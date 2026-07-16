@@ -13,13 +13,14 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 
 ## État (16/07/2026)
 - Jalon 1 FAIT : structure repo, docker-compose (postgres+pgvector), API FastAPI /health, front vitrine React 19/Vite/TS/Tailwind (7 pages publiques, textes du doc 06, palette solaire primary #E8871E). Build vérifié.
-- Jalon 2 FAIT : auth JWT (access en mémoire + refresh token en cookie httpOnly rotatif), vérification email (lien loggé en dev tant que EMAIL_API_KEY est vide), fiche Maison par blocs (doc 02 §2) avec score de complétude pondéré (doc 02 §4, `api/app/services/completeness.py`), migration Alembic initiale (`api/alembic/versions/0001_initial_schema.py`). Testé : unit tests sécurité/score sans DB, build front (tsc+vite), routes API vérifiées en navigateur via le proxy Vite (500 attendu en l'absence de Postgres local — pas de Docker dans cet environnement de dev). **À faire par toi** : `docker compose up -d postgres` puis `cd api && alembic upgrade head` pour valider le parcours complet (register → vérif email → fiche maison → score) en conditions réelles.
+- Jalon 2 FAIT et validé de bout en bout : auth JWT (access en mémoire + refresh token en cookie httpOnly rotatif), vérification email (lien loggé en dev tant que EMAIL_API_KEY est vide), fiche Maison par blocs (doc 02 §2) avec score de complétude pondéré (doc 02 §4, `api/app/services/completeness.py`), migration Alembic initiale (`api/alembic/versions/0001_initial_schema.py`, sans pgvector/pgcrypto — pas utiles avant J3). Testé contre une vraie base Postgres (voir note Docker ci-dessous) : register, login, refresh rotatif, `/auth/me`, création + PATCH de la fiche maison, score recalculé correctement (20 % après remplissage du bloc identité).
 - Prochain : Jalon 3 (RAG + chat public — ingestion kb/, embeddings, citations).
+- **Note environnement dev (pas de Docker sur cette machine)** : PostgreSQL 17 installé nativement via winget (service Windows `postgresql-x64-17`), rôle `helios`/`change-me` + base `helios` créés pour matcher les defaults de `config.py` — donc l'API tourne sans fichier `.env`. Sur une machine avec Docker, `docker-compose.yml` (image `pgvector/pg16`) reste la référence ; pas besoin de reproduire cette install native ailleurs.
 
 ## Commandes
 - Front : `cd frontend && npm install && npm run dev` (build : `npm run build`)
 - API : `cd api && pip install -r requirements.txt && uvicorn app.main:app --reload`
-- BDD : `docker compose up -d postgres` puis `cd api && alembic upgrade head`
+- BDD (avec Docker) : `docker compose up -d postgres` puis `cd api && alembic upgrade head`
 
 ## Remote
 https://github.com/stf3001/helios.git
