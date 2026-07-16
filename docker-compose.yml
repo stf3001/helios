@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-helios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-helios}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+  # ollama : activé au jalon 3 (RAG). Sur le free tier 2 OCPU, démarrer sans.
+  # ollama:
+  #   image: ollama/ollama
+  #   volumes: [ollama:/root/.ollama]
+
+volumes:
+  pgdata:
