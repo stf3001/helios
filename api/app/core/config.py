@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     email_api_key: str = ""  # Resend/Brevo — vide en dev : le lien est loggé au lieu d'être envoyé
     cookie_secure: bool = False  # True en prod (HTTPS) — cf. deploy/
 
+    embed_dimensions: int = 1024  # bge-m3 (doc 10 §1)
+    rag_top_k: int = 8
+    rag_score_threshold: float = 0.5  # similarité cosinus min. sous laquelle Helios répond en mode prudent
+
     class Config:
         env_file = ".env"
 

@@ -1,5 +1,6 @@
 import Hero from '../components/Hero'
 import Card from '../components/Card'
+import ChatWidget from '../components/chat/ChatWidget'
 
 export default function HeliosIA() {
   return (
@@ -24,10 +25,7 @@ export default function HeliosIA() {
         </Card>
       </section>
       <section className="max-w-[900px] mx-auto px-4 pb-14">
-        <div className="rounded-2xl border-2 border-dashed border-primary/40 p-8 text-center text-gray-500">
-          Le chat public Helios arrive ici (jalon 3). <br />
-          « Bonjour, je suis Helios. Posez-moi vos questions sur l'énergie de votre logement… »
-        </div>
+        <ChatWidget />
       </section>
     </>
   )

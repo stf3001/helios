@@ -7,7 +7,15 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
 from app.core.db import Base
-from app.models import House, RefreshToken, User  # noqa: F401 — enregistre les tables sur Base.metadata
+from app.models import (  # noqa: F401 — enregistre les tables sur Base.metadata
+    Conversation,
+    House,
+    KbChunk,
+    KbDocument,
+    Message,
+    RefreshToken,
+    User,
+)
 
 config = context.config
 if config.config_file_name is not None:

@@ -8,3 +8,4 @@ argon2-cffi==23.1.*
 httpx==0.27.*
 alembic==1.13.*
 email-validator==2.2.*
+pgvector==0.3.*
