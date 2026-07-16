@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
+import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Vision from './pages/Vision'
 import Colibri from './pages/Colibri'
@@ -8,6 +9,10 @@ import CommentCaMarche from './pages/CommentCaMarche'
 import HeliosIA from './pages/HeliosIA'
 import Faq from './pages/Faq'
 import Partenaires from './pages/Partenaires'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import VerifyEmail from './pages/auth/VerifyEmail'
+import FicheMaison from './pages/FicheMaison'
 
 export default function App() {
   return (
@@ -22,6 +27,10 @@ export default function App() {
           <Route path="/helios" element={<HeliosIA />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/partenaires" element={<Partenaires />} />
+          <Route path="/connexion" element={<Login />} />
+          <Route path="/inscription" element={<Register />} />
+          <Route path="/verifier-email" element={<VerifyEmail />} />
+          <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />

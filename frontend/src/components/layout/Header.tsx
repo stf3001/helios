@@ -1,5 +1,6 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Sun } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 const links = [
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
@@ -10,6 +11,9 @@ const links = [
 ]
 
 export default function Header() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
       <div className="max-w-[1200px] mx-auto px-4 h-16 flex items-center justify-between">
@@ -25,10 +29,26 @@ export default function Header() {
             </NavLink>
           ))}
         </nav>
-        <span className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold opacity-60 cursor-not-allowed"
-              title="Espace client — jalon 2">
-          Mon espace (bientôt)
-        </span>
+        {user ? (
+          <div className="flex items-center gap-3">
+            <Link to="/mon-espace" className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90">
+              Mon espace
+            </Link>
+            <button
+              onClick={() => logout().then(() => navigate('/'))}
+              className="text-sm text-gray-500 hover:text-primary"
+            >
+              Déconnexion
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link to="/connexion" className="text-sm text-gray-700 hover:text-primary">Connexion</Link>
+            <Link to="/inscription" className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90">
+              Mon espace
+            </Link>
+          </div>
+        )}
       </div>
     </header>
   )

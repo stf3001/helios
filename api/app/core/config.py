@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     embed_model: str = "bge-m3"
     sobry_partner_link: str = ""
 
+    jwt_algorithm: str = "HS256"
+    jwt_access_ttl_min: int = 15
+    jwt_refresh_ttl_days: int = 30
+    email_verify_ttl_hours: int = 48
+    frontend_url: str = "http://localhost:5173"
+    email_api_key: str = ""  # Resend/Brevo — vide en dev : le lien est loggé au lieu d'être envoyé
+    cookie_secure: bool = False  # True en prod (HTTPS) — cf. deploy/
+
     class Config:
         env_file = ".env"
 
