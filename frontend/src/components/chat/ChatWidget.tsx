@@ -13,13 +13,28 @@ interface ChatMessage {
   citations?: Citation[]
 }
 
-export default function ChatWidget() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'helios', content: "Bonjour, je suis Helios. Posez-moi vos questions sur l'énergie de votre logement…" },
-  ])
+const GREETING: ChatMessage = {
+  role: 'helios',
+  content: "Bonjour, je suis Helios. Posez-moi vos questions sur l'énergie de votre logement…",
+}
+
+export default function ChatWidget({
+  fetchImpl = fetch,
+  initialConversationId = null,
+  initialMessages,
+}: {
+  /** Passer `authFetch` du AuthContext pour le mode connecté ; sinon fetch anonyme (mode public). */
+  fetchImpl?: (input: string, init?: RequestInit) => Promise<Response>
+  initialConversationId?: string | null
+  initialMessages?: ChatMessage[]
+} = {}) {
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages && initialMessages.length > 0 ? initialMessages : [GREETING]
+  )
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
-  const conversationId = useRef<string | null>(null)
+  const [simplified, setSimplified] = useState(false)
+  const conversationId = useRef<string | null>(initialConversationId)
 
   function updateLastHelios(update: (m: ChatMessage) => ChatMessage) {
     setMessages((m) => {
@@ -34,11 +49,12 @@ export default function ChatWidget() {
     const question = input.trim()
     if (!question || sending) return
     setInput('')
+    setSimplified(false)
     setMessages((m) => [...m, { role: 'user', content: question }, { role: 'helios', content: '' }])
     setSending(true)
 
     try {
-      const res = await fetch('/api/chat/messages', {
+      const res = await fetchImpl('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: conversationId.current, content: question }),
@@ -61,6 +77,7 @@ export default function ChatWidget() {
           const event = JSON.parse(line)
           if (event.type === 'conversation') {
             conversationId.current = event.conversation_id
+            setSimplified(!!event.simplified)
           } else if (event.type === 'token') {
             updateLastHelios((msg) => ({ ...msg, content: msg.content + event.text }))
           } else if (event.type === 'citations') {
@@ -80,6 +97,11 @@ export default function ChatWidget() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm max-w-[700px] mx-auto flex flex-col h-[520px]">
+      {simplified && (
+        <div className="px-4 py-2 text-xs text-center bg-sun/10 text-gray-600 border-b border-gray-100">
+          Mode simplifié : réponse générée localement (service avancé indisponible ou limite atteinte).
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((m, i) => (
           <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>

@@ -1,12 +1,15 @@
 """RAG au runtime — doc 07 §4 : recherche, seuil de pertinence, prompt avec constitution."""
 
+import json
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.models.house import House
 from app.models.kb import KbChunk, KbDocument
+from app.services.completeness import _is_filled, compute_score, niveau_for_score
 
 _CONSTITUTION_PATH = Path(__file__).resolve().parents[3] / "prompts" / "constitution-v0.1.md"
 _constitution_text = _CONSTITUTION_PATH.read_text(encoding="utf-8") if _CONSTITUTION_PATH.exists() else ""
@@ -42,7 +45,23 @@ def build_citations(results: list[dict]) -> list[dict]:
     ]
 
 
-def build_prompt(question: str, results: list[dict]) -> str:
+def build_house_context(house: House) -> dict:
+    """Contexte fiche Maison pour le mode connecté (doc 03 §7) — uniquement les champs renseignés.
+
+    NB : ne contient pas encore le "dernier audit" mentionné au doc 03 §7 — le
+    moteur de pré-audit n'existe pas avant le jalon 6. Point d'extension futur.
+    """
+    profil = {
+        c.name: getattr(house, c.name)
+        for c in house.__table__.columns
+        if c.name not in ("id", "user_id", "completeness_score", "updated_at")
+        and _is_filled(getattr(house, c.name))
+    }
+    score = compute_score(house)
+    return {"score": score, "niveau": niveau_for_score(score), "profil": profil}
+
+
+def build_prompt(question: str, results: list[dict], house_context: dict | None = None) -> str:
     if not results or best_score(results) < settings.rag_score_threshold:
         sources_block = (
             "Aucune source fiable trouvée dans la base de connaissances pour cette question. "
@@ -51,12 +70,26 @@ def build_prompt(question: str, results: list[dict]) -> str:
     else:
         sources_block = "\n\n".join(f"[Source {i + 1}] {r['chunk'].content}" for i, r in enumerate(results))
 
+    if house_context is not None:
+        mode_block = (
+            "MODE CONNECTÉ — fiche foyer de ce visiteur (JSON, uniquement les champs renseignés) :\n"
+            f"{json.dumps(house_context, ensure_ascii=False, default=str)}\n"
+            "Adapte ta réponse à ce foyer précis. Si un champ décisif pour répondre manque, "
+            "pose la question ou indique quel champ renseigner plutôt que de deviner (doc 03 §4)."
+        )
+        question_label = "Question de l'utilisateur connecté"
+    else:
+        mode_block = "MODE PUBLIC (visiteur) — pas de fiche foyer associée."
+        question_label = "Question du visiteur"
+
     return (
         f"{_constitution_text}\n\n"
         "---\n"
-        "SOURCES DISPONIBLES (mode public/visiteur — ne cite que celles fournies ici, jamais d'autres) :\n"
+        f"{mode_block}\n\n"
+        "---\n"
+        "SOURCES DISPONIBLES (ne cite que celles fournies ici, jamais d'autres) :\n"
         f"{sources_block}\n\n"
         "---\n"
-        f"Question du visiteur : {question}\n"
+        f"{question_label} : {question}\n"
         "Réponse d'Helios :"
     )

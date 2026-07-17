@@ -13,6 +13,7 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
+import EspaceHelios from './pages/EspaceHelios'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/inscription" element={<Register />} />
           <Route path="/verifier-email" element={<VerifyEmail />} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
+          <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />

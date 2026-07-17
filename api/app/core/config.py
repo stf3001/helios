@@ -6,7 +6,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me"
     llm_api_provider: str = "anthropic"
     llm_api_key: str = ""            # emplacement réservé — clé à venir
+    llm_api_model: str = "claude-haiku-4-5-20251001"
     llm_api_budget_daily_eur: float = 5.0
+    llm_api_budget_monthly_eur: float = 100.0
+    llm_price_per_1k_tokens_eur: float = 0.005  # estimation grossière (blended in/out) — à calibrer
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:3b"
     embed_model: str = "bge-m3"
@@ -23,6 +26,13 @@ class Settings(BaseSettings):
     embed_dimensions: int = 1024  # bge-m3 (doc 10 §1)
     rag_top_k: int = 8
     rag_score_threshold: float = 0.5  # similarité cosinus min. sous laquelle Helios répond en mode prudent
+    constitution_version: str = "v0.1"  # doit suivre prompts/constitution-v0.1.md
+
+    rag_api_min_niveau: str = "prediagnostic_qualitatif"  # score >= 40% requis pour basculer vers l'API (doc 07 §5)
+    rag_api_long_message_chars: int = 200
+    rag_api_keywords: tuple[str, ...] = (
+        "audit", "combien", "coût", "cout", "prix", "rentab", "chiffr", "économie", "economie",
+    )
 
     class Config:
         env_file = ".env"

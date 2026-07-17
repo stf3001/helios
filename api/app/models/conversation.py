@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -28,4 +28,8 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     model_used: Mapped[str | None] = mapped_column(String(10))  # local | api
     tokens: Mapped[int | None] = mapped_column(Integer)
+    citations: Mapped[list[dict] | None] = mapped_column(JSONB)
+    chunks_used: Mapped[list[str] | None] = mapped_column(JSONB)  # ids des kb_chunks cités
+    constitution_version: Mapped[str | None] = mapped_column(String(10))
+    estimated_cost_eur: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
