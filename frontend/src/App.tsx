@@ -14,6 +14,7 @@ import Register from './pages/auth/Register'
 import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
 import EspaceHelios from './pages/EspaceHelios'
+import SimulateurSolaire from './pages/SimulateurSolaire'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/helios" element={<HeliosIA />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/partenaires" element={<Partenaires />} />
+          <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
           <Route path="/verifier-email" element={<VerifyEmail />} />

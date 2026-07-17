@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 const links = [
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
   { to: '/helios', label: 'Helios (IA)' },
-  { to: '/vision', label: 'Vision' },
+  { to: '/simulateur-solaire', label: 'Simulateur solaire' },
   { to: '/partenaires', label: 'Partenaires' },
   { to: '/faq', label: 'FAQ' },
 ]

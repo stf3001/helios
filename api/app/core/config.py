@@ -34,6 +34,17 @@ class Settings(BaseSettings):
         "audit", "combien", "coût", "cout", "prix", "rentab", "chiffr", "économie", "economie",
     )
 
+    # --- Simulateur solaire (doc 09 §1) — ordres de grandeur France 2026, À CALIBRER, jamais donnés comme certains ---
+    solar_prix_achat_eur_kwh: float = 0.25       # prix du kWh évité par l'autoconsommation (TRV ~2026)
+    solar_prix_revente_eur_kwh: float = 0.13     # tarif de rachat du surplus (obligation d'achat < 9 kWc)
+    solar_conso_defaut_kwh_an: int = 4500        # conso annuelle par défaut (mode public sans fiche)
+    solar_autoconso_sans_pilotage: float = 0.30  # part de la production consommée sur place, sans pilotage
+    solar_autoconso_avec_pilotage: float = 0.45  # avec pilotage ballon + usages décalés
+    solar_gain_autoconso_batterie: float = 0.25  # points d'autoconso gagnés avec batterie
+    solar_cout_par_kwc_eur: int = 2500           # coût installation clé en main (€/kWc, prime non déduite)
+    solar_cout_batterie_par_kwh_eur: int = 700   # coût batterie LFP posée (€/kWh utile)
+    solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
+
     class Config:
         env_file = ".env"
 
