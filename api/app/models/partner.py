@@ -20,6 +20,7 @@ class Partner(Base):
     raison_sociale: Mapped[str] = mapped_column(String(150), nullable=False)
     siret: Mapped[str | None] = mapped_column(String(14))
     email: Mapped[str | None] = mapped_column(String(255))
+    password_hash: Mapped[str | None] = mapped_column(String(255))  # défini à l'activation (accès espace partenaire)
     rge: Mapped[bool] = mapped_column(Boolean, default=False)
     zones: Mapped[list[str] | None] = mapped_column(ARRAY(String))    # codes postaux / départements couverts
     metiers: Mapped[list[str] | None] = mapped_column(ARRAY(String))  # pv, pac, isolation, menuiseries, vmc...

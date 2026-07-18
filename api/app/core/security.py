@@ -43,6 +43,28 @@ def decode_access_token(token: str) -> str | None:
     return payload.get("sub")
 
 
+def create_partner_token(partner_id: str) -> str:
+    """Jeton d'accès pour l'espace partenaire (distinct des jetons utilisateur : type=partner)."""
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": partner_id,
+        "type": "partner",
+        "iat": now,
+        "exp": now + timedelta(hours=12),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def decode_partner_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError:
+        return None
+    if payload.get("type") != "partner":
+        return None
+    return payload.get("sub")
+
+
 def new_raw_token() -> str:
     """Jeton opaque aléatoire (refresh token / vérification email) — jamais stocké en clair."""
     return secrets.token_urlsafe(48)

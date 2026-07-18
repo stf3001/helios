@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://helios:change-me@localhost:5432/helios"
     jwt_secret: str = "change-me"
+    admin_token: str = "change-me-admin"  # secret pour les endpoints admin (validation partenaires)
     llm_api_provider: str = "anthropic"
     llm_api_key: str = ""            # emplacement réservé — clé à venir
     llm_api_model: str = "claude-haiku-4-5-20251001"

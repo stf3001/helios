@@ -19,6 +19,7 @@ import EspaceAudits from './pages/EspaceAudits'
 import EspaceEnergie from './pages/EspaceEnergie'
 import DevenirPartenaire from './pages/DevenirPartenaire'
 import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
+import PartnerPortal from './pages/PartnerPortal'
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/faq" element={<Faq />} />
           <Route path="/partenaires" element={<Partenaires />} />
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
+          <Route path="/partenaire" element={<PartnerPortal />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
