@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import BlockCard from '../components/fiche/BlockCard'
 import CompletenessBar from '../components/fiche/CompletenessBar'
+import HouseDocuments from '../components/fiche/HouseDocuments'
 import type { Draft, FieldSpec, FieldValue } from '../components/fiche/types'
 import { useAuth } from '../context/AuthContext'
 
@@ -226,6 +227,7 @@ export default function FicheMaison() {
             <BlockCard title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
             <BlockCard title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
             <BlockCard title="Toiture / potentiel solaire" weightLabel="bonus — utilisé au simulateur" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <HouseDocuments />
           </div>
         </>
       )}

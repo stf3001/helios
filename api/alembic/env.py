@@ -12,6 +12,7 @@ from app.models import (  # noqa: F401 — enregistre les tables sur Base.metada
     Conversation,
     EnergyStudy,
     House,
+    HouseDocument,
     KbChunk,
     KbDocument,
     Lead,
