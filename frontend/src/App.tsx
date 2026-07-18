@@ -17,6 +17,8 @@ import EspaceHelios from './pages/EspaceHelios'
 import SimulateurSolaire from './pages/SimulateurSolaire'
 import EspaceAudits from './pages/EspaceAudits'
 import EspaceEnergie from './pages/EspaceEnergie'
+import DevenirPartenaire from './pages/DevenirPartenaire'
+import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
 
 export default function App() {
   return (
@@ -31,6 +33,7 @@ export default function App() {
           <Route path="/helios" element={<HeliosIA />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/partenaires" element={<Partenaires />} />
+          <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
@@ -39,6 +42,7 @@ export default function App() {
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />
           <Route path="/espace/energie" element={<ProtectedRoute><EspaceEnergie /></ProtectedRoute>} />
+          <Route path="/espace/mises-en-relation" element={<ProtectedRoute><EspaceMisesEnRelation /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />

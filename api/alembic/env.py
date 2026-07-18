@@ -14,8 +14,11 @@ from app.models import (  # noqa: F401 — enregistre les tables sur Base.metada
     House,
     KbChunk,
     KbDocument,
+    Lead,
     Message,
+    Partner,
     RefreshToken,
+    Review,
     SolarStudy,
     User,
 )
