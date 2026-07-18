@@ -1,9 +1,23 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
+from app.core.ratelimit import limiter
 from app.routers import audits, auth, chat, energy, faq, houses, leads, partners, solar
 
 app = FastAPI(title="HELIOS API", version="0.1.0")
+
+
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(status_code=429, content={"detail": "Trop de requêtes, réessayez dans un instant."})
+
+
+# Rate limiting (doc 10 sécurité) — limites par IP appliquées sur les routes décorées (auth, chat)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

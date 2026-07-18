@@ -11,3 +11,4 @@ email-validator==2.2.*
 pgvector==0.3.*
 anthropic==0.40.*
 fpdf2==2.8.*
+slowapi==0.1.*

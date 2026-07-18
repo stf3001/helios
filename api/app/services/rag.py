@@ -11,7 +11,8 @@ from app.models.house import House
 from app.models.kb import KbChunk, KbDocument
 from app.services.completeness import _is_filled, compute_score, niveau_for_score
 
-_CONSTITUTION_PATH = Path(__file__).resolve().parents[3] / "prompts" / "constitution-v0.1.md"
+# Version de constitution pilotée par la config (settings.constitution_version) — synchro avec le doc 03.
+_CONSTITUTION_PATH = Path(__file__).resolve().parents[3] / "prompts" / f"constitution-{settings.constitution_version}.md"
 _constitution_text = _CONSTITUTION_PATH.read_text(encoding="utf-8") if _CONSTITUTION_PATH.exists() else ""
 
 
@@ -45,8 +46,18 @@ def build_citations(results: list[dict]) -> list[dict]:
     ]
 
 
+# Champs exclus du contexte envoyé au LLM externe (doc 10 sécurité : anonymiser la fiche,
+# jamais nom/email, PDL exclu des prompts). `pdl` est une donnée personnelle sensible
+# (identifiant de compteur) qui n'apporte rien au conseil : on ne l'envoie jamais au modèle.
+_HOUSE_CONTEXT_EXCLUDE = {
+    "id", "user_id", "completeness_score", "updated_at",
+    "pdl",  # confidentialité (doc 10)
+}
+
+
 def build_house_context(house: House) -> dict:
-    """Contexte fiche Maison pour le mode connecté (doc 03 §7) — uniquement les champs renseignés.
+    """Contexte fiche Maison pour le mode connecté (doc 03 §7) — uniquement les champs renseignés,
+    hors données personnelles sensibles (PDL exclu, doc 10 sécurité).
 
     NB : ne contient pas encore le "dernier audit" mentionné au doc 03 §7 — le
     moteur de pré-audit n'existe pas avant le jalon 6. Point d'extension futur.
@@ -54,8 +65,7 @@ def build_house_context(house: House) -> dict:
     profil = {
         c.name: getattr(house, c.name)
         for c in house.__table__.columns
-        if c.name not in ("id", "user_id", "completeness_score", "updated_at")
-        and _is_filled(getattr(house, c.name))
+        if c.name not in _HOUSE_CONTEXT_EXCLUDE and _is_filled(getattr(house, c.name))
     }
     score = compute_score(house)
     return {"score": score, "niveau": niveau_for_score(score), "profil": profil}

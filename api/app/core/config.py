@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     embed_dimensions: int = 1024  # bge-m3 (doc 10 §1)
     rag_top_k: int = 8
     rag_score_threshold: float = 0.5  # similarité cosinus min. sous laquelle Helios répond en mode prudent
-    constitution_version: str = "v0.1"  # doit suivre prompts/constitution-v0.1.md
+    constitution_version: str = "v0.2"  # doit suivre prompts/constitution-<version>.md
 
     rag_api_min_niveau: str = "prediagnostic_qualitatif"  # score >= 40% requis pour basculer vers l'API (doc 07 §5)
     rag_api_long_message_chars: int = 200

@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.db import async_session, get_db
 from app.core.deps import get_current_user, get_optional_user
+from app.core.ratelimit import limiter
 from app.models.conversation import Conversation, Message
 from app.models.house import House
 from app.models.user import User
@@ -23,7 +24,9 @@ def _owner_ok(conversation: Conversation, user: User | None) -> bool:
 
 
 @router.post("/messages")
+@limiter.limit("20/minute")
 async def send_message(
+    request: Request,
     payload: ChatIn,
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),

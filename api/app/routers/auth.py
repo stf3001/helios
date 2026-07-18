@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.core.ratelimit import limiter
 from app.core.security import create_access_token, hash_password, hash_token, new_raw_token, verify_password
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
@@ -44,7 +45,8 @@ async def _issue_refresh_token(db: AsyncSession, user_id: uuid.UUID) -> str:
 
 
 @router.post("/register", response_model=TokenOut, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterIn, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, payload: RegisterIn, response: Response, db: AsyncSession = Depends(get_db)):
     if not payload.consent_cgu:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "L'acceptation des CGU est requise")
     existing = await db.scalar(select(User).where(User.email == payload.email))
@@ -87,7 +89,8 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenOut)
-async def login(payload: LoginIn, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, payload: LoginIn, response: Response, db: AsyncSession = Depends(get_db)):
     user = await db.scalar(select(User).where(User.email == payload.email))
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email ou mot de passe incorrect")
