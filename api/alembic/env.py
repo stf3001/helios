@@ -10,6 +10,7 @@ from app.core.db import Base
 from app.models import (  # noqa: F401 — enregistre les tables sur Base.metadata
     Audit,
     Conversation,
+    EnergyStudy,
     House,
     KbChunk,
     KbDocument,

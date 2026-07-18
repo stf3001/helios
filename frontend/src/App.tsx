@@ -16,6 +16,7 @@ import FicheMaison from './pages/FicheMaison'
 import EspaceHelios from './pages/EspaceHelios'
 import SimulateurSolaire from './pages/SimulateurSolaire'
 import EspaceAudits from './pages/EspaceAudits'
+import EspaceEnergie from './pages/EspaceEnergie'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />
+          <Route path="/espace/energie" element={<ProtectedRoute><EspaceEnergie /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />
