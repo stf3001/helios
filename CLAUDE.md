@@ -11,6 +11,16 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 - Secrets uniquement en .env (jamais commités). Anonymiser toute donnée envoyée à une API LLM externe.
 - KB et prompts versionnés dans git (kb/, prompts/) = source de vérité, réingérés vers pgvector.
 
+## État (18/07/2026) — J1→J8 + J10 + trous produit (reste : J9 déploiement)
+
+> **Gros lot du 18/07 (après J8)** — tout validé de bout en bout (API + migrations 0008→0010 + build front) :
+> - **Sécurité/conformité** : PDL exclu du contexte LLM (`rag._HOUSE_CONTEXT_EXCLUDE`), constitution **v0.2** (chemin piloté par `settings.constitution_version` ; §5bis garde-fous énergie/SOBRY), **rate limiting** slowapi (login 10/min, register 5/min, chat 20/min → 429).
+> - **Upload documents** (`house_documents`, migration 0008) : router `/api/houses/me/documents` (PDF/images, 10 Mo, dpe/facture/devis/photo), stockage `generated/house_docs/` (gitignoré) ; composant `HouseDocuments` dans la fiche.
+> - **Admin + espace partenaire** (migration 0009 `partners.password_hash`) : admin par secret `X-Admin-Token` (`require_admin`) → `/api/admin/partners` (revue), activate (génère mdp initial), suspend ; auth partenaire (jeton `type=partner`, `get_current_partner`), `/api/partner/login|leads|leads/{id}/status` (vraie transition côté partenaire, commission auto à SIGNÉ) ; page `/partenaire` (login+dashboard, token localStorage).
+> - **Dashboard + RGPD** : dashboard `/espace` (résumé fiche + tuiles ; header pointe dessus et désencombré) ; router `/api/account` : export (portabilité, sans hash), consentements (toggle `consent_leads`), suppression de compte (droit à l'effacement, cascade + fichiers) ; page `/espace/compte`.
+> - **J10 agents** (`agents_log`, migration 0010) : framework `api/app/services/agents_engine.py` — sources déclarées (`SOURCES`), `crawl_source`/`run_crawler` (fetch→parse→embed→upsert kb, journalisé), `run_veille` (repère les kb_documents périmés selon `date_maj`). CLI `agents/run_agents.py {crawl|veille}` ; `agents/ingest.py` délègue désormais au framework (ingestion manuelle = agent crawler unifiés). Endpoint `GET /api/admin/agents-log`. Validé : crawler ré-ingère la FAQ (109 upsert), veille détecte la péremption, journal consultable. **Sources web (aides/prix) prévues mais à déclarer/calibrer** (échec réseau journalisé, non bloquant).
+> - Migrations à jour : `alembic upgrade head` applique 0001→0010. Nouvelles deps : `slowapi`, `python-multipart` (déjà dans requirements.txt).
+
 ## État (18/07/2026) — J1→J8 (8 jalons sur 10)
 
 > **⚡ Docker installé (17/07/2026) — le blocage pgvector est LEVÉ.** Docker Desktop 4.82 + WSL2 sont en place. `docker compose up -d postgres` (image `pgvector/pgvector:pg16`) tourne (conteneur `helios-postgres-1`, port 5432). Le Postgres natif Windows a été **arrêté** (`Stop-Service postgresql-x64-17`) pour libérer le port — le repartir en cas de besoin, mais Docker est désormais la référence. **Les 4 migrations (0001→0004) s'appliquent proprement d'un coup** (`cd api && alembic upgrade head`), la FAQ est ingérée (109 chunks dans pgvector), et **le chat RAG J3/J4 est validé de bout en bout** (voir plus bas). Note PATH : appeler `docker` via un shell peut échouer sur `docker-credential-desktop` — ajouter `C:\Program Files\Docker\Docker\resources\bin` au PATH, ou utiliser le terminal fourni par Docker Desktop.

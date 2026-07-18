@@ -12,9 +12,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import require_admin
 from app.core.security import hash_password
+from app.models.agent_log import AgentLog
 from app.models.partner import Partner
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
+
+
+@router.get("/agents-log")
+async def agents_log(limit: int = 50, db: AsyncSession = Depends(get_db)):
+    """Journal des agents (crawler + veille) — supervision de l'alimentation du RAG (doc 10)."""
+    rows = await db.scalars(select(AgentLog).order_by(AgentLog.created_at.desc()).limit(limit))
+    return [{"agent": r.agent, "action": r.action, "detail": r.detail, "created_at": r.created_at} for r in rows]
 
 
 @router.get("/partners")

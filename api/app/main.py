@@ -50,5 +50,4 @@ async def health():
     return {"status": "ok", "service": "helios-api"}
 
 
-# Jalons à venir :
-# J8: partners, leads        J9: prod        J10: agents
+# Reste avant lancement : J9 (déploiement prod : Oracle, HTTPS, emails réels, domaine).
