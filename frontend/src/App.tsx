@@ -15,6 +15,7 @@ import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
 import EspaceHelios from './pages/EspaceHelios'
 import SimulateurSolaire from './pages/SimulateurSolaire'
+import EspaceAudits from './pages/EspaceAudits'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/verifier-email" element={<VerifyEmail />} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
+          <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />
         </Routes>
       </main>
       <Footer />

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, chat, houses, solar
+from app.routers import audits, auth, chat, houses, solar
 
 app = FastAPI(title="HELIOS API", version="0.1.0")
 
@@ -17,6 +17,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(houses.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(solar.router, prefix="/api")
+app.include_router(audits.router, prefix="/api")
 
 
 @app.get("/health")
