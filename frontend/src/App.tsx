@@ -20,6 +20,8 @@ import EspaceEnergie from './pages/EspaceEnergie'
 import DevenirPartenaire from './pages/DevenirPartenaire'
 import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
 import PartnerPortal from './pages/PartnerPortal'
+import Espace from './pages/Espace'
+import EspaceCompte from './pages/EspaceCompte'
 
 export default function App() {
   return (
@@ -40,6 +42,8 @@ export default function App() {
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
           <Route path="/verifier-email" element={<VerifyEmail />} />
+          <Route path="/espace" element={<ProtectedRoute><Espace /></ProtectedRoute>} />
+          <Route path="/espace/compte" element={<ProtectedRoute><EspaceCompte /></ProtectedRoute>} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />

@@ -32,10 +32,7 @@ export default function Header() {
         {user ? (
           <div className="flex items-center gap-3">
             <Link to="/espace/helios" className="text-sm text-gray-700 hover:text-primary">Mon Helios</Link>
-            <Link to="/espace/audits" className="text-sm text-gray-700 hover:text-primary">Mes pré-audits</Link>
-            <Link to="/espace/energie" className="text-sm text-gray-700 hover:text-primary">Énergie</Link>
-            <Link to="/espace/mises-en-relation" className="text-sm text-gray-700 hover:text-primary">Partenaires</Link>
-            <Link to="/mon-espace" className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90">
+            <Link to="/espace" className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90">
               Mon espace
             </Link>
             <button

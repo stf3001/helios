@@ -6,7 +6,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.ratelimit import limiter
 from app.routers import (
-    admin, audits, auth, chat, documents, energy, faq, houses, leads,
+    account, admin, audits, auth, chat, documents, energy, faq, houses, leads,
     partner_portal, partners, solar,
 )
 
@@ -42,6 +42,7 @@ app.include_router(faq.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(partner_portal.router, prefix="/api")
+app.include_router(account.router, prefix="/api")
 
 
 @app.get("/health")

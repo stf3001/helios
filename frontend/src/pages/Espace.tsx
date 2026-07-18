@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+
+const NIVEAU_LABEL: Record<string, string> = {
+  conseils_generaux: 'Conseils généraux',
+  prediagnostic_qualitatif: 'Pré-diagnostic qualitatif',
+  preaudit_chiffre: 'Pré-audit chiffré',
+}
+
+const TUILES = [
+  { to: '/mon-espace', icon: Home, title: 'Ma fiche maison', desc: 'Complétez votre logement' },
+  { to: '/espace/helios', icon: MessageSquare, title: 'Mon Helios', desc: 'Conseil personnalisé' },
+  { to: '/espace/audits', icon: FileText, title: 'Mes pré-audits', desc: 'Diagnostic chiffré' },
+  { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'Simulateur PVGIS' },
+  { to: '/espace/energie', icon: Zap, title: "Mon contrat d'énergie", desc: 'Conseil & SOBRY' },
+  { to: '/espace/mises-en-relation', icon: Handshake, title: 'Mises en relation', desc: 'Partenaires travaux' },
+]
+
+export default function Espace() {
+  const { user, authFetch } = useAuth()
+  const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
+  const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : null)),
+      authFetch('/api/audits').then((r) => (r.ok ? r.json() : [])),
+    ]).then(([h, audits]) => {
+      setHouse(h)
+      if (audits.length > 0) setLastAudit(audits[0])
+    }).finally(() => setLoading(false))
+  }, [authFetch])
+
+  return (
+    <section className="max-w-[900px] mx-auto px-4 py-12">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Bonjour {user?.prenom || ''} 👋</h1>
+        <Link to="/espace/compte" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary">
+          <Settings className="w-4 h-4" /> Mon compte
+        </Link>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-400">Chargement…</p>
+      ) : (
+        <>
+          {/* Résumé maison */}
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-8">
+            {house ? (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm text-gray-500">Votre fiche maison ({house.code_postal})</div>
+                  <div className="text-3xl font-bold text-primary my-1">{house.completeness_score}%</div>
+                  <div className="text-sm text-gray-600">Niveau : {NIVEAU_LABEL[house.niveau] ?? house.niveau}</div>
+                  {lastAudit && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      Dernier pré-audit : {new Date(lastAudit.created_at).toLocaleDateString('fr-FR')}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Link to="/mon-espace" className="rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2 text-center hover:opacity-90">
+                    Compléter ma fiche
+                  </Link>
+                  {house.completeness_score >= 70 && (
+                    <Link to="/espace/audits" className="rounded-xl border border-primary text-primary text-sm font-semibold px-4 py-2 text-center hover:bg-primary/5">
+                      Générer un pré-audit
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-gray-700">Vous n'avez pas encore de fiche maison — c'est le point de départ.</p>
+                <Link to="/mon-espace" className="rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2 hover:opacity-90 shrink-0">
+                  Créer ma fiche
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Tuiles d'accès */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TUILES.map((t) => (
+              <Link key={t.to} to={t.to}
+                className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+                <t.icon className="w-6 h-6 text-primary mb-2" />
+                <div className="font-semibold">{t.title}</div>
+                <div className="text-sm text-gray-500">{t.desc}</div>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
