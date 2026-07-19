@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MessageSquare, ClipboardList, Sparkles, Gift, ShieldCheck, Lock, ArrowRight } from 'lucide-react'
+import { MessageSquare, ClipboardList, Sparkles, Gift, ShieldCheck, Lock, ArrowRight, Sun, BatteryCharging, Car, Droplets } from 'lucide-react'
 import HierarchieColibri from '../components/HierarchieColibri'
 import { useTitle } from '../hooks/useTitle'
 
@@ -62,8 +62,35 @@ export default function Home() {
         </div>
       </section>
 
+      {/* La maison de demain */}
+      <section className="max-w-[1000px] mx-auto px-4 py-16 text-center">
+        <p className="uppercase tracking-widest text-primary text-sm font-semibold mb-3">La maison de demain</p>
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-ink mb-4">
+          Pour la première fois, votre maison peut produire son énergie — et bien plus.
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto mb-8">
+          Isolée, intelligente, capable de produire son électricité verte, de la stocker, de se chauffer,
+          de recharger la voiture, et demain de produire son eau. Ce n'était pas possible avant. Ça l'est aujourd'hui.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
+          {[
+            { icon: Sun, label: 'Produire' },
+            { icon: BatteryCharging, label: 'Stocker' },
+            { icon: Car, label: 'Se déplacer' },
+            { icon: Droplets, label: 'Son eau, demain' },
+          ].map((c) => (
+            <div key={c.label} className="inline-flex items-center gap-2 rounded-full bg-cream border border-black/5 px-4 py-2 text-sm text-ink">
+              <c.icon className="w-4 h-4 text-primary" /> {c.label}
+            </div>
+          ))}
+        </div>
+        <Link to="/vision" className="inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all">
+          Découvrir notre vision <ArrowRight className="w-4 h-4" />
+        </Link>
+      </section>
+
       {/* 3 étapes */}
-      <section className="max-w-[1100px] mx-auto px-4 py-16">
+      <section className="max-w-[1100px] mx-auto px-4 py-16 bg-cream rounded-3xl">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-3">Comment ça marche</h2>
         <p className="text-center text-gray-600 mb-10">Trois étapes, à votre rythme — sans engagement.</p>
         <div className="grid gap-6 md:grid-cols-3">
