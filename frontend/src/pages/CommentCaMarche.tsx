@@ -1,5 +1,6 @@
 import Hero from '../components/Hero'
 import Card from '../components/Card'
+import HierarchieColibri from '../components/HierarchieColibri'
 
 export default function CommentCaMarche() {
   return (
@@ -21,8 +22,15 @@ export default function CommentCaMarche() {
           Helios vous met en relation avec une entreprise partenaire signataire de notre charte.
         </Card>
       </section>
-      <section className="max-w-[900px] mx-auto px-4 pb-12">
-        <div className="border-l-4 border-primary bg-gray-50 rounded-r-2xl p-6 text-gray-700">
+      <section className="bg-cream py-14">
+        <div className="max-w-[900px] mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-2">La hiérarchie qui guide chaque conseil</h2>
+          <HierarchieColibri />
+        </div>
+      </section>
+
+      <section className="max-w-[900px] mx-auto px-4 py-12">
+        <div className="border-l-4 border-primary bg-cream rounded-r-2xl p-6 text-gray-700">
           Le pré-diagnostic Helios est indicatif : il ne remplace pas un audit énergétique réglementaire
           réalisé par un professionnel certifié. Il vous aide à le préparer — et à le comprendre.
         </div>

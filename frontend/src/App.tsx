@@ -22,6 +22,9 @@ import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
 import PartnerPortal from './pages/PartnerPortal'
 import Espace from './pages/Espace'
 import EspaceCompte from './pages/EspaceCompte'
+import Guides from './pages/Guides'
+import GuideDetail from './pages/GuideDetail'
+import Glossaire from './pages/Glossaire'
 
 export default function App() {
   return (
@@ -34,6 +37,9 @@ export default function App() {
           <Route path="/colibri" element={<Colibri />} />
           <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
           <Route path="/helios" element={<HeliosIA />} />
+          <Route path="/guides" element={<Guides />} />
+          <Route path="/guides/:slug" element={<GuideDetail />} />
+          <Route path="/glossaire" element={<Glossaire />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/partenaires" element={<Partenaires />} />
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
