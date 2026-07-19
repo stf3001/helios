@@ -15,8 +15,14 @@ interface ChatMessage {
 
 const GREETING: ChatMessage = {
   role: 'helios',
-  content: "Bonjour, je suis Helios. Posez-moi vos questions sur l'énergie de votre logement…",
+  content: "Bonjour, je suis Helios 👋 Posez-moi vos questions sur l'énergie de votre logement — je suis franc et je n'ai rien à vous vendre.",
 }
+
+const SUGGESTIONS = [
+  'Par quoi commencer pour isoler ma maison ?',
+  'Ai-je intérêt à passer au solaire ?',
+  'Quelles aides pour changer ma chaudière ?',
+]
 
 export default function ChatWidget({
   fetchImpl = fetch,
@@ -44,9 +50,12 @@ export default function ChatWidget({
     })
   }
 
-  async function onSubmit(e: FormEvent) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault()
-    const question = input.trim()
+    send(input.trim())
+  }
+
+  async function send(question: string) {
     if (!question || sending) return
     setInput('')
     setSimplified(false)
@@ -95,25 +104,40 @@ export default function ChatWidget({
     }
   }
 
+  const onlyGreeting = messages.length === 1 && messages[0].role === 'helios'
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm max-w-[700px] mx-auto flex flex-col h-[520px]">
+    <div className="rounded-2xl border border-black/5 bg-white shadow-sm max-w-[700px] mx-auto flex flex-col h-[70vh] max-h-[600px] min-h-[440px] overflow-hidden">
+      {/* En-tête : le visage d'Helios */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-black/5 bg-cream">
+        <img src="/brand/helios-thumbsup.png" alt="Helios" className="h-9 w-9 object-contain" />
+        <div className="leading-tight">
+          <div className="font-display font-semibold text-ink">Helios</div>
+          <div className="text-xs text-gray-500">Assistant énergie · franc & indépendant</div>
+        </div>
+      </div>
+
       {simplified && (
-        <div className="px-4 py-2 text-xs text-center bg-sun/10 text-gray-600 border-b border-gray-100">
+        <div className="px-4 py-2 text-xs text-center bg-sun/10 text-gray-600 border-b border-black/5">
           Mode simplifié : réponse générée localement (service avancé indisponible ou limite atteinte).
         </div>
       )}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
         {messages.map((m, i) => (
-          <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+          <div key={i} className={'animate-fade-in ' + (m.role === 'user' ? 'flex justify-end' : 'flex justify-start gap-2')}>
+            {m.role === 'helios' && (
+              <img src="/brand/helios-thumbsup.png" alt="" className="h-7 w-7 object-contain shrink-0 mt-1" />
+            )}
             <div
               className={
                 'max-w-[80%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap ' +
-                (m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-800')
+                (m.role === 'user' ? 'bg-primary text-white' : 'bg-cream text-dark')
               }
             >
               {m.content || (sending && i === messages.length - 1 ? '…' : '')}
               {m.citations && m.citations.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-gray-300/50 text-xs text-gray-500 space-y-0.5">
+                <div className="mt-2 pt-2 border-t border-black/10 text-xs text-gray-500 space-y-0.5">
                   {m.citations.map((c, ci) => (
                     <div key={ci}>📎 {c.titre}</div>
                   ))}
@@ -122,8 +146,21 @@ export default function ChatWidget({
             </div>
           </div>
         ))}
+
+        {/* Amorces de questions (page blanche → on propose) */}
+        {onlyGreeting && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {SUGGESTIONS.map((s) => (
+              <button key={s} onClick={() => send(s)}
+                className="text-xs text-ink border border-ink/20 rounded-full px-3 py-1.5 hover:bg-ink/5 transition">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <form onSubmit={onSubmit} className="border-t border-gray-100 p-3 flex gap-2">
+
+      <form onSubmit={onSubmit} className="border-t border-black/5 p-3 flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
