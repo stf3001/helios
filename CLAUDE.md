@@ -13,6 +13,16 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 
 ## État (18/07/2026) — J1→J8 + J10 + trous produit (reste : J9 déploiement)
 
+> **Refonte visuelle & PWA (19/07/2026)** — ton chaleureux « esprit colibri », orange dominant + accents bleu marine (`ink`)/vert (`leaf`) du logo, fonds crème.
+> - **Marque** : logo H + avatar mascotte Helios dans `frontend/public/brand/` (traités depuis les concepts de l'utilisateur via Pillow) ; icônes d'app 192/512/maskable/apple-touch + favicon dans `public/`.
+> - **Typo auto-hébergée** (RGPD, pas de Google CDN) : Fraunces (titres, `font-display`) + Nunito (corps) — woff2 dans `public/fonts/`, `@font-face` dans `src/fonts.css`. Tokens Tailwind : `ink sky leaf cream` + animations `slide-up`/`fade-in`.
+> - **PWA installable** : `public/manifest.webmanifest` + `public/sw.js` (network-first nav, cache assets, **ignore `/api/`**). SW enregistré **uniquement en prod** (`import.meta.env.PROD` dans `main.tsx`) — sinon il sert des assets périmés et casse le HMR dev. `src/vite-env.d.ts` ajouté pour typer `import.meta.env`.
+> - **Mobile** : menu burger dans `Header.tsx` ; chat plein écran (70vh) avec avatar + amorces.
+> - **Pédagogie** : `components/HierarchieColibri.tsx` (constitution §3), pages `/guides` (+`/guides/:slug`, données `data/guides.ts` — chapôs réels, sections en placeholders `[À rédiger]`), `/glossaire` (`data/glossaire.ts`, 14 termes). Accueil narratif refondu (`Home.tsx`).
+> - **Finitions** : `hooks/useTitle.ts` (titres SEO par page) ; `components/Skeleton.tsx` ; encouragements bienveillants dans `CompletenessBar.tsx` ; footer navy avec colonne Ressources.
+> - **À rédiger par l'utilisateur** (choix « structure seulement ») : le contenu réel des guides (`data/guides.ts`), les définitions sensibles du glossaire (montants d'aides marqués `[à vérifier]`), les textes marketing de l'accueil.
+
+
 > **Gros lot du 18/07 (après J8)** — tout validé de bout en bout (API + migrations 0008→0010 + build front) :
 > - **Sécurité/conformité** : PDL exclu du contexte LLM (`rag._HOUSE_CONTEXT_EXCLUDE`), constitution **v0.2** (chemin piloté par `settings.constitution_version` ; §5bis garde-fous énergie/SOBRY), **rate limiting** slowapi (login 10/min, register 5/min, chat 20/min → 429).
 > - **Upload documents** (`house_documents`, migration 0008) : router `/api/houses/me/documents` (PDF/images, 10 Mo, dpe/facture/devis/photo), stockage `generated/house_docs/` (gitignoré) ; composant `HouseDocuments` dans la fiche.
