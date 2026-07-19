@@ -15,8 +15,9 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// PWA : enregistre le service worker (installable « Ajouter à l'écran d'accueil »)
-if ('serviceWorker' in navigator) {
+// PWA : enregistre le service worker UNIQUEMENT en production (sinon il sert des assets
+// périmés en dev et casse le HMR de Vite). Installable « Ajouter à l'écran d'accueil ».
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })
