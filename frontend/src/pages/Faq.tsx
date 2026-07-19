@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Hero from '../components/Hero'
 import { ChevronDown } from 'lucide-react'
+import { useTitle } from '../hooks/useTitle'
 
 interface FaqEntry {
   question: string
@@ -10,6 +11,7 @@ interface FaqEntry {
 }
 
 export default function Faq() {
+  useTitle('Questions fréquentes')
   const [entries, setEntries] = useState<FaqEntry[]>([])
   const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState<number | null>(null)

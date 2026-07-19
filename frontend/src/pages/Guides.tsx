@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import Hero from '../components/Hero'
 import { guides, guideCategories } from '../data/guides'
+import { useTitle } from '../hooks/useTitle'
 
 export default function Guides() {
+  useTitle('Guides & Aides')
   const [cat, setCat] = useState<string | null>(null)
   const list = cat ? guides.filter((g) => g.categorie === cat) : guides
 

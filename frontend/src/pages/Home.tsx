@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MessageSquare, ClipboardList, Sparkles, Gift, ShieldCheck, Lock, ArrowRight } from 'lucide-react'
 import HierarchieColibri from '../components/HierarchieColibri'
+import { useTitle } from '../hooks/useTitle'
 
 const ETAPES = [
   { icon: ClipboardList, titre: 'Décrivez votre maison', desc: 'Année, surface, chauffage, isolation… Tout est optionnel et modifiable. Un score vous montre ce qui affine le diagnostic.' },
@@ -15,6 +16,7 @@ const REASSURANCE = [
 ]
 
 export default function Home() {
+  useTitle()
   return (
     <>
       {/* Héros */}

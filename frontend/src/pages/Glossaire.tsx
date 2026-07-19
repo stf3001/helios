@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Hero from '../components/Hero'
 import { glossaire } from '../data/glossaire'
+import { useTitle } from '../hooks/useTitle'
 
 export default function Glossaire() {
+  useTitle('Glossaire')
   const [q, setQ] = useState('')
 
   const list = useMemo(() => {

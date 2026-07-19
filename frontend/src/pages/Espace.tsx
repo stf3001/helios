@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTitle } from '../hooks/useTitle'
+import { Skeleton, SkeletonCards } from '../components/Skeleton'
 
 const NIVEAU_LABEL: Record<string, string> = {
   conseils_generaux: 'Conseils généraux',
@@ -19,6 +21,7 @@ const TUILES = [
 ]
 
 export default function Espace() {
+  useTitle('Mon espace')
   const { user, authFetch } = useAuth()
   const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
   const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
@@ -44,7 +47,10 @@ export default function Espace() {
       </div>
 
       {loading ? (
-        <p className="text-gray-400">Chargement…</p>
+        <>
+          <Skeleton className="h-28 w-full mb-8" />
+          <SkeletonCards count={6} />
+        </>
       ) : (
         <>
           {/* Résumé maison */}

@@ -1,10 +1,12 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { guides } from '../data/guides'
+import { useTitle } from '../hooks/useTitle'
 
 export default function GuideDetail() {
   const { slug } = useParams()
   const guide = guides.find((g) => g.slug === slug)
+  useTitle(guide?.titre)
 
   if (!guide) {
     return (

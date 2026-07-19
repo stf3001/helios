@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import Hero from '../components/Hero'
+import { useTitle } from '../hooks/useTitle'
 
 const METIERS = [
   { value: 'pv', label: 'Photovoltaïque' },
@@ -11,6 +12,7 @@ const METIERS = [
 ]
 
 export default function DevenirPartenaire() {
+  useTitle('Devenir partenaire')
   const [raison, setRaison] = useState('')
   const [siret, setSiret] = useState('')
   const [email, setEmail] = useState('')

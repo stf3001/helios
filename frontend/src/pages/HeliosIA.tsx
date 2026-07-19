@@ -1,8 +1,10 @@
 import Hero from '../components/Hero'
 import Card from '../components/Card'
 import ChatWidget from '../components/chat/ChatWidget'
+import { useTitle } from '../hooks/useTitle'
 
 export default function HeliosIA() {
+  useTitle('Helios — votre assistant énergie')
   return (
     <>
       <Hero title="Helios. Une IA franche, dénuée d'intérêt." />

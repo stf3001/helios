@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Sun } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTitle } from '../hooks/useTitle'
 
 const ORIENTATIONS = [
   { value: 'sud', label: 'Sud' },
@@ -62,6 +63,7 @@ interface SimResult {
 const eur = (n: number) => n.toLocaleString('fr-FR') + ' €'
 
 export default function SimulateurSolaire() {
+  useTitle('Simulateur solaire')
   const { user, authFetch } = useAuth()
   const [adresse, setAdresse] = useState('')
   const [orientation, setOrientation] = useState('sud')

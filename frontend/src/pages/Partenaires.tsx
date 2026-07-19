@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Hero from '../components/Hero'
+import { useTitle } from '../hooks/useTitle'
 
 const engagements = [
   'Certifications à jour (RGE quand les aides l\'exigent), assurance décennale',
@@ -26,6 +27,7 @@ interface PartnerCard {
 }
 
 export default function Partenaires() {
+  useTitle('Nos partenaires')
   const [partners, setPartners] = useState<PartnerCard[]>([])
   const [loaded, setLoaded] = useState(false)
 
