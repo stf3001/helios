@@ -70,19 +70,26 @@ export default function Home() {
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto mb-8">
           Isolée, intelligente, capable de produire son électricité verte, de la stocker, de se chauffer,
-          de recharger la voiture, et demain de produire son eau. Ce n'était pas possible avant. Ça l'est aujourd'hui.
+          de recharger la voiture, et même de produire son eau. Ce n'était pas possible avant. Ça l'est aujourd'hui.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mb-6">
           {[
             { icon: Sun, label: 'Produire' },
             { icon: BatteryCharging, label: 'Stocker' },
             { icon: Car, label: 'Se déplacer' },
-            { icon: Droplets, label: 'Son eau, demain' },
-          ].map((c) => (
-            <div key={c.label} className="inline-flex items-center gap-2 rounded-full bg-cream border border-black/5 px-4 py-2 text-sm text-ink">
-              <c.icon className="w-4 h-4 text-primary" /> {c.label}
-            </div>
-          ))}
+            { icon: Droplets, label: 'Son eau', to: '/eau' },
+          ].map((c) =>
+            c.to ? (
+              <Link key={c.label} to={c.to}
+                className="inline-flex items-center gap-2 rounded-full bg-cream border border-black/5 px-4 py-2 text-sm text-ink hover:border-sky hover:text-sky transition">
+                <c.icon className="w-4 h-4 text-primary" /> {c.label}
+              </Link>
+            ) : (
+              <div key={c.label} className="inline-flex items-center gap-2 rounded-full bg-cream border border-black/5 px-4 py-2 text-sm text-ink">
+                <c.icon className="w-4 h-4 text-primary" /> {c.label}
+              </div>
+            )
+          )}
         </div>
         <Link to="/vision" className="inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all">
           Découvrir notre vision <ArrowRight className="w-4 h-4" />

@@ -28,6 +28,7 @@ import Glossaire from './pages/Glossaire'
 import PotentielHydrique from './pages/PotentielHydrique'
 import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
+import Eau from './pages/Eau'
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/partenaire" element={<PartnerPortal />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
+          <Route path="/eau" element={<Eau />} />
           <Route path="/potentiel-hydrique" element={<PotentielHydrique />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />

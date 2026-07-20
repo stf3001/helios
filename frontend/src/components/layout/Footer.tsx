@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 const ressources = [
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
   { to: '/engagements', label: 'Nos engagements' },
+  { to: '/eau', label: "L'eau atmosphérique" },
   { to: '/guides', label: 'Guides & Aides' },
   { to: '/glossaire', label: 'Glossaire' },
   { to: '/faq', label: 'FAQ' },

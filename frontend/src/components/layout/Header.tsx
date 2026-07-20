@@ -7,6 +7,7 @@ const links = [
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
   { to: '/helios', label: 'Helios (IA)' },
   { to: '/simulateur-solaire', label: 'Simulateur solaire' },
+  { to: '/eau', label: 'Eau' },
   { to: '/guides', label: 'Guides & Aides' },
   { to: '/faq', label: 'FAQ' },
 ]

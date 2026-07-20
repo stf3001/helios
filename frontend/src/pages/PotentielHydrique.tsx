@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { Droplets } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
@@ -60,7 +61,8 @@ export default function PotentielHydrique() {
       </div>
       <p className="text-gray-600 mb-8">
         Estimez la quantité d'eau qu'un générateur atmosphérique (Hydrolia) pourrait produire chez vous,
-        selon le climat de votre ville. De l'eau pure, extraite de l'air — une brique de la maison de demain.
+        selon le climat de votre ville. De l'eau pure, extraite de l'air — une brique de la maison de demain.{' '}
+        <Link to="/eau" className="text-sky underline">Comprendre l'eau atmosphérique →</Link>
       </p>
 
       <form onSubmit={onSubmit} className="bg-gray-50 rounded-2xl p-6 grid gap-4 sm:grid-cols-2 mb-8">
