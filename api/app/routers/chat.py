@@ -61,10 +61,47 @@ async def send_message(
 
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
-    prompt = rag.build_prompt(payload.content, results, house_context, pro_context)
     citations = rag.build_citations(results)
     chunks_used = [str(r["chunk"].id) for r in results]
     conversation_id = conversation.id
+
+    # Réponse instantanée (doc 07 §5) : fiche Q/R quasi identique → on la sert sans LLM.
+    # `force_llm` (bouton « développer » du widget) désactive le court-circuit.
+    if not payload.force_llm:
+        instant = rag.instant_answer(results)
+        if instant is not None:
+            instant_citations = citations[:1]
+
+            async def stream_instant():
+                yield json.dumps(
+                    {
+                        "type": "conversation",
+                        "conversation_id": str(conversation_id),
+                        "mode": mode,
+                        "simplified": False,
+                        "instant": True,
+                    }
+                ) + "\n"
+                yield json.dumps({"type": "token", "text": instant}) + "\n"
+                yield json.dumps({"type": "citations", "citations": instant_citations}) + "\n"
+
+                async with async_session() as db2:
+                    db2.add(
+                        Message(
+                            conversation_id=conversation_id,
+                            role="helios",
+                            content=instant,
+                            model_used="kb",
+                            citations=instant_citations,
+                            chunks_used=chunks_used[:1],
+                            constitution_version=settings.constitution_version,
+                        )
+                    )
+                    await db2.commit()
+
+            return StreamingResponse(stream_instant(), media_type="application/x-ndjson")
+
+    prompt = rag.build_prompt(payload.content, results, house_context, pro_context)
 
     route, simplified, token_stream = await router_llm.generate_route(
         db,

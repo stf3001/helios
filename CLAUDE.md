@@ -23,6 +23,15 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > - **À rédiger par l'utilisateur** (choix « structure seulement ») : le contenu réel des guides (`data/guides.ts`), les définitions sensibles du glossaire (montants d'aides marqués `[à vérifier]`), les textes marketing de l'accueil.
 
 
+> **Lot UX 20/07 (spec expérience client, validé avec l'utilisateur)** — objectif : rendre excellent l'existant, zéro sur-ingénierie. Gemma reste pour la migration serveur (décision utilisateur).
+> - **Réponses instantanées** (doc 07 §5 enfin fait) : `rag.instant_answer()` — si une fiche Q/R matche ≥ `rag_instant_answer_threshold`, le chat sert la réponse de la fiche SANS LLM (~0 s au lieu de 30-135 s), `model_used="kb"`, event `instant: true`. Seuil **0.66 calibré par mesure réelle** (exacte 0.69-0.80, paraphrase 0.67-0.69, hors-sujet 0.36 — le chunk Q+R dilue). `ChatIn.force_llm` + bouton « Développer avec Helios » dans le widget pour repasser au LLM (le message fiche est alors remplacé sans redoubler la question). Testé bout en bout : 4.2 s instant / force_llm et hors-sujet → LLM.
+> - **Attente vivante** : `WaitIndicator` dans `ChatWidget` (points animés + messages progressifs à 0/6/20 s) à la place du « … » muet.
+> - **États d'erreur** : `components/ApiError.tsx` (bannière « momentanément indisponible » + bouton Réessayer) branché sur Faq, Partenaires, Espace (404 fiche = état normal, distingué des vraies erreurs). Plus jamais de page silencieusement vide si l'API est down.
+> - **Onboarding « 3 questions »** : création de fiche = code postal + année + chauffage (POST puis PATCH) → score > 0 immédiat ; accueil `/espace` sans fiche mis en scène (avatar + CTA « Répondre aux 3 questions »).
+> - **`demarrer-helios.bat`** (racine) : double-clic → vérifie/lance Docker + Postgres, ouvre 2 fenêtres (API 8000, front 5173), ouvre le navigateur. Évite le piège « backend éteint = site qui semble vide » (vécu le 20/07).
+> - **FAQ publique élargie** : `/api/faq` sert les 3 sources Q/R (`faq_maison`+`solutions`+`pilotage`) = 125 entrées.
+> - Compte de test dev : `demo@helios.fr` / `Helios2026!` (email marqué vérifié en base).
+
 > **Lot 20/07 — Storage/eau/pilotage/courtage/Espace Pro + intégration chat** (migrations 0011→0013) :
 > - **Connaissances** (`kb/solutions.md`, `kb/pilotage.md`, ingérées via crawler) : stockage (LFP, sodium-ion, inertie Energisto 10 kWh/9000 €/garantie 40 ans), eau atmosphérique (Hydrolia), pilotage/HEMS (Ecojoko/Comwatt/MyLight), offres d'achat EDF/TotalEnergies/Engie, courtage.
 > - **Simulateur solaire** : `solar_engine.STORAGE_TECHS` → `stockage_options` (LFP/sodium/inertie), comparatif dans `SimulateurSolaire.tsx`.

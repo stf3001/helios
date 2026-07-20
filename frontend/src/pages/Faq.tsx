@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Hero from '../components/Hero'
 import { ChevronDown } from 'lucide-react'
 import { useTitle } from '../hooks/useTitle'
+import ApiError from '../components/ApiError'
 
 interface FaqEntry {
   question: string
@@ -14,16 +15,21 @@ export default function Faq() {
   useTitle('Questions fréquentes')
   const [entries, setEntries] = useState<FaqEntry[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
   const [open, setOpen] = useState<number | null>(null)
   const [query, setQuery] = useState('')
   const [cat, setCat] = useState<string | null>(null)
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoaded(false)
+    setError(false)
     fetch('/api/faq')
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(setEntries)
+      .catch(() => setError(true))
       .finally(() => setLoaded(true))
   }, [])
+  useEffect(load, [load])
 
   const categories = useMemo(
     () => Array.from(new Set(entries.map((e) => e.cat).filter(Boolean))).sort() as string[],
@@ -80,6 +86,8 @@ export default function Faq() {
 
         {!loaded ? (
           <p className="text-gray-400">Chargement…</p>
+        ) : error ? (
+          <ApiError retry={load} />
         ) : (
           <>
             <p className="text-xs text-gray-400 mb-3">

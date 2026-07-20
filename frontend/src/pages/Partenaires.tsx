@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Hero from '../components/Hero'
 import { useTitle } from '../hooks/useTitle'
+import ApiError from '../components/ApiError'
 
 const engagements = [
   'Certifications à jour (RGE quand les aides l\'exigent), assurance décennale',
@@ -30,13 +31,18 @@ export default function Partenaires() {
   useTitle('Nos partenaires')
   const [partners, setPartners] = useState<PartnerCard[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoaded(false)
+    setError(false)
     fetch('/api/partners')
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(setPartners)
+      .catch(() => setError(true))
       .finally(() => setLoaded(true))
   }, [])
+  useEffect(load, [load])
 
   return (
     <>
@@ -64,6 +70,8 @@ export default function Partenaires() {
         </div>
         {!loaded ? (
           <p className="text-gray-400">Chargement…</p>
+        ) : error ? (
+          <ApiError retry={load} />
         ) : partners.length === 0 ? (
           <p className="text-gray-500">
             Aucun partenaire référencé pour l'instant. Vous êtes un professionnel ?{' '}

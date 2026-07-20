@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     embed_dimensions: int = 1024  # bge-m3 (doc 10 §1)
     rag_top_k: int = 8
     rag_score_threshold: float = 0.5  # similarité cosinus min. sous laquelle Helios répond en mode prudent
+    # Réponse instantanée (doc 07 §5 « cache ») : si une fiche Q/R matche au-delà de ce
+    # score, on la sert telle quelle sans LLM (latence ~0). Calibré sur bge-m3 en mesurant
+    # la base réelle (20/07/2026) : question exacte 0.69-0.80, paraphrase 0.67-0.69,
+    # hors sujet 0.36. Le chunk Q+R dilue les scores, d'où un seuil plus bas qu'intuitif.
+    rag_instant_answer_threshold: float = 0.66
     constitution_version: str = "v0.2"  # doit suivre prompts/constitution-<version>.md
 
     rag_api_min_niveau: str = "prediagnostic_qualitatif"  # score >= 40% requis pour basculer vers l'API (doc 07 §5)

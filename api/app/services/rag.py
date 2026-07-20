@@ -33,6 +33,30 @@ def best_score(results: list[dict]) -> float:
     return max((r["score"] for r in results), default=0.0)
 
 
+# Sources dont les chunks sont des fiches Q/R servables telles quelles (mêmes
+# sources que la FAQ publique — cf. routers/faq.py).
+_QR_SOURCES = ("faq_maison", "solutions", "pilotage")
+
+
+def instant_answer(results: list[dict]) -> str | None:
+    """Réponse instantanée sans LLM (doc 07 §5) : si la meilleure fiche Q/R matche
+    quasi exactement la question, on sert sa réponse telle quelle — latence nulle,
+    zéro risque d'hallucination. Sinon None → parcours LLM normal."""
+    if not results:
+        return None
+    best = results[0]
+    if best["score"] < settings.rag_instant_answer_threshold:
+        return None
+    if best["document"].source not in _QR_SOURCES:
+        return None
+    content = best["chunk"].content
+    marker = "\nR:"
+    idx = content.find(marker)
+    if idx == -1:
+        return None
+    return content[idx + len(marker):].strip()
+
+
 def build_citations(results: list[dict]) -> list[dict]:
     if not results or best_score(results) < settings.rag_score_threshold:
         return []

@@ -5,6 +5,12 @@ import HouseDocuments from '../components/fiche/HouseDocuments'
 import type { Draft, FieldSpec, FieldValue } from '../components/fiche/types'
 import { useAuth } from '../context/AuthContext'
 
+const ANNEE_OPTIONS = [
+  { value: 'avant_1948', label: 'Avant 1948' }, { value: '1948_1974', label: '1948 – 1974' },
+  { value: '1975_1988', label: '1975 – 1988' }, { value: '1989_2000', label: '1989 – 2000' },
+  { value: '2001_2012', label: '2001 – 2012' }, { value: 'apres_2012', label: 'Après 2012' },
+]
+
 const IDENTITE_FIELDS: FieldSpec[] = [
   { key: 'code_postal', label: 'Code postal', type: 'text', help: 'Requis — 5 chiffres' },
   { key: 'type_logement', label: 'Type de logement', type: 'select', options: [
@@ -13,11 +19,7 @@ const IDENTITE_FIELDS: FieldSpec[] = [
   { key: 'statut', label: 'Statut', type: 'select', options: [
     { value: 'proprietaire', label: 'Propriétaire' }, { value: 'locataire', label: 'Locataire' }, { value: 'en_achat', label: 'En cours d\'achat' },
   ] },
-  { key: 'annee_construction', label: 'Année de construction', type: 'select', options: [
-    { value: 'avant_1948', label: 'Avant 1948' }, { value: '1948_1974', label: '1948 – 1974' },
-    { value: '1975_1988', label: '1975 – 1988' }, { value: '1989_2000', label: '1989 – 2000' },
-    { value: '2001_2012', label: '2001 – 2012' }, { value: 'apres_2012', label: 'Après 2012' },
-  ] },
+  { key: 'annee_construction', label: 'Année de construction', type: 'select', options: ANNEE_OPTIONS },
   { key: 'surface_habitable', label: 'Surface habitable (m²)', type: 'number', min: 1, max: 2000 },
   { key: 'nb_niveaux', label: 'Nombre de niveaux', type: 'number', min: 1, max: 20 },
   { key: 'nb_occupants', label: "Nombre d'occupants", type: 'number', min: 0, max: 50 },
@@ -119,6 +121,8 @@ export default function FicheMaison() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newCodePostal, setNewCodePostal] = useState('')
+  const [newAnnee, setNewAnnee] = useState('')
+  const [newChauffage, setNewChauffage] = useState('')
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
@@ -151,7 +155,20 @@ export default function FicheMaison() {
         const body = await res.json().catch(() => null)
         throw new Error(body?.detail || 'Création impossible')
       }
-      const data = await res.json()
+      let data = await res.json()
+      // Onboarding « 3 questions » : année + chauffage remplis d'emblée → le score
+      // démarre au-dessus de zéro et l'utilisateur voit tout de suite l'intérêt.
+      if (newAnnee || newChauffage) {
+        const patch: Record<string, string> = {}
+        if (newAnnee) patch.annee_construction = newAnnee
+        if (newChauffage) patch.chauffage_principal = newChauffage
+        const res2 = await authFetch('/api/houses/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        })
+        if (res2.ok) data = await res2.json()
+      }
       setHouse(data)
       setDraft(data)
     } catch (err) {
@@ -202,21 +219,53 @@ export default function FicheMaison() {
       {error && <p className="text-sm text-red-600 mb-6">{error}</p>}
 
       {!house ? (
-        <form onSubmit={createHouse} className="bg-gray-50 rounded-2xl p-6 max-w-sm">
-          <label className="block text-sm font-medium mb-1" htmlFor="code_postal">Code postal</label>
-          <input
-            id="code_postal" type="text" required pattern="\d{5}" maxLength={5} value={newCodePostal}
-            onChange={(e) => setNewCodePostal(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4"
-            placeholder="75001"
-          />
-          <button
-            type="submit" disabled={creating}
-            className="rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2 hover:opacity-90 disabled:opacity-50"
-          >
-            {creating ? 'Création…' : 'Créer ma fiche maison'}
-          </button>
-        </form>
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 max-w-lg">
+          <div className="flex items-center gap-3 mb-1">
+            <img src="/brand/helios-thumbsup.png" alt="" className="h-10 w-10 object-contain" />
+            <h2 className="font-display font-semibold text-lg text-ink">3 questions suffisent pour commencer</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-5">
+            Avec ces trois réponses, Helios peut déjà vous orienter. Vous compléterez le reste
+            à votre rythme — chaque champ affine ses conseils.
+          </p>
+          <form onSubmit={createHouse} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="code_postal">1. Où se situe votre logement ?</label>
+              <input
+                id="code_postal" type="text" required pattern="\d{5}" maxLength={5} value={newCodePostal}
+                onChange={(e) => setNewCodePostal(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="Code postal — ex. 75001"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="ob_annee">2. De quand date-t-il ?</label>
+              <select id="ob_annee" value={newAnnee} onChange={(e) => setNewAnnee(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">— je ne sais pas encore —</option>
+                {ANNEE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="ob_chauffage">3. Comment est-il chauffé ?</label>
+              <select id="ob_chauffage" value={newChauffage} onChange={(e) => setNewChauffage(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">— je ne sais pas encore —</option>
+                {CHAUFFAGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit" disabled={creating}
+              className="rounded-xl bg-primary text-white text-sm font-semibold px-5 py-2.5 hover:opacity-90 disabled:opacity-50"
+            >
+              {creating ? 'Création…' : 'C\'est parti'}
+            </button>
+          </form>
+        </div>
       ) : (
         <>
           <CompletenessBar score={house.completeness_score as number} niveau={house.niveau as string} />

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
+import ApiError from '../components/ApiError'
 
 const NIVEAU_LABEL: Record<string, string> = {
   conseils_generaux: 'Conseils généraux',
@@ -28,16 +29,21 @@ export default function Espace() {
   const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
   const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
+    setError(false)
     Promise.all([
-      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : null)),
-      authFetch('/api/audits').then((r) => (r.ok ? r.json() : [])),
+      // 404 = pas encore de fiche (état normal) ; toute autre erreur = service indisponible.
+      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : r.status === 404 ? null : Promise.reject(new Error(String(r.status))))),
+      authFetch('/api/audits').then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
     ]).then(([h, audits]) => {
       setHouse(h)
       if (audits.length > 0) setLastAudit(audits[0])
-    }).finally(() => setLoading(false))
+    }).catch(() => setError(true)).finally(() => setLoading(false))
   }, [authFetch])
+  useEffect(load, [load])
 
   return (
     <section className="max-w-[900px] mx-auto px-4 py-12">
@@ -53,6 +59,8 @@ export default function Espace() {
           <Skeleton className="h-28 w-full mb-8" />
           <SkeletonCards count={6} />
         </>
+      ) : error ? (
+        <ApiError retry={load} />
       ) : (
         <>
           {/* Résumé maison */}
@@ -81,10 +89,16 @@ export default function Espace() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-gray-700">Vous n'avez pas encore de fiche maison — c'est le point de départ.</p>
-                <Link to="/mon-espace" className="rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2 hover:opacity-90 shrink-0">
-                  Créer ma fiche
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img src="/brand/helios-thumbsup.png" alt="" className="h-12 w-12 object-contain" />
+                  <div>
+                    <p className="font-semibold text-ink">Bienvenue ! Commençons par votre logement.</p>
+                    <p className="text-sm text-gray-600">3 questions suffisent — Helios s'occupe du reste.</p>
+                  </div>
+                </div>
+                <Link to="/mon-espace" className="rounded-xl bg-primary text-white text-sm font-semibold px-5 py-2.5 hover:opacity-90 shrink-0">
+                  Répondre aux 3 questions
                 </Link>
               </div>
             )}

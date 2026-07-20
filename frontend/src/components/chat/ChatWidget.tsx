@@ -1,5 +1,5 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { Send } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Send, Sparkles } from 'lucide-react'
 
 interface Citation {
   titre: string
@@ -11,6 +11,37 @@ interface ChatMessage {
   role: 'user' | 'helios'
   content: string
   citations?: Citation[]
+  /** Réponse servie directement depuis la base de connaissances (sans LLM). */
+  instant?: boolean
+  /** Question d'origine — pour le bouton « développer avec Helios ». */
+  question?: string
+}
+
+/** Attente vivante : la génération locale est lente (30-60 s sur CPU), on montre
+    que Helios travaille au lieu d'un « … » muet. */
+const WAIT_STEPS = [
+  { after: 0, text: 'Helios cherche dans sa base de connaissances…' },
+  { after: 6, text: 'Helios rédige sa réponse…' },
+  { after: 20, text: 'Helios rédige — la version locale prend parfois une minute, merci de patienter…' },
+]
+
+function WaitIndicator() {
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const step = [...WAIT_STEPS].reverse().find((s) => elapsed >= s.after) ?? WAIT_STEPS[0]
+  return (
+    <span className="inline-flex items-center gap-2 text-gray-500">
+      <span className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+        ))}
+      </span>
+      {step.text}
+    </span>
+  )
 }
 
 const GREETING: ChatMessage = {
@@ -55,18 +86,23 @@ export default function ChatWidget({
     send(input.trim())
   }
 
-  async function send(question: string) {
+  async function send(question: string, forceLlm = false) {
     if (!question || sending) return
     setInput('')
     setSimplified(false)
-    setMessages((m) => [...m, { role: 'user', content: question }, { role: 'helios', content: '' }])
+    if (forceLlm) {
+      // « Développer » : on remplace la réponse fiche par une vraie rédaction, sans dupliquer la question.
+      setMessages((m) => [...m, { role: 'helios', content: '', question }])
+    } else {
+      setMessages((m) => [...m, { role: 'user', content: question }, { role: 'helios', content: '', question }])
+    }
     setSending(true)
 
     try {
       const res = await fetchImpl('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation_id: conversationId.current, content: question }),
+        body: JSON.stringify({ conversation_id: conversationId.current, content: question, force_llm: forceLlm }),
       })
       if (!res.ok || !res.body) throw new Error('Le service est momentanément indisponible, réessayez.')
 
@@ -87,6 +123,7 @@ export default function ChatWidget({
           if (event.type === 'conversation') {
             conversationId.current = event.conversation_id
             setSimplified(!!event.simplified)
+            if (event.instant) updateLastHelios((msg) => ({ ...msg, instant: true }))
           } else if (event.type === 'token') {
             updateLastHelios((msg) => ({ ...msg, content: msg.content + event.text }))
           } else if (event.type === 'citations') {
@@ -135,12 +172,27 @@ export default function ChatWidget({
                 (m.role === 'user' ? 'bg-primary text-white' : 'bg-cream text-dark')
               }
             >
-              {m.content || (sending && i === messages.length - 1 ? '…' : '')}
+              {m.content || (sending && i === messages.length - 1 ? <WaitIndicator /> : '')}
               {m.citations && m.citations.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-black/10 text-xs text-gray-500 space-y-0.5">
                   {m.citations.map((c, ci) => (
                     <div key={ci}>📎 {c.titre}</div>
                   ))}
+                </div>
+              )}
+              {m.instant && m.content && (
+                <div className="mt-2 pt-2 border-t border-black/10 text-xs text-gray-500 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" /> Réponse directe de notre base
+                  </span>
+                  {m.question && !sending && (
+                    <button
+                      onClick={() => send(m.question!, true)}
+                      className="underline hover:text-primary"
+                    >
+                      Développer avec Helios
+                    </button>
+                  )}
                 </div>
               )}
             </div>
