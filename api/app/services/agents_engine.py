@@ -33,6 +33,7 @@ class SourceSpec:
 # Les sources "web" (aides/prix) sont optionnelles : un échec réseau est journalisé, non bloquant.
 SOURCES: list[SourceSpec] = [
     SourceSpec(name="faq_maison", kind="faq_markdown", location="05-FAQ-V1.md"),
+    SourceSpec(name="solutions", kind="faq_markdown", location="helios/kb/solutions.md"),
 ]
 
 _FAQ_RE = re.compile(
