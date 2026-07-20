@@ -8,15 +8,29 @@ from app.core.config import settings
 from app.models.house import House
 
 
-def estimation(house: House, offre_actuelle: str | None = None) -> dict:
-    """Estimation de courtage : compare l'offre actuelle au meilleur contrat trouvé (simulé)."""
-    conso = house.conso_elec_kwh_an or 4500
-    facture_estimee = round(conso * settings.solar_prix_achat_eur_kwh)
+def estimation(house: House, infos: dict | None = None) -> dict:
+    """Estimation de courtage à partir des infos recueillies (fournisseur/offre/conso/puissance…).
+
+    La facture de référence privilégie le montant déclaré, sinon la conso × prix, sinon la fiche.
+    Le profil transmis est inclus dans le résultat pour la traçabilité (ce qui est envoyé au courtier).
+    """
+    infos = infos or {}
+    conso = infos.get("conso_annuelle_kwh") or house.conso_elec_kwh_an or 4500
+    facture = infos.get("montant_facture_annuelle_eur") or round(conso * settings.solar_prix_achat_eur_kwh)
     gain_pct = settings.courtage_gain_estime_pct
-    gain_eur = round(facture_estimee * gain_pct / 100)
+    gain_eur = round(facture * gain_pct / 100)
+
+    profil_transmis = {
+        "fournisseur_actuel": infos.get("fournisseur_actuel"),
+        "offre_actuelle": infos.get("offre_actuelle"),
+        "conso_annuelle_kwh": conso,
+        "puissance_kva": infos.get("puissance_kva") or house.puissance_souscrite,
+        "option_tarifaire": infos.get("option_tarifaire") or house.option_tarifaire,
+    }
     return {
-        "offre_actuelle": offre_actuelle,
-        "facture_reference_eur_an": facture_estimee,
+        "offre_actuelle": infos.get("offre_actuelle"),
+        "profil_transmis": profil_transmis,
+        "facture_reference_eur_an": facture,
         "gain_estime_pct": gain_pct,
         "gain_estime_eur_an": gain_eur,
         "meilleures_offres": [

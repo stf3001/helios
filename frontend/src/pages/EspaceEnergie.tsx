@@ -48,9 +48,14 @@ export default function EspaceEnergie() {
   const [error, setError] = useState<string | null>(null)
   const [decided, setDecided] = useState<string | null>(null)
 
-  // Parcours courtage
+  // Parcours courtage — recueil des infos nécessaires
   const [courtageConsent, setCourtageConsent] = useState(false)
+  const [fournisseur, setFournisseur] = useState('')
   const [offreActuelle, setOffreActuelle] = useState('')
+  const [conso, setConso] = useState('')
+  const [puissance, setPuissance] = useState('')
+  const [optionTarif, setOptionTarif] = useState('')
+  const [facture, setFacture] = useState('')
   const [courtage, setCourtage] = useState<StudyResult | null>(null)
   const [courtageBusy, setCourtageBusy] = useState(false)
   const [courtageDecided, setCourtageDecided] = useState<string | null>(null)
@@ -102,7 +107,15 @@ export default function EspaceEnergie() {
       const res = await authFetch('/api/energy/courtage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consent: courtageConsent, offre_actuelle: offreActuelle || null }),
+        body: JSON.stringify({
+          consent: courtageConsent,
+          fournisseur_actuel: fournisseur || null,
+          offre_actuelle: offreActuelle || null,
+          conso_annuelle_kwh: conso ? Number(conso) : null,
+          puissance_kva: puissance ? Number(puissance) : null,
+          option_tarifaire: optionTarif || null,
+          montant_facture_annuelle_eur: facture ? Number(facture) : null,
+        }),
       })
       if (!res.ok) {
         const body = await res.json().catch(() => null)
@@ -273,15 +286,47 @@ export default function EspaceEnergie() {
 
             {!courtage ? (
               <form onSubmit={launchCourtage} className="bg-gray-50 rounded-2xl p-5 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Votre offre actuelle (facultatif)</label>
-                  <input value={offreActuelle} onChange={(e) => setOffreActuelle(e.target.value)}
-                    placeholder="ex. EDF Tarif Bleu"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <p className="text-xs text-gray-500">Renseignez ce que vous savez — plus c'est complet, meilleure est l'étude. Tout est facultatif.</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Fournisseur actuel</label>
+                    <input value={fournisseur} onChange={(e) => setFournisseur(e.target.value)} placeholder="ex. EDF"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Offre actuelle</label>
+                    <input value={offreActuelle} onChange={(e) => setOffreActuelle(e.target.value)} placeholder="ex. Tarif Bleu"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Conso annuelle (kWh)</label>
+                    <input type="number" value={conso} onChange={(e) => setConso(e.target.value)} placeholder="ex. 4500"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Puissance (kVA)</label>
+                    <input type="number" value={puissance} onChange={(e) => setPuissance(e.target.value)} placeholder="ex. 9"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Option tarifaire</label>
+                    <select value={optionTarif} onChange={(e) => setOptionTarif(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                      <option value="">— indifférent —</option>
+                      <option value="base">Base</option>
+                      <option value="hphc">Heures pleines / creuses</option>
+                      <option value="tempo">Tempo</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Facture annuelle (€, si connue)</label>
+                    <input type="number" value={facture} onChange={(e) => setFacture(e.target.value)} placeholder="ex. 1200"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
                 </div>
                 <label className="flex items-start gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={courtageConsent} onChange={(e) => setCourtageConsent(e.target.checked)} className="mt-1" />
-                  <span>J'autorise HELIOS à transmettre mon profil de consommation à un partenaire courtier pour comparer les offres.</span>
+                  <span>J'autorise HELIOS à transmettre ces informations à un partenaire courtier pour comparer les offres du marché.</span>
                 </label>
                 <button type="submit" disabled={!courtageConsent || courtageBusy}
                   className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 hover:opacity-90 disabled:opacity-40">

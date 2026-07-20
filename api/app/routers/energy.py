@@ -125,13 +125,15 @@ async def request_courtage(
         select(Partner).where(Partner.statut == "actif", Partner.metiers.any("courtage"))
     )
 
-    estimation = courtage_client.estimation(house, payload.offre_actuelle)
+    infos = payload.model_dump(exclude={"consent"})
+    estimation = courtage_client.estimation(house, infos)
     opinion, favorable = courtage_client.helios_opinion(estimation)
 
     study = EnergyStudy(
         house_id=house.id,
         partner_id=courtier.id if courtier else None,
         type="courtage",
+        pdl=payload.pdl,
         consent_at=datetime.now(timezone.utc),
         status="presentee",
         result=estimation,
