@@ -23,6 +23,15 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > - **À rédiger par l'utilisateur** (choix « structure seulement ») : le contenu réel des guides (`data/guides.ts`), les définitions sensibles du glossaire (montants d'aides marqués `[à vérifier]`), les textes marketing de l'accueil.
 
 
+> **Lot 20/07 — Storage/eau/pilotage/courtage/Espace Pro + intégration chat** (migrations 0011→0013) :
+> - **Connaissances** (`kb/solutions.md`, `kb/pilotage.md`, ingérées via crawler) : stockage (LFP, sodium-ion, inertie Energisto 10 kWh/9000 €/garantie 40 ans), eau atmosphérique (Hydrolia), pilotage/HEMS (Ecojoko/Comwatt/MyLight), offres d'achat EDF/TotalEnergies/Engie, courtage.
+> - **Simulateur solaire** : `solar_engine.STORAGE_TECHS` → `stockage_options` (LFP/sodium/inertie), comparatif dans `SimulateurSolaire.tsx`.
+> - **#3 Potentiel hydrique** (migration 0012 `water_studies`) : `water_engine.py` (tables Hydrolia gitignorées `api/data/hydrolia/`, interpolation bilinéaire, fallback), page `/potentiel-hydrique`. Données propriétaires JAMAIS commitées (export Notion déplacé hors repo).
+> - **Courtage énergie** : `courtage_client.py` (`estimation(house=None, infos, gain_pct)` — résidentiel ET pro ; `helios_opinion` = règle 5 % + comparateur public + jamais de commission du client), section courtage dans `EspaceEnergie.tsx` (recueil d'infos + consentement horodaté). Partenaire courtier à définir.
+> - **#5 Espace Pro** (migration 0013 `pro_profiles`) : `ProProfile` (secteur/surface/équipements/conso…), `pro_advisor.py` (conseils par secteur : boulangerie fours/froid/puissance, restauration, commerce…), router `/api/pro/{profile,advice,courtage}` (courtage pro sans persistance car `energy_studies.house_id` NOT NULL), page `/espace/pro`. Tuile Espace Pro dans `/espace`.
+> - **Intégration chat** : `chat.send_message` charge `ProProfile` (+ `House`) de l'utilisateur connecté ; `rag.build_pro_context()` + `rag.build_prompt(..., pro_context)` ajoutent un bloc « MODE CONNECTÉ — CLIENT PROFESSIONNEL » qui prime sur le foyer. Helios détecte le contexte et adapte questions/conseils (postes énergivores du métier, courtage pro). Aucun champ sensible transmis (id/user_id/timestamps exclus, comme PDL côté foyer).
+> - Migrations à jour : `alembic upgrade head` applique 0001→0013 (appliquées sur le Postgres Docker).
+
 > **Gros lot du 18/07 (après J8)** — tout validé de bout en bout (API + migrations 0008→0010 + build front) :
 > - **Sécurité/conformité** : PDL exclu du contexte LLM (`rag._HOUSE_CONTEXT_EXCLUDE`), constitution **v0.2** (chemin piloté par `settings.constitution_version` ; §5bis garde-fous énergie/SOBRY), **rate limiting** slowapi (login 10/min, register 5/min, chat 20/min → 429).
 > - **Upload documents** (`house_documents`, migration 0008) : router `/api/houses/me/documents` (PDF/images, 10 Mo, dpe/facture/devis/photo), stockage `generated/house_docs/` (gitignoré) ; composant `HouseDocuments` dans la fiche.

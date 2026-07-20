@@ -12,6 +12,7 @@ from app.core.deps import get_current_user, get_optional_user
 from app.core.ratelimit import limiter
 from app.models.conversation import Conversation, Message
 from app.models.house import House
+from app.models.pro import ProProfile
 from app.models.user import User
 from app.schemas.chat import ChatIn
 from app.services import ollama_client, rag, router_llm
@@ -47,8 +48,12 @@ async def send_message(
     await db.commit()
 
     house_context = None
+    pro_context = None
     niveau = None
     if user:
+        pro = await db.scalar(select(ProProfile).where(ProProfile.user_id == user.id))
+        if pro is not None:
+            pro_context = rag.build_pro_context(pro)  # Helios détecte un client pro et adapte
         house = await db.scalar(select(House).where(House.user_id == user.id))
         if house is not None:
             house_context = rag.build_house_context(house)
@@ -56,7 +61,7 @@ async def send_message(
 
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
-    prompt = rag.build_prompt(payload.content, results, house_context)
+    prompt = rag.build_prompt(payload.content, results, house_context, pro_context)
     citations = rag.build_citations(results)
     chunks_used = [str(r["chunk"].id) for r in results]
     conversation_id = conversation.id

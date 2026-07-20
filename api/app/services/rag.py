@@ -71,7 +71,27 @@ def build_house_context(house: House) -> dict:
     return {"score": score, "niveau": niveau_for_score(score), "profil": profil}
 
 
-def build_prompt(question: str, results: list[dict], house_context: dict | None = None) -> str:
+def build_pro_context(profile) -> dict:
+    """Contexte professionnel pour le chat — Helios détecte un client pro et adapte ses conseils."""
+    return {
+        "raison_sociale": profile.raison_sociale,
+        "secteur": profile.secteur,
+        "surface_m2": profile.surface_m2,
+        "effectif": profile.effectif,
+        "equipements": profile.equipements or [],
+        "conso_annuelle_kwh": profile.conso_annuelle_kwh,
+        "puissance_kva": profile.puissance_kva,
+        "fournisseur_actuel": profile.fournisseur_actuel,
+        "contrat_actuel": profile.contrat_actuel,
+    }
+
+
+def build_prompt(
+    question: str,
+    results: list[dict],
+    house_context: dict | None = None,
+    pro_context: dict | None = None,
+) -> str:
     if not results or best_score(results) < settings.rag_score_threshold:
         sources_block = (
             "Aucune source fiable trouvée dans la base de connaissances pour cette question. "
@@ -80,7 +100,16 @@ def build_prompt(question: str, results: list[dict], house_context: dict | None 
     else:
         sources_block = "\n\n".join(f"[Source {i + 1}] {r['chunk'].content}" for i, r in enumerate(results))
 
-    if house_context is not None:
+    if pro_context is not None:
+        # Le contexte pro prime : Helios s'adresse à un professionnel et adapte questions/conseils.
+        mode_block = (
+            "MODE CONNECTÉ — CLIENT PROFESSIONNEL. Profil pro (JSON) :\n"
+            f"{json.dumps(pro_context, ensure_ascii=False, default=str)}\n"
+            "Adapte tes conseils au métier et aux équipements de ce professionnel (postes énergivores "
+            "du secteur, pilotage, contrat pro négociable, potentiel de courtage). Reste franc et indépendant."
+        )
+        question_label = "Question du client professionnel"
+    elif house_context is not None:
         mode_block = (
             "MODE CONNECTÉ — fiche foyer de ce visiteur (JSON, uniquement les champs renseignés) :\n"
             f"{json.dumps(house_context, ensure_ascii=False, default=str)}\n"
