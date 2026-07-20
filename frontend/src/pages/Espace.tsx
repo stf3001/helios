@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings } from 'lucide-react'
+import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
@@ -16,6 +16,7 @@ const TUILES = [
   { to: '/espace/helios', icon: MessageSquare, title: 'Mon Helios', desc: 'Conseil personnalisé' },
   { to: '/espace/audits', icon: FileText, title: 'Mes pré-audits', desc: 'Diagnostic chiffré' },
   { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'Simulateur PVGIS' },
+  { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique' },
   { to: '/espace/energie', icon: Zap, title: "Mon contrat d'énergie", desc: 'Conseil & SOBRY' },
   { to: '/espace/mises-en-relation', icon: Handshake, title: 'Mises en relation', desc: 'Partenaires travaux' },
 ]

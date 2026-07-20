@@ -25,6 +25,7 @@ import EspaceCompte from './pages/EspaceCompte'
 import Guides from './pages/Guides'
 import GuideDetail from './pages/GuideDetail'
 import Glossaire from './pages/Glossaire'
+import PotentielHydrique from './pages/PotentielHydrique'
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/partenaire" element={<PartnerPortal />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
+          <Route path="/potentiel-hydrique" element={<PotentielHydrique />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
           <Route path="/verifier-email" element={<VerifyEmail />} />

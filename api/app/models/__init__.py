@@ -9,9 +9,10 @@ from app.models.partner import Lead, Partner, Review
 from app.models.refresh_token import RefreshToken
 from app.models.solar import SolarStudy
 from app.models.user import User
+from app.models.water import WaterStudy
 
 __all__ = [
     "User", "House", "RefreshToken", "KbDocument", "KbChunk",
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
-    "Partner", "Lead", "Review", "HouseDocument", "AgentLog",
+    "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy",
 ]
