@@ -7,6 +7,17 @@ hypothèses économiques sont dans `config.py` (constantes calibrables, ordres d
 
 from app.core.config import settings
 
+# Technologies de stockage comparées (ordres de grandeur 2026, À CONFIRMER au devis).
+# Le stockage inertie (Energisto, partenaire) : ~10 kWh pour ~9000 € => ~900 €/kWh, garantie 40 ans.
+STORAGE_TECHS = [
+    {"tech": "lfp", "label": "Batterie lithium (LFP)", "cout_par_kwh_eur": 700, "garantie_ans": 10,
+     "note": "Référence actuelle : compacte et fiable."},
+    {"tech": "sodium", "label": "Batterie sodium-ion", "cout_par_kwh_eur": 600, "garantie_ans": 12,
+     "note": "Émergente en 2026 : bon marché, excellente au froid, un peu plus volumineuse."},
+    {"tech": "inertie", "label": "Stockage par inertie (Energisto)", "cout_par_kwh_eur": 900, "garantie_ans": 40,
+     "note": "Mécanique, sans chimie : très longue durée de vie (garantie 40 ans)."},
+]
+
 
 def _fourchette(value: float) -> dict:
     demi = settings.solar_incertitude
@@ -38,29 +49,36 @@ def _scenario_for_power(power_kwc: int, annual_kwh: float, conso_kwh: int) -> di
             "temps_retour_ans": retour_ans,
         }
 
-    # Scénario batterie : gain d'autoconso sur le profil "avec pilotage"
-    taux_batt = min(settings.solar_autoconso_avec_pilotage + settings.solar_gain_autoconso_batterie, 1.0)
-    autoconso_batt = min(annual_kwh * taux_batt, conso_kwh)
-    surplus_batt = max(annual_kwh - autoconso_batt, 0)
-    economie_batt = (
-        autoconso_batt * settings.solar_prix_achat_eur_kwh + surplus_batt * settings.solar_prix_revente_eur_kwh
+    # Comparaison des technologies de stockage (même gain d'autoconso, coûts/garanties différents)
+    capacite_kwh = power_kwc  # dimensionnement grossier : ~1 kWh utile / kWc
+    taux_stock = min(settings.solar_autoconso_avec_pilotage + settings.solar_gain_autoconso_batterie, 1.0)
+    autoconso_stock = min(annual_kwh * taux_stock, conso_kwh)
+    surplus_stock = max(annual_kwh - autoconso_stock, 0)
+    economie_stock = (
+        autoconso_stock * settings.solar_prix_achat_eur_kwh + surplus_stock * settings.solar_prix_revente_eur_kwh
     )
-    capacite_batt_kwh = power_kwc  # dimensionnement grossier : ~1 kWh utile / kWc
-    cout_batt = cout_installation + capacite_batt_kwh * settings.solar_cout_batterie_par_kwh_eur
-    retour_batt = round(cout_batt / economie_batt, 1) if economie_batt > 0 else None
+    stockage_options = []
+    for tech in STORAGE_TECHS:
+        cout_total = cout_installation + capacite_kwh * tech["cout_par_kwh_eur"]
+        retour = round(cout_total / economie_stock, 1) if economie_stock > 0 else None
+        stockage_options.append({
+            "tech": tech["tech"],
+            "label": tech["label"],
+            "capacite_kwh": capacite_kwh,
+            "taux_autoconso_pct": round(100 * autoconso_stock / annual_kwh) if annual_kwh else 0,
+            "economie_annuelle_eur": _fourchette(economie_stock),
+            "cout_total_eur": _fourchette(cout_total),
+            "temps_retour_ans": retour,
+            "garantie_ans": tech["garantie_ans"],
+            "note": tech["note"],
+        })
 
     return {
         "puissance_kwc": power_kwc,
         "production_annuelle_kwh": round(annual_kwh),
         "cout_installation_eur": _fourchette(cout_installation),
         "profils_autoconso": profils,
-        "scenario_batterie": {
-            "capacite_kwh": capacite_batt_kwh,
-            "taux_autoconso_pct": round(100 * autoconso_batt / annual_kwh) if annual_kwh else 0,
-            "economie_annuelle_eur": _fourchette(economie_batt),
-            "cout_total_eur": _fourchette(cout_batt),
-            "temps_retour_ans": retour_batt,
-        },
+        "stockage_options": stockage_options,
     }
 
 

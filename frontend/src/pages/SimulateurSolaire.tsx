@@ -38,13 +38,19 @@ interface ScenarioPuissance {
   production_annuelle_kwh: number
   cout_installation_eur: Fourchette
   profils_autoconso: { sans_pilotage: Profil; avec_pilotage: Profil }
-  scenario_batterie: {
-    capacite_kwh: number
-    taux_autoconso_pct: number
-    economie_annuelle_eur: Fourchette
-    cout_total_eur: Fourchette
-    temps_retour_ans: number | null
-  }
+  stockage_options: StockageOption[]
+}
+
+interface StockageOption {
+  tech: string
+  label: string
+  capacite_kwh: number
+  taux_autoconso_pct: number
+  economie_annuelle_eur: Fourchette
+  cout_total_eur: Fourchette
+  temps_retour_ans: number | null
+  garantie_ans: number
+  note: string
 }
 
 interface SimResult {
@@ -212,7 +218,7 @@ export default function SimulateurSolaire() {
               {Object.entries(result.scenarios.par_puissance).map(([kwc, s]) => (
                 <div key={kwc} className="bg-white border border-gray-200 rounded-2xl p-6">
                   <h3 className="font-semibold text-lg mb-3">Installation {kwc} kWc — coût estimé {eur(s.cout_installation_eur.bas)} à {eur(s.cout_installation_eur.haut)}</h3>
-                  <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                  <div className="grid sm:grid-cols-2 gap-4 text-sm mb-4">
                     <div className="rounded-xl bg-gray-50 p-4">
                       <div className="font-medium mb-1">Sans pilotage</div>
                       <div className="text-gray-600">Autoconso {s.profils_autoconso.sans_pilotage.taux_autoconso_pct} %</div>
@@ -229,12 +235,20 @@ export default function SimulateurSolaire() {
                       </div>
                       <div className="text-gray-600">Retour ~{s.profils_autoconso.avec_pilotage.temps_retour_ans} ans</div>
                     </div>
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <div className="font-medium mb-1">Avec batterie ({s.scenario_batterie.capacite_kwh} kWh)</div>
-                      <div className="text-gray-600">Autoconso {s.scenario_batterie.taux_autoconso_pct} %</div>
-                      <div className="text-gray-600">Coût ~{eur(s.scenario_batterie.cout_total_eur.central)}</div>
-                      <div className="text-gray-600">Retour ~{s.scenario_batterie.temps_retour_ans} ans</div>
-                    </div>
+                  </div>
+
+                  {/* Comparaison des technologies de stockage */}
+                  <div className="text-sm font-medium text-ink mb-2">Ajouter un stockage ({s.stockage_options[0]?.capacite_kwh} kWh) — autoconso {s.stockage_options[0]?.taux_autoconso_pct} %</div>
+                  <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                    {s.stockage_options.map((o) => (
+                      <div key={o.tech} className="rounded-xl border border-gray-200 p-4">
+                        <div className="font-medium text-ink mb-1">{o.label}</div>
+                        <div className="text-gray-600">Coût total ~{eur(o.cout_total_eur.central)}</div>
+                        <div className="text-gray-600">Retour ~{o.temps_retour_ans} ans</div>
+                        <div className="text-leaf font-medium">Garantie {o.garantie_ans} ans</div>
+                        <div className="text-xs text-gray-400 mt-1">{o.note}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
