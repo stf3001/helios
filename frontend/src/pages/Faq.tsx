@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Hero from '../components/Hero'
 import { ChevronDown } from 'lucide-react'
 import { useTitle } from '../hooks/useTitle'
@@ -13,11 +14,14 @@ interface FaqEntry {
 
 export default function Faq() {
   useTitle('Questions fréquentes')
+  // ?q= : arrivée depuis une citation du chat → recherche préremplie + fiche ouverte.
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get('q') ?? ''
   const [entries, setEntries] = useState<FaqEntry[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(false)
-  const [open, setOpen] = useState<number | null>(null)
-  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState<number | null>(initialQuery ? 0 : null)
+  const [query, setQuery] = useState(initialQuery)
   const [cat, setCat] = useState<string | null>(null)
 
   const load = useCallback(() => {

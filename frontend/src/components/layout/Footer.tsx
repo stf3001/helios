@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 const ressources = [
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
+  { to: '/engagements', label: 'Nos engagements' },
   { to: '/guides', label: 'Guides & Aides' },
   { to: '/glossaire', label: 'Glossaire' },
   { to: '/faq', label: 'FAQ' },
@@ -32,6 +33,7 @@ export default function Footer() {
           <p className="font-semibold text-white mb-2">Transparence</p>
           <p>HELIOS est gratuit pour vous, toujours. La plateforme se rémunère par une commission versée
              par les entreprises partenaires — jamais par le client. Les conseils d'Helios sont indépendants.</p>
+          <p className="mt-2"><Link to="/engagements" className="underline hover:text-white">Tous nos engagements →</Link></p>
         </div>
         <div>
           <p className="font-semibold text-white mb-2">« Je le sais, mais je fais ma part. »</p>

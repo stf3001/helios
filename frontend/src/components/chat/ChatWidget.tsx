@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { Send, Sparkles } from 'lucide-react'
 
 interface Citation {
@@ -176,7 +177,12 @@ export default function ChatWidget({
               {m.citations && m.citations.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-black/10 text-xs text-gray-500 space-y-0.5">
                   {m.citations.map((c, ci) => (
-                    <div key={ci}>📎 {c.titre}</div>
+                    <div key={ci}>
+                      📎{' '}
+                      <Link to={`/faq?q=${encodeURIComponent(c.titre)}`} className="underline hover:text-primary">
+                        {c.titre}
+                      </Link>
+                    </div>
                   ))}
                 </div>
               )}

@@ -31,6 +31,9 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > - **`demarrer-helios.bat`** (racine) : double-clic → vérifie/lance Docker + Postgres, ouvre 2 fenêtres (API 8000, front 5173), ouvre le navigateur. Évite le piège « backend éteint = site qui semble vide » (vécu le 20/07).
 > - **FAQ publique élargie** : `/api/faq` sert les 3 sources Q/R (`faq_maison`+`solutions`+`pilotage`) = 125 entrées.
 > - Compte de test dev : `demo@helios.fr` / `Helios2026!` (email marqué vérifié en base).
+> - **Guides rédigés** : les 6 guides de `data/guides.ts` sont des BROUILLONS complets tirés des fiches validées de la base (mêmes chiffres que la FAQ, zéro invention) — badge « bientôt » retiré, **à relire par l'utilisateur** (mention en tête de fichier).
+> - **Citations cliquables** : les 📎 du chat → `/faq?q=<titre>` (recherche préremplie + fiche ouverte). Vérifié en navigateur : question → réponse instantanée + lien citation + « Développer avec Helios ».
+> - **Page `/engagements`** (« Nos engagements ») : 6 garde-fous réellement implémentés (avis d'abord/négatif possible, jamais facturé au client, chiffres déterministes, comparateur public, RGPD+PDL, zéro démarchage) ; liens footer (Ressources + bloc Transparence).
 
 > **Lot 20/07 — Storage/eau/pilotage/courtage/Espace Pro + intégration chat** (migrations 0011→0013) :
 > - **Connaissances** (`kb/solutions.md`, `kb/pilotage.md`, ingérées via crawler) : stockage (LFP, sodium-ion, inertie Energisto 10 kWh/9000 €/garantie 40 ans), eau atmosphérique (Hydrolia), pilotage/HEMS (Ecojoko/Comwatt/MyLight), offres d'achat EDF/TotalEnergies/Engie, courtage.
