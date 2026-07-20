@@ -21,6 +21,7 @@ class EnergyStudy(Base):
         UUID(as_uuid=True), ForeignKey("houses.id"), nullable=False, index=True
     )
     partner_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))  # FK vers partners en J8
+    type: Mapped[str] = mapped_column(String(20), nullable=False, default="sobry")  # sobry | courtage
     pdl: Mapped[str | None] = mapped_column(String(14))
     consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)  # consentement horodaté
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="demandee")

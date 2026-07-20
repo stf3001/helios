@@ -19,8 +19,8 @@ from app.core.deps import get_current_user
 from app.models.energy import EnergyStudy
 from app.models.house import House
 from app.models.user import User
-from app.schemas.energy import StudyDecision, StudyRequest
-from app.services import energy_advisor, sobry_client
+from app.schemas.energy import CourtageRequest, StudyDecision, StudyRequest
+from app.services import courtage_client, energy_advisor, sobry_client
 
 router = APIRouter(prefix="/energy", tags=["energy"])
 
@@ -109,6 +109,52 @@ async def request_study(
     }
 
 
+@router.post("/courtage", status_code=status.HTTP_201_CREATED)
+async def request_courtage(
+    payload: CourtageRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    """Demande d'étude de courtage d'énergie — Helios recueille le profil, transmet au partenaire
+    courtier (avec consentement), reçoit et analyse le résultat, puis le présente (avis indépendant)."""
+    if not payload.consent:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Le consentement explicite est requis pour lancer l'étude.")
+    house = await _own_house(db, user.id)
+
+    # Partenaire courtier : un partenaire actif dont les métiers incluent "courtage" (à nommer plus tard)
+    from app.models.partner import Partner
+    courtier = await db.scalar(
+        select(Partner).where(Partner.statut == "actif", Partner.metiers.any("courtage"))
+    )
+
+    estimation = courtage_client.estimation(house, payload.offre_actuelle)
+    opinion, favorable = courtage_client.helios_opinion(estimation)
+
+    study = EnergyStudy(
+        house_id=house.id,
+        partner_id=courtier.id if courtier else None,
+        type="courtage",
+        consent_at=datetime.now(timezone.utc),
+        status="presentee",
+        result=estimation,
+        helios_opinion=opinion,
+    )
+    db.add(study)
+    await db.commit()
+    await db.refresh(study)
+
+    return {
+        "id": study.id,
+        "type": "courtage",
+        "status": study.status,
+        "estimation": estimation,
+        "helios_opinion": opinion,
+        "favorable": favorable,
+        "partenaire": courtier.raison_sociale if courtier else None,
+        "comparateur_public": settings.energie_comparateur_public,
+        # Garde-fou : lien partenaire proposé uniquement si l'avis est favorable
+        "partner_link": (settings.courtage_partner_link or None) if favorable else None,
+    }
+
+
 @router.get("/studies")
 async def list_studies(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     house = await db.scalar(select(House).where(House.user_id == user.id))
@@ -118,8 +164,8 @@ async def list_studies(user: User = Depends(get_current_user), db: AsyncSession 
         select(EnergyStudy).where(EnergyStudy.house_id == house.id).order_by(EnergyStudy.created_at.desc())
     )
     return [
-        {"id": s.id, "status": s.status, "estimation": s.result, "helios_opinion": s.helios_opinion,
-         "created_at": s.created_at}
+        {"id": s.id, "type": s.type, "status": s.status, "estimation": s.result,
+         "helios_opinion": s.helios_opinion, "created_at": s.created_at}
         for s in rows
     ]
 

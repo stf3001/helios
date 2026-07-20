@@ -10,3 +10,8 @@ class StudyRequest(BaseModel):
 
 class StudyDecision(BaseModel):
     decision: Literal["souscrite", "declinee"]
+
+
+class CourtageRequest(BaseModel):
+    consent: bool  # doit être True — consentement explicite (doc 09 §2)
+    offre_actuelle: str | None = Field(default=None, max_length=100)  # fournisseur/offre actuels (facultatif)

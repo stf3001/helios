@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     sobry_seuil_gain_pct: float = 5.0            # règle des 5 % : sous ce gain, Helios déconseille de changer (FAQ)
     energie_comparateur_public: str = "https://comparateur.energie-info.fr"  # à toujours mentionner (garde-fou doc 09 §2)
 
+    # --- Courtage énergie (partenaire courtier, à nommer plus tard) ---
+    courtage_partner_link: str = ""              # lien apporteur du courtier (vide = pas de lien proposé)
+    courtage_gain_estime_pct: float = 8.0        # gain moyen estimé d'un changement d'offre via courtage (à calibrer)
+
     class Config:
         env_file = ".env"
 

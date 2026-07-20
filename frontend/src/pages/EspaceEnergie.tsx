@@ -14,7 +14,8 @@ interface Estimation {
   gain_estime_pct: number
   gain_estime_eur_an: number
   facture_reference_eur_an: number
-  offres: string[]
+  offres?: string[]
+  meilleures_offres?: string[]
 }
 interface StudyResult {
   id: string
@@ -24,6 +25,7 @@ interface StudyResult {
   favorable: boolean
   comparateur_public: string
   partner_link: string | null
+  partenaire?: string | null
 }
 
 const COMPAT_STYLE: Record<string, string> = {
@@ -45,6 +47,13 @@ export default function EspaceEnergie() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [decided, setDecided] = useState<string | null>(null)
+
+  // Parcours courtage
+  const [courtageConsent, setCourtageConsent] = useState(false)
+  const [offreActuelle, setOffreActuelle] = useState('')
+  const [courtage, setCourtage] = useState<StudyResult | null>(null)
+  const [courtageBusy, setCourtageBusy] = useState(false)
+  const [courtageDecided, setCourtageDecided] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -83,6 +92,38 @@ export default function EspaceEnergie() {
       body: JSON.stringify({ decision }),
     })
     if (res.ok) setDecided(decision)
+  }
+
+  async function launchCourtage(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setCourtageBusy(true)
+    try {
+      const res = await authFetch('/api/energy/courtage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent: courtageConsent, offre_actuelle: offreActuelle || null }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        throw new Error(body?.detail || 'Étude impossible.')
+      }
+      setCourtage(await res.json())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setCourtageBusy(false)
+    }
+  }
+
+  async function decideCourtage(decision: 'souscrite' | 'declinee') {
+    if (!courtage) return
+    const res = await authFetch(`/api/energy/study/${courtage.id}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision }),
+    })
+    if (res.ok) setCourtageDecided(decision)
   }
 
   const maxPrix = spot ? Math.max(...spot.points.map((p) => p.prix)) : 1
@@ -186,7 +227,7 @@ export default function EspaceEnergie() {
                 <div className="text-sm text-gray-600">
                   Estimation : gain <strong>~{study.estimation.gain_estime_pct}%</strong> soit
                   ~{study.estimation.gain_estime_eur_an} €/an (base facture {study.estimation.facture_reference_eur_an} €).
-                  Offres : {study.estimation.offres.join(', ')}.
+                  Offres : {(study.estimation.offres ?? []).join(', ')}.
                 </div>
 
                 {decided ? (
@@ -214,6 +255,73 @@ export default function EspaceEnergie() {
                   <a href={study.comparateur_public} target="_blank" rel="noopener noreferrer" className="underline">
                     energie-info.fr
                   </a>.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Niveau 2 bis : courtage d'énergie */}
+          <div className="border-t border-gray-200 pt-8">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold text-lg">Faire jouer la concurrence : étude de courtage</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Un partenaire courtier compare pour vous les offres du marché selon votre profil.
+              <strong> Helios vous donnera son avis indépendant sur le résultat</strong> — y compris « restez sur votre offre ».
+            </p>
+
+            {!courtage ? (
+              <form onSubmit={launchCourtage} className="bg-gray-50 rounded-2xl p-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Votre offre actuelle (facultatif)</label>
+                  <input value={offreActuelle} onChange={(e) => setOffreActuelle(e.target.value)}
+                    placeholder="ex. EDF Tarif Bleu"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+                <label className="flex items-start gap-2 text-sm text-gray-700">
+                  <input type="checkbox" checked={courtageConsent} onChange={(e) => setCourtageConsent(e.target.checked)} className="mt-1" />
+                  <span>J'autorise HELIOS à transmettre mon profil de consommation à un partenaire courtier pour comparer les offres.</span>
+                </label>
+                <button type="submit" disabled={!courtageConsent || courtageBusy}
+                  className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 hover:opacity-90 disabled:opacity-40">
+                  {courtageBusy ? 'Étude en cours…' : 'Lancer l\'étude de courtage'}
+                </button>
+                {error && <p className="text-sm text-red-600">{error}</p>}
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div className={'rounded-2xl p-5 border ' + (courtage.favorable ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200')}>
+                  <div className="font-semibold mb-1">L'avis d'Helios{courtage.partenaire ? ` (courtier : ${courtage.partenaire})` : ''}</div>
+                  <p className="text-sm text-gray-700">{courtage.helios_opinion}</p>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Gain estimé <strong>~{courtage.estimation.gain_estime_pct}%</strong> soit
+                  ~{courtage.estimation.gain_estime_eur_an} €/an.
+                  {courtage.estimation.meilleures_offres && <> Pistes : {courtage.estimation.meilleures_offres.join(', ')}.</>}
+                </div>
+                {courtageDecided ? (
+                  <p className="text-sm font-medium text-gray-800">
+                    {courtageDecided === 'souscrite' ? 'Vous avez choisi de changer d\'offre — bonne économie !' : 'Vous avez décliné. Votre choix est enregistré.'}
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-3">
+                    {courtage.favorable && courtage.partner_link && (
+                      <a href={courtage.partner_link} target="_blank" rel="noopener noreferrer"
+                        onClick={() => decideCourtage('souscrite')}
+                        className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 hover:opacity-90">
+                        Voir l'offre du courtier
+                      </a>
+                    )}
+                    <button onClick={() => decideCourtage('declinee')}
+                      className="rounded-xl border border-gray-300 text-gray-700 px-5 py-2.5 hover:bg-gray-50">
+                      Ne pas donner suite
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400">
+                  Comparez aussi librement sur le comparateur public indépendant{' '}
+                  <a href={courtage.comparateur_public} target="_blank" rel="noopener noreferrer" className="underline">energie-info.fr</a>.
                 </p>
               </div>
             )}
