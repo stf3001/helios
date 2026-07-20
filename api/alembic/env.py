@@ -19,6 +19,7 @@ from app.models import (  # noqa: F401 — enregistre les tables sur Base.metada
     Lead,
     Message,
     Partner,
+    ProProfile,
     RefreshToken,
     Review,
     SolarStudy,

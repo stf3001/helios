@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets } from 'lucide-react'
+import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
@@ -19,6 +19,7 @@ const TUILES = [
   { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique' },
   { to: '/espace/energie', icon: Zap, title: "Mon contrat d'énergie", desc: 'Conseil & SOBRY' },
   { to: '/espace/mises-en-relation', icon: Handshake, title: 'Mises en relation', desc: 'Partenaires travaux' },
+  { to: '/espace/pro', icon: Building2, title: 'Espace Pro', desc: 'Énergie de mon entreprise' },
 ]
 
 export default function Espace() {

@@ -8,24 +8,25 @@ from app.core.config import settings
 from app.models.house import House
 
 
-def estimation(house: House, infos: dict | None = None) -> dict:
+def estimation(house: House | None = None, infos: dict | None = None, gain_pct: float | None = None) -> dict:
     """Estimation de courtage à partir des infos recueillies (fournisseur/offre/conso/puissance…).
 
-    La facture de référence privilégie le montant déclaré, sinon la conso × prix, sinon la fiche.
-    Le profil transmis est inclus dans le résultat pour la traçabilité (ce qui est envoyé au courtier).
+    Utilisable pour un particulier (avec `house`) ou un pro (house=None, infos issues du profil pro).
+    La facture de référence privilégie le montant déclaré, sinon la conso × prix. `profil_transmis`
+    trace ce qui est envoyé au courtier.
     """
     infos = infos or {}
-    conso = infos.get("conso_annuelle_kwh") or house.conso_elec_kwh_an or 4500
+    conso = infos.get("conso_annuelle_kwh") or (house.conso_elec_kwh_an if house else None) or 4500
     facture = infos.get("montant_facture_annuelle_eur") or round(conso * settings.solar_prix_achat_eur_kwh)
-    gain_pct = settings.courtage_gain_estime_pct
+    gain_pct = gain_pct if gain_pct is not None else settings.courtage_gain_estime_pct
     gain_eur = round(facture * gain_pct / 100)
 
     profil_transmis = {
         "fournisseur_actuel": infos.get("fournisseur_actuel"),
         "offre_actuelle": infos.get("offre_actuelle"),
         "conso_annuelle_kwh": conso,
-        "puissance_kva": infos.get("puissance_kva") or house.puissance_souscrite,
-        "option_tarifaire": infos.get("option_tarifaire") or house.option_tarifaire,
+        "puissance_kva": infos.get("puissance_kva") or (house.puissance_souscrite if house else None),
+        "option_tarifaire": infos.get("option_tarifaire") or (house.option_tarifaire if house else None),
     }
     return {
         "offre_actuelle": infos.get("offre_actuelle"),

@@ -26,6 +26,7 @@ import Guides from './pages/Guides'
 import GuideDetail from './pages/GuideDetail'
 import Glossaire from './pages/Glossaire'
 import PotentielHydrique from './pages/PotentielHydrique'
+import EspacePro from './pages/EspacePro'
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/verifier-email" element={<VerifyEmail />} />
           <Route path="/espace" element={<ProtectedRoute><Espace /></ProtectedRoute>} />
           <Route path="/espace/compte" element={<ProtectedRoute><EspaceCompte /></ProtectedRoute>} />
+          <Route path="/espace/pro" element={<ProtectedRoute><EspacePro /></ProtectedRoute>} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />

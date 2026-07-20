@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     # --- Courtage énergie (partenaire courtier, à nommer plus tard) ---
     courtage_partner_link: str = ""              # lien apporteur du courtier (vide = pas de lien proposé)
     courtage_gain_estime_pct: float = 8.0        # gain moyen estimé d'un changement d'offre via courtage (à calibrer)
+    courtage_gain_estime_pct_pro: float = 12.0   # potentiel plus élevé en pro (volumes, contrats négociables)
 
     class Config:
         env_file = ".env"
