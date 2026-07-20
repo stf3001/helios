@@ -19,7 +19,11 @@ R: Ça dépend de votre profil. Une batterie est intéressante si vous produisez
 
 ### Q: C'est quoi la production d'eau atmosphérique (Hydrolia) ?
 `cat:eau | tags:hydrolia,eau,atmospherique | verif:partenaire`
-R: Un générateur d'eau atmosphérique capte l'humidité de l'air ambiant et la condense en eau potable. La production dépend fortement de la température et de l'humidité : plus l'air est chaud et humide, plus le rendement est élevé. Alimenté par du solaire, il rend une maison plus autonome en eau. Notre partenaire Hydrolia propose des modèles du foyer (20 L/jour) aux besoins collectifs (jusqu'à 1000 L/jour). C'est une brique de la maison de demain : produire, stocker, et jusqu'à son eau.
+R: Un générateur d'eau atmosphérique (AWG) capte l'humidité de l'air ambiant et la condense en eau potable — « de l'eau pure, extraite de l'air ». La production dépend fortement de la température et de l'humidité : plus l'air est chaud et humide, plus le rendement est élevé. Alimenté par du solaire, il rend une maison plus autonome en eau, sans réseau. Notre partenaire Hydrolia, né « autour d'une table entre amis » avec l'envie de faire sa part face aux défis environnementaux, propose des modèles du foyer (20 L/jour) aux besoins collectifs. C'est une brique de la maison de demain : produire son énergie, la stocker, et jusqu'à son eau.
+
+### Q: Pourquoi produire sa propre eau plutôt que l'acheter en bouteille ?
+`cat:eau | tags:eau,plastique,sante,ecologie | verif:generique`
+R: L'eau en bouteille génère énormément de déchets plastiques et coûte cher au litre ; des études pointent aussi la présence de microplastiques. Produire son eau sur place, à partir de l'air, évite le plastique, le transport et le stockage, tout en offrant une eau contrôlée. Couplée au solaire, c'est une solution durable qui rapproche la maison de l'autonomie — un geste concret pour la planète et le budget.
 
 ### Q: La maison peut-elle vraiment devenir autonome ?
 `cat:vision | tags:autonomie,maison,transition | verif:generique`
