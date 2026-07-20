@@ -12,7 +12,9 @@ from app.models.kb import KbChunk, KbDocument
 
 router = APIRouter(prefix="/faq", tags=["faq"])
 
-SOURCE = "faq_maison"
+# Sources FAQ publiques (format Q:/R:) : les 109 fiches d'origine + les fiches
+# thématiques stockage/eau/pilotage/courtage ingérées ensuite. Même base que le chat.
+FAQ_SOURCES = ("faq_maison", "solutions", "pilotage")
 
 
 def _answer_from_content(content: str) -> str:
@@ -28,7 +30,7 @@ async def list_faq(db: AsyncSession = Depends(get_db)):
     stmt = (
         select(KbDocument, KbChunk)
         .join(KbChunk, KbChunk.document_id == KbDocument.id)
-        .where(KbDocument.source == SOURCE, KbDocument.statut == "actif")
+        .where(KbDocument.source.in_(FAQ_SOURCES), KbDocument.statut == "actif")
         .order_by(KbDocument.titre)
     )
     rows = (await db.execute(stmt)).all()
