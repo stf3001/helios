@@ -78,6 +78,13 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   l'utilisateur** : `Stop-Service postgresql-x64-17` (ou `services.msc`) puis test navigateur
 >   complet du panneau Revolt sur `/simulateur-solaire`.
 
+> **Espace client étoffé (22/07/2026, inspiré du dashboard Hydrolia)** :
+> - **CTA « Parler à Helios » proéminent** en tête d'espace (bandeau ink/primary), rappelant qu'Helios connaît déjà la fiche et les simulations — pas de re-saisie.
+> - **Section « Mes simulateurs »** : solaire (Revolt), potentiel hydrique, et **Éolia en tuile « bientôt disponible »** (grisée, non cliquable — honnête, rien n'est promis avant d'exister).
+> - **« Mes documents » remonté en premier niveau** sur `/espace` (plus seulement dans `/mon-espace`) : le composant `HouseDocuments` est réutilisé tel quel (auto-suffisant, fetch ses propres données).
+> - **Limite de 6 documents/maison** (`MAX_DOCUMENTS_PAR_MAISON`, `documents.py`) — 400 explicite au 7ᵉ upload, compteur "x/6" et bouton désactivé côté front. Testé réellement : 6 uploads OK, 7ᵉ rejeté.
+> - **« Avis d'Helios » sur un devis** : nouvel endpoint `GET /houses/me/documents/{id}/extract` (pypdf, texte tronqué à 6000 caractères, PDF uniquement) → le frontend pré-remplit le champ de saisie du chat (`ChatWidget.initialInput`, `EspaceHelios` lit `?ask=`) avec le contenu réel du document. L'utilisateur relit et envoie lui-même — rien n'est expédié automatiquement, aucun chiffre n'est jamais garanti sur un document non vérifié. Testé réellement avec un vrai PDF (fpdf2) : extraction correcte, redirection avec le bon texte, champ pré-rempli confirmé en navigateur.
+> - Nouvelle dépendance : `pypdf==5.1.*`.
 > - **Refonte engagement institutionnel** (inspiré d'une analyse du site jumeau Hydrolia, en gardant l'honnêteté constitution) :
 >   - `components/ScrollReveal.tsx` : révélation au scroll (IntersectionObserver + `animate-slide-up` déjà existant), zéro nouvelle dépendance, `as` polymorphe.
 >   - `components/CtaFaisTaPart.tsx` : bandeau CTA réutilisable (« Parler à Helios » / « Créer ma fiche »), posé sur Colibri et Qui sommes-nous.

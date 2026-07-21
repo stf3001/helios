@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ChatWidget from '../components/chat/ChatWidget'
 import { useAuth } from '../context/AuthContext'
 
@@ -22,6 +23,9 @@ interface ChatMessage {
 
 export default function EspaceHelios() {
   const { authFetch } = useAuth()
+  // Arrivée depuis "Demander l'avis d'Helios" (documents) : ?ask=<question pré-remplie>.
+  const [searchParams] = useSearchParams()
+  const askPrefill = searchParams.get('ask') ?? undefined
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [initialMessages, setInitialMessages] = useState<ChatMessage[] | undefined>(undefined)
@@ -84,7 +88,13 @@ export default function EspaceHelios() {
           </div>
         </div>
 
-        <ChatWidget key={selectedId ?? 'new'} fetchImpl={authFetch} initialConversationId={selectedId} initialMessages={initialMessages} />
+        <ChatWidget
+          key={selectedId ?? 'new'}
+          fetchImpl={authFetch}
+          initialConversationId={selectedId}
+          initialMessages={initialMessages}
+          initialInput={!selectedId ? askPrefill : undefined}
+        />
       </div>
     </section>
   )

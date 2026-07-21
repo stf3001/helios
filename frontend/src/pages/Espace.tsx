@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2 } from 'lucide-react'
+import {
+  Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, ArrowRight,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
+import HouseDocuments from '../components/fiche/HouseDocuments'
 
 const NIVEAU_LABEL: Record<string, string> = {
   conseils_generaux: 'Conseils généraux',
@@ -12,12 +15,13 @@ const NIVEAU_LABEL: Record<string, string> = {
   preaudit_chiffre: 'Pré-audit chiffré',
 }
 
-const TUILES = [
-  { to: '/mon-espace', icon: Home, title: 'Ma fiche maison', desc: 'Complétez votre logement' },
-  { to: '/espace/helios', icon: MessageSquare, title: 'Mon Helios', desc: 'Conseil personnalisé' },
+const SIMULATEURS = [
+  { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'PV, batterie, tarifs — simulateur Revolt' },
+  { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique (Hydrolia)' },
+]
+
+const AUTRES_TUILES = [
   { to: '/espace/audits', icon: FileText, title: 'Mes pré-audits', desc: 'Diagnostic chiffré' },
-  { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'Simulateur PVGIS' },
-  { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique' },
   { to: '/espace/energie', icon: Zap, title: "Mon contrat d'énergie", desc: 'Conseil & SOBRY' },
   { to: '/espace/mises-en-relation', icon: Handshake, title: 'Mises en relation', desc: 'Partenaires travaux' },
   { to: '/espace/pro', icon: Building2, title: 'Espace Pro', desc: 'Énergie de mon entreprise' },
@@ -104,9 +108,57 @@ export default function Espace() {
             )}
           </div>
 
-          {/* Tuiles d'accès */}
+          {/* Parler à Helios — proéminent, avec le contexte de la fiche */}
+          <Link to="/espace/helios"
+            className="group flex items-center justify-between gap-4 bg-ink text-white rounded-2xl p-6 mb-8 hover:opacity-95 transition">
+            <div className="flex items-center gap-4">
+              <img src="/brand/helios-thumbsup.png" alt="" className="h-12 w-12 object-contain shrink-0" />
+              <div>
+                <div className="font-display font-semibold text-lg">Une question ? Parlez à Helios</div>
+                <div className="text-sm text-white/70">
+                  Il connaît déjà votre fiche et vos simulations — pas besoin de tout réexpliquer.
+                </div>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl shrink-0 group-hover:gap-2.5 transition-all">
+              <MessageSquare className="w-4 h-4" /> Discuter <ArrowRight className="w-4 h-4" />
+            </span>
+          </Link>
+
+          {/* Mes simulateurs */}
+          <h2 className="font-semibold text-lg mb-3">Mes simulateurs</h2>
+          <div className="grid sm:grid-cols-3 gap-4 mb-8">
+            {SIMULATEURS.map((t) => (
+              <Link key={t.to} to={t.to}
+                className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+                <t.icon className="w-6 h-6 text-primary mb-2" />
+                <div className="font-semibold">{t.title}</div>
+                <div className="text-sm text-gray-500">{t.desc}</div>
+              </Link>
+            ))}
+            <div className="border border-dashed border-gray-300 rounded-2xl p-5 opacity-60">
+              <Wind className="w-6 h-6 text-gray-400 mb-2" />
+              <div className="font-semibold text-gray-500">Potentiel éolien</div>
+              <div className="text-sm text-gray-400">Simulateur Eolia — bientôt disponible</div>
+            </div>
+          </div>
+
+          {/* Mes documents — accès direct, sans changer de page */}
+          <h2 className="font-semibold text-lg mb-3">Mes documents</h2>
+          <div className="mb-8">
+            <HouseDocuments />
+          </div>
+
+          {/* Autres tuiles d'accès */}
+          <h2 className="font-semibold text-lg mb-3">Le reste de mon espace</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TUILES.map((t) => (
+            <Link to="/mon-espace"
+              className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+              <Home className="w-6 h-6 text-primary mb-2" />
+              <div className="font-semibold">Ma fiche maison</div>
+              <div className="text-sm text-gray-500">Compléter mon logement</div>
+            </Link>
+            {AUTRES_TUILES.map((t) => (
               <Link key={t.to} to={t.to}
                 className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
                 <t.icon className="w-6 h-6 text-primary mb-2" />

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { FileUp, Trash2, Download } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { FileUp, Trash2, Download, MessageSquareText } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+
+const MAX_DOCUMENTS = 6
 
 interface Doc {
   id: string
@@ -27,11 +30,14 @@ function humanSize(n: number | null): string {
 
 export default function HouseDocuments() {
   const { authFetch } = useAuth()
+  const navigate = useNavigate()
   const [docs, setDocs] = useState<Doc[]>([])
   const [type, setType] = useState('dpe')
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [askingId, setAskingId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const atLimit = docs.length >= MAX_DOCUMENTS
 
   function load() {
     authFetch('/api/houses/me/documents').then((r) => (r.ok ? r.json() : [])).then(setDocs)
@@ -79,11 +85,36 @@ export default function HouseDocuments() {
     if (res.ok) load()
   }
 
+  async function askHelios(doc: Doc) {
+    setAskingId(doc.id)
+    setError(null)
+    try {
+      const res = await authFetch(`/api/houses/me/documents/${doc.id}/extract`)
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(typeof body?.detail === 'string' ? body.detail : 'Extraction impossible.')
+      const extrait = body.tronque ? `${body.text}\n\n[…texte tronqué, document plus long]` : body.text
+      const question =
+        `J'ai déposé le document « ${doc.filename} » dans mon espace, peux-tu me donner ton avis dessus ?\n\n` +
+        `--- Contenu du document ---\n${extrait}`
+      navigate(`/espace/helios?ask=${encodeURIComponent(question)}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setAskingId(null)
+    }
+  }
+
   return (
     <div className="bg-gray-50 rounded-2xl p-5">
-      <h3 className="font-semibold mb-1">Mes documents</h3>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-semibold">Mes documents</h3>
+        <span className={'text-xs ' + (atLimit ? 'text-amber-600 font-medium' : 'text-gray-400')}>
+          {docs.length} / {MAX_DOCUMENTS}
+        </span>
+      </div>
       <p className="text-sm text-gray-500 mb-4">
-        Ajoutez votre DPE, vos factures ou des photos (PDF ou image, 10 Mo max). Ils enrichissent votre fiche.
+        Ajoutez votre DPE, vos factures, un devis (pour l'avis d'Helios) ou des photos de votre logement
+        (PDF ou image, 10 Mo max, {MAX_DOCUMENTS} documents maximum pour l'instant).
       </p>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -91,10 +122,11 @@ export default function HouseDocuments() {
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
           {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <label className="inline-flex items-center gap-2 rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2 hover:opacity-90 cursor-pointer">
-          <FileUp className="w-4 h-4" /> {uploading ? 'Envoi…' : 'Ajouter un document'}
+        <label className={'inline-flex items-center gap-2 rounded-xl text-sm font-semibold px-4 py-2 ' +
+          (atLimit ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-primary text-white hover:opacity-90 cursor-pointer')}>
+          <FileUp className="w-4 h-4" /> {uploading ? 'Envoi…' : atLimit ? 'Limite atteinte' : 'Ajouter un document'}
           <input ref={fileRef} type="file" className="hidden" onChange={onFile}
-            accept="application/pdf,image/*" disabled={uploading} />
+            accept="application/pdf,image/*" disabled={uploading || atLimit} />
         </label>
       </div>
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
@@ -111,6 +143,14 @@ export default function HouseDocuments() {
                 <span className="text-gray-400 ml-2">{humanSize(d.size)}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
+                {d.type === 'devis' && (
+                  <button onClick={() => askHelios(d)} disabled={askingId === d.id}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+                    title="Demander l'avis d'Helios">
+                    <MessageSquareText className="w-3.5 h-3.5" />
+                    {askingId === d.id ? 'Lecture…' : "Avis d'Helios"}
+                  </button>
+                )}
                 <button onClick={() => download(d)} className="text-gray-500 hover:text-primary" title="Télécharger">
                   <Download className="w-4 h-4" />
                 </button>

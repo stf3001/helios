@@ -60,16 +60,20 @@ export default function ChatWidget({
   fetchImpl = fetch,
   initialConversationId = null,
   initialMessages,
+  initialInput,
 }: {
   /** Passer `authFetch` du AuthContext pour le mode connecté ; sinon fetch anonyme (mode public). */
   fetchImpl?: (input: string, init?: RequestInit) => Promise<Response>
   initialConversationId?: string | null
   initialMessages?: ChatMessage[]
+  /** Pré-remplit le champ de saisie (ex. question + extrait d'un devis) — l'utilisateur
+      garde la main : il relit et envoie lui-même, rien n'est expédié automatiquement. */
+  initialInput?: string
 } = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages && initialMessages.length > 0 ? initialMessages : [GREETING]
   )
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(initialInput ?? '')
   const [sending, setSending] = useState(false)
   const [simplified, setSimplified] = useState(false)
   const conversationId = useRef<string | null>(initialConversationId)
