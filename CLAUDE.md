@@ -34,6 +34,43 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > - **Guides rédigés** : les 6 guides de `data/guides.ts` sont des BROUILLONS complets tirés des fiches validées de la base (mêmes chiffres que la FAQ, zéro invention) — badge « bientôt » retiré, **à relire par l'utilisateur** (mention en tête de fichier).
 > - **Citations cliquables** : les 📎 du chat → `/faq?q=<titre>` (recherche préremplie + fiche ouverte). Vérifié en navigateur : question → réponse instantanée + lien citation + « Développer avec Helios ».
 > - **Page `/engagements`** (« Nos engagements ») : 6 garde-fous réellement implémentés (avis d'abord/négatif possible, jamais facturé au client, chiffres déterministes, comparateur public, RGPD+PDL, zéro démarchage) ; liens footer (Ressources + bloc Transparence).
+> **Simulateur "Revolt" (22/07/2026)** — PV + batterie + tarifs dynamiques, à conso réelle égale.
+> Décisions actées avec l'utilisateur avant de coder (je ne peux ni inscrire un vrai partenaire
+> Enedis à sa place — SIRET/RGPD/callback public —, ni inventer des tarifs réels) :
+> - **Enedis** : coder maintenant avec une courbe simulée, brancher les vraies clés plus tard.
+> - **SOBRY SoFlex/SoCap** : grille de TEST fournie par l'utilisateur (SoFlex libre -0,13→0,38 €/kWh,
+>   ~1000 h/an négatives ; SoCap plafonné 0→0,25 €/kWh), clairement étiquetée "à confirmer".
+> - **Batterie virtuelle** : MyLight (MyBattery), tarifs 2026 relevés sur le web (papernest.com +
+>   adsolar.fr, sources concordantes) — 179 € d'activation, ~1,20 €/kWc/mois, restitution ~0,083 €/kWh,
+>   nécessite mylight150 comme fournisseur (contrainte réelle signalée à l'utilisateur).
+> - `enedis_client.py` : courbe de charge horaire (8760 pts) SIMULÉE à partir du profil maison
+>   (chauffage/occupants/conso annuelle), scaffold OAuth2 DataConnect dormant (lève tant que
+>   `ENEDIS_CLIENT_ID` est vide) — bascule seule vers le réel le jour venu, zéro autre code à changer.
+> - `pvgis.py` : `production_series_hourly()` (endpoint réel `seriescalc`, 8760 points/an, testé
+>   réellement : 6 kWc à Lyon → 8059-8106 kWh/an selon l'année de référence).
+> - `sobry_tariffs.py` : générateur déterministe de grille horaire annuelle (creux solaire
+>   printemps/été à midi, pointes hiver) calé sur les stats fournies — vérifié : min/max exacts,
+>   998 h négatives (cible ~1000).
+> - `revolt_engine.py` (pur, sans I/O, testable) : `simulate_pv_only`, `simulate_pv_battery`
+>   (glouton horaire, rendement configurable), `simulate_mylight` (stockage virtuel illimité),
+>   `cost_annuel` (fixe/soflex/socap), `compare_scenarios` (matrice brique × tarif vs référence
+>   sans PV). Testé bout en bout avec vrais appels PVGIS : PV+batterie > PV seul en autoconso et
+>   économies, comme attendu.
+> - Router `POST /api/revolt/simulate` (connecté, fiche requise) + `RevoltPanel.tsx` dans
+>   `SimulateurSolaire.tsx` (connecté) : puissance simulée, batterie physique optionnelle, MyLight
+>   optionnel, choix des tarifs à comparer, tableau brique × tarif avec économies vs actuel.
+> - **Point de vigilance repéré (hors scope de ce lot, à traiter séparément)** : `solar_prix_revente_eur_kwh`
+>   (0,13 €/kWh, config existante réutilisée telle quelle) contredit le fait déjà écrit dans
+>   `kb/solutions.md` sur la réforme 2026 (surplus revendu ~0,01 €/kWh) — à harmoniser un jour,
+>   n'affecte pas la correction du nouveau code mais rend le scénario "fixe" optimiste.
+> - **Bloqué en local au moment de coder** : le service Windows natif `postgresql-x64-17` a
+>   redémarré et intercepte le port 5432 à la place du conteneur Docker (déjà vécu et documenté
+>   plus haut) — je n'ai pas les droits admin pour l'arrêter depuis cet environnement. Logique
+>   backend intégralement vérifiée par scripts reproduisant exactement le chemin du router
+>   (geocoding réel + PVGIS réel + moteur), DB non requise pour ces tests. **Reste à faire par
+>   l'utilisateur** : `Stop-Service postgresql-x64-17` (ou `services.msc`) puis test navigateur
+>   complet du panneau Revolt sur `/simulateur-solaire`.
+
 > - **Refonte engagement institutionnel** (inspiré d'une analyse du site jumeau Hydrolia, en gardant l'honnêteté constitution) :
 >   - `components/ScrollReveal.tsx` : révélation au scroll (IntersectionObserver + `animate-slide-up` déjà existant), zéro nouvelle dépendance, `as` polymorphe.
 >   - `components/CtaFaisTaPart.tsx` : bandeau CTA réutilisable (« Parler à Helios » / « Créer ma fiche »), posé sur Colibri et Qui sommes-nous.

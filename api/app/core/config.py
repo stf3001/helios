@@ -66,6 +66,34 @@ class Settings(BaseSettings):
     courtage_gain_estime_pct: float = 8.0        # gain moyen estimé d'un changement d'offre via courtage (à calibrer)
     courtage_gain_estime_pct_pro: float = 12.0   # potentiel plus élevé en pro (volumes, contrats négociables)
 
+    # --- Simulateur "Revolt" (doc futur) : PV + batterie + tarifs dynamiques, à conso réelle ---
+    # Enedis DataConnect (OAuth2) — identifiants d'un vrai partenaire homologué, obtenus après
+    # inscription au Data Hub Enedis (SIRET, dossier RGPD/DPIA, callback HTTPS public). Vides en
+    # dev : le moteur utilise une courbe de charge SIMULÉE tant que ces clés ne sont pas fournies.
+    enedis_client_id: str = ""
+    enedis_client_secret: str = ""
+    enedis_redirect_uri: str = ""
+
+    # Batterie physique — mêmes ordres de grandeur que solar_engine.STORAGE_TECHS
+    revolt_battery_efficiency: float = 0.90        # rendement aller-retour (pertes onduleur/charge)
+
+    # MyLight — batterie virtuelle "MyBattery" (offre publique mylight150, tarifs 2026 relevés sur
+    # le web le 22/07/2026 : papernest.com et adsolar.fr, concordants — À CONFIRMER auprès de MyLight
+    # avant toute décision, ces montants peuvent évoluer). Nécessite de souscrire l'électricité chez
+    # mylight150 (fournisseur alternatif) — contrainte réelle à signaler à l'utilisateur.
+    mylight_activation_eur: float = 179.0
+    mylight_abonnement_eur_par_kwc_mois: float = 1.20   # TTC
+    mylight_restitution_eur_kwh: float = 0.083          # TURPE + accise (~4,93+3,37 cts HT)
+
+    # SOBRY SoFlex / SoCap — grille de TEST fournie par l'utilisateur (structure réelle des offres,
+    # valeurs à confirmer/mettre à jour auprès de SOBRY avant toute décision commerciale) :
+    # SoFlex = tarif dynamique libre (marché), SoCap = même principe mais plafonné.
+    sobry_soflex_prix_min_eur_kwh: float = -0.13   # tarifs négatifs possibles (surproduction réseau)
+    sobry_soflex_prix_max_eur_kwh: float = 0.38
+    sobry_soflex_heures_negatives_an: int = 1000   # ~1000 h/an à prix négatif ou nul
+    sobry_socap_prix_min_eur_kwh: float = 0.00     # plafonné à 0 (jamais négatif), creux au midi solaire
+    sobry_socap_prix_max_eur_kwh: float = 0.25     # plafonné la nuit
+
     class Config:
         env_file = ".env"
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Sun } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
+import RevoltPanel from '../components/RevoltPanel'
 
 const ORIENTATIONS = [
   { value: 'sud', label: 'Sud' },
@@ -253,6 +254,10 @@ export default function SimulateurSolaire() {
                 </div>
               ))}
               <p className="text-xs text-gray-400">{result.scenarios.avertissement}</p>
+
+              <RevoltPanel
+                defaultPowerKwc={Number(Object.keys(result.scenarios.par_puissance)[0] ?? 6)}
+              />
             </div>
           )}
         </div>
