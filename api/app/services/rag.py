@@ -35,7 +35,7 @@ def best_score(results: list[dict]) -> float:
 
 # Sources dont les chunks sont des fiches Q/R servables telles quelles (mêmes
 # sources que la FAQ publique — cf. routers/faq.py).
-_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau")
+_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "revolt")
 
 
 def instant_answer(results: list[dict]) -> str | None:
