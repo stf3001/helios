@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MessageSquare, ClipboardList, Sparkles, Gift, ShieldCheck, Lock, ArrowRight, Sun, BatteryCharging, Car, Droplets } from 'lucide-react'
 import HierarchieColibri from '../components/HierarchieColibri'
+import ScrollReveal from '../components/ScrollReveal'
 import { useTitle } from '../hooks/useTitle'
 
 const ETAPES = [
@@ -91,9 +92,15 @@ export default function Home() {
             )
           )}
         </div>
-        <Link to="/vision" className="inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all">
-          Découvrir notre vision <ArrowRight className="w-4 h-4" />
-        </Link>
+        <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2">
+          <Link to="/vision" className="inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all">
+            Découvrir notre vision <ArrowRight className="w-4 h-4" />
+          </Link>
+          <span className="text-gray-300 hidden sm:inline">·</span>
+          <Link to="/qui-sommes-nous" className="inline-flex items-center gap-1.5 text-primary font-semibold hover:gap-2.5 transition-all">
+            Qui sommes-nous <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </section>
 
       {/* 3 étapes */}
@@ -102,7 +109,7 @@ export default function Home() {
         <p className="text-center text-gray-600 mb-10">Trois étapes, à votre rythme — sans engagement.</p>
         <div className="grid gap-6 md:grid-cols-3">
           {ETAPES.map((e, i) => (
-            <div key={e.titre} className="rounded-2xl border border-gray-200 p-6 bg-white">
+            <ScrollReveal key={e.titre} delay={i * 80} className="rounded-2xl border border-gray-200 p-6 bg-white">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <e.icon className="w-6 h-6" />
@@ -111,7 +118,7 @@ export default function Home() {
               </div>
               <h3 className="font-display font-semibold text-lg text-ink mb-1">{e.titre}</h3>
               <p className="text-sm text-gray-600">{e.desc}</p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
@@ -125,7 +132,7 @@ export default function Home() {
       </section>
 
       {/* Esprit colibri */}
-      <section className="max-w-[900px] mx-auto px-4 py-16 text-center">
+      <ScrollReveal as="section" className="max-w-[900px] mx-auto px-4 py-16 text-center">
         <p className="font-display text-2xl md:text-3xl font-semibold text-ink mb-3">« Je le sais, mais je fais ma part. »</p>
         <p className="text-gray-700 max-w-xl mx-auto">
           Chaque geste compte — pour la planète et pour votre facture. Un conseil gratuit qui fait économiser
@@ -134,17 +141,17 @@ export default function Home() {
         <Link to="/colibri" className="inline-flex items-center gap-1.5 text-primary font-semibold mt-4 hover:gap-2.5 transition-all">
           L'esprit colibri <ArrowRight className="w-4 h-4" />
         </Link>
-      </section>
+      </ScrollReveal>
 
       {/* Transparence */}
-      <section className="max-w-[900px] mx-auto px-4 pb-16">
+      <ScrollReveal as="section" className="max-w-[900px] mx-auto px-4 pb-16">
         <div className="border-l-4 border-primary bg-cream rounded-r-2xl p-6 text-gray-700">
           <strong className="text-ink">Transparence.</strong> HELIOS est gratuit pour vous, toujours. La plateforme
           se rémunère par une commission versée par les entreprises partenaires quand vous leur confiez des travaux.
-          Les conseils d'Helios sont strictement indépendants de ce mécanisme — c'est écrit dans sa charte, et c'est
-          non négociable.
+          Les conseils d'Helios sont strictement indépendants de ce mécanisme — c'est écrit dans{' '}
+          <Link to="/engagements" className="underline hover:text-primary">sa charte</Link>, et c'est non négociable.
         </div>
-      </section>
+      </ScrollReveal>
 
       {/* CTA final */}
       <section className="bg-ink text-white">
