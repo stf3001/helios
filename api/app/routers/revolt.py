@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.house import House
+from app.models.revolt import RevoltStudy
 from app.models.user import User
 from app.schemas.revolt import RevoltSimulateIn
 from app.services import enedis_client, geocoding, pvgis, revolt_engine
@@ -57,9 +58,33 @@ async def simulate(
         tarif_modes=tuple(payload.tarif_modes),
     )
 
-    return {
+    result = {
         "power_kwc": payload.power_kwc,
         "production_annuelle_kwh": round(sum(prod_h)),
         "consommation": {"source": conso["source"], "annuelle_kwh": conso["annual_kwh"], "avertissement": conso["avertissement"]},
         "lignes": comparaison["lignes"],
     }
+
+    # Conservée gratuitement dans l'espace client — et exploitable par Helios dans le chat.
+    study = RevoltStudy(
+        house_id=house.id,
+        params=payload.model_dump(),
+        result=result,
+    )
+    db.add(study)
+    await db.commit()
+    await db.refresh(study)
+
+    return {"study_id": study.id, **result}
+
+
+@router.get("/studies")
+async def list_studies(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Historique des simulations Revolt de l'utilisateur, les plus récentes d'abord."""
+    house = await db.scalar(select(House).where(House.user_id == user.id))
+    if house is None:
+        return []
+    rows = await db.scalars(
+        select(RevoltStudy).where(RevoltStudy.house_id == house.id).order_by(RevoltStudy.created_at.desc())
+    )
+    return [{"id": s.id, "params": s.params, "result": s.result, "created_at": s.created_at} for s in rows]

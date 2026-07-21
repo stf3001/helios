@@ -110,11 +110,26 @@ def build_pro_context(profile) -> dict:
     }
 
 
+def build_revolt_context(study) -> dict:
+    """Résumé de la dernière simulation Revolt (PV/batterie/tarifs) du foyer, pour le contexte
+    du chat — Helios peut s'appuyer sur un calcul déjà fait plutôt que de le réinventer."""
+    lignes = study.result.get("lignes", [])
+    meilleure = max(lignes, key=lambda l: l.get("economie_vs_actuel_eur", 0), default=None)
+    return {
+        "date_simulation": study.created_at.isoformat() if hasattr(study.created_at, "isoformat") else str(study.created_at),
+        "power_kwc": study.params.get("power_kwc"),
+        "batterie_kwh": study.params.get("battery_kwh"),
+        "mylight_simule": study.params.get("mylight", False),
+        "meilleur_scenario": meilleure,
+    }
+
+
 def build_prompt(
     question: str,
     results: list[dict],
     house_context: dict | None = None,
     pro_context: dict | None = None,
+    revolt_context: dict | None = None,
 ) -> str:
     if not results or best_score(results) < settings.rag_score_threshold:
         sources_block = (
@@ -145,10 +160,19 @@ def build_prompt(
         mode_block = "MODE PUBLIC (visiteur) — pas de fiche foyer associée."
         question_label = "Question du visiteur"
 
+    revolt_block = ""
+    if revolt_context is not None:
+        revolt_block = (
+            "\n\n---\n"
+            "DERNIÈRE SIMULATION REVOLT (PV/batterie/tarifs) DE CE FOYER (JSON) — un calcul déjà "
+            "fait, réutilise-le plutôt que de réinventer des chiffres :\n"
+            f"{json.dumps(revolt_context, ensure_ascii=False, default=str)}"
+        )
+
     return (
         f"{_constitution_text}\n\n"
         "---\n"
-        f"{mode_block}\n\n"
+        f"{mode_block}{revolt_block}\n\n"
         "---\n"
         "SOURCES DISPONIBLES (ne cite que celles fournies ici, jamais d'autres) :\n"
         f"{sources_block}\n\n"

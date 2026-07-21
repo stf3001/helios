@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Zap, Info } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Zap, Info, History } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const TARIF_LABEL: Record<string, string> = { fixe: 'Tarif fixe', soflex: 'SOBRY SoFlex', socap: 'SOBRY SoCap' }
@@ -23,10 +23,18 @@ interface Ligne {
 }
 
 interface RevoltResult {
+  study_id?: string
   power_kwc: number
   production_annuelle_kwh: number
   consommation: { source: string; annuelle_kwh: number; avertissement: string }
   lignes: Ligne[]
+}
+
+interface RevoltStudySummary {
+  id: string
+  params: { power_kwc: number; battery_kwh?: number; mylight?: boolean; tarif_modes: string[] }
+  result: RevoltResult
+  created_at: string
 }
 
 const eur = (n: number) => Math.round(n).toLocaleString('fr-FR') + ' €'
@@ -42,6 +50,12 @@ export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: numb
   const [result, setResult] = useState<RevoltResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [historique, setHistorique] = useState<RevoltStudySummary[]>([])
+
+  function chargerHistorique() {
+    authFetch('/api/revolt/studies').then((r) => (r.ok ? r.json() : [])).then(setHistorique).catch(() => {})
+  }
+  useEffect(chargerHistorique, [authFetch])
 
   function toggleTarif(mode: string) {
     setTarifModes((m) => (m.includes(mode) ? m.filter((x) => x !== mode) : [...m, mode]))
@@ -68,6 +82,7 @@ export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: numb
         throw new Error(body?.detail || 'Simulation impossible, réessayez.')
       }
       setResult(await res.json())
+      chargerHistorique() // conservée gratuitement dans l'espace client — on rafraîchit la liste
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -179,6 +194,38 @@ export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: numb
               </div>
             )
           })}
+        </div>
+      )}
+
+      {historique.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
+            <History className="w-4 h-4" /> Mes simulations précédentes
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            Conservées gratuitement dans votre espace — Helios s'appuie dessus dans vos conversations.
+          </p>
+          <ul className="space-y-1.5">
+            {historique.map((h) => {
+              const meilleure = h.result.lignes
+                .filter((l) => l.brique !== 'actuel_sans_pv')
+                .sort((a, b) => b.economie_vs_actuel_eur - a.economie_vs_actuel_eur)[0]
+              return (
+                <li key={h.id} className="text-xs text-gray-600 flex flex-wrap items-center gap-x-2">
+                  <span className="text-gray-400">{new Date(h.created_at).toLocaleDateString('fr-FR')}</span>
+                  <span>{h.params.power_kwc} kWc</span>
+                  {h.params.battery_kwh && <span>+ batterie {h.params.battery_kwh} kWh</span>}
+                  {h.params.mylight && <span>+ MyLight</span>}
+                  {meilleure && (
+                    <span className="text-leaf font-medium">
+                      meilleure option : {BRIQUE_LABEL[meilleure.brique] ?? meilleure.brique} ({TARIF_LABEL[meilleure.tarif]}) —
+                      {' '}{eur(meilleure.economie_vs_actuel_eur)}/an
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
     </div>

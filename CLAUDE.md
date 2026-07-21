@@ -63,6 +63,13 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   (0,13 €/kWh, config existante réutilisée telle quelle) contredit le fait déjà écrit dans
 >   `kb/solutions.md` sur la réforme 2026 (surplus revendu ~0,01 €/kWh) — à harmoniser un jour,
 >   n'affecte pas la correction du nouveau code mais rend le scénario "fixe" optimiste.
+> - **Persistance (22/07/2026, demande utilisateur)** : `revolt_studies` (migration 0014, `house_id`
+>   NOT NULL) — chaque simulation est conservée gratuitement dans l'espace client, sans action de
+>   sa part (`POST /revolt/simulate` sauvegarde automatiquement, `GET /revolt/studies` liste
+>   l'historique, affiché dans `RevoltPanel.tsx`). `rag.build_revolt_context()` résume la dernière
+>   simulation (meilleur scénario) et l'injecte dans le prompt du chat (`chat.py`, à la suite du
+>   contexte foyer) — Helios réutilise un calcul déjà fait plutôt que d'en inventer un nouveau.
+>   Testé : contexte correctement construit et injecté dans le prompt.
 > - **Bloqué en local au moment de coder** : le service Windows natif `postgresql-x64-17` a
 >   redémarré et intercepte le port 5432 à la place du conteneur Docker (déjà vécu et documenté
 >   plus haut) — je n'ai pas les droits admin pour l'arrêter depuis cet environnement. Logique

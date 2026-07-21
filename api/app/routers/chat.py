@@ -13,6 +13,7 @@ from app.core.ratelimit import limiter
 from app.models.conversation import Conversation, Message
 from app.models.house import House
 from app.models.pro import ProProfile
+from app.models.revolt import RevoltStudy
 from app.models.user import User
 from app.schemas.chat import ChatIn
 from app.services import ollama_client, rag, router_llm
@@ -49,6 +50,7 @@ async def send_message(
 
     house_context = None
     pro_context = None
+    revolt_context = None
     niveau = None
     if user:
         pro = await db.scalar(select(ProProfile).where(ProProfile.user_id == user.id))
@@ -58,6 +60,11 @@ async def send_message(
         if house is not None:
             house_context = rag.build_house_context(house)
             niveau = house_context["niveau"]
+            revolt_study = await db.scalar(
+                select(RevoltStudy).where(RevoltStudy.house_id == house.id).order_by(RevoltStudy.created_at.desc())
+            )
+            if revolt_study is not None:
+                revolt_context = rag.build_revolt_context(revolt_study)
 
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
@@ -101,7 +108,7 @@ async def send_message(
 
             return StreamingResponse(stream_instant(), media_type="application/x-ndjson")
 
-    prompt = rag.build_prompt(payload.content, results, house_context, pro_context)
+    prompt = rag.build_prompt(payload.content, results, house_context, pro_context, revolt_context)
 
     route, simplified, token_stream = await router_llm.generate_route(
         db,
