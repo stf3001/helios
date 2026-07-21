@@ -4,6 +4,8 @@ import {
   Eye, HeartHandshake, Sparkles, Feather, ArrowRight,
 } from 'lucide-react'
 import { useTitle } from '../hooks/useTitle'
+import ScrollReveal from '../components/ScrollReveal'
+import CtaFaisTaPart from '../components/CtaFaisTaPart'
 
 const CAPACITES = [
   { icon: ShieldCheck, titre: 'Bien isolée', desc: 'Elle garde sa chaleur l\'hiver, sa fraîcheur l\'été. Le socle de tout le reste.' },
@@ -61,14 +63,14 @@ export default function Vision() {
             Pas d'un coup, pas forcément tout — mais dans le bon ordre, à votre rythme et votre budget.
           </p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {CAPACITES.map((c) => (
-              <div key={c.titre} className="bg-white rounded-2xl border border-gray-200 p-5">
+            {CAPACITES.map((c, i) => (
+              <ScrollReveal key={c.titre} delay={i * 60} className="bg-white rounded-2xl border border-gray-200 p-5">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
                   <c.icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-display font-semibold text-ink">{c.titre}</h3>
                 <p className="text-sm text-gray-600 mt-1">{c.desc}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -96,8 +98,8 @@ export default function Vision() {
         <div className="max-w-[1000px] mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Nos valeurs, non négociables</h2>
           <div className="grid gap-5 sm:grid-cols-2">
-            {VALEURS.map((v) => (
-              <div key={v.titre} className="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4">
+            {VALEURS.map((v, i) => (
+              <ScrollReveal key={v.titre} delay={i * 60} className="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4">
                 <div className="shrink-0 w-11 h-11 rounded-xl bg-leaf/10 text-leaf flex items-center justify-center">
                   <v.icon className="w-6 h-6" />
                 </div>
@@ -105,14 +107,14 @@ export default function Vision() {
                   <h3 className="font-display font-semibold text-lg text-ink">{v.titre}</h3>
                   <p className="text-sm text-gray-600 mt-1">{v.desc}</p>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="max-w-[820px] mx-auto px-4 py-16 text-center">
+      <ScrollReveal as="section" className="max-w-[820px] mx-auto px-4 py-16 text-center">
         <p className="font-display text-2xl md:text-3xl font-semibold text-ink mb-3">« Je le sais, mais je fais ma part. »</p>
         <p className="text-gray-700 max-w-xl mx-auto mb-6">
           La maison de demain se construit un geste après l'autre. Commençons par le vôtre.
@@ -122,8 +124,11 @@ export default function Vision() {
           <Link to="/colibri" className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 text-ink font-semibold px-6 py-3 hover:bg-cream">
             L'esprit colibri <ArrowRight className="w-4 h-4" />
           </Link>
+          <Link to="/qui-sommes-nous" className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 text-ink font-semibold px-6 py-3 hover:bg-cream">
+            Qui sommes-nous <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
-      </section>
+      </ScrollReveal>
     </>
   )
 }

@@ -29,6 +29,7 @@ import PotentielHydrique from './pages/PotentielHydrique'
 import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
+import QuiSommesNous from './pages/QuiSommesNous'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/vision" element={<Vision />} />
           <Route path="/colibri" element={<Colibri />} />
+          <Route path="/qui-sommes-nous" element={<QuiSommesNous />} />
           <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/helios" element={<HeliosIA />} />

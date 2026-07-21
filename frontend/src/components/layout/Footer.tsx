@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 
 const ressources = [
+  { to: '/qui-sommes-nous', label: 'Qui sommes-nous' },
+  { to: '/vision', label: 'Notre vision' },
+  { to: '/colibri', label: "L'esprit colibri" },
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
   { to: '/engagements', label: 'Nos engagements' },
   { to: '/eau', label: "L'eau atmosphérique" },
