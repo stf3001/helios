@@ -78,6 +78,27 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   l'utilisateur** : `Stop-Service postgresql-x64-17` (ou `services.msc`) puis test navigateur
 >   complet du panneau Revolt sur `/simulateur-solaire`.
 
+> **Montée en puissance des connaissances (22/07/2026, Phase 1 du plan)** — après audit complet du
+> fichier FAQ source (141 fiches, 21 catégories déjà bien couvertes : isolation, chauffage, PV,
+> stockage, aides, DPE, copropriété, devis/chantier...), ciblage des VRAIS trous plutôt qu'une
+> réécriture de ce qui existait déjà :
+> - `kb/complements.md` (10 fiches) : aides locales (structurel, pas de montant national inventé),
+>   bonus écologique/prime à la conversion VE, MaPrimeAdapt' (distinction), biomasse collective,
+>   DPE et vente/notaire, résidence secondaire, auto-rénovation et assurance, PAC hybride,
+>   assurance habitation après travaux, location meublée.
+> - `kb/cas_pratiques.md` (4 fiches) : **nouveau type de contenu**, narratif plutôt que Q/R sec —
+>   4 profils-types (maison 70s tout-élec budget serré, copro chauffage collectif gaz, jeune actif
+>   RT2012+solaire, retraités passoire F) qui illustrent la méthode sobriété→isolation→systèmes→
+>   production appliquée à un cas concret, sans jamais promettre un chiffre pour LE lecteur.
+> - `frontend/src/data/glossaire.ts` : 14 → 40 termes (repris de la KB existante : TURPE, accise,
+>   COP, DTG, PPT, ABF, PLU, TRV, garanties décennale/parfait achèvement, V2G/V2H, bonus
+>   écologique...).
+> - Sources branchées au crawler + FAQ publique + réponses instantanées. Ingéré : **155 fiches
+>   au total** (141 + 14). Testé réellement : question VE → réponse instantanée (3-4s) citant
+>   correctement `complements`.
+> - Reste du plan (non fait) : Phase 3 (guides longs 7→15-20), Phase 4 (veille active sur les
+>   fiches "aides"/"réglementation" avec recherche web ciblée à chaque péremption détectée).
+
 > **Espace client étoffé (22/07/2026, inspiré du dashboard Hydrolia)** :
 > - **CTA « Parler à Helios » proéminent** en tête d'espace (bandeau ink/primary), rappelant qu'Helios connaît déjà la fiche et les simulations — pas de re-saisie.
 > - **Section « Mes simulateurs »** : solaire (Revolt), potentiel hydrique, et **Éolia en tuile « bientôt disponible »** (grisée, non cliquable — honnête, rien n'est promis avant d'exister).
