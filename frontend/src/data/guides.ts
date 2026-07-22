@@ -182,6 +182,190 @@ export const guides: Guide[] = [
       },
     ],
   },
+  {
+    slug: 'locataire-reduire-factures',
+    titre: 'Locataire : quels leviers pour réduire ses factures ?',
+    categorie: 'Locataire',
+    chapo: 'Pas de travaux lourds à votre main, mais des leviers réels — et un rapport de force qui a changé avec la réglementation.',
+    sections: [
+      {
+        titre: 'Ce qui dépend entièrement de vous',
+        contenu:
+          'Tous les gestes de sobriété restent à votre portée sans demander la permission à personne : régler le thermostat, ne pas surchauffer, poser des mousseurs sur les robinets, calfeutrer provisoirement une fenêtre qui coulisse mal. Ce sont les mêmes gestes qui font gagner 10 à 15 % sur le chauffage dans n\'importe quel logement, propriétaire ou non.',
+      },
+      {
+        titre: 'Ce que le propriétaire ne peut plus ignorer',
+        contenu:
+          'Le rapport de force a changé : un logement classé G ne peut plus être mis en location depuis 2025, les F suivront en 2028, les E en 2034. Si votre logement est une passoire thermique, votre loyer est déjà gelé — un point à connaître si votre bailleur en évoque une hausse. Signaler par écrit (lettre recommandée) un logement énergivore n\'est pas un caprice : c\'est rappeler une obligation légale qui pèse de plus en plus sur le propriétaire, pas sur vous.',
+      },
+      {
+        titre: 'Meublé ou nu, même règle',
+        contenu:
+          'Le DPE et le calendrier d\'interdiction des passoires thermiques s\'appliquent de la même façon, que la location soit meublée ou nue — c\'est le logement qui est concerné, pas le type de bail. Ne vous laissez pas dire le contraire. Pour de petits travaux à vos frais (comme une meilleure isolation d\'un tuyau ou un rideau thermique), aucune autorisation n\'est nécessaire tant que vous ne touchez pas à la structure du logement.',
+      },
+    ],
+  },
+  {
+    slug: 'copropriete-travaux-collectifs',
+    titre: 'Copropriété : lancer des travaux énergétiques collectifs',
+    categorie: 'Copropriété',
+    chapo: 'ITE, chaudière collective, toiture : ces travaux se décident à plusieurs. Voici comment enclencher le mouvement.',
+    sections: [
+      {
+        titre: 'Individuel ou collectif : la première question',
+        contenu:
+          'Vos travaux privatifs (chauffage individuel, parfois les fenêtres selon le règlement) ne nécessitent généralement pas de vote. Mais tout ce qui touche l\'aspect extérieur ou les parties communes — isolation par l\'extérieur, panneaux solaires en toiture commune, chaudière collective — doit passer en assemblée générale. Vérifiez d\'abord le règlement de copropriété : il précise ce qui relève de votre lot et ce qui est commun.',
+      },
+      {
+        titre: 'DTG et plan pluriannuel : les bons outils',
+        contenu:
+          'Le diagnostic technique global (DTG) est un état des lieux complet de l\'immeuble — structure, équipements, performance énergétique. Il sert souvent de base à un plan pluriannuel de travaux (PPT), obligatoire pour certaines copropriétés selon leur taille, qui budgétise et planifie les rénovations sur plusieurs années. Faire réaliser un DTG, même quand ce n\'est pas obligatoire, est le meilleur point de départ pour convaincre en assemblée générale : on discute sur des chiffres, pas des impressions.',
+      },
+      {
+        titre: 'Convaincre en assemblée générale',
+        contenu:
+          'MaPrimeRénov\' Copropriété existe spécifiquement pour financer les travaux collectifs — un argument à mettre en avant, car il change la perception du coût pour des copropriétaires souvent réticents. Un chauffage collectif au gaz vieillissant, un immeuble mal isolé : ce sont des arguments concrets (confort, charges, valeur des lots) qui parlent davantage qu\'un discours écologique général. Patience nécessaire : ce chantier se joue sur plusieurs assemblées, pas une seule.',
+      },
+    ],
+  },
+  {
+    slug: 'comprendre-son-dpe',
+    titre: 'Comprendre son DPE, ligne par ligne',
+    categorie: 'DPE',
+    chapo: 'De A à G, ce que dit vraiment l\'étiquette — et ce qu\'elle change concrètement pour vous.',
+    sections: [
+      {
+        titre: 'Ce que mesure le DPE',
+        contenu:
+          'Le Diagnostic de Performance Énergétique classe un logement de A à G selon sa consommation d\'énergie et ses émissions. Il est opposable depuis 2021 (vous pouvez vous retourner contre un DPE erroné), obligatoire pour vendre ou louer, et valable 10 ans. Sa fiabilité s\'est améliorée avec la réforme, mais des écarts subsistent d\'un diagnostiqueur à l\'autre — Helios peut vous aider à interpréter le vôtre et à identifier les travaux qui font vraiment gagner des classes.',
+      },
+      {
+        titre: 'F ou G : ce qui change dès maintenant',
+        contenu:
+          'Un logement classé G ne peut plus être mis en location depuis janvier 2025 ; les F suivront en janvier 2028, les E en janvier 2034. Les loyers des F et G sont déjà gelés. Pour la vente, un audit énergétique réglementaire (plus poussé qu\'un simple DPE) est obligatoire pour les maisons individuelles classées F ou G, et désormais E aussi. Ce DPE pèse également sur le prix : plusieurs études notariales montrent une décote pour les logements mal classés, et son absence dans une annonce ou une vente peut engager la responsabilité du vendeur.',
+      },
+      {
+        titre: 'Faire progresser son étiquette',
+        contenu:
+          'Les postes qui font gagner le plus de classes, dans l\'ordre où Helios les recommande : isolation (combles en priorité, puis murs et fenêtres), puis système de chauffage adapté à un logement désormais bien isolé. Un audit énergétique réglementaire vous donnera une feuille de route chiffrée par un professionnel certifié — Helios ne remplace pas ce document mais vous aide à le préparer et à comprendre ses préconisations.',
+      },
+    ],
+  },
+  {
+    slug: 'devis-renovation-pieges',
+    titre: 'Devis de rénovation : ce qu\'il ne faut jamais accepter',
+    categorie: 'Chantier',
+    chapo: 'Les mentions obligatoires, l\'acompte raisonnable, et les signaux qui doivent vous faire fuir.',
+    sections: [
+      {
+        titre: 'Ce qu\'un devis doit obligatoirement contenir',
+        contenu:
+          'Identité et SIRET de l\'entreprise, assurance décennale avec les coordonnées de l\'assureur, détail des prestations et quantités (pas juste un prix global), prix HT et TTC avec le taux de TVA applicable, durée de validité de l\'offre, et la mention de la qualification RGE si vos aides en dépendent. Sans décennale vérifiable, ne signez pas — c\'est la garantie qui vous protège pendant 10 ans sur le gros œuvre.',
+      },
+      {
+        titre: 'Comparer à périmètre égal',
+        contenu:
+          'Le devis le moins cher n\'est pas toujours comparable à un autre : vérifiez la marque et le modèle du matériel, les performances annoncées (résistance thermique R, COP d\'une PAC, coefficient Uw d\'une fenêtre), la surface réellement traitée, la préparation et les finitions incluses, et les garanties. Demandez systématiquement 3 devis minimum et exigez les fiches techniques — un professionnel sérieux n\'a aucune raison de les refuser.',
+      },
+      {
+        titre: 'Acompte, signature, et malfaçons',
+        contenu:
+          'Un acompte raisonnable se situe entre 10 et 30 % à la commande, jamais plus de 50 % avant le début effectif du chantier. Si votre plan de financement dépend d\'une aide comme MaPrimeRénov\', attendez l\'accord écrit avant de signer. En cas de malfaçon : réception avec réserves écrites, puis garantie de parfait achèvement (1 an, tout défaut signalé), biennale (2 ans, équipements) et décennale (10 ans, gros ouvrage). Le démarchage téléphonique pour la rénovation énergétique est interdit — une offre à « 1 € », une pression à signer le jour même ou un crédit intégré sans y avoir pensé sont des signaux d\'alarme.',
+      },
+    ],
+  },
+  {
+    slug: 'apres-le-preaudit',
+    titre: 'Après un pré-audit Helios : les premières actions concrètes',
+    categorie: 'Rénovation',
+    chapo: 'Le pré-audit vous donne une feuille de route. Voici comment la transformer en premières décisions, sans se disperser.',
+    sections: [
+      {
+        titre: 'Relire dans l\'ordre, pas par enthousiasme',
+        contenu:
+          'Le pré-audit priorise vos postes de travaux selon la hiérarchie sobriété → isolation → systèmes → production — pas selon ce qui vous fait le plus envie. Il est tentant de vouloir commencer par le solaire ou une nouvelle PAC parce que c\'est plus visible et plus gratifiant : résistez, ce sont presque toujours les postes les moins rentables à traiter en premier tant que l\'enveloppe n\'est pas traitée.',
+      },
+      {
+        titre: 'Les gestes gratuits, cette semaine',
+        contenu:
+          'Avant tout devis, appliquez ce qui ne coûte rien et se fait en un après-midi : réglages de thermostat, programmation des plages d\'absence, purge des radiateurs, vérification des joints de fenêtres. Ce sont des économies immédiates qui financeront une partie de vos travaux futurs, et qui vous donnent une vraie mesure de votre consommation « plancher » avant travaux.',
+      },
+      {
+        titre: 'Le premier devis à demander',
+        contenu:
+          'Sur la base du poste de déperdition le plus important identifié par votre pré-audit (souvent la toiture), demandez 3 devis à des artisans RGE avant toute autre démarche. C\'est ce premier chantier qui conditionne le dimensionnement de tout le reste : un chauffage ou une installation solaire dimensionnés après l\'isolation seront plus petits, moins chers et mieux adaptés. Utilisez ensuite le chat Helios pour faire relire vos devis avant de signer.',
+      },
+    ],
+  },
+  {
+    slug: 'produire-son-eau',
+    titre: 'Produire son eau chez soi : le guide de l\'eau atmosphérique',
+    categorie: 'Eau',
+    chapo: 'Un générateur qui transforme l\'humidité de l\'air en eau potable. Ce que ça change, et pour qui c\'est pertinent.',
+    sections: [
+      {
+        titre: 'Le principe, en quatre étapes',
+        contenu:
+          'Un générateur d\'eau atmosphérique capte l\'humidité de l\'air ambiant, la condense en eau (le même principe physique qu\'un déshumidificateur), filtre et purifie cette eau, puis en vérifie la qualité. Plus l\'air est chaud et humide, plus la production est élevée — la quantité produite dépend donc fortement de votre climat local, pas seulement du modèle choisi.',
+      },
+      {
+        titre: 'Boisson et cuisine, pas la douche',
+        contenu:
+          'Soyons francs : l\'eau du réseau reste imbattable en prix pour la douche, les toilettes ou le lave-linge. L\'eau atmosphérique se positionne sur l\'eau de boisson et de cuisine, là où elle remplace avantageusement l\'eau en bouteille — moins de déchets plastiques, pas de transport, une eau dont vous pouvez vérifier vous-même la potabilité grâce au kit de certification fourni avec l\'appareil.',
+      },
+      {
+        titre: 'Coupler avec le solaire',
+        contenu:
+          'Produire de l\'eau à partir de l\'air consomme de l\'électricité — c\'est le principal poste de coût en fonctionnement. La solution prend tout son sens couplée à une production solaire : l\'appareil tourne en journée quand vos panneaux produisent, et votre surplus solaire devient de l\'eau potable plutôt que d\'être revendu pour presque rien. Utilisez le simulateur « Mon potentiel hydrique » d\'Helios pour estimer la production réaliste selon votre ville avant toute décision.',
+      },
+    ],
+  },
+  {
+    slug: 'vehicule-electrique-guide',
+    titre: 'Véhicule électrique : recharge et aides, le guide complet',
+    categorie: 'Mobilité',
+    chapo: 'Borne à domicile, recharge solaire, aides à l\'achat : les questions qui reviennent le plus.',
+    sections: [
+      {
+        titre: 'Installer une borne chez soi',
+        contenu:
+          'Une borne de recharge à domicile (wallbox) sécurise et accélère la recharge par rapport à une simple prise domestique. Le budget dépend de la puissance choisie et de la complexité de l\'installation électrique existante — un point que votre électricien doit valider en amont, notamment si votre puissance souscrite est déjà proche de sa limite.',
+      },
+      {
+        titre: 'Recharger avec ses panneaux solaires',
+        contenu:
+          'C\'est l\'un des meilleurs usages du solaire : recharger le véhicule en journée avec sa propre production augmente fortement l\'autoconsommation et réduit le coût au kilomètre, bien davantage qu\'en revendant ce même surplus au réseau. Avec un pilotage intelligent (recharge programmée sur les heures de production) ou une batterie, l\'effet est encore meilleur. La maison devient, à son échelle, une petite station de recharge alimentée par le soleil.',
+      },
+      {
+        titre: 'Les aides à l\'achat, à vérifier au cas par cas',
+        contenu:
+          'Deux dispositifs principaux existent, cumulables sous conditions : le bonus écologique (aide directe à l\'achat d\'un véhicule électrique neuf, sous plafond de prix et de revenus) et la prime à la conversion (versée en échange de la mise au rebut d\'un vieux véhicule polluant). Les montants et conditions changent chaque année et selon votre revenu fiscal de référence — vérifiez toujours sur service-public.fr avant d\'acheter, sans vous fier au chiffre annoncé par le vendeur.',
+      },
+    ],
+  },
+  {
+    slug: 'comprendre-revolt',
+    titre: 'Simulateur Revolt : bien interpréter vos résultats',
+    categorie: 'Énergie',
+    chapo: 'Panneaux, batterie physique ou virtuelle, tarif fixe ou dynamique : comment lire un comparatif Revolt sans se tromper.',
+    sections: [
+      {
+        titre: 'À consommation réelle égale',
+        contenu:
+          'Contrairement au simulateur solaire classique qui raisonne en moyennes annuelles, Revolt simule heure par heure sur une année complète, à partir d\'une courbe de consommation (aujourd\'hui simulée selon votre profil, demain issue d\'Enedis avec votre consentement). C\'est ce qui permet de comparer plusieurs scénarios sur une base identique : ajouter des panneaux seuls, y ajouter une batterie, ou changer de tarif — sans que la consommation elle-même ne varie d\'un scénario à l\'autre.',
+      },
+      {
+        titre: 'Batterie physique ou virtuelle : deux logiques différentes',
+        contenu:
+          'Une batterie physique augmente votre autoconsommation immédiatement mais représente un investissement matériel qui prend du temps à s\'amortir. Le stockage virtuel (comme MyLight) évite cet investissement — vous « mettez de côté » votre surplus solaire pour le récupérer plus tard, moyennant un abonnement et des frais de restitution — mais impose souvent de changer de fournisseur d\'électricité. Aucune des deux n\'est meilleure dans l\'absolu : Revolt compare les deux sur VOTRE profil.',
+      },
+      {
+        titre: 'SoFlex, SoCap ou tarif fixe',
+        contenu:
+          'Un tarif dynamique comme SoFlex suit le marché heure par heure, avec des creux très bon marché (parfois négatifs) aux heures de forte production solaire nationale, mais des pointes plus chères en hiver. SoCap suit la même logique en version plafonnée, moins risquée mais moins généreuse aux heures creuses. Ces grilles restent des grilles de test à confirmer auprès de SOBRY — utilisez Revolt pour comprendre l\'ordre de grandeur de l\'écart avec votre tarif actuel, pas comme un devis final.',
+      },
+    ],
+  },
 ]
 
 export const guideCategories = Array.from(new Set(guides.map((g) => g.categorie)))

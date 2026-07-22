@@ -96,8 +96,13 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > - Sources branchées au crawler + FAQ publique + réponses instantanées. Ingéré : **155 fiches
 >   au total** (141 + 14). Testé réellement : question VE → réponse instantanée (3-4s) citant
 >   correctement `complements`.
-> - Reste du plan (non fait) : Phase 3 (guides longs 7→15-20), Phase 4 (veille active sur les
->   fiches "aides"/"réglementation" avec recherche web ciblée à chaque péremption détectée).
+> - **Phase 3 faite dans la foulée** : `data/guides.ts` 6 → **15 guides** (9 nouveaux : locataire,
+>   copropriété, comprendre son DPE, devis/pièges, après le pré-audit, produire son eau, véhicule
+>   électrique, comprendre Revolt) — mêmes faits que la KB, aucun chiffre inventé. Nouvelles
+>   catégories : Locataire, Copropriété, DPE, Chantier, Eau, Mobilité. Vérifié en navigateur
+>   (liste + un guide détaillé, rendu propre). Build front OK.
+> - Reste du plan (non fait) : Phase 4 (veille active sur les fiches "aides"/"réglementation"
+>   avec recherche web ciblée à chaque péremption détectée).
 
 > **Espace client étoffé (22/07/2026, inspiré du dashboard Hydrolia)** :
 > - **CTA « Parler à Helios » proéminent** en tête d'espace (bandeau ink/primary), rappelant qu'Helios connaît déjà la fiche et les simulations — pas de re-saisie.
