@@ -78,6 +78,22 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   l'utilisateur** : `Stop-Service postgresql-x64-17` (ou `services.msc`) puis test navigateur
 >   complet du panneau Revolt sur `/simulateur-solaire`.
 
+> **Audit esthétique (22/07/2026) — 2 correctifs demandés par l'utilisateur** :
+> - **#1 Contraste CTA** : `tailwind.config.js` `primary` #E8871E → **#B85A08**. L'ancien couple
+>   texte blanc/fond primary donnait un ratio **2,65:1** (échoue WCAG AA, seuil 4,5). Vérifié
+>   dans le navigateur sur un vrai bouton du DOM (pas en théorie) : **4,66:1**, conforme — et
+>   par symétrie du calcul de contraste, corrige aussi `text-primary` sur fond blanc (liens,
+>   icônes). Rendu visuel toujours chaleureux (dégradé hero inchangé, juste un cran plus profond).
+> - **#2 Illustrations sur les pages sans aucune image** (constat de l'audit : 0 image hors logo
+>   sur Vision/Colibri) : hero à deux colonnes (texte + image) sur Vision et Qui sommes-nous,
+>   réutilisant les assets de marque existants (`helios-arms.png`, `helios-thumbsup.png` — `helios-
+>   avatar.png` écarté après vérification visuelle : texte parasite visible dans l'image, brouillon
+>   inutilisable). Pour Colibri (aucun asset ne convenait) : illustration SVG sur-mesure d'un
+>   colibri, palette de marque, sur un badge circulaire (nécessaire pour que la queue bleu marine
+>   ressorte sur le dégradé orange — vérifié en navigateur, corrigé après un premier essai où les
+>   couleurs terra/jaune se fondaient dans le fond).
+> - Build front OK. Vérifié visuellement (captures) sur les 3 pages après correctifs.
+
 > **Montée en puissance des connaissances (22/07/2026, Phase 1 du plan)** — après audit complet du
 > fichier FAQ source (141 fiches, 21 catégories déjà bien couvertes : isolation, chauffage, PV,
 > stockage, aides, DPE, copropriété, devis/chantier...), ciblage des VRAIS trous plutôt qu'une

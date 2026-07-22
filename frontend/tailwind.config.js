@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#E8871E',   // orange solaire — couleur dominante
+        primary: '#B85A08',   // orange solaire assombri — contraste AA vérifié (texte blanc dessus, et lui-même sur blanc)
         sun: '#F5B700',        // jaune soleil (accent chaud, logo)
         terra: '#C05621',      // orange terre
         ink: '#1D3F63',        // bleu marine (logo) — titres, confiance

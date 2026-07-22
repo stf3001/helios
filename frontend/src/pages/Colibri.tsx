@@ -1,8 +1,27 @@
 import { Thermometer, Home, Sun, Sliders, Droplet } from 'lucide-react'
-import Hero from '../components/Hero'
 import ScrollReveal from '../components/ScrollReveal'
 import CtaFaisTaPart from '../components/CtaFaisTaPart'
 import { useTitle } from '../hooks/useTitle'
+
+/** Illustration sur mesure (aucune photo de marque ne convenait au colibri) —
+    palette de marque, clin d'œil à la légende : le colibri porte sa goutte d'eau. */
+function ColibriIllustration() {
+  return (
+    <div className="h-60 w-60 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center drop-shadow-xl">
+      <svg viewBox="0 0 220 220" className="h-44 w-44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M120 90 C 160 60, 190 70, 195 40 C 175 55, 150 60, 130 85 Z" fill="#FDF8F3" opacity="0.95" />
+        <path d="M95 150 C 82 175, 65 188, 48 192 C 60 174, 70 160, 82 145 Z" fill="#2E86C1" />
+        <path d="M105 155 C 98 183, 90 202, 82 212 C 95 194, 103 176, 113 155 Z" fill="#1D3F63" opacity="0.9" />
+        <path d="M95 60 C 130 65, 140 110, 115 150 C 100 170, 75 165, 68 140 C 55 105, 65 65, 95 60 Z" fill="#57A64A" />
+        <ellipse cx="88" cy="95" rx="12" ry="18" fill="#F5B700" />
+        <circle cx="85" cy="58" r="16" fill="#57A64A" />
+        <path d="M72 52 L 20 40 L 74 60 Z" fill="#1D3F63" />
+        <circle cx="80" cy="53" r="3" fill="#FDF8F3" />
+        <path d="M35 30 C 38 36, 42 40, 35 46 C 28 40, 32 36, 35 30 Z" fill="#2E86C1" />
+      </svg>
+    </div>
+  )
+}
 
 // Chiffres par foyer : repris tels quels de la base de connaissances d'Helios
 // (mêmes fiches que la FAQ/le chat) — jamais un total agrégé inventé (doc 03).
@@ -33,7 +52,17 @@ export default function Colibri() {
   useTitle("L'esprit colibri")
   return (
     <>
-      <Hero title="L'esprit colibri" subtitle="Chaque geste compte pour construire un avenir durable." />
+      <section className="relative overflow-hidden bg-gradient-to-br from-sun via-primary to-terra text-white">
+        <div className="max-w-[1100px] mx-auto px-4 py-16 md:py-20 grid md:grid-cols-[1.3fr_1fr] gap-8 items-center">
+          <div className="text-center md:text-left">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-4">L'esprit colibri</h1>
+            <p className="text-xl text-white/90">Chaque geste compte pour construire un avenir durable.</p>
+          </div>
+          <div className="hidden md:flex justify-center">
+            <ColibriIllustration />
+          </div>
+        </div>
+      </section>
 
       {/* La légende */}
       <section className="max-w-[800px] mx-auto px-4 py-16">

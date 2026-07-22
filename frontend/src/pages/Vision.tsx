@@ -30,13 +30,18 @@ export default function Vision() {
   return (
     <>
       {/* Manifeste */}
-      <section className="bg-gradient-to-br from-sun via-primary to-terra text-white">
-        <div className="max-w-[900px] mx-auto px-4 py-20 text-center">
-          <p className="uppercase tracking-widest text-white/80 text-sm mb-4">Notre vision</p>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight">
-            La maison de demain existe déjà. <br className="hidden md:block" />
-            Aidons chaque foyer à la bâtir.
-          </h1>
+      <section className="relative overflow-hidden bg-gradient-to-br from-sun via-primary to-terra text-white">
+        <div className="max-w-[1100px] mx-auto px-4 py-16 md:py-20 grid md:grid-cols-[1.3fr_1fr] gap-8 items-center">
+          <div className="text-center md:text-left">
+            <p className="uppercase tracking-widest text-white/80 text-sm mb-4">Notre vision</p>
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight">
+              La maison de demain existe déjà. <br className="hidden md:block" />
+              Aidons chaque foyer à la bâtir.
+            </h1>
+          </div>
+          <div className="hidden md:flex justify-center">
+            <img src="/brand/helios-arms.png" alt="Helios accueille avec bienveillance" className="h-56 drop-shadow-xl" />
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Bot, UserCheck, FileCheck2, Sprout } from 'lucide-react'
-import Hero from '../components/Hero'
 import ScrollReveal from '../components/ScrollReveal'
 import CtaFaisTaPart from '../components/CtaFaisTaPart'
 import { useTitle } from '../hooks/useTitle'
@@ -9,7 +8,18 @@ export default function QuiSommesNous() {
   useTitle('Qui sommes-nous')
   return (
     <>
-      <Hero title="Qui sommes-nous" subtitle="Une conviction simple, mise au service de chaque foyer." />
+      {/* Hero avec l'avatar Helios — une identité, pas qu'un dégradé */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-sun via-primary to-terra text-white">
+        <div className="max-w-[1100px] mx-auto px-4 py-16 md:py-20 grid md:grid-cols-[1.3fr_1fr] gap-8 items-center">
+          <div className="text-center md:text-left">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-4">Qui sommes-nous</h1>
+            <p className="text-xl text-white/90">Une conviction simple, mise au service de chaque foyer.</p>
+          </div>
+          <div className="hidden md:flex justify-center">
+            <img src="/brand/helios-thumbsup.png" alt="Helios" className="h-56 drop-shadow-xl" />
+          </div>
+        </div>
+      </section>
 
       {/* Origine / mission */}
       <section className="max-w-[820px] mx-auto px-4 py-16 space-y-5 text-lg text-gray-700">
