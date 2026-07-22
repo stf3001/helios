@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Building2 } from 'lucide-react'
+import PasswordInput from '../components/PasswordInput'
 
 interface PLead {
   id: string
@@ -95,7 +96,7 @@ export default function PartnerPortal() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Mot de passe</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+            <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           </div>
           <button type="submit" className="w-full rounded-xl bg-primary text-white font-semibold px-4 py-2.5 hover:opacity-90">

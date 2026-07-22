@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function Register() {
   const { register } = useAuth()
@@ -52,8 +53,8 @@ export default function Register() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="password">Mot de passe</label>
-          <input
-            id="password" type="password" required minLength={8} autoComplete="new-password" value={password}
+          <PasswordInput
+            id="password" required minLength={8} autoComplete="new-password" value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
