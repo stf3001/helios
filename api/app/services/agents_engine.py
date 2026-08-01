@@ -39,6 +39,10 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="revolt", kind="faq_markdown", location="helios/kb/revolt.md"),
     SourceSpec(name="complements", kind="faq_markdown", location="helios/kb/complements.md"),
     SourceSpec(name="cas_pratiques", kind="faq_markdown", location="helios/kb/cas_pratiques.md"),
+    SourceSpec(name="baremes_aides", kind="faq_markdown", location="helios/kb/baremes_aides.md"),
+    SourceSpec(name="confort_ete", kind="faq_markdown", location="helios/kb/confort_ete.md"),
+    SourceSpec(name="reglementation", kind="faq_markdown", location="helios/kb/reglementation.md"),
+    SourceSpec(name="voss", kind="faq_markdown", location="helios/kb/voss.md"),
 ]
 
 _FAQ_RE = re.compile(

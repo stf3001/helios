@@ -1,11 +1,28 @@
 import Hero from '../components/Hero'
 import Card from '../components/Card'
 import HierarchieColibri from '../components/HierarchieColibri'
+import MaisonDemain from '../components/MaisonDemain'
 
 export default function CommentCaMarche() {
   return (
     <>
       <Hero title="Comment ça marche" subtitle="Trois étapes, à votre rythme." />
+
+      <section className="max-w-[1100px] mx-auto px-4 pt-12">
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-ink text-center">La maison de demain</h2>
+        <p className="text-gray-600 text-center mt-2 mb-6 max-w-[640px] mx-auto">
+          Intelligente, sobre, connectée : l'énergie y circule au bon moment, entre production,
+          stockage et usages. Helios vous aide à avancer vers cette maison, un geste à la fois.
+        </p>
+        <MaisonDemain />
+        <p className="text-xs text-gray-500 mt-3 text-center max-w-[720px] mx-auto">
+          Illustration de la vision d'ensemble. Certains éléments sont accessibles dès aujourd'hui
+          (solaire, stockage, pilotage, eau atmosphérique via nos partenaires) ; d'autres, comme
+          l'éolien domestique, arriveront progressivement. Helios ne vous propose jamais un
+          équipement qui ne servirait pas réellement votre foyer.
+        </p>
+      </section>
+
       <section className="max-w-[1100px] mx-auto px-4 py-12 grid gap-6 md:grid-cols-3">
         <Card title="1. Décrivez votre maison">
           Créez votre espace gratuit et renseignez votre logement : année, surface, chauffage, isolation…

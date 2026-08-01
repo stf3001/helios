@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     llm_api_model: str = "claude-haiku-4-5-20251001"
     llm_api_budget_daily_eur: float = 5.0
     llm_api_budget_monthly_eur: float = 100.0
+    llm_api_daily_requests_per_user: int = 3  # quota "conseils approfondis" par client et par jour
     llm_price_per_1k_tokens_eur: float = 0.005  # estimation grossière (blended in/out) — à calibrer
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:3b"

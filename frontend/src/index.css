@@ -16,3 +16,29 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
+
+/* Dégradé « lever de soleil » du hero — tons chauds de la marque (sun/terra/primary) qui
+   glissent très lentement. CSS pur, aucun JS. Le point le plus foncé (primary #B85A08, contraste
+   AA vérifié avec du texte blanc) reste dominant côté texte ; le jaune n'apparaît qu'en accent
+   diffus. Animation désactivée si l'utilisateur préfère moins de mouvement (accessibilité). */
+.hero-sunrise {
+  background-color: #B85A08;
+  background-image: linear-gradient(120deg, #B85A08 0%, #C05621 38%, #A64D07 62%, #B85A08 100%);
+  background-size: 200% 200%;
+  animation: sunrise-shift 18s ease-in-out infinite;
+}
+@keyframes sunrise-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-sunrise { animation: none; }
+}
+
+/* De nombreux champs du site utilisent text-sm (14px, spécificité de classe > sélecteur de
+   type — d'où le !important, seul moyen fiable de gagner sur toutes les classes Tailwind
+   existantes sans éditer ~15 fichiers un par un). Sous 16px, iOS Safari zoome automatiquement
+   au focus d'un champ — expérience dégradée sur mobile. */
+input, select, textarea {
+  font-size: 16px !important;
+}

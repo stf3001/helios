@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { guides } from '../data/guides'
+import { getCategoryIcon } from '../data/categoryIcons'
 import { useTitle } from '../hooks/useTitle'
 
 export default function GuideDetail() {
@@ -17,12 +18,17 @@ export default function GuideDetail() {
     )
   }
 
+  const { Icon, color } = getCategoryIcon(guide.categorie)
+
   return (
     <article className="max-w-[720px] mx-auto px-4 py-12">
       <Link to="/guides" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-6">
         <ArrowLeft className="w-4 h-4" /> Tous les guides
       </Link>
-      <div className="text-xs text-primary font-semibold uppercase mb-2">{guide.categorie}</div>
+      <div className={'inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gray-50 mb-4 ' + color}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div className={'text-xs font-semibold uppercase mb-2 ' + color}>{guide.categorie}</div>
       <h1 className="text-3xl font-bold leading-tight mb-3">{guide.titre}</h1>
       <p className="text-lg text-gray-600 mb-8">{guide.chapo}</p>
 

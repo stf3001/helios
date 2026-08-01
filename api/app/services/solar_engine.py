@@ -8,14 +8,15 @@ hypothèses économiques sont dans `config.py` (constantes calibrables, ordres d
 from app.core.config import settings
 
 # Technologies de stockage comparées (ordres de grandeur 2026, À CONFIRMER au devis).
-# Le stockage inertie (Energisto, partenaire) : ~10 kWh pour ~9000 € => ~900 €/kWh, garantie 40 ans.
+# Le volant béton VOSS (techno Energiestro, partenaire) : ~10 kWh pour ~10 000 € => ~1000 €/kWh,
+# garantie annoncée 40 ans. Specs commerciales = hypothèse de lancement (cf. kb/voss.md).
 STORAGE_TECHS = [
     {"tech": "lfp", "label": "Batterie lithium (LFP)", "cout_par_kwh_eur": 700, "garantie_ans": 10,
      "note": "Référence actuelle : compacte et fiable."},
     {"tech": "sodium", "label": "Batterie sodium-ion", "cout_par_kwh_eur": 600, "garantie_ans": 12,
      "note": "Émergente en 2026 : bon marché, excellente au froid, un peu plus volumineuse."},
-    {"tech": "inertie", "label": "Stockage par inertie (Energisto)", "cout_par_kwh_eur": 900, "garantie_ans": 40,
-     "note": "Mécanique, sans chimie : très longue durée de vie (garantie 40 ans)."},
+    {"tech": "inertie", "label": "Volant béton VOSS (Energiestro)", "cout_par_kwh_eur": 1000, "garantie_ans": 40,
+     "note": "Mécanique, sans chimie ni métaux critiques : garantie 40 ans, zéro remplacement."},
 ]
 
 

@@ -9,9 +9,9 @@ R: Sans stockage, l'électricité solaire produite en journée mais non consomm�
 `cat:stockage | tags:lithium,sodium,lfp,batterie | verif:marche 2026`
 R: Le lithium fer-phosphate (LFP) est aujourd'hui la référence pour le stockage résidentiel : compact, fiable, ~3000 à 6000 cycles. Le sodium-ion arrive à maturité en 2026 : coût par kWh proche voire inférieur au LFP, excellent comportement au froid (jusqu'à -30 °C sans chauffage), mais un peu plus volumineux à capacité égale. Le sodium-ion est prometteur pour le stationnaire quand la place n'est pas un problème. Ces informations évoluent vite : à confirmer au moment du projet.
 
-### Q: C'est quoi le stockage par inertie (Energisto) ?
-`cat:stockage | tags:inertie,energisto,stockage | verif:partenaire`
-R: Le stockage par inertie conserve l'énergie sous forme mécanique (une masse mise en mouvement) plutôt que chimique comme une batterie. Avantage majeur : une très longue durée de vie. Notre partenaire Energisto propose par exemple un système d'environ 10 kWh de stockage pour un ordre de grandeur de 9 000 € TTC tout compris, avec une garantie annoncée de 40 ans. HELIOS agit comme apporteur d'affaires : le conseil reste indépendant, et les chiffres sont à confirmer au devis.
+### Q: C'est quoi le stockage par inertie (VOSS / Energiestro) ?
+`cat:stockage | tags:inertie,voss,energiestro,stockage | verif:partenaire`
+R: Le stockage par inertie conserve l'énergie sous forme mécanique (une masse mise en mouvement) plutôt que chimique comme une batterie. C'est la technologie VOSS (Volant de Stockage Solaire) d'Energiestro : un cylindre de béton tourne à grande vitesse sous vide, accéléré par le surplus solaire le jour, freiné la nuit pour restituer l'électricité. Avantage majeur : une très longue durée de vie — garantie annoncée de 40 ans, sans remplacement. Ordre de grandeur envisagé : ~10 kWh de stockage (~7 kWh restituables, rendement ~70 %) pour environ 10 000 € tout compris. HELIOS agit comme apporteur d'affaires : le conseil reste indépendant, et ces chiffres sont une hypothèse à confirmer au devis et au lancement du produit.
 
 ### Q: Une batterie, est-ce rentable pour ma maison ?
 `cat:stockage | tags:rentabilite,batterie,autoconsommation | verif:generique`

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { MessageSquare, ClipboardList, Sparkles, Gift, ShieldCheck, Lock, ArrowRight, Sun, BatteryCharging, Car, Droplets } from 'lucide-react'
+import { MessageSquare, ClipboardList, Sparkles, ArrowRight, Sun, BatteryCharging, Car, Droplets } from 'lucide-react'
 import HierarchieColibri from '../components/HierarchieColibri'
 import ScrollReveal from '../components/ScrollReveal'
+import HeroSearch from '../components/HeroSearch'
 import { useTitle } from '../hooks/useTitle'
 
 const ETAPES = [
@@ -10,56 +11,40 @@ const ETAPES = [
   { icon: MessageSquare, titre: 'Agissez à votre rythme', desc: 'Des gestes gratuits au gros chantier. Et si vous le voulez, une mise en relation avec un artisan de confiance.' },
 ]
 
-const REASSURANCE = [
-  { icon: Gift, titre: 'Gratuit, toujours', desc: 'Jamais facturé au client.' },
-  { icon: ShieldCheck, titre: 'Indépendant', desc: 'Aucun produit à vous vendre.' },
-  { icon: Lock, titre: 'Vos données protégées', desc: 'Export et suppression à tout moment.' },
-]
-
 export default function Home() {
   useTitle()
   return (
     <>
-      {/* Héros */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-sun via-primary to-terra">
-        <div className="max-w-[1100px] mx-auto px-4 py-16 md:py-20 grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
+      {/* Héros — on ouvre sur le bénéfice (comprendre son logement, être accompagné dans la durée),
+          pas sur ce qu'Helios ne fait pas. La gratuité/indépendance devient un socle discret et prouvé. */}
+      <section className="relative overflow-hidden hero-sunrise">
+        {/* Halo « soleil » diffus, côté droit (derrière la mascotte, loin du texte) — chaleur sans nuire au contraste */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full bg-sun/30 blur-3xl" />
+        <div className="relative max-w-[1100px] mx-auto px-4 py-16 md:py-20 grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
           <div className="text-white animate-slide-up">
             <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight text-white">
-              Votre maison mérite un conseil franc.
+              Enfin, un logement que vous comprenez.
             </h1>
             <p className="text-lg text-white/90 mt-4 max-w-xl">
-              Helios est une intelligence artificielle indépendante qui analyse votre logement et vous guide
-              dans vos travaux d'énergie — gratuitement, sans rien à vous vendre, à votre rythme.
+              Helios analyse votre maison et vous accompagne dans la durée — travaux, entretien, énergie.
+              Il apprend votre logement et évolue avec vous, une étape à la fois.
             </p>
-            <div className="flex flex-wrap gap-3 mt-7">
-              <Link to="/helios" className="inline-flex items-center gap-2 rounded-xl bg-white text-primary font-semibold px-5 py-3 hover:bg-white/90">
-                <MessageSquare className="w-5 h-5" /> Poser ma question à Helios
+
+            <HeroSearch />
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              <Link to="/inscription" className="inline-flex items-center gap-2 rounded-xl border border-white/40 text-white font-semibold px-4 py-2 hover:bg-white/10">
+                Créer mon espace
               </Link>
-              <Link to="/inscription" className="inline-flex items-center gap-2 rounded-xl bg-ink/20 text-white font-semibold px-5 py-3 hover:bg-ink/30 border border-white/30">
-                Créer mon espace gratuit
-              </Link>
+              <span className="text-white/80">
+                Gratuit · indépendant · vos données sous votre contrôle.{' '}
+                <Link to="/engagements" className="underline underline-offset-2 hover:text-white">Pourquoi c'est gratuit ?</Link>
+              </span>
             </div>
           </div>
           <div className="hidden md:flex justify-center">
             <img src="/brand/helios-salute.png" alt="Helios vous accueille" className="h-64 drop-shadow-xl" />
           </div>
-        </div>
-      </section>
-
-      {/* Réassurance */}
-      <section className="bg-cream border-b border-black/5">
-        <div className="max-w-[1000px] mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {REASSURANCE.map((r) => (
-            <div key={r.titre} className="flex items-center gap-3">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary">
-                <r.icon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-semibold text-ink text-sm">{r.titre}</div>
-                <div className="text-xs text-gray-500">{r.desc}</div>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

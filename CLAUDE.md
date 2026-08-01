@@ -198,6 +198,232 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
   - **Reste à brancher** (hors scope done J8) : espace partenaire (dashboard partenaire = phase 2, doc 04) ; endpoint admin de validation des candidatures (fait à la main en psql pour la démo) ; envoi email réel des notifs de lead (J9).
 - Prochain : Jalon 9 (déploiement prod : Oracle Cloud, HTTPS, emails réels Resend/Brevo, rate limiting) — ou brancher la page FAQ publique sur les 109 entrées de la base (petit reste du doc 04).
 
+> **Conseil plus personnalisé (22/07/2026, retour utilisateur : « conseils trop généralistes »)** —
+> suite à l'audit de suggestions, exécution des points #1 et #2 :
+> - **#1 Exploiter les études déjà faites** : `rag.build_solar_context/audit_context/energy_context/
+>   water_context` (même principe que `build_revolt_context`), branchés dans `chat.py` (requête la
+>   dernière étude de chaque type pour la maison de l'utilisateur connecté) et dans `build_prompt`
+>   (bloc générique par étude, avec consigne explicite de ne jamais confondre ces données réelles
+>   avec un « cas pratique » fictif de la KB). **Point de vigilance découvert en testant réellement**
+>   (compte démo, vraies données solaire+Revolt en base) : le modèle local `llama3.2:3b` reste trop
+>   petit pour exploiter fiablement un prompt de ~16 Ko — premier essai : chiffres inventés en
+>   confondant la fiche foyer avec un cas pratique fictif. Corrigé (consigne anti-confusion + profil
+>   foyer/études repositionné juste avant la question, où un petit modèle local a plus d'attention)
+>   : il n'invente plus, mais reste encore générique (repose des questions au lieu d'utiliser les
+>   données déjà en base) — **limite réelle du modèle local, pas du câblage** ; une vraie
+>   personnalisation fiable demandera soit un modèle local plus gros (`llama3.1:8b`, plus lent en
+>   CPU), soit une vraie `LLM_API_KEY` (le routeur bascule déjà automatiquement les questions
+>   complexes vers l'API dès qu'une clé est configurée).
+> - **#2 Barèmes réels et sourcés** : `kb/baremes_aides.md` (7 fiches, recherche web recoupant
+>   plusieurs agrégateurs spécialisés — Hellowatt, Effy, Primes Energie) : plafonds de revenus
+>   bleu/jaune/violet/rose 2026, montants MaPrimeRénov' par geste (PAC, combles/toiture), **le
+>   changement réglementaire important repéré en cherchant** (décret du 8/09/2025 : l'isolation des
+>   murs seule n'est plus éligible en parcours par geste depuis le 1ᵉʳ janvier 2026, seulement en
+>   rénovation d'ampleur), CEE (mécanisme, cumul avec MaPrimeRénov', 6ᵉ période 2026-2030), TVA
+>   5,5 %/10 % (conditions, simplification Cerfa 2026), méthode pour les aides locales (pas de
+>   montant nationalement inventé). Tagué `verif:date_sensible_22_07_2026` (à re-vérifier
+>   périodiquement, candidat naturel pour la veille agent Phase 4 non encore faite). Branché au
+>   crawler + `FAQ_SOURCES` + `rag._QR_SOURCES`. Ingéré et vérifié réellement : FAQ publique 155→162
+>   fiches, réponse instantanée testée en 1,5 s citant la bonne fiche (score 0,782) sur la question
+>   isolation des murs 2026.
+> - **Reste des suggestions non traitées** (axes #3 benchmarks chiffrés réels, #4 DPE réel/
+>   observatoire ADEME, #5 cas pratiques enrichis de vrais retours d'expérience, #6 granularité
+>   climatique) : pas demandés pour l'instant.
+
+> **Routage hybride local/API activé pour de vrai (22/07/2026)** — une vraie `LLM_API_KEY` Claude a
+> été fournie par l'utilisateur, testée en conditions réelles pour la première fois :
+> - Modèle **`claude-haiku-4-5-20251001`** (le plus économe en tokens de la gamme Claude) choisi
+>   volontairement pendant le développement, sur demande explicite de l'utilisateur (« utilisation
+>   minimale des crédits » avant mise en ligne). Budgets abaissés pendant le dev :
+>   `LLM_API_BUDGET_DAILY_EUR=1`, `LLM_API_BUDGET_MONTHLY_EUR=10` (à remonter en prod).
+> - **Nouveau quota** `llm_api_daily_requests_per_user` (3 par défaut, `config.py`) : indépendant du
+>   plafond de coût global, protège contre un seul client qui viderait le budget partagé.
+>   `router_llm.daily_quota_exceeded()` compte les `messages.model_used='api'` du jour pour ce
+>   `user_id`, vérifié avant `cost_caps_exceeded()` dans `generate_route()`.
+> - **Nouveau critère de bascule** : un pré-audit déjà généré pour le foyer (`has_recent_audit`,
+>   dérivé de `audit_context is not None` dans `chat.py`) déclenche la route API au même titre
+>   qu'un message long ou un mot-clé — la logique : un client qui a déjà un diagnostic chiffré
+>   cherche probablement une explication approfondie, pas une généralité.
+> - **Clé stockée dans `C:\Users\DELL\Desktop\HELIOS\.env`** (hors du repo git, un niveau au-dessus
+>   de `helios/`) — piège découvert en debuggant : le process uvicorn lancé par l'outil de preview
+>   tourne avec ce répertoire comme CWD, pas `helios/` ni `helios/api/` (`pydantic-settings` cherche
+>   `.env` relatif au CWD réel du process, pas à l'emplacement du code). Un `.env` posé à la racine
+>   du repo ou dans `api/` y était invisible — d'où un premier test qui basculait silencieusement
+>   en « mode simplifié » sans jamais tenter l'appel API, aucune erreur nulle part (comportement
+>   voulu du fallback, mais trompeur ici). Diagnostiqué avec un endpoint `/health` temporarisé
+>   affichant `os.getcwd()` et `bool(settings.llm_api_key)`, retiré après coup.
+> - **Validé réellement, avec de vrais coûts engagés (quelques centimes)** : appel direct minimal
+>   (« réponds OK ») → réponse correcte ; puis un vrai parcours `/api/chat/messages` connecté avec
+>   question complexe (mot-clé « combien ») sur le compte démo (fiche 90 %, étude solaire réelle en
+>   base) → route `api` choisie, réponse en **12,4 s** (vs 60-150 s en local), **chiffres corrects
+>   et personnalisés repris de la vraie étude solaire** (scénarios 3/6/9 kWc, productions et
+>   économies réelles, recommandation argumentée) — contrairement au modèle local 3B qui restait
+>   générique sur la même question. Quota vérifié : 1 requête API comptée pour l'utilisateur,
+>   `daily_quota_exceeded` correctement à `False` sous le seuil de 3.
+> - **Reste à faire** (non demandé pour l'instant) : bandeau front explicite quand le quota
+>   quotidien est atteint (actuellement bascule silencieuse en mode simplifié, comme les autres
+>   cas de fallback) ; remonter les budgets et le modèle une fois en prod.
+
+> **Mise en cache des prompts Anthropic (22/07/2026, sur suggestion utilisateur)** — la constitution
+> (identique à chaque appel, quel que soit l'utilisateur/la question) est maintenant séparée du
+> contenu variable et envoyée en `system` avec `cache_control: ephemeral` :
+> - `rag.py` : `build_prompt()` scindé en `constitution_text` (public) + `build_user_content()`
+>   (sources RAG + fiche foyer + études + question, sans la constitution) ; `build_prompt()` redevient
+>   un simple wrapper qui reconcatène les deux, gardé pour le modèle local (Ollama n'a pas de
+>   séparation system/user ni de cache).
+> - `anthropic_client.generate_stream(system, user_content)` : signature changée pour porter la
+>   constitution dans le bloc `system` (`cache_control: {"type": "ephemeral"}`) ; logge
+>   `usage.cache_creation_input_tokens`/`cache_read_input_tokens` après chaque appel
+>   (`logger = logging.getLogger("helios.anthropic")`).
+> - `router_llm.generate_route()` : paramètre renommé `prompt`→`user_content` ; reconstruit
+>   `rag.constitution_text + user_content` pour le chemin local, passe les deux séparément à
+>   `anthropic_client` pour le chemin API. `chat.py` mis à jour en conséquence.
+> - **Mesuré réellement, pas supposé** : deux appels Claude Haiku consécutifs avec le même `system`
+>   → `cache_write=0` et `cache_read=0` sur les deux. Cause identifiée : la constitution seule fait
+>   **~1841 tokens** (mesuré via l'API, `usage.input_tokens`), sous le **seuil minimum de mise en
+>   cache de Haiku 4.5 (4096 tokens)** — l'API ignore silencieusement le `cache_control` en dessous
+>   de ce seuil (comportement documenté, pas un bug). **Donc aucun gain actuel avec Haiku.**
+> - **Pourquoi le garder quand même** : (1) zéro coût/risque — un `cache_control` sous le seuil est
+>   un no-op silencieux ; (2) le code est prêt sans rien reconstruire le jour où le modèle change —
+>   Claude Sonnet 5 a un seuil minimum de **1024 tokens seulement**, sous lequel la constitution
+>   (1841 tokens) serait déjà cacheable telle quelle ; (3) si le contenu système grossit (ex. contexte
+>   foyer déplacé dans `system` plus tard), le même mécanisme s'activera automatiquement.
+> - **Non prioritaire pour l'instant** : avec le quota de 3 requêtes API/jour/client déjà en place,
+>   le volume est trop faible pour que la mise en cache change quoi que ce soit au coût réel, même
+>   si le seuil était atteint — à réévaluer si le modèle change ou si le quota est relevé en prod.
+
+> **Design/marketing pré-prod (22/07/2026) — points #1 et #2 de l'audit de suggestions** :
+> - **#1 Audit mobile réel** (375×812, DOM/computed-style, pas de suppositions) : un seul vrai bug
+>   trouvé — quasi tous les champs de formulaire du site (simulateur solaire, énergie, pro, Revolt,
+>   devenir partenaire, recherches FAQ/glossaire) étaient en `text-sm` (14px), ce qui déclenche un
+>   **zoom automatique iOS Safari** au focus (seuil 16px). Corrigé en une seule règle globale
+>   (`frontend/src/index.css`, `input/select/textarea { font-size: 16px !important }` — `!important`
+>   nécessaire car la spécificité d'une classe Tailwind bat un sélecteur de type simple) plutôt que
+>   dans les ~15 fichiers concernés. Vérifié sur 8+ pages (dont `/espace`, `/espace/energie`,
+>   `/espace/pro`, simulateur solaire connecté avec un vrai résultat Revolt/stockage affiché) :
+>   zéro débordement horizontal, tuiles/liens correctement dimensionnés pour le tactile. Le menu
+>   burger mobile a été vérifié fonctionnel (un faux positif initial venait de l'outillage de test
+>   de session, pas du code).
+> - **#2 Image de partage social + habillage PDF** :
+>   - `frontend/public/og-image.png` (1200×630, généré via Pillow + polices de marque converties
+>     woff2→ttf avec fontTools) : dégradé identique aux hero sections (`from-sun via-primary
+>     to-terra`), logo + wordmark, tagline, mascotte `helios-thumbsup`. Branché dans `index.html`
+>     (`og:image` + dimensions, `twitter:card=summary_large_image`) — **limite technique
+>     assumée** : le site étant une SPA sans SSR, cette image sert de preview pour TOUTES les pages
+>     (les crawlers sociaux ne lisent que le HTML initial, identique quelle que soit la route) ;
+>     un aperçu par page nécessiterait du pré-rendu, hors scope ici.
+>   - **Corrigé au passage** : `theme-color` de `index.html` était resté sur l'ancien orange
+>     `#E8871E` alors que `tailwind.config.js` `primary` avait été assombri en `#B85A08` lors du
+>     correctif de contraste — incohérence trouvée en marge, corrigée.
+>   - `pdf_audit.py` : en-tête « lettre à en-tête » (bandeau crème, vrai logo `logo-mark.png`
+>     embarqué, wordmark en `ink`, sous-titre en `primary` mis à jour), titres de section et fond
+>     du tableau des priorités harmonisés avec la charte. Vérifié avec un vrai audit du compte démo
+>     (rendu réel via PyMuPDF, pas une supposition) : rendu propre, logo net, couleurs correctes.
+
+> **Système d'icônes par catégorie — guides/FAQ (22/07/2026, point #1 du plan visuel)** :
+> - `frontend/src/data/categoryIcons.tsx` (nouveau) : mapping catégorie → icône `lucide-react` +
+>   couleur de marque (tokens `tailwind.config.js`), avec `normalizeCat()` pour faire correspondre
+>   les libellés capitalisés français des guides (« Copropriété ») et les clés en minuscules sans
+>   accent de la FAQ (`copropriete`) — 25 catégories réelles couvertes (vérifiées via `/api/faq`),
+>   fallback neutre (`Sparkles` gris) pour toute catégorie non mappée, jamais d'erreur.
+> - Branché dans `Guides.tsx` (puces de filtre + icône sur chaque carte), `GuideDetail.tsx`
+>   (badge icône en tête d'article) et `Faq.tsx` (puces de filtre + icône devant chaque question).
+> - **Glossaire volontairement laissé de côté** : pas de champ catégorie dans `data/glossaire.ts`
+>   (liste alphabétique pure), en ajouter un maintenant aurait été un chantier à part entière hors
+>   demande — cohérent avec le plan proposé (« pas d'illustration nécessaire, traitement
+>   typographique suffit »).
+> - Vérifié en navigateur sur les 3 pages (build front OK + rendu réel des icônes/couleurs).
+> - **Reste du plan visuel (non fait, discuté avec l'utilisateur mais pas démarré)** : la grande
+>   illustration « maison de demain » (coupe de maison + animation CSS du flux d'énergie) — prévue
+>   en étape suivante, dessin statique d'abord.
+
+> **Illustration « La maison de demain » (22/07/2026)** — après un essai de SVG codé à la main
+> jugé insuffisant (retiré), l'utilisateur a fourni une vraie infographie (générée par outil
+> d'image externe : coupe de maison au trait + aplats de couleur de marque, flux d'énergie colorés,
+> tulipes éoliennes, puits canadien, AWG). Intégrée comme asset :
+> - `frontend/public/maison-demain.webp` — converti depuis le PNG source 1536×1024 (1,84 Mo) en
+>   **WebP qualité 90 = 307 Ko** (6× plus léger, visuellement identique, vérifié). PNG lourd non
+>   commité. WebP = support universel en 2026.
+> - `frontend/src/components/MaisonDemain.tsx` (nouveau, remplace l'ancien SVG supprimé) : image
+>   présentée en grand + **vue plein écran au clic** (overlay `fixed z-[100] bg-black/85`, fermeture
+>   Échap/clic/croix, blocage du scroll de fond) — nécessaire car les légendes de l'infographie sont
+>   illisibles à la taille réduite d'un mobile. Aucune dépendance (juste `useState`/`useEffect` +
+>   icônes lucide). `loading="lazy"`, `width/height` explicites (anti-CLS), `alt` descriptif.
+> - Placée en tête de `/comment-ca-marche` (juste après le Hero), avec titre + intro + **légende
+>   honnête (constitution)** : précise que c'est la vision d'ensemble, distingue ce qui est
+>   accessible aujourd'hui (solaire/stockage/pilotage/eau via partenaires) de ce qui viendra
+>   (éolien domestique), et rappelle qu'Helios ne propose jamais un équipement inutile au foyer.
+> - Vérifié en navigateur : rendu desktop, ouverture/fermeture du zoom plein écran (backdrop
+>   `rgba(0,0,0,0.85)` au-dessus du header confirmé en computed-style), et mobile (image contenue
+>   dans 375px, zéro débordement, tap-to-zoom fonctionnel). Build front OK.
+> - **NB** : l'utilisateur a aussi une version animée (`maison_de_demain_anime.gif`/`.mp4` dans ses
+>   Downloads) — non intégrée, à voir si souhaité plus tard (le GIF serait lourd, le MP4 en boucle
+>   muette serait préférable).
+
+> **Refonte du hero d'accueil (27/07/2026, suggestions marketing validées avec l'utilisateur)** —
+> constat de départ : l'accueil parlait à 100 % de ce qu'Helios *ne fait pas* (3 négations
+> défensives : gratuit/indépendant/données protégées), sans jamais dire ce qu'il *fait* pour
+> l'habitant → « la confiance se prouve, elle ne se proclame pas ». Pivot vers le bénéfice :
+> - **Titre** (option A « la maîtrise ») : « Enfin, un logement que vous comprenez. » + sous-titre
+>   sur l'accompagnement dans la durée. (Alternatives B « compagnon » / C « colibri » fournies,
+>   swap trivial de 2 lignes si l'utilisateur préfère.)
+> - **Champ de saisie dans le hero** (`components/HeroSearch.tsx`, le « game-changer » n°1) :
+>   placeholder qui fait défiler de vraies questions (`setInterval`, figé au focus/à la saisie),
+>   envoi → `/helios?q=...` ; `HeliosIA.tsx` lit `?q=` (`useSearchParams`) et pré-remplit le
+>   `ChatWidget` (`initialInput`) — l'utilisateur relit et envoie lui-même (principe « garde la
+>   main » déjà en place, cf. devis). Testé bout en bout en navigateur : question saisie →
+>   redirection → chat pré-rempli avec le texte exact.
+> - **Les 3 pavés de réassurance supprimés**, condensés en une ligne fine sous les CTA :
+>   « Gratuit · indépendant · vos données sous votre contrôle. » + lien discret **« Pourquoi c'est
+>   gratuit ? » → /engagements** (prouver le modèle éco. plutôt que le marteler).
+> - **Hiérarchie des CTA** : action primaire = le champ de saisie (essai sans engagement) ;
+>   secondaire = « Créer mon espace » en outline plus léger (fini les 2 boutons de poids égal).
+> - **Dégradé « lever de soleil » animé** (`.hero-sunrise` dans `index.css`, CSS pur, `prefers-
+>   reduced-motion` respecté) : tons chauds de marque qui glissent lentement (18 s). Base assombrie
+>   (primary/terra) pour garder le contraste du texte blanc (stop le plus clair #C05621 = 4,57:1
+>   calculé, titre en grand = seuil 3:1) ; le jaune n'apparaît qu'en halo diffus côté droit
+>   (derrière la mascotte, loin du texte). Vérifié desktop + mobile (zéro débordement, champ 16px
+>   anti-zoom iOS). Build front OK.
+> - **Non fait (choix assumé)** : le colibri SVG animé dans le hero suggéré en n°3 — le hero a déjà
+>   la mascotte `helios-salute.png` (visage de marque établi) ; ajouter un 2ᵉ visuel l'aurait
+>   chargé. L'esprit colibri reste montré via la section dédiée et la page `/colibri`.
+
+> **KB étoffée — confort d'été & réglementation (27/07/2026)** — survol de la couverture existante
+> (FAQ source 109 fiches + kb thématiques ~162 total) → deux vrais trous ciblés :
+> - `kb/confort_ete.md` (8 fiches) : la base était très « chauffage/hiver », quasi rien sur la
+>   **surchauffe estivale** (enjeu majeur avec les canicules). Méthode (protections solaires ext.
+>   avant int., sur-ventilation nocturne, toiture, brasseur d'air avant clim), clim/PAC réversible,
+>   déphasage des isolants denses, inertie, végétalisation. Chiffres = ordres de grandeur honnêtes.
+> - `kb/reglementation.md` (8 fiches) : la base ne comptait qu'1-2 fiches réglementaires alors que
+>   « ai-je le droit de louer / dois-je faire un audit / dois-je entretenir » sont très demandées.
+>   Calendrier loi Climat (interdiction location G 2025 / F 2028 / E 2034), gel des loyers F/G,
+>   audit énergétique obligatoire à la vente (F/G depuis 2023, E 2025, D 2034), validité + opposabilité
+>   DPE (+ correction petits logements 2024), entretien obligatoire chaudière/PAC/clim/ramonage,
+>   DTG/PPT copro. Échéances datées taguées `verif:date_sensible_27_07_2026` (candidat veille Phase 4).
+> - Branché crawler (`agents_engine.SOURCES`) + `FAQ_SOURCES` (faq.py) + `rag._QR_SOURCES` (réponses
+>   instantanées). Ingéré via `agents/run_agents.py crawl` (+16 fiches → ~178 au total).
+
+> **VOSS — stockage solaire par volant béton (27/07/2026)** — fiche produit fournie par
+> l'utilisateur (AD Solar ; techno réelle Energiestro, specs commerciales = HYPOTHÈSE de
+> lancement : 10 kWh / 7 kWh utiles / rendement ~70 % / ~10 000 € posé / garantie 40 ans) :
+> - `kb/voss.md` (7 fiches Q/R, `verif:hypothese_lancement`) : principe technique, argument 40 ans
+>   (~0,10 €/kWh sur la durée), bilan carbone **avec la formulation prudente imposée par la fiche**
+>   (« meilleur bilan carbone sur le cycle de vie matériaux + longévité + fin de vie », JAMAIS
+>   « le plus écologique » — risque DGCCRF/loi Climat sur les allégations environnementales),
+>   bémol du rendement 70 % assumé frontalement, condition béton bas-carbone (à confirmer
+>   fabricant), comparatif honnête vs lithium (chacun gagne sur son terrain), profil cible.
+> - **Correction de nom (info utilisateur : « Energisto » était une faute)** : le partenaire
+>   s'appelle **Energiestro**, la techno **VOSS** — c'est le même produit que le « stockage
+>   inertie » déjà présent. Harmonisé partout : `solar_engine.STORAGE_TECHS` (label « Volant
+>   béton VOSS (Energiestro) », prix aligné 900→**1000 €/kWh** soit 10 000 €/10 kWh),
+>   fiche historique de `kb/solutions.md` réécrite (bons chiffres + rendement), glossaire
+>   (terme « Volant d'inertie (VOSS) », 41 termes). Ancienne fiche « Energisto » supprimée de
+>   la base (doc + chunks) car le crawl upsert par titre l'aurait laissée en doublon.
+> - Ingéré + vérifié réellement : FAQ publique **185 fiches**, question chat « c'est quoi le VOSS »
+>   → réponse instantanée (score 0.775) avec les bons chiffres et la réserve « à confirmer au
+>   lancement ». NB : les notes historiques de ce fichier mentionnant « Energisto » sont laissées
+>   telles quelles (archives datées).
+
 ## Commandes
 - Front : `cd frontend && npm install && npm run dev` (build : `npm run build`)
 - API : `cd api && pip install -r requirements.txt && uvicorn app.main:app --reload`

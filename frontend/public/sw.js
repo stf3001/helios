@@ -1,6 +1,6 @@
 // Service worker HELIOS — coquille minimale pour l'installabilité PWA + cache léger.
 // Stratégie : network-first pour la navigation (contenu frais), cache des assets statiques.
-const CACHE = 'helios-v1'
+const CACHE = 'helios-v2'
 const SHELL = ['/', '/helios', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (e) => {
@@ -26,8 +26,13 @@ self.addEventListener('fetch', (e) => {
   }
   e.respondWith(
     caches.match(request).then((cached) => cached || fetch(request).then((res) => {
-      const copy = res.clone()
-      caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {})
+      // Ne jamais mettre en cache une réponse en erreur (404, 5xx, page d'erreur du serveur) :
+      // sinon un asset momentanément indisponible reste « cassé » en cache-first jusqu'au
+      // prochain changement de version du cache.
+      if (res.ok && res.type === 'basic') {
+        const copy = res.clone()
+        caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {})
+      }
       return res
     }).catch(() => cached))
   )

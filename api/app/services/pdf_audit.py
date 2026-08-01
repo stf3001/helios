@@ -13,9 +13,12 @@ from fpdf import FPDF
 from app.core.config import settings
 
 PDF_DIR = Path(__file__).resolve().parents[2] / "generated" / "audits"
+_LOGO_PATH = Path(__file__).resolve().parents[3] / "frontend" / "public" / "brand" / "logo-mark.png"
 
-ORANGE = (232, 135, 30)   # primary HELIOS #E8871E
+ORANGE = (184, 90, 8)     # primary HELIOS #B85A08 (contraste AA vérifié, cf. tailwind.config.js)
+INK = (29, 63, 99)        # bleu marine de la marque — titres
 GRIS = (90, 90, 90)
+CREAM = (253, 248, 243)   # fond chaleureux de la marque #FDF8F3
 
 _POSTE_LABEL = {
     "toiture": "Toiture / combles",
@@ -40,19 +43,37 @@ def _eur(n) -> str:
 
 class _AuditPDF(FPDF):
     def header(self):
-        self.set_font("Helvetica", "B", 16)
-        self.set_text_color(*ORANGE)
-        self.cell(0, 10, _s("HELIOS"), ln=True)
-        self.set_font("Helvetica", "", 11)
-        self.set_text_color(*GRIS)
-        self.cell(0, 6, _s("Pré-audit énergétique indicatif"), ln=True)
-        self.ln(2)
+        # Bandeau chaleureux type "en-tête à lettre" (couleurs de marque, cf. tailwind.config.js)
+        self.set_fill_color(*CREAM)
+        self.rect(0, 0, self.w, 28, style="F")
         self.set_draw_color(*ORANGE)
-        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
-        self.ln(4)
+        self.set_line_width(0.8)
+        self.line(0, 28, self.w, 28)
+
+        if _LOGO_PATH.exists():
+            logo_h = 14
+            self.image(str(_LOGO_PATH), x=self.l_margin, y=7, h=logo_h)
+            text_x = self.l_margin + logo_h * (1920 / 1113) + 4
+        else:
+            text_x = self.l_margin
+
+        self.set_xy(text_x, 8)
+        self.set_font("Helvetica", "B", 17)
+        self.set_text_color(*INK)
+        self.cell(0, 9, _s("HELIOS"), ln=True)
+        self.set_x(text_x)
+        self.set_font("Helvetica", "", 10)
+        self.set_text_color(*ORANGE)
+        self.cell(0, 6, _s("Pré-audit énergétique indicatif"), ln=True)
+
+        self.set_y(34)
+        self.set_line_width(0.2)
 
     def footer(self):
-        self.set_y(-15)
+        self.set_y(-18)
+        self.set_draw_color(220, 220, 220)
+        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+        self.ln(2)
         self.set_font("Helvetica", "I", 7)
         self.set_text_color(*GRIS)
         self.multi_cell(0, 3, _s(
@@ -69,8 +90,9 @@ def _section(pdf: FPDF, titre: str):
     pdf.ln(3)
     pdf.set_x(pdf.l_margin)
     pdf.set_font("Helvetica", "B", 12)
-    pdf.set_text_color(0, 0, 0)
+    pdf.set_text_color(*INK)
     pdf.cell(0, 7, _s(titre), ln=True)
+    pdf.set_text_color(0, 0, 0)
     pdf.set_font("Helvetica", "", 10)
 
 
@@ -125,7 +147,7 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
     cols = [("Action", 64), ("Cout", 30), ("Aide", 22), ("Reste", 22), ("Eco/an", 24), ("Retour", 18)]
     pdf.set_x(pdf.l_margin)
     pdf.set_font("Helvetica", "B", 8)
-    pdf.set_fill_color(240, 240, 240)
+    pdf.set_fill_color(*CREAM)
     for h, w in cols:
         pdf.cell(w, 6, _s(h), border=1, fill=True)
     pdf.ln()

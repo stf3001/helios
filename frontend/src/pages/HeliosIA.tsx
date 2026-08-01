@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import Hero from '../components/Hero'
 import Card from '../components/Card'
 import ChatWidget from '../components/chat/ChatWidget'
@@ -5,6 +6,10 @@ import { useTitle } from '../hooks/useTitle'
 
 export default function HeliosIA() {
   useTitle('Helios — votre assistant énergie')
+  // ?q= : arrivée depuis le champ de saisie du hero de l'accueil → question pré-remplie
+  // (l'utilisateur garde la main : il relit et envoie lui-même).
+  const [searchParams] = useSearchParams()
+  const initialQuestion = searchParams.get('q') ?? undefined
   return (
     <>
       <Hero title="Helios. Une IA franche, dénuée d'intérêt." />
@@ -27,7 +32,7 @@ export default function HeliosIA() {
         </Card>
       </section>
       <section className="max-w-[900px] mx-auto px-4 pb-14">
-        <ChatWidget />
+        <ChatWidget initialInput={initialQuestion} />
       </section>
     </>
   )

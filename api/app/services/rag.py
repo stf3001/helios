@@ -12,8 +12,11 @@ from app.models.kb import KbChunk, KbDocument
 from app.services.completeness import _is_filled, compute_score, niveau_for_score
 
 # Version de constitution pilotée par la config (settings.constitution_version) — synchro avec le doc 03.
+# Public (pas de underscore) : identique à CHAQUE appel API, quel que soit l'utilisateur ou la question —
+# c'est le préfixe envoyé séparément en `system` avec `cache_control` (mise en cache des prompts Anthropic,
+# router_llm.py / anthropic_client.py), pour que ce contenu strictement stable soit mis en cache côté API.
 _CONSTITUTION_PATH = Path(__file__).resolve().parents[3] / "prompts" / f"constitution-{settings.constitution_version}.md"
-_constitution_text = _CONSTITUTION_PATH.read_text(encoding="utf-8") if _CONSTITUTION_PATH.exists() else ""
+constitution_text = _CONSTITUTION_PATH.read_text(encoding="utf-8") if _CONSTITUTION_PATH.exists() else ""
 
 
 async def search_chunks(db: AsyncSession, query_embedding: list[float], top_k: int | None = None) -> list[dict]:
@@ -35,7 +38,7 @@ def best_score(results: list[dict]) -> float:
 
 # Sources dont les chunks sont des fiches Q/R servables telles quelles (mêmes
 # sources que la FAQ publique — cf. routers/faq.py).
-_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "revolt", "complements", "cas_pratiques")
+_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "revolt", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss")
 
 
 def instant_answer(results: list[dict]) -> str | None:
@@ -124,13 +127,61 @@ def build_revolt_context(study) -> dict:
     }
 
 
-def build_prompt(
+def build_solar_context(study) -> dict:
+    """Résumé de la dernière étude solaire (PVGIS + scénarios, par puissance 3/6/9 kWc) du foyer —
+    évite de renvoyer Helios sur des généralités photovoltaïques quand un calcul chiffré existe déjà."""
+    return {
+        "date_simulation": study.created_at.isoformat() if hasattr(study.created_at, "isoformat") else str(study.created_at),
+        "toiture": {k: v for k, v in study.params.items() if k != "gps"},
+        "scenarios_par_puissance": study.scenarios,
+    }
+
+
+def build_audit_context(audit) -> dict:
+    """Résumé du dernier pré-audit déterministe du foyer (déperditions, priorités chiffrées) —
+    Helios doit s'appuyer sur ce diagnostic déjà fait plutôt que de re-décrire la méthode en général."""
+    return {
+        "date_audit": audit.created_at.isoformat() if hasattr(audit.created_at, "isoformat") else str(audit.created_at),
+        "resultat": audit.json_result,
+    }
+
+
+def build_energy_context(study) -> dict:
+    """Résumé de la dernière étude énergie (SOBRY/courtage) du foyer, avec l'avis Helios déjà rendu."""
+    return {
+        "date_etude": study.created_at.isoformat() if hasattr(study.created_at, "isoformat") else str(study.created_at),
+        "type": study.type,
+        "statut": study.status,
+        "resultat": study.result,
+        "avis_helios": study.helios_opinion,
+    }
+
+
+def build_water_context(study) -> dict:
+    """Résumé de la dernière étude de potentiel hydrique (Hydrolia) du foyer."""
+    return {
+        "date_simulation": study.created_at.isoformat() if hasattr(study.created_at, "isoformat") else str(study.created_at),
+        "ville": study.params.get("ville"),
+        "resultat": study.result,
+    }
+
+
+def build_user_content(
     question: str,
     results: list[dict],
     house_context: dict | None = None,
     pro_context: dict | None = None,
     revolt_context: dict | None = None,
+    solar_context: dict | None = None,
+    audit_context: dict | None = None,
+    energy_context: dict | None = None,
+    water_context: dict | None = None,
 ) -> str:
+    """Tout ce qui est variable d'une question à l'autre (sources RAG, fiche foyer, études,
+    question) — sans la constitution, envoyée séparément en `system` côté API (mise en cache,
+    cf. `anthropic_client.generate_stream`). Utilisé seul pour le message utilisateur de l'API,
+    et concaténé à la constitution par `build_prompt` pour le modèle local (Ollama, pas de
+    séparation system/user ni de cache)."""
     if not results or best_score(results) < settings.rag_score_threshold:
         sources_block = (
             "Aucune source fiable trouvée dans la base de connaissances pour cette question. "
@@ -150,33 +201,58 @@ def build_prompt(
         question_label = "Question du client professionnel"
     elif house_context is not None:
         mode_block = (
-            "MODE CONNECTÉ — fiche foyer de ce visiteur (JSON, uniquement les champs renseignés) :\n"
+            "MODE CONNECTÉ — fiche foyer de CE visiteur (JSON, uniquement les champs renseignés) :\n"
             f"{json.dumps(house_context, ensure_ascii=False, default=str)}\n"
-            "Adapte ta réponse à ce foyer précis. Si un champ décisif pour répondre manque, "
-            "pose la question ou indique quel champ renseigner plutôt que de deviner (doc 03 §4)."
+            "Adapte ta réponse à ce foyer précis, en te basant sur CES données réelles (pas sur un "
+            "exemple de la base de connaissances, même si un « cas pratique » ressemble à sa situation — "
+            "les cas pratiques sont des profils fictifs pédagogiques, jamais CE foyer). Si un champ décisif "
+            "pour répondre manque, pose la question ou indique quel champ renseigner plutôt que de deviner (doc 03 §4)."
         )
         question_label = "Question de l'utilisateur connecté"
     else:
         mode_block = "MODE PUBLIC (visiteur) — pas de fiche foyer associée."
         question_label = "Question du visiteur"
 
-    revolt_block = ""
-    if revolt_context is not None:
-        revolt_block = (
-            "\n\n---\n"
-            "DERNIÈRE SIMULATION REVOLT (PV/batterie/tarifs) DE CE FOYER (JSON) — un calcul déjà "
-            "fait, réutilise-le plutôt que de réinventer des chiffres :\n"
-            f"{json.dumps(revolt_context, ensure_ascii=False, default=str)}"
+    # Chaque étude déjà réalisée pour ce foyer est injectée telle quelle : Helios doit s'appuyer
+    # sur un calcul déterministe existant plutôt que de rester générique ou d'en réinventer un.
+    studies_blocks = []
+    for label, ctx in (
+        ("DERNIÈRE ÉTUDE SOLAIRE (PVGIS + scénarios)", solar_context),
+        ("DERNIER PRÉ-AUDIT ÉNERGÉTIQUE (déperditions + priorités chiffrées)", audit_context),
+        ("DERNIÈRE ÉTUDE ÉNERGIE (SOBRY/courtage, avis Helios déjà rendu)", energy_context),
+        ("DERNIÈRE SIMULATION REVOLT (PV/batterie/tarifs dynamiques)", revolt_context),
+        ("DERNIÈRE ÉTUDE DE POTENTIEL HYDRIQUE (Hydrolia)", water_context),
+    ):
+        if ctx is not None:
+            studies_blocks.append(
+                f"{label} DE CE FOYER (JSON) — un calcul déjà fait, réutilise-le plutôt que de "
+                f"réinventer des chiffres :\n{json.dumps(ctx, ensure_ascii=False, default=str)}"
+            )
+    if studies_blocks:
+        studies_blocks.append(
+            "CONSIGNE : les chiffres (€/an, kWh, %) que tu donnes à CE foyer doivent venir de ces "
+            "études ci-dessus, jamais d'une fourchette générale ni d'un « cas pratique » de la base "
+            "de connaissances (ce sont des exemples fictifs pour d'autres profils, pas ce foyer)."
         )
+    studies_block = ("\n\n---\n" + "\n\n---\n".join(studies_blocks)) if studies_blocks else ""
 
+    # Ordre volontaire : les modèles locaux (3B) suivent bien mieux ce qui est proche de la question
+    # que ce qui est enterré tôt dans un long prompt (constitution + sources) — le profil du foyer et
+    # ses études réelles sont donc placés juste avant la question, jamais avant.
     return (
-        f"{_constitution_text}\n\n"
-        "---\n"
-        f"{mode_block}{revolt_block}\n\n"
-        "---\n"
-        "SOURCES DISPONIBLES (ne cite que celles fournies ici, jamais d'autres) :\n"
+        "SOURCES DISPONIBLES (ne cite que celles fournies ici, jamais d'autres — certaines peuvent être "
+        "des cas pratiques fictifs, à but pédagogique uniquement, jamais CE foyer) :\n"
         f"{sources_block}\n\n"
+        "---\n"
+        f"{mode_block}{studies_block}\n\n"
         "---\n"
         f"{question_label} : {question}\n"
         "Réponse d'Helios :"
     )
+
+
+def build_prompt(question: str, results: list[dict], *args, **kwargs) -> str:
+    """Prompt complet (constitution + contenu variable) pour le modèle local (Ollama), qui n'a
+    ni séparation system/user ni mise en cache — voir `build_user_content` pour le détail des
+    arguments et le chemin API (constitution envoyée à part, avec `cache_control`)."""
+    return f"{constitution_text}\n\n---\n{build_user_content(question, results, *args, **kwargs)}"

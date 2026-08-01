@@ -10,11 +10,15 @@ from app.core.config import settings
 from app.core.db import async_session, get_db
 from app.core.deps import get_current_user, get_optional_user
 from app.core.ratelimit import limiter
+from app.models.audit import Audit
 from app.models.conversation import Conversation, Message
+from app.models.energy import EnergyStudy
 from app.models.house import House
 from app.models.pro import ProProfile
 from app.models.revolt import RevoltStudy
+from app.models.solar import SolarStudy
 from app.models.user import User
+from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
 from app.services import ollama_client, rag, router_llm
 
@@ -51,6 +55,10 @@ async def send_message(
     house_context = None
     pro_context = None
     revolt_context = None
+    solar_context = None
+    audit_context = None
+    energy_context = None
+    water_context = None
     niveau = None
     if user:
         pro = await db.scalar(select(ProProfile).where(ProProfile.user_id == user.id))
@@ -60,11 +68,36 @@ async def send_message(
         if house is not None:
             house_context = rag.build_house_context(house)
             niveau = house_context["niveau"]
+
             revolt_study = await db.scalar(
                 select(RevoltStudy).where(RevoltStudy.house_id == house.id).order_by(RevoltStudy.created_at.desc())
             )
             if revolt_study is not None:
                 revolt_context = rag.build_revolt_context(revolt_study)
+
+            solar_study = await db.scalar(
+                select(SolarStudy).where(SolarStudy.house_id == house.id).order_by(SolarStudy.created_at.desc())
+            )
+            if solar_study is not None:
+                solar_context = rag.build_solar_context(solar_study)
+
+            audit = await db.scalar(
+                select(Audit).where(Audit.house_id == house.id).order_by(Audit.created_at.desc())
+            )
+            if audit is not None:
+                audit_context = rag.build_audit_context(audit)
+
+            energy_study = await db.scalar(
+                select(EnergyStudy).where(EnergyStudy.house_id == house.id).order_by(EnergyStudy.created_at.desc())
+            )
+            if energy_study is not None:
+                energy_context = rag.build_energy_context(energy_study)
+
+            water_study = await db.scalar(
+                select(WaterStudy).where(WaterStudy.house_id == house.id).order_by(WaterStudy.created_at.desc())
+            )
+            if water_study is not None:
+                water_context = rag.build_water_context(water_study)
 
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
@@ -108,7 +141,17 @@ async def send_message(
 
             return StreamingResponse(stream_instant(), media_type="application/x-ndjson")
 
-    prompt = rag.build_prompt(payload.content, results, house_context, pro_context, revolt_context)
+    user_content = rag.build_user_content(
+        payload.content,
+        results,
+        house_context,
+        pro_context,
+        revolt_context,
+        solar_context,
+        audit_context,
+        energy_context,
+        water_context,
+    )
 
     route, simplified, token_stream = await router_llm.generate_route(
         db,
@@ -116,7 +159,8 @@ async def send_message(
         niveau=niveau,
         message=payload.content,
         user_id=user.id if user else None,
-        prompt=prompt,
+        user_content=user_content,
+        has_recent_audit=audit_context is not None,
     )
 
     async def stream():

@@ -4,6 +4,7 @@ import Hero from '../components/Hero'
 import { ChevronDown } from 'lucide-react'
 import { useTitle } from '../hooks/useTitle'
 import ApiError from '../components/ApiError'
+import { getCategoryIcon } from '../data/categoryIcons'
 
 interface FaqEntry {
   question: string
@@ -74,16 +75,19 @@ export default function Faq() {
               >
                 Toutes
               </button>
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => { setCat(c); setOpen(null) }}
-                  className={'text-xs px-3 py-1 rounded-full border capitalize ' +
-                    (cat === c ? 'bg-primary text-white border-primary' : 'border-gray-300 text-gray-600')}
-                >
-                  {c.replace(/_/g, ' ')}
-                </button>
-              ))}
+              {categories.map((c) => {
+                const { Icon } = getCategoryIcon(c)
+                return (
+                  <button
+                    key={c}
+                    onClick={() => { setCat(c); setOpen(null) }}
+                    className={'flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border capitalize ' +
+                      (cat === c ? 'bg-primary text-white border-primary' : 'border-gray-300 text-gray-600')}
+                  >
+                    <Icon className="w-3.5 h-3.5" /> {c.replace(/_/g, ' ')}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -99,21 +103,24 @@ export default function Faq() {
               {entries.length > 0 && ` sur ${entries.length}`}
             </p>
             <div className="space-y-3">
-              {filtered.map((e, i) => (
-                <div key={e.question} className="bg-gray-50 rounded-2xl">
-                  <button
-                    className="w-full flex items-center justify-between p-4 text-left font-semibold"
-                    onClick={() => setOpen(open === i ? null : i)}
-                  >
-                    <span>
-                      {e.cat && <span className="text-primary text-xs mr-2 uppercase">{e.cat.replace(/_/g, ' ')}</span>}
-                      {e.question}
-                    </span>
-                    <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`} />
-                  </button>
-                  {open === i && <p className="px-4 pb-4 text-gray-700 whitespace-pre-line">{e.answer}</p>}
-                </div>
-              ))}
+              {filtered.map((e, i) => {
+                const { Icon, color } = getCategoryIcon(e.cat)
+                return (
+                  <div key={e.question} className="bg-gray-50 rounded-2xl">
+                    <button
+                      className="w-full flex items-center gap-3 justify-between p-4 text-left font-semibold"
+                      onClick={() => setOpen(open === i ? null : i)}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Icon className={'w-4 h-4 shrink-0 ' + color} />
+                        {e.question}
+                      </span>
+                      <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`} />
+                    </button>
+                    {open === i && <p className="px-4 pb-4 text-gray-700 whitespace-pre-line">{e.answer}</p>}
+                  </div>
+                )
+              })}
               {filtered.length === 0 && (
                 <p className="text-gray-500 text-center py-8">Aucune question ne correspond — essayez le chat Helios.</p>
               )}
