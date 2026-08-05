@@ -33,7 +33,7 @@ const MAP: Record<string, CatIcon> = {
   aides: { Icon: HandCoins, color: 'text-sun' },
   financement: { Icon: HandCoins, color: 'text-sun' },
   pilotage: { Icon: Cpu, color: 'text-ink' },
-  revolt: { Icon: BatteryCharging, color: 'text-primary' },
+  autoconso: { Icon: BatteryCharging, color: 'text-primary' },
   stockage: { Icon: Battery, color: 'text-primary' },
   ventilation: { Icon: Wind, color: 'text-sky' },
   menuiseries: { Icon: DoorClosed, color: 'text-terra' },

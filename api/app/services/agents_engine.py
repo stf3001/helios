@@ -36,7 +36,7 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="solutions", kind="faq_markdown", location="helios/kb/solutions.md"),
     SourceSpec(name="pilotage", kind="faq_markdown", location="helios/kb/pilotage.md"),
     SourceSpec(name="eau", kind="faq_markdown", location="helios/kb/eau.md"),
-    SourceSpec(name="revolt", kind="faq_markdown", location="helios/kb/revolt.md"),
+    SourceSpec(name="autoconso", kind="faq_markdown", location="helios/kb/autoconso.md"),
     SourceSpec(name="complements", kind="faq_markdown", location="helios/kb/complements.md"),
     SourceSpec(name="cas_pratiques", kind="faq_markdown", location="helios/kb/cas_pratiques.md"),
     SourceSpec(name="baremes_aides", kind="faq_markdown", location="helios/kb/baremes_aides.md"),

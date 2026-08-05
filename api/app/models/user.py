@@ -23,3 +23,7 @@ class User(Base):
 
     consent_cgu_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     consent_leads_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Accès au back-office (/admin). Se positionne en base uniquement — aucune route ne
+    # permet de se l'auto-attribuer.
+    is_admin: Mapped[bool] = mapped_column(default=False, server_default="false")

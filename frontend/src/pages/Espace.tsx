@@ -16,7 +16,7 @@ const NIVEAU_LABEL: Record<string, string> = {
 }
 
 const SIMULATEURS = [
-  { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'PV, batterie, tarifs — simulateur Revolt' },
+  { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'PV, batterie, tarifs — autoconsommation' },
   { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique (Hydrolia)' },
 ]
 

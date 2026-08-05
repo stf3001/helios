@@ -38,7 +38,7 @@ def best_score(results: list[dict]) -> float:
 
 # Sources dont les chunks sont des fiches Q/R servables telles quelles (mêmes
 # sources que la FAQ publique — cf. routers/faq.py).
-_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "revolt", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss")
+_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "autoconso", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss")
 
 
 def instant_answer(results: list[dict]) -> str | None:
@@ -113,8 +113,8 @@ def build_pro_context(profile) -> dict:
     }
 
 
-def build_revolt_context(study) -> dict:
-    """Résumé de la dernière simulation Revolt (PV/batterie/tarifs) du foyer, pour le contexte
+def build_autoconso_context(study) -> dict:
+    """Résumé de la dernière simulation Autoconso (PV/batterie/tarifs) du foyer, pour le contexte
     du chat — Helios peut s'appuyer sur un calcul déjà fait plutôt que de le réinventer."""
     lignes = study.result.get("lignes", [])
     meilleure = max(lignes, key=lambda l: l.get("economie_vs_actuel_eur", 0), default=None)
@@ -171,7 +171,7 @@ def build_user_content(
     results: list[dict],
     house_context: dict | None = None,
     pro_context: dict | None = None,
-    revolt_context: dict | None = None,
+    autoconso_context: dict | None = None,
     solar_context: dict | None = None,
     audit_context: dict | None = None,
     energy_context: dict | None = None,
@@ -220,7 +220,7 @@ def build_user_content(
         ("DERNIÈRE ÉTUDE SOLAIRE (PVGIS + scénarios)", solar_context),
         ("DERNIER PRÉ-AUDIT ÉNERGÉTIQUE (déperditions + priorités chiffrées)", audit_context),
         ("DERNIÈRE ÉTUDE ÉNERGIE (SOBRY/courtage, avis Helios déjà rendu)", energy_context),
-        ("DERNIÈRE SIMULATION REVOLT (PV/batterie/tarifs dynamiques)", revolt_context),
+        ("DERNIÈRE SIMULATION AUTOCONSO (PV/batterie/tarifs dynamiques)", autoconso_context),
         ("DERNIÈRE ÉTUDE DE POTENTIEL HYDRIQUE (Hydrolia)", water_context),
     ):
         if ctx is not None:

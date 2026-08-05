@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 TarifMode = Literal["fixe", "soflex", "socap"]
 
 
-class RevoltSimulateIn(BaseModel):
+class AutoconsoSimulateIn(BaseModel):
     power_kwc: float = Field(gt=0, le=36, description="Puissance de l'installation PV simulée (kWc)")
     battery_kwh: float | None = Field(default=None, gt=0, description="Capacité batterie physique (kWh utile)")
     battery_power_kw: float | None = Field(default=None, gt=0, description="Puissance charge/décharge (kW)")

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Send, Sparkles } from 'lucide-react'
+import { Check, Flag, Send, Sparkles } from 'lucide-react'
 
 interface Citation {
   titre: string
@@ -16,6 +16,10 @@ interface ChatMessage {
   instant?: boolean
   /** Question d'origine — pour le bouton « développer avec Helios ». */
   question?: string
+  /** Identifiant en base — permet de signaler la réponse (envoyé en fin de flux). */
+  messageId?: string
+  /** Signalement déjà envoyé : on remercie au lieu de reproposer le bouton. */
+  signale?: boolean
 }
 
 /** Attente vivante : la génération locale est lente (30-60 s sur CPU), on montre
@@ -91,6 +95,25 @@ export default function ChatWidget({
     send(input.trim())
   }
 
+  /** Signale une réponse. Un motif est demandé, le commentaire reste facultatif :
+   *  exiger une justification découragerait justement les retours utiles. */
+  async function signaler(messageId: string, index: number) {
+    const commentaire = window.prompt(
+      "Qu'est-ce qui ne va pas dans cette réponse ? (facultatif — le signalement part dans tous les cas)",
+    )
+    if (commentaire === null) return // annulation explicite
+    try {
+      await fetchImpl('/api/chat/signaler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: messageId, motif: 'autre', commentaire }),
+      })
+    } finally {
+      // On remercie même en cas d'échec réseau : l'utilisateur n'a pas à gérer notre plomberie.
+      setMessages((m) => m.map((msg, i) => (i === index ? { ...msg, signale: true } : msg)))
+    }
+  }
+
   async function send(question: string, forceLlm = false) {
     if (!question || sending) return
     setInput('')
@@ -133,6 +156,9 @@ export default function ChatWidget({
             updateLastHelios((msg) => ({ ...msg, content: msg.content + event.text }))
           } else if (event.type === 'citations') {
             updateLastHelios((msg) => ({ ...msg, citations: event.citations }))
+          } else if (event.type === 'message_id') {
+            // Émis une fois la réponse enregistrée : débloque le bouton « signaler ».
+            updateLastHelios((msg) => ({ ...msg, messageId: event.message_id }))
           }
         }
       }
@@ -201,6 +227,24 @@ export default function ChatWidget({
                       className="underline hover:text-primary"
                     >
                       Développer avec Helios
+                    </button>
+                  )}
+                </div>
+              )}
+              {/* Signalement : rend la constitution vérifiable plutôt que seulement affirmée. */}
+              {m.role === 'helios' && m.messageId && !sending && (
+                <div className="mt-2 text-xs text-gray-400">
+                  {m.signale ? (
+                    <span className="inline-flex items-center gap-1 text-leaf">
+                      <Check className="w-3.5 h-3.5" /> Merci, c'est signalé — nous le relisons.
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => signaler(m.messageId!, i)}
+                      className="inline-flex items-center gap-1 hover:text-primary"
+                      title="Cette réponse vous semble fausse ou gênante ?"
+                    >
+                      <Flag className="w-3.5 h-3.5" /> Signaler cette réponse
                     </button>
                   )}
                 </div>

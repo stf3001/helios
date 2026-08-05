@@ -424,6 +424,166 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   lancement ». NB : les notes historiques de ce fichier mentionnant « Energisto » sont laissées
 >   telles quelles (archives datées).
 
+> **Back-office `/admin` — étape 1 (27/07/2026)** — décisions utilisateur : **identité visuelle
+> propre** (pas de copie d'Eolia/Hydrolia) et **accès complet assumé** aux données (pas
+> d'anonymisation des conversations).
+> - **Auth** (migration `0015_admin_space`) : `users.is_admin` + `get_current_admin`.
+>   `require_admin_access` accepte DEUX voies sur les mêmes routes : `X-Admin-Token` (scripts) ou
+>   JWT d'un compte admin (interface) — évite la duplication de routes et le conflit de chemins
+>   qu'aurait produit un second router monté sur le même préfixe.
+> - **Instrumentation ajoutée dans la même migration** : `messages.rag_score` (meilleur score de
+>   similarité au moment de la réponse), renseigné dans `chat.py` sur les deux chemins (instantané
+>   et LLM). Sous `rag_score_threshold` = trou de la base de connaissances → alimente le compteur
+>   « questions sans réponse » et, à l'étape 2, la liste détaillée.
+> - **Backend** : `services/admin_stats.py` (agrégats lecture seule : foyers, activité, coût IA vs
+>   plafonds, business, KB, alertes dérivées) et `services/admin_health.py` (sondes parallèles
+>   Postgres/Ollama/PVGIS ; **Claude et Enedis ne sont PAS appelés** — un test consommerait des
+>   crédits pour rien, on rapporte l'état de configuration). Routes : `/api/admin/{me,dashboard,
+>   services,agents-log,partners,partners/{id}/activate|suspend}`.
+> - **Frontend** : `/admin/*` monté AVANT le site public dans `App.tsx`, **hors** de sa mise en page
+>   (ni Header ni Footer public). `components/admin/AdminLayout.tsx` (coquille sombre + `StatCard`
+>   / `Section` / `useAdminData`) et `AdminRoute.tsx` (garde qui interroge `/api/admin/me` — le
+>   serveur reste l'autorité, le droit admin n'est pas exposé dans le profil utilisateur).
+>   4 pages : tableau de bord, partenaires (validation + mot de passe initial affiché une fois),
+>   services, journal des agents.
+> - **Identité propre vérifiée en navigateur** (computed styles, les captures étant indisponibles) :
+>   fond `rgb(2,6,23)`, police système (pas Fraunces/Nunito), aucun header/footer public présent,
+>   zéro débordement horizontal.
+> - **Validé réellement** : tableau de bord avec vraies données (185 fiches, 11 sources, 2 comptes,
+>   3 leads), services (0 en erreur, latences réelles), partenaires (2 actifs), journal des agents
+>   (historique du crawler). Sécurité testée dans les 3 cas : sans auth → 403, compte NON admin →
+>   403 (jeton forgé pour `test@helios.fr`), secret partagé → 200. Build front OK.
+> - **Compte admin de dev** : `demo@helios.fr` promu via `is_admin = True` en base.
+> - **Reste (étapes 2 et 3 du plan validé)** : supervision d'Helios (conversations, questions sans
+>   réponse détaillées, coût par utilisateur), base de connaissances (fiches jamais citées /
+>   les plus citées, lancer crawl+veille depuis l'UI), puis signalements, RGPD et journal des accès.
+
+> **Back-office — étape 2 (27/07/2026) : supervision d'Helios + base de connaissances** —
+> le module qui n'existe ni chez Eolia ni chez Hydrolia, et qui justifie le back-office.
+> - `services/admin_supervision.py` : `liste_conversations` (filtre public/connecté, drapeau
+>   `sans_reponse` par agrégat `MIN(rag_score)`), `detail_conversation` (échange complet avec
+>   identité du foyer, voie de réponse, score, citations, coût, version de constitution),
+>   `questions_sans_reponse` (**DISTINCT ON** pour rattacher à chaque réponse la question
+>   utilisateur la plus proche), `base_connaissances_detail` (SQL brut avec
+>   `jsonb_array_elements_text(chunks_used)` → fiches les plus mobilisées / jamais remontées),
+>   `cout_par_utilisateur`.
+> - **Vocabulaire volontairement exact** : `chunks_used` contient TOUTES les fiches remontées par
+>   la recherche (top-k), pas seulement celles citées dans la réponse → l'UI dit « mobilisées » /
+>   « jamais remontées », jamais « citées ».
+> - **Lancement des agents depuis l'UI** : `POST /admin/agents/run?agent=crawl|veille` via
+>   `BackgroundTasks` + session DB propre (`async_session`) — le crawler prend plusieurs minutes
+>   (embeddings locaux), une exécution synchrone aurait expiré. Progression suivie dans
+>   `agents_log`, erreurs journalisées. Vérifié : veille lancée → journal « 0 document périmé » ;
+>   agent inconnu → 400.
+> - **Frontend** : `AdminConversations.tsx` (liste + vue détaillée d'un échange) et
+>   `AdminConnaissances.tsx` (questions sans réponse, fiches mobilisées, jamais remontées avec
+>   filtre par source, boutons crawler/veille). Navigation portée à 6 entrées.
+> - **Validé en navigateur avec de vraies données** : 23 conversations listées (identité affichée),
+>   détail d'un échange connecté montrant « API · 0,0031 € · constitution v0.2 », 15 fiches les plus
+>   mobilisées (top : cas_pratiques et pilotage à 5×), **137 fiches jamais remontées** — signal
+>   immédiatement exploitable. Build front OK.
+> - **Limite honnête affichée dans l'UI** : « questions sans réponse » est vide car `rag_score`
+>   vient d'être introduit (anciens messages à NULL) ; le relevé démarre avec la mise en service.
+> - **Reste (étape 3)** : signalements client (bouton « réponse fausse »), RGPD (export/suppression
+>   depuis l'UI), journal des accès admin. Moins urgent tant qu'on n'est pas ouvert au public.
+
+> **Back-office — étape 3 (27/07/2026) : signalements, RGPD, traçabilité** — migration
+> `0016_moderation` (tables `message_reports` et `admin_access_log`).
+> - **Signalements** : le foyer (ou un visiteur anonyme) signale une réponse via un bouton dans
+>   le `ChatWidget`. Rend la constitution **vérifiable** au lieu de seulement affirmée.
+>   Prérequis technique : `chat.py` émet désormais un événement `{"type":"message_id"}` en FIN de
+>   flux (le message n'est enregistré qu'après le streaming, son id n'existait pas avant).
+>   `POST /api/chat/signaler` (rate-limité 10/min, ouvert aux anonymes, vérifie que le message
+>   existe et vient bien d'Helios). Revue admin : liste filtrable par statut + traitement
+>   (« Corrigé » / « Ignorer ») avec note de suite donnée.
+> - **RGPD admin** : recherche de foyers, export (portabilité) et suppression (droit à
+>   l'effacement) — **réutilise `account.export_data` / `account.delete_account`** plutôt que de
+>   dupliquer la logique. Garde-fous : un compte admin ne se supprime pas depuis là ; côté UI,
+>   double confirmation dont la ressaisie exacte de l'email. L'export se télécharge en local
+>   (aucun service tiers).
+> - **Journal des accès** (`admin_access_log`) : contrepartie de l'accès complet assumé — chaque
+>   lecture de conversation nominative et chaque export/suppression est tracé (`_tracer`).
+>   La trace de suppression est écrite AVANT l'effacement, l'email n'étant plus lisible après.
+>   Un accès par secret partagé est enregistré sous « secret_partagé ».
+> - **Validé réellement, parcours complet** : question au chat → `message_id` reçu → signalement
+>   anonyme accepté → motif invalide refusé (400) → signalement visible dans la file admin avec
+>   la réponse incriminée, son score (0,688) et sa voie (kb). Export RGPD → 8 sections de données
+>   → tracé dans le journal ; lecture de conversation → tracée aussi. Bouton « Signaler cette
+>   réponse » confirmé présent dans le chat public après réponse. Build front OK.
+> - **Back-office complet : 8 écrans** (tableau de bord, conversations, connaissances,
+>   signalements, foyers & RGPD, partenaires, services, agents).
+
+> **Correctif d'interprétation : « fiches jamais remontées » (27/07/2026)** — le back-office
+> affichait « 137 fiches jamais remontées » et j'en avais fait « le signal le plus actionnable ».
+> **C'était faux, vérifié après coup** : seulement 20 réponses ont jamais mobilisé des sources,
+> soit 20 × `rag_top_k` (8) = **160 tirages au maximum pour 185 fiches** — il était
+> mathématiquement impossible que la majorité remonte. C'est un artefact de volume, pas un
+> défaut de contenu.
+> - `admin_supervision.base_connaissances_detail` renvoie désormais un bloc `volume`
+>   (réponses, tirages max, total fiches, `echantillon_suffisant` = au moins 3 tirages/fiche) ;
+>   l'UI affiche un avertissement explicite tant que l'échantillon est insuffisant, au lieu de
+>   laisser croire à un problème de rédaction.
+> - **Métrique de remplacement, indépendante du trafic** : test d'AUTO-RÉCUPÉRATION — pour chaque
+>   fiche, on pose sa propre question au moteur et on vérifie qu'elle se retrouve. Une fiche qui
+>   ne se retrouve pas elle-même est introuvable en pratique, quel que soit l'usage. Script :
+>   `scratchpad/test_recall.py` (185 embeddings réels via Ollama).
+
+> **Test d'auto-récupération : résultats et correctifs (27/07/2026)** — 185 fiches testées
+> (chacune interrogée avec sa propre question) :
+> - **181/185 au rang 1, 0 introuvable** → base saine, bien indexée et bien formulée.
+> - **4 reléguées**, toutes révélatrices de quasi-doublons. Le cas grave : deux fiches
+>   **se contredisaient** sur batterie virtuelle vs physique (« souvent moins avantageuse
+>   qu'annoncé » contre « fait mieux dans quasi tous les cas ») → selon celle qui remontait,
+>   Helios donnait un conseil opposé. Sujet à enjeu commercial (MyLight partenaire).
+> - **Arbitrage rendu par l'utilisateur** (position reprise telle quelle dans la fiche) : les deux
+>   ont de vrais avantages ; la physique permet le **back-up** en coupure réseau, l'indépendance
+>   vis-à-vis d'un opérateur et le rapport à « SON » énergie ; la virtuelle impose un fournisseur
+>   alternatif, ce que beaucoup refusent ; et l'écart économique dépend de la **courbe de charge**
+>   du foyer. → Helios simule, compare les deux à consommation égale, **et le client décide**.
+>   Constat au passage : toutes les fiches existantes traitaient le sujet comme purement
+>   financier — le back-up, la réticence fournisseur et l'autonomie n'étaient nulle part.
+> - Vérifié avant d'écrire : `revolt_engine.compare_scenarios` compare DÉJÀ physique
+>   (`simulate_pv_battery`) et virtuelle (`simulate_mylight`) à consommation réelle égale — la
+>   fiche ne promet donc rien qui n'existe pas (seule la courbe Enedis réelle reste à brancher).
+> - Doublon « recharge voiture » (FAQ + `solutions.md`) : **fusionné** (les conditions concrètes
+>   de la version FAQ — véhicule présent en journée, 6 kWc minimum — ont été reversées dans
+>   `solutions.md`) puis l'original retiré. Fiche orpheline supprimée en base (l'upsert par titre
+>   ne supprime rien).
+> - Réingéré et **vérifié en conditions réelles** : la question « batterie virtuelle ou physique »
+>   renvoie désormais la réponse nuancée (score 0,781, réponse instantanée). Base : 184 fiches.
+
+> **⚠️ CORRECTION DE NOMMAGE — « Revolt » → « autoconso » (27/07/2026)** — À RETENIR :
+> **REVOLT est un logiciel de dimensionnement solaire TIERS** (payant, utilisé par de nombreux
+> installateurs), qui **n'appartient pas à HELIOS**. Il avait été cité par l'utilisateur comme
+> simple *repère de qualité* au moment de concevoir le simulateur ; le nom s'est propagé dans le
+> code par erreur d'interprétation de ma part. Utiliser la marque d'un produit tiers pour une
+> fonctionnalité maison était un risque réel de confusion. **Ne jamais réintroduire ce nom.**
+> - Renommé partout en **`autoconso`** (descriptif : autoconsommation = PV + stockage + tarifs,
+>   à consommation réelle). 19 fichiers modifiés, 6 renommés :
+>   `models/autoconso.py` (`AutoconsoStudy`), `schemas/autoconso.py`, `services/autoconso_engine.py`,
+>   `routers/autoconso.py` (préfixe `/api/autoconso`), `kb/autoconso.md` (source `autoconso`),
+>   `components/AutoconsoPanel.tsx`. Plus `rag.build_autoconso_context`,
+>   `config.autoconso_battery_efficiency`, `FAQ_SOURCES`, `_QR_SOURCES`, guides, glossaire, FAQ.
+> - **Migration `0017_rename_autoconso`** : `revolt_studies` → `autoconso_studies` (+ index).
+>   Les migrations historiques 0014/0015 gardent l'ancien nom — on ne réécrit jamais une
+>   migration déjà appliquée ; la chaîne de révisions en dépend.
+> - **Piège rencontré** : le remplacement automatique a inséré « simulateur d'autoconsommation »
+>   (avec apostrophe) dans des chaînes JS en quotes simples → 10 erreurs TS. Corrigé en passant
+>   ces chaînes en guillemets doubles. Vérifier ce motif après tout remplacement de masse.
+> - **Vérifié réellement** : migration appliquée, backend importe, `tsc -b` OK, build front OK,
+>   routes `/api/autoconso/{simulate,studies}` enregistrées, **les 2 simulations persistées sont
+>   toujours lisibles après renommage de table**, 7 fiches réingérées sous `source=autoconso`
+>   (les anciennes `source=revolt` purgées), FAQ à 184 fiches, chat retrouve la fiche (score 0,746).
+>
+> **Niveau de qualité visé** (étude REVOLT réelle fournie par l'utilisateur, 23 pages, client
+> AD Solar 9 kWc) : dimensionnement + récupération Enedis, production/consommation horaire,
+> répartition autonomie directe vs batterie virtuelle, profil projeté (VE, équipements),
+> facture avant/après, économies N+1, **gains cumulés sur 25 ans**, comparatif d'offres,
+> impact environnemental (temps de retour énergétique), analyse d'ensoleillement et d'ombrage 3D,
+> simulation d'emprunt. Le simulateur HELIOS couvre aujourd'hui une partie de ce périmètre
+> (production PVGIS, autoconso, batterie physique/virtuelle, tarifs) — l'écart restant est
+> documenté ici comme cible, pas comme promesse.
+
 ## Commandes
 - Front : `cd frontend && npm install && npm run dev` (build : `npm run build`)
 - API : `cd api && pip install -r requirements.txt && uvicorn app.main:app --reload`

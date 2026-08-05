@@ -8,12 +8,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.db import Base
 
 
-class RevoltStudy(Base):
-    """Simulation « Revolt » (PV + batterie + tarifs) — toujours liée à une fiche maison
+class AutoconsoStudy(Base):
+    """Simulation « Autoconso » (PV + batterie + tarifs) — toujours liée à une fiche maison
     (fonctionnalité réservée aux utilisateurs connectés). Conservée gratuitement dans
     l'espace client, et exploitable par Helios dans le chat (contexte de conversation)."""
 
-    __tablename__ = "revolt_studies"
+    __tablename__ = "autoconso_studies"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     house_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("houses.id"), nullable=False, index=True)

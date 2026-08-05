@@ -30,8 +30,43 @@ import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
 import QuiSommesNous from './pages/QuiSommesNous'
+import AdminRoute from './components/admin/AdminRoute'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminPartenaires from './pages/admin/AdminPartenaires'
+import AdminServices from './pages/admin/AdminServices'
+import AdminAgents from './pages/admin/AdminAgents'
+import AdminConversations from './pages/admin/AdminConversations'
+import AdminConnaissances from './pages/admin/AdminConnaissances'
+import AdminSignalements from './pages/admin/AdminSignalements'
+import AdminFoyers from './pages/admin/AdminFoyers'
+
+/** Le back-office a sa propre coquille (fond sombre, pas de header/footer public) :
+ * il est donc monté AVANT le site public, en dehors de sa mise en page. */
+function AdminRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/conversations" element={<AdminRoute><AdminConversations /></AdminRoute>} />
+      <Route path="/connaissances" element={<AdminRoute><AdminConnaissances /></AdminRoute>} />
+      <Route path="/signalements" element={<AdminRoute><AdminSignalements /></AdminRoute>} />
+      <Route path="/foyers" element={<AdminRoute><AdminFoyers /></AdminRoute>} />
+      <Route path="/partenaires" element={<AdminRoute><AdminPartenaires /></AdminRoute>} />
+      <Route path="/services" element={<AdminRoute><AdminServices /></AdminRoute>} />
+      <Route path="/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
+    </Routes>
+  )
+}
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin/*" element={<AdminRoutes />} />
+      <Route path="*" element={<SitePublic />} />
+    </Routes>
+  )
+}
+
+function SitePublic() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

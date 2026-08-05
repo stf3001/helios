@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,8 +15,9 @@ from app.models.audit import Audit
 from app.models.conversation import Conversation, Message
 from app.models.energy import EnergyStudy
 from app.models.house import House
+from app.models.moderation import MOTIFS, MessageReport
 from app.models.pro import ProProfile
-from app.models.revolt import RevoltStudy
+from app.models.autoconso import AutoconsoStudy
 from app.models.solar import SolarStudy
 from app.models.user import User
 from app.models.water import WaterStudy
@@ -54,7 +56,7 @@ async def send_message(
 
     house_context = None
     pro_context = None
-    revolt_context = None
+    autoconso_context = None
     solar_context = None
     audit_context = None
     energy_context = None
@@ -69,11 +71,11 @@ async def send_message(
             house_context = rag.build_house_context(house)
             niveau = house_context["niveau"]
 
-            revolt_study = await db.scalar(
-                select(RevoltStudy).where(RevoltStudy.house_id == house.id).order_by(RevoltStudy.created_at.desc())
+            autoconso_study = await db.scalar(
+                select(AutoconsoStudy).where(AutoconsoStudy.house_id == house.id).order_by(AutoconsoStudy.created_at.desc())
             )
-            if revolt_study is not None:
-                revolt_context = rag.build_revolt_context(revolt_study)
+            if autoconso_study is not None:
+                autoconso_context = rag.build_autoconso_context(autoconso_study)
 
             solar_study = await db.scalar(
                 select(SolarStudy).where(SolarStudy.house_id == house.id).order_by(SolarStudy.created_at.desc())
@@ -102,6 +104,9 @@ async def send_message(
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
     citations = rag.build_citations(results)
+    # Meilleur score de similarité : tracé sur la réponse pour le back-office. Sous le seuil
+    # de pertinence, la question révèle un trou de la base de connaissances (module admin).
+    rag_score = rag.best_score(results)
     chunks_used = [str(r["chunk"].id) for r in results]
     conversation_id = conversation.id
 
@@ -126,18 +131,20 @@ async def send_message(
                 yield json.dumps({"type": "citations", "citations": instant_citations}) + "\n"
 
                 async with async_session() as db2:
-                    db2.add(
-                        Message(
-                            conversation_id=conversation_id,
-                            role="helios",
-                            content=instant,
-                            model_used="kb",
-                            citations=instant_citations,
-                            chunks_used=chunks_used[:1],
-                            constitution_version=settings.constitution_version,
-                        )
+                    msg = Message(
+                        conversation_id=conversation_id,
+                        role="helios",
+                        content=instant,
+                        model_used="kb",
+                        citations=instant_citations,
+                        chunks_used=chunks_used[:1],
+                        constitution_version=settings.constitution_version,
+                        rag_score=rag_score,
                     )
+                    db2.add(msg)
                     await db2.commit()
+                    # Envoyé en dernier : permet au widget de proposer « signaler cette réponse ».
+                    yield json.dumps({"type": "message_id", "message_id": str(msg.id)}) + "\n"
 
             return StreamingResponse(stream_instant(), media_type="application/x-ndjson")
 
@@ -146,7 +153,7 @@ async def send_message(
         results,
         house_context,
         pro_context,
-        revolt_context,
+        autoconso_context,
         solar_context,
         audit_context,
         energy_context,
@@ -180,20 +187,22 @@ async def send_message(
         tokens = len(full_response) // 4 or None  # approximation grossière (doc : à calibrer)
         cost = router_llm.estimate_cost_eur(tokens) if route == "api" else None
         async with async_session() as db2:
-            db2.add(
-                Message(
-                    conversation_id=conversation_id,
-                    role="helios",
-                    content=full_response,
-                    model_used=route,
-                    tokens=tokens,
-                    citations=citations,
-                    chunks_used=chunks_used,
-                    constitution_version=settings.constitution_version,
-                    estimated_cost_eur=cost,
-                )
+            msg = Message(
+                conversation_id=conversation_id,
+                role="helios",
+                content=full_response,
+                model_used=route,
+                tokens=tokens,
+                citations=citations,
+                chunks_used=chunks_used,
+                constitution_version=settings.constitution_version,
+                estimated_cost_eur=cost,
+                rag_score=rag_score,
             )
+            db2.add(msg)
             await db2.commit()
+            # Envoyé en dernier : permet au widget de proposer « signaler cette réponse ».
+            yield json.dumps({"type": "message_id", "message_id": str(msg.id)}) + "\n"
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")
 
@@ -222,3 +231,43 @@ async def get_conversation_messages(
         {"id": m.id, "role": m.role, "content": m.content, "citations": m.citations, "created_at": m.created_at}
         for m in rows
     ]
+
+
+class SignalementIn(BaseModel):
+    """Signalement d'une réponse d'Helios par le foyer (ou un visiteur)."""
+
+    message_id: uuid.UUID
+    motif: str
+    commentaire: str | None = None
+
+
+@router.post("/signaler", status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+async def signaler_reponse(
+    request: Request,
+    payload: SignalementIn,
+    user: User | None = Depends(get_optional_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Signale une réponse fausse, hors sujet ou gênante — alimente la revue admin.
+
+    Ouvert aux visiteurs anonymes (le chat public l'est aussi). On vérifie seulement que le
+    message existe et qu'il vient bien d'Helios : signaler sa propre question n'aurait pas de sens.
+    """
+    if payload.motif not in MOTIFS:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Motif invalide (attendu : {', '.join(MOTIFS)})")
+
+    message = await db.get(Message, payload.message_id)
+    if message is None or message.role != "helios":
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Message introuvable")
+
+    db.add(
+        MessageReport(
+            message_id=message.id,
+            user_id=user.id if user else None,
+            motif=payload.motif,
+            commentaire=(payload.commentaire or "").strip()[:2000] or None,
+        )
+    )
+    await db.commit()
+    return {"enregistre": True, "message": "Merci — ce signalement est examiné par l'équipe."}

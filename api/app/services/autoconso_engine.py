@@ -1,4 +1,4 @@
-"""Moteur "Revolt" — simulateur avancé PV + batterie + tarifs, à consommation réelle égale.
+"""Moteur "Autoconso" — simulateur avancé PV + batterie + tarifs, à consommation réelle égale.
 
 Entièrement déterministe (aucun LLM, doc 07 §6) : prend en entrée deux séries horaires sur
 un an (8760 points) — consommation du logement et production PV — et simule heure par heure
@@ -45,7 +45,7 @@ def simulate_pv_battery(
     """PV + batterie physique — simulation glouton heure par heure (charge dès qu'il y a du
     surplus, décharge dès qu'il y a un besoin, dans la limite de la capacité et de la puissance
     de charge/décharge). Pertes appliquées à la charge (rendement aller-retour, doc 09 §1)."""
-    eff = efficiency if efficiency is not None else settings.revolt_battery_efficiency
+    eff = efficiency if efficiency is not None else settings.autoconso_battery_efficiency
     soc = 0.0
     import_h: Hourly = []
     export_h: Hourly = []

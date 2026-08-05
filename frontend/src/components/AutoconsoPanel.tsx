@@ -22,7 +22,7 @@ interface Ligne {
   avertissement?: string
 }
 
-interface RevoltResult {
+interface AutoconsoResult {
   study_id?: string
   power_kwc: number
   production_annuelle_kwh: number
@@ -30,16 +30,16 @@ interface RevoltResult {
   lignes: Ligne[]
 }
 
-interface RevoltStudySummary {
+interface AutoconsoStudySummary {
   id: string
   params: { power_kwc: number; battery_kwh?: number; mylight?: boolean; tarif_modes: string[] }
-  result: RevoltResult
+  result: AutoconsoResult
   created_at: string
 }
 
 const eur = (n: number) => Math.round(n).toLocaleString('fr-FR') + ' €'
 
-export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: number }) {
+export default function AutoconsoPanel({ defaultPowerKwc }: { defaultPowerKwc: number }) {
   const { authFetch } = useAuth()
   const [powerKwc, setPowerKwc] = useState(String(defaultPowerKwc))
   const [avecBatterie, setAvecBatterie] = useState(false)
@@ -47,13 +47,13 @@ export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: numb
   const [batteryKw, setBatteryKw] = useState('3')
   const [mylight, setMylight] = useState(false)
   const [tarifModes, setTarifModes] = useState<string[]>(['fixe', 'soflex', 'socap'])
-  const [result, setResult] = useState<RevoltResult | null>(null)
+  const [result, setResult] = useState<AutoconsoResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [historique, setHistorique] = useState<RevoltStudySummary[]>([])
+  const [historique, setHistorique] = useState<AutoconsoStudySummary[]>([])
 
   function chargerHistorique() {
-    authFetch('/api/revolt/studies').then((r) => (r.ok ? r.json() : [])).then(setHistorique).catch(() => {})
+    authFetch('/api/autoconso/studies').then((r) => (r.ok ? r.json() : [])).then(setHistorique).catch(() => {})
   }
   useEffect(chargerHistorique, [authFetch])
 
@@ -66,7 +66,7 @@ export default function RevoltPanel({ defaultPowerKwc }: { defaultPowerKwc: numb
     setError(null)
     setLoading(true)
     try {
-      const res = await authFetch('/api/revolt/simulate', {
+      const res = await authFetch('/api/autoconso/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -344,25 +344,25 @@ export const guides: Guide[] = [
     ],
   },
   {
-    slug: 'comprendre-revolt',
-    titre: 'Simulateur Revolt : bien interpréter vos résultats',
+    slug: 'comprendre-autoconso',
+    titre: "Simulateur d'autoconsommation : bien interpréter vos résultats",
     categorie: 'Énergie',
-    chapo: 'Panneaux, batterie physique ou virtuelle, tarif fixe ou dynamique : comment lire un comparatif Revolt sans se tromper.',
+    chapo: "Panneaux, batterie physique ou virtuelle, tarif fixe ou dynamique : comment lire un comparatif d'autoconsommation sans se tromper.",
     sections: [
       {
         titre: 'À consommation réelle égale',
         contenu:
-          'Contrairement au simulateur solaire classique qui raisonne en moyennes annuelles, Revolt simule heure par heure sur une année complète, à partir d\'une courbe de consommation (aujourd\'hui simulée selon votre profil, demain issue d\'Enedis avec votre consentement). C\'est ce qui permet de comparer plusieurs scénarios sur une base identique : ajouter des panneaux seuls, y ajouter une batterie, ou changer de tarif — sans que la consommation elle-même ne varie d\'un scénario à l\'autre.',
+          'Contrairement au simulateur solaire classique qui raisonne en moyennes annuelles, Autoconso simule heure par heure sur une année complète, à partir d\'une courbe de consommation (aujourd\'hui simulée selon votre profil, demain issue d\'Enedis avec votre consentement). C\'est ce qui permet de comparer plusieurs scénarios sur une base identique : ajouter des panneaux seuls, y ajouter une batterie, ou changer de tarif — sans que la consommation elle-même ne varie d\'un scénario à l\'autre.',
       },
       {
         titre: 'Batterie physique ou virtuelle : deux logiques différentes',
         contenu:
-          'Une batterie physique augmente votre autoconsommation immédiatement mais représente un investissement matériel qui prend du temps à s\'amortir. Le stockage virtuel (comme MyLight) évite cet investissement — vous « mettez de côté » votre surplus solaire pour le récupérer plus tard, moyennant un abonnement et des frais de restitution — mais impose souvent de changer de fournisseur d\'électricité. Aucune des deux n\'est meilleure dans l\'absolu : Revolt compare les deux sur VOTRE profil.',
+          'Une batterie physique augmente votre autoconsommation immédiatement mais représente un investissement matériel qui prend du temps à s\'amortir. Le stockage virtuel (comme MyLight) évite cet investissement — vous « mettez de côté » votre surplus solaire pour le récupérer plus tard, moyennant un abonnement et des frais de restitution — mais impose souvent de changer de fournisseur d\'électricité. Aucune des deux n\'est meilleure dans l\'absolu : Autoconso compare les deux sur VOTRE profil.',
       },
       {
         titre: 'SoFlex, SoCap ou tarif fixe',
         contenu:
-          'Un tarif dynamique comme SoFlex suit le marché heure par heure, avec des creux très bon marché (parfois négatifs) aux heures de forte production solaire nationale, mais des pointes plus chères en hiver. SoCap suit la même logique en version plafonnée, moins risquée mais moins généreuse aux heures creuses. Ces grilles restent des grilles de test à confirmer auprès de SOBRY — utilisez Revolt pour comprendre l\'ordre de grandeur de l\'écart avec votre tarif actuel, pas comme un devis final.',
+          'Un tarif dynamique comme SoFlex suit le marché heure par heure, avec des creux très bon marché (parfois négatifs) aux heures de forte production solaire nationale, mais des pointes plus chères en hiver. SoCap suit la même logique en version plafonnée, moins risquée mais moins généreuse aux heures creuses. Ces grilles restent des grilles de test à confirmer auprès de SOBRY — utilisez Autoconso pour comprendre l\'ordre de grandeur de l\'écart avec votre tarif actuel, pas comme un devis final.',
       },
     ],
   },

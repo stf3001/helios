@@ -32,4 +32,7 @@ class Message(Base):
     chunks_used: Mapped[list[str] | None] = mapped_column(JSONB)  # ids des kb_chunks cités
     constitution_version: Mapped[str | None] = mapped_column(String(10))
     estimated_cost_eur: Mapped[float | None] = mapped_column(Float)
+    # Meilleur score de similarité RAG au moment de la réponse. Sous le seuil de pertinence,
+    # c'est un trou dans la base de connaissances → alimente le module admin « questions sans réponse ».
+    rag_score: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")

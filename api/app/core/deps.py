@@ -61,6 +61,44 @@ async def get_current_partner(
 
 
 def require_admin(x_admin_token: str | None = Header(default=None)) -> None:
-    """Garde les endpoints admin via un secret partagé (X-Admin-Token). Simple, suffisant en v1."""
+    """Garde les endpoints admin via un secret partagé (X-Admin-Token). Conservé pour les
+    scripts et l'outillage en ligne de commande ; le back-office, lui, passe par
+    `get_current_admin` (compte utilisateur + JWT)."""
     if not x_admin_token or x_admin_token != settings.admin_token:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès admin refusé")
+
+
+async def get_current_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Authentifie un administrateur pour le back-office : même JWT que l'espace client,
+    mais exige `users.is_admin`. Renvoie 403 (et non 404) pour rester explicite côté UI."""
+    user = await get_current_user(credentials, db)
+    if not user.is_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès réservé aux administrateurs")
+    return user
+
+
+async def require_admin_access(
+    x_admin_token: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Garde des routes admin, acceptant DEUX voies d'accès :
+
+    - `X-Admin-Token` : secret partagé, pour les scripts et l'outillage en ligne de commande ;
+    - JWT d'un compte `is_admin` : pour le back-office.
+
+    Renvoie le compte admin quand l'accès vient d'un utilisateur (permet de l'afficher et,
+    plus tard, de tracer les accès), ou None pour un accès par secret partagé.
+    """
+    if x_admin_token and x_admin_token == settings.admin_token:
+        return None
+    if credentials is not None:
+        user_id = decode_access_token(credentials.credentials)
+        if user_id is not None:
+            user = await db.get(User, uuid.UUID(user_id))
+            if user is not None and user.is_admin:
+                return user
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès admin refusé")

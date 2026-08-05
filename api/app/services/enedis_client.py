@@ -1,5 +1,5 @@
 """Client Enedis DataConnect — courbe de charge (consommation) du logement, pour le
-simulateur "Revolt" (PV + batterie + tarifs dynamiques, comparés à conso réelle égale).
+simulateur d'autoconsommation (PV + batterie + tarifs dynamiques, comparés à conso réelle égale).
 
 Enedis DataConnect (OAuth2, https://datahub-enedis.fr) fournit la vraie courbe de charge
 Linky (pas de 30 min, jusqu'à 3 ans d'historique) après consentement explicite du client.

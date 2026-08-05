@@ -5,19 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.house import House
-from app.models.revolt import RevoltStudy
+from app.models.autoconso import AutoconsoStudy
 from app.models.user import User
-from app.schemas.revolt import RevoltSimulateIn
-from app.services import enedis_client, geocoding, pvgis, revolt_engine
+from app.schemas.autoconso import AutoconsoSimulateIn
+from app.services import enedis_client, geocoding, pvgis, autoconso_engine
 from app.services.geocoding import GeocodingError
 from app.services.pvgis import PvgisError
 
-router = APIRouter(prefix="/revolt", tags=["revolt"])
+router = APIRouter(prefix="/autoconso", tags=["autoconso"])
 
 
 @router.post("/simulate")
 async def simulate(
-    payload: RevoltSimulateIn,
+    payload: AutoconsoSimulateIn,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -49,7 +49,7 @@ async def simulate(
     conso = await enedis_client.get_load_curve(house)
     conso_h = conso["hourly_kwh"]
 
-    comparaison = revolt_engine.compare_scenarios(
+    comparaison = autoconso_engine.compare_scenarios(
         conso_h,
         prod_h,
         battery_kwh=payload.battery_kwh,
@@ -66,7 +66,7 @@ async def simulate(
     }
 
     # Conservée gratuitement dans l'espace client — et exploitable par Helios dans le chat.
-    study = RevoltStudy(
+    study = AutoconsoStudy(
         house_id=house.id,
         params=payload.model_dump(),
         result=result,
@@ -80,11 +80,11 @@ async def simulate(
 
 @router.get("/studies")
 async def list_studies(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Historique des simulations Revolt de l'utilisateur, les plus récentes d'abord."""
+    """Historique des simulations Autoconso de l'utilisateur, les plus récentes d'abord."""
     house = await db.scalar(select(House).where(House.user_id == user.id))
     if house is None:
         return []
     rows = await db.scalars(
-        select(RevoltStudy).where(RevoltStudy.house_id == house.id).order_by(RevoltStudy.created_at.desc())
+        select(AutoconsoStudy).where(AutoconsoStudy.house_id == house.id).order_by(AutoconsoStudy.created_at.desc())
     )
     return [{"id": s.id, "params": s.params, "result": s.result, "created_at": s.created_at} for s in rows]

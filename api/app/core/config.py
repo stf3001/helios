@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     courtage_gain_estime_pct: float = 8.0        # gain moyen estimé d'un changement d'offre via courtage (à calibrer)
     courtage_gain_estime_pct_pro: float = 12.0   # potentiel plus élevé en pro (volumes, contrats négociables)
 
-    # --- Simulateur "Revolt" (doc futur) : PV + batterie + tarifs dynamiques, à conso réelle ---
+    # --- Simulateur "Autoconso" (doc futur) : PV + batterie + tarifs dynamiques, à conso réelle ---
     # Enedis DataConnect (OAuth2) — identifiants d'un vrai partenaire homologué, obtenus après
     # inscription au Data Hub Enedis (SIRET, dossier RGPD/DPIA, callback HTTPS public). Vides en
     # dev : le moteur utilise une courbe de charge SIMULÉE tant que ces clés ne sont pas fournies.
@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     enedis_redirect_uri: str = ""
 
     # Batterie physique — mêmes ordres de grandeur que solar_engine.STORAGE_TECHS
-    revolt_battery_efficiency: float = 0.90        # rendement aller-retour (pertes onduleur/charge)
+    autoconso_battery_efficiency: float = 0.90        # rendement aller-retour (pertes onduleur/charge)
 
     # MyLight — batterie virtuelle "MyBattery" (offre publique mylight150, tarifs 2026 relevés sur
     # le web le 22/07/2026 : papernest.com et adsolar.fr, concordants — À CONFIRMER auprès de MyLight

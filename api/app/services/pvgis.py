@@ -47,7 +47,7 @@ def _loss_for(ombrage: str | None) -> float:
 
 def resolve_angle_aspect_loss(orientation: str | None, pente: int | None, ombrage: str | None) -> tuple[int, int, float]:
     """Traduit les champs de la fiche Maison (orientation/pente/ombrage) en paramètres PVGIS
-    (angle, aspect, loss) — utilisé par `simulate` et par le simulateur Revolt (série horaire)."""
+    (angle, aspect, loss) — utilisé par `simulate` et par le simulateur d'autoconsommation (série horaire)."""
     angle = pente if pente is not None else _DEFAULT_ANGLE
     return angle, _aspect_for(orientation), _loss_for(ombrage)
 
@@ -81,7 +81,7 @@ async def production_series_hourly(
     *, lat: float, lon: float, peakpower: float, angle: int, aspect: int, loss: float
 ) -> list[float]:
     """Série de production PV heure par heure sur une année type (kWh), pour le simulateur
-    "Revolt" (matching heure par heure avec une courbe de consommation). Endpoint PVGIS
+    "Autoconso" (matching heure par heure avec une courbe de consommation). Endpoint PVGIS
     `seriescalc`, réel et gratuit (Commission européenne, pas de clé requise)."""
     params = {
         "lat": lat,
