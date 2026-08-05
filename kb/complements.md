@@ -1,6 +1,6 @@
 # Base de connaissances — Compléments (source complements)
 # Format identique à la FAQ : ### Q: / `meta` / R: — ingéré par l'agent crawler (source complements).
-# Sujets identifiés comme réellement absents de la FAQ existante (05-FAQ-V1.md, 141 fiches) :
+# Sujets identifiés comme réellement absents de la FAQ existante (faq_maison.md) :
 # aides locales, véhicule électrique (aides d'achat), DPE/vente, statuts particuliers, biénergie.
 
 ### Q: Existe-t-il des aides locales en plus de MaPrimeRénov' ?

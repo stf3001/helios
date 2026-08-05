@@ -32,7 +32,9 @@ class SourceSpec:
 # Registre des sources. La FAQ locale est la source canonique (fiable, hors réseau).
 # Les sources "web" (aides/prix) sont optionnelles : un échec réseau est journalisé, non bloquant.
 SOURCES: list[SourceSpec] = [
-    SourceSpec(name="faq_maison", kind="faq_markdown", location="05-FAQ-V1.md"),
+    # Source historique (109 fiches d'origine). Déplacée depuis HELIOS/05-FAQ-V1.md vers le
+    # dépôt le 27/07/2026 : elle vit désormais avec les autres fiches, donc versionnée en git.
+    SourceSpec(name="faq_maison", kind="faq_markdown", location="helios/kb/faq_maison.md"),
     SourceSpec(name="solutions", kind="faq_markdown", location="helios/kb/solutions.md"),
     SourceSpec(name="pilotage", kind="faq_markdown", location="helios/kb/pilotage.md"),
     SourceSpec(name="eau", kind="faq_markdown", location="helios/kb/eau.md"),
