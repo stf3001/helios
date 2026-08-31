@@ -1,0 +1,122 @@
+[
+  {
+    "nom": "Paris",
+    "slug": "paris",
+    "departement": "75",
+    "zone": "H1",
+    "prod_3kwc": 3380,
+    "prod_6kwc": 6761,
+    "prod_9kwc": 10141,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Lyon",
+    "slug": "lyon",
+    "departement": "69",
+    "zone": "H1",
+    "prod_3kwc": 3811,
+    "prod_6kwc": 7623,
+    "prod_9kwc": 11434,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Marseille",
+    "slug": "marseille",
+    "departement": "13",
+    "zone": "H3",
+    "prod_3kwc": 4773,
+    "prod_6kwc": 9546,
+    "prod_9kwc": 14319,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Toulouse",
+    "slug": "toulouse",
+    "departement": "31",
+    "zone": "H2",
+    "prod_3kwc": 3886,
+    "prod_6kwc": 7772,
+    "prod_9kwc": 11658,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Bordeaux",
+    "slug": "bordeaux",
+    "departement": "33",
+    "zone": "H2",
+    "prod_3kwc": 3810,
+    "prod_6kwc": 7619,
+    "prod_9kwc": 11429,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Nantes",
+    "slug": "nantes",
+    "departement": "44",
+    "zone": "H2",
+    "prod_3kwc": 3657,
+    "prod_6kwc": 7314,
+    "prod_9kwc": 10971,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Montpellier",
+    "slug": "montpellier",
+    "departement": "34",
+    "zone": "H3",
+    "prod_3kwc": 4512,
+    "prod_6kwc": 9024,
+    "prod_9kwc": 13536,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Strasbourg",
+    "slug": "strasbourg",
+    "departement": "67",
+    "zone": "H1",
+    "prod_3kwc": 3351,
+    "prod_6kwc": 6702,
+    "prod_9kwc": 10052,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Lille",
+    "slug": "lille",
+    "departement": "59",
+    "zone": "H1",
+    "prod_3kwc": 3174,
+    "prod_6kwc": 6349,
+    "prod_9kwc": 9524,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Rennes",
+    "slug": "rennes",
+    "departement": "35",
+    "zone": "H2",
+    "prod_3kwc": 3441,
+    "prod_6kwc": 6883,
+    "prod_9kwc": 10324,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Nice",
+    "slug": "nice",
+    "departement": "06",
+    "zone": "H3",
+    "prod_3kwc": 4509,
+    "prod_6kwc": 9018,
+    "prod_9kwc": 13527,
+    "cout_6kwc": 10500
+  },
+  {
+    "nom": "Grenoble",
+    "slug": "grenoble",
+    "departement": "38",
+    "zone": "H1",
+    "prod_3kwc": 3864,
+    "prod_6kwc": 7729,
+    "prod_9kwc": 11593,
+    "cout_6kwc": 10500
+  }
+]

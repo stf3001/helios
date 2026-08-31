@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   BatteryCharging, Battery, Building2, Car, Compass, Cpu, DoorClosed, Droplet,
-  Droplets, FileBarChart, Flame, HandCoins, HardHat, Key, Layers, Leaf, Scale,
+  Droplets, FileBarChart, Flame, HandCoins, HardHat, Key, Layers, Leaf, Scale, ShieldAlert,
   Smile, Sparkles, Sun, Wind, Zap,
 } from 'lucide-react'
 
@@ -42,6 +42,7 @@ const MAP: Record<string, CatIcon> = {
   sobriete: { Icon: Leaf, color: 'text-leaf' },
   vision: { Icon: Compass, color: 'text-ink' },
   helios: { Icon: Sparkles, color: 'text-primary' },
+  vigilance: { Icon: ShieldAlert, color: 'text-terra' },
   renovation: { Icon: HardHat, color: 'text-terra' },
 }
 

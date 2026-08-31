@@ -745,7 +745,31 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 >   (photovoltaique 15 + stockage 23 + autoconso 7), `/eau` garde sa page riche + 15 fiches,
 >   et une fiche renvoie bien vers son chapeau. Titres des chapeaux : 43-48 caractères.
 >
-> - Reste : phase 6 (anti-arnaque et pages territoire) — chantier de rédaction, non démarré.
+>
+> **SEO — phase 6 : vigilance et pages locales (5/08/2026)** — dernière phase du plan.
+> - `kb/vigilance.md` (**8 fiches**) : démarchage, devis gonflés, « travaux à 1 euro », faux RGE,
+>   crédit affecté déguisé, urgence artificielle, recours. **C'est le territoire qu'une plateforme
+>   vivant de la revente de contacts ne peut pas revendiquer sans se contredire** — Helios le peut.
+>   Faits juridiques vérifiés par recherche web : **loi n° 2025-594 du 30 juin 2025** interdisant le
+>   démarchage non sollicité en rénovation énergétique (téléphone, SMS, mail, réseaux sociaux),
+>   contrat signé après sollicitation interdite **nul de plein droit**, rétractation 14 jours sans
+>   motif ni frais, interdiction d'exécuter ou d'encaisser avant la fin du délai, amendes jusqu'à
+>   75 000 € / 375 000 €. Chaque fiche rappelle qu'elle informe sans remplacer un conseil juridique.
+>   Chapeau `/vigilance` associé. Retrieval vérifié sur 4 questions d'inquiétude réalistes :
+>   la bonne fiche remonte en tête à chaque fois.
+> - **Pages locales** `/solaire/{ville}` (**12 villes**) : `src/data/villes.json` contient des
+>   productions PVGIS **réellement calculées** par ville (script `scratchpad/calc_villes.py`,
+>   36 appels PVGIS, exécuté UNE fois et versionné — le build reste hors ligne et reproductible).
+> - **Garde-fou anti-« pages satellites »** : des pages géographiques dupliquées sont sanctionnées
+>   par les moteurs. Ici l'écart de production est de **×1,50** entre Lille (6 349 kWh) et
+>   Marseille (9 546 kWh) pour 6 kWc, et chaque page porte en plus le conseil lié à sa **zone
+>   climatique** (H1 isolation d'abord / H2 ventilation / H3 confort d'été). Le contenu est donc
+>   authentiquement différent, pas décliné. L'écart est affiché par le script comme contrôle.
+> - Honnêteté affichée sur chaque page : chiffres pour une toiture plein sud à 30° sans ombrage,
+>   « votre toiture diffère forcément » + renvoi au simulateur pour le cas réel.
+> - **Plan de site : 238 URL** (contre 8 au départ de l'audit).
+> - Vérifié : pages générées avec titre/description/canonique propres à chaque ville, rendu React
+>   confirmé en navigateur sur `/solaire/marseille` et `/vigilance`.
 
 ## Commandes
 - Front : `cd frontend && npm install && npm run dev` (build : `npm run build`)

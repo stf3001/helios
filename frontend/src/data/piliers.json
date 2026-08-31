@@ -1,5 +1,40 @@
 [
   {
+    "slug": "vigilance",
+    "titre": "Éviter les arnaques aux travaux",
+    "sousTitre": "Démarchage, devis gonflés, fausses aides : reconnaître les pièges et savoir réagir.",
+    "metaTitre": "Arnaques aux travaux : reconnaître les pièges",
+    "metaDesc": "Démarchage interdit, devis gonflés, « travaux à 1 euro », faux RGE : les signaux d'alerte et vos recours, expliqués sans intérêt commercial.",
+    "intro": "La rénovation énergétique attire beaucoup d'argent public, donc beaucoup d'abus. La bonne nouvelle est que la loi vous protège mieux qu'on ne le croit : depuis le 30 juin 2025, le démarchage non sollicité est purement interdit dans ce secteur, et un contrat signé à la suite d'une telle sollicitation est nul de plein droit. Encore faut-il le savoir au moment où quelqu'un sonne à votre porte.",
+    "cats": [
+      "vigilance"
+    ],
+    "sections": [
+      {
+        "titre": "La règle qui règle 90 % des cas",
+        "contenu": "Ne donnez jamais suite à une sollicitation que vous n'avez pas demandée — téléphone, porte-à-porte, SMS, courriel ou réseaux sociaux. Ce n'est pas seulement un conseil de prudence : c'est illégal depuis 2025, et l'entreprise qui le fait est déjà en infraction avant même de vous avoir parlé de travaux. Allez chercher vos prestataires vous-même, comparez trois devis, et vous éliminez l'essentiel du risque."
+      },
+      {
+        "titre": "Le test du prix hors aides",
+        "contenu": "Face à une offre « à 1 euro » ou « intégralement remboursée », posez une seule question : quel est le prix HORS aides, et quel est le montant de chaque aide, séparément ? Une entreprise honnête répond sans difficulté. Une offre qui ne tient que par un total confus cache soit un prix gonflé, soit un crédit qu'on ne veut pas nommer."
+      },
+      {
+        "titre": "Vous avez 14 jours, toujours",
+        "contenu": "Pour un contrat signé chez vous, le délai de rétractation est de 14 jours, sans motif et sans frais. L'entreprise n'a le droit ni de commencer les travaux ni d'encaisser quoi que ce soit avant la fin de ce délai. Si elle l'a fait, cela joue en votre faveur. Rétractez-vous par écrit, en recommandé, et signalez sur SignalConso."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/helios",
+        "label": "Faire relire mon devis par Helios"
+      },
+      {
+        "to": "/partenaires",
+        "label": "Voir nos partenaires signataires"
+      }
+    ]
+  },
+  {
     "slug": "aides",
     "titre": "Les aides à la rénovation énergétique",
     "sousTitre": "MaPrimeRénov', CEE, TVA réduite : ce à quoi vous avez droit, et ce qui a changé en 2026.",

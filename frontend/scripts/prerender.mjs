@@ -154,6 +154,34 @@ const PAGES_FIXES = [
  *  même source que les pages React — la version servie aux moteurs dit donc la même chose. */
 const PILIERS = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/piliers.json'), 'utf-8'))
 
+/** Pages locales : production PVGIS RÉELLE par ville (écart x1,5 entre Lille et Marseille).
+ *  C'est cette différence de contenu qui distingue une page locale légitime d'une page
+ *  géographique dupliquée — ces dernières sont sanctionnées par les moteurs. */
+const VILLES = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/villes.json'), 'utf-8'))
+
+function villeHtml(coquille, v) {
+  const url = `${SITE}/solaire/${v.slug}`
+  const titre = `Panneaux solaires à ${v.nom} : production réelle`
+  const desc = `À ${v.nom}, une installation de 6 kWc produit environ ${v.prod_6kwc.toLocaleString('fr-FR')} kWh par an (données PVGIS). Ce que ça change pour votre projet.`
+  const contenu = `
+      <article>
+        <h1>Panneaux solaires à ${echapper(v.nom)}</h1>
+        <p>À ${echapper(v.nom)} (zone climatique ${v.zone}), une toiture plein sud inclinée à 30° produit
+        environ ${v.prod_3kwc} kWh par an pour 3 kWc, ${v.prod_6kwc} kWh pour 6 kWc et ${v.prod_9kwc} kWh
+        pour 9 kWc. Données PVGIS (Commission européenne).</p>
+        <p><a href="/solaire">Le guide solaire</a> · <a href="/simulateur-solaire">Simuler ma toiture</a></p>
+      </article>`
+  return coquille
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${echapper(titre)}</title>`)
+    .replace(/<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${echapper(desc)}" />`)
+    .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${echapper(titre)}" />`)
+    .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${echapper(desc)}" />`)
+    .replace('</head>', `  <link rel="canonical" href="${url}" />
+  </head>`)
+    .replace('<div id="root"></div>', `<div id="root">${contenu}
+    </div>`)
+}
+
 /**
  * Zones privées : exclues du plan de site ET du robots.txt.
  *
@@ -206,6 +234,7 @@ function ecrireSitemap(fiches, guides) {
   const urls = [
     ...PAGES_FIXES.map((p) => ({ loc: p, maj: aujourdhui })),
     ...PILIERS.map((p) => ({ loc: `/${p.slug}`, maj: aujourdhui })),
+    ...VILLES.map((v) => ({ loc: `/solaire/${v.slug}`, maj: aujourdhui })),
     ...fiches.map((f) => ({ loc: `/faq/${f.slug}`, maj: majKb })),
     ...guides.map((g) => ({ loc: `/guides/${g}`, maj: majGuides })),
   ]
@@ -263,6 +292,11 @@ function main() {
     writeFileSync(join(DIST, `${pilier.slug}.html`), pilierHtml(coquille, pilier), 'utf-8')
   }
 
+  mkdirSync(join(DIST, 'solaire'), { recursive: true })
+  for (const v of VILLES) {
+    writeFileSync(join(DIST, 'solaire', `${v.slug}.html`), villeHtml(coquille, v), 'utf-8')
+  }
+
   const guides = lireGuides()
   const nbUrls = ecrireSitemap(fiches, guides)
   ecrireRobots()
@@ -270,6 +304,7 @@ function main() {
   const parSource = fiches.reduce((acc, f) => ({ ...acc, [f.source]: (acc[f.source] || 0) + 1 }), {})
   console.log(`[pré-rendu] ${fiches.length} fiches générées sous /faq/`)
   console.log('[pré-rendu] ' + Object.entries(parSource).map(([s, n]) => `${s}:${n}`).join(' '))
+  console.log(`[pré-rendu] ${VILLES.length} pages locales sous /solaire/`)
   console.log(`[pré-rendu] ${PILIERS.length} pages chapeau : ${PILIERS.map((p) => '/' + p.slug).join(' ')}`)
   console.log(`[pré-rendu] sitemap.xml : ${nbUrls} URL (${PAGES_FIXES.length} pages + ${PILIERS.length} chapeaux + ${fiches.length} fiches + ${guides.length} guides)`)
   console.log(`[pré-rendu] robots.txt écrit · site déclaré : ${SITE}`)

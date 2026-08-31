@@ -45,6 +45,7 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="confort_ete", kind="faq_markdown", location="helios/kb/confort_ete.md"),
     SourceSpec(name="reglementation", kind="faq_markdown", location="helios/kb/reglementation.md"),
     SourceSpec(name="voss", kind="faq_markdown", location="helios/kb/voss.md"),
+    SourceSpec(name="vigilance", kind="faq_markdown", location="helios/kb/vigilance.md"),
 ]
 
 _FAQ_RE = re.compile(

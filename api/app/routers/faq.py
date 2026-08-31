@@ -14,7 +14,7 @@ router = APIRouter(prefix="/faq", tags=["faq"])
 
 # Sources FAQ publiques (format Q:/R:) : les 109 fiches d'origine + les fiches
 # thématiques stockage/eau/pilotage/courtage ingérées ensuite. Même base que le chat.
-FAQ_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "autoconso", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss")
+FAQ_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "autoconso", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss", "vigilance")
 
 
 def _answer_from_content(content: str) -> str:

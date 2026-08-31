@@ -32,6 +32,7 @@ import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
 import QuiSommesNous from './pages/QuiSommesNous'
 import Pilier from './pages/Pilier'
+import Ville from './pages/Ville'
 import piliers from './data/piliers.json'
 import AdminRoute from './components/admin/AdminRoute'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -94,6 +95,7 @@ function SitePublic() {
           <Route path="/eau" element={<Eau />} />
           {/* Pages chapeau : routes dérivées de data/piliers.json. Celles marquées
               `pageDediee` ont déjà leur propre page (ex. /eau) et sont donc exclues. */}
+          <Route path="/solaire/:slug" element={<Ville />} />
           {piliers.filter((p) => !(p as { pageDediee?: boolean }).pageDediee).map((p) => (
             <Route key={p.slug} path={`/${p.slug}`} element={<Pilier />} />
           ))}
