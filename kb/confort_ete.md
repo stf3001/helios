@@ -5,7 +5,7 @@
 # jamais présentés comme certains pour UN logement précis.
 
 ### Q: Ma maison est une fournaise l'été, par où commencer ?
-`cat:confort | tags:surchauffe,ete,canicule,methode | verif:generique`
+`cat:confort | tags:surchauffe,ete,canicule,methode | verif:generique | seo_titre:Maison trop chaude l'été : par où commencer | seo_desc:Protections solaires, ventilation nocturne, toiture, puis rafraîchissement : la méthode dans le bon ordre, du gratuit au plus coûteux.`
 R: Dans l'ordre, du plus rentable au plus lourd : (1) arrêter le soleil AVANT qu'il n'entre — protections solaires extérieures ; (2) sur-ventiler la nuit quand l'air extérieur est plus frais ; (3) traiter la toiture, première source de chaleur entrante l'été ; (4) seulement ensuite envisager un rafraîchissement actif (brasseur d'air, puis climatisation si vraiment nécessaire). La même logique que pour l'hiver : on agit sur l'enveloppe et les usages avant d'acheter une machine. Un logement bien isolé est confortable été comme hiver.
 
 ### Q: Volets, stores, rideaux : qu'est-ce qui protège vraiment de la chaleur ?
@@ -17,7 +17,7 @@ R: La règle : une protection EXTÉRIEURE (volet, store banne, brise-soleil orie
 R: Oui, c'est l'un des gestes les plus efficaces et totalement gratuits. Le principe : la nuit, quand l'air extérieur redescend sous la température intérieure, on ouvre en grand pour évacuer la chaleur accumulée et rafraîchir les murs (leur inertie garde ensuite le frais une partie de la journée). On crée si possible un courant d'air traversant (deux façades opposées). Le jour, on referme tout et on ferme les protections solaires. Limite : en épisode de canicule où même la nuit reste chaude, le bénéfice diminue ; et pensez sécurité/moustiques pour les ouvertures nocturnes.
 
 ### Q: Un brasseur d'air ou un ventilateur de plafond, est-ce utile ?
-`cat:confort | tags:brasseur_air,ventilateur,climatisation | verif:generique`
+`cat:confort | tags:brasseur_air,ventilateur,climatisation | verif:generique | seo_titre:Brasseur d'air ou climatisation : que choisir ? | seo_desc:Un brasseur consomme 50 W contre 1 000 W pour une clim, pour un confort proche. Quand il suffit, et quand la climatisation devient justifiée.`
 R: Très utile et sobre. Un brasseur d'air ne refroidit pas l'air, mais le mouvement d'air sur la peau procure un ressenti de plusieurs degrés en moins — pour une puissance d'environ 50 W, sans commune mesure avec une climatisation (souvent 700 à 1500 W). C'est souvent le bon compromis avant d'envisager une clim : on l'essaie d'abord. Il ne fonctionne que quand quelqu'un est présent dans la pièce (c'est le ressenti corporel qui compte), inutile de le laisser tourner dans une pièce vide.
 
 ### Q: La climatisation, bonne ou mauvaise idée ?

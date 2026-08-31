@@ -7,7 +7,7 @@
 # grandeur « à confirmer au devis », pas de contradiction, les deux restent indicatifs.
 
 ### Q: C'est quoi le VOSS, le stockage solaire en béton ?
-`cat:stockage | tags:voss,volant_inertie,beton,energiestro | verif:hypothese_lancement`
+`cat:stockage | tags:voss,volant_inertie,beton,energiestro | verif:hypothese_lancement | seo_titre:VOSS : le stockage solaire en béton, garanti 40 ans | seo_desc:Un volant d'inertie en béton plutôt qu'une batterie chimique : comment ça marche, ce que ça coûte, et ses limites réelles. Sans métaux critiques.`
 R: Le VOSS (Volant de Stockage Solaire) est un stockage d'électricité MÉCANIQUE, pas chimique : un cylindre de béton précontraint tourne à très grande vitesse dans une enceinte sous vide. Le surplus solaire du jour accélère le volant (moteur) ; la nuit, le freinage régénératif restitue l'électricité (alternateur). Une butée magnétique passive porte le poids et un alternateur à faibles pertes limite l'autodécharge, avec une restitution visée sur environ 10 heures — de quoi passer la nuit. La rupture, c'est le matériau : le béton coûte environ 10 fois moins cher que l'acier ou la fibre de carbone des volants d'inertie classiques. Version résidentielle envisagée : ~10 kWh stockés, ~7 kWh restituables, autour de 10 000 € pose comprise — chiffres à confirmer au lancement du produit, jamais garantis à ce stade.
 
 ### Q: 40 ans de garantie pour un stockage, c'est réaliste ?

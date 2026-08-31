@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Hero from '../components/Hero'
-import { ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { useTitle } from '../hooks/useTitle'
 import ApiError from '../components/ApiError'
 import { getCategoryIcon } from '../data/categoryIcons'
+import { faqSlug } from '../lib/faqSlug'
 
 interface FaqEntry {
   question: string
@@ -117,7 +118,19 @@ export default function Faq() {
                       </span>
                       <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`} />
                     </button>
-                    {open === i && <p className="px-4 pb-4 text-gray-700 whitespace-pre-line">{e.answer}</p>}
+                    {open === i && (
+                      <div className="px-4 pb-4">
+                        <p className="text-gray-700 whitespace-pre-line">{e.answer}</p>
+                        {/* Lien vers la page dédiée : donne son adresse à chaque fiche et
+                            construit le maillage interne dont dépend le référencement. */}
+                        <Link
+                          to={`/faq/${faqSlug(e.question)}`}
+                          className="inline-flex items-center gap-1 text-sm text-primary font-semibold mt-3 hover:gap-2 transition-all"
+                        >
+                          Ouvrir cette fiche <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )
               })}

@@ -8,6 +8,7 @@ import Colibri from './pages/Colibri'
 import CommentCaMarche from './pages/CommentCaMarche'
 import HeliosIA from './pages/HeliosIA'
 import Faq from './pages/Faq'
+import FaqDetail from './pages/FaqDetail'
 import Partenaires from './pages/Partenaires'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -30,6 +31,8 @@ import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
 import QuiSommesNous from './pages/QuiSommesNous'
+import Pilier from './pages/Pilier'
+import piliers from './data/piliers.json'
 import AdminRoute from './components/admin/AdminRoute'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminPartenaires from './pages/admin/AdminPartenaires'
@@ -83,11 +86,17 @@ function SitePublic() {
           <Route path="/guides/:slug" element={<GuideDetail />} />
           <Route path="/glossaire" element={<Glossaire />} />
           <Route path="/faq" element={<Faq />} />
+          <Route path="/faq/:slug" element={<FaqDetail />} />
           <Route path="/partenaires" element={<Partenaires />} />
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/partenaire" element={<PartnerPortal />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/eau" element={<Eau />} />
+          {/* Pages chapeau : routes dérivées de data/piliers.json. Celles marquées
+              `pageDediee` ont déjà leur propre page (ex. /eau) et sont donc exclues. */}
+          {piliers.filter((p) => !(p as { pageDediee?: boolean }).pageDediee).map((p) => (
+            <Route key={p.slug} path={`/${p.slug}`} element={<Pilier />} />
+          ))}
           <Route path="/potentiel-hydrique" element={<PotentielHydrique />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />

@@ -35,6 +35,41 @@
   .hero-sunrise { animation: none; }
 }
 
+/* ---------------------------------------------------------------------------
+   Avatar animé Helios (composant HeliosAvatar).
+   Le mouvement est porté par des keyframes CSS (aucune dépendance d'animation) :
+   deux couches superposées — le « socle » vivant (respiration + balancement, en
+   boucle) et l'animation d'état (jouée une seule fois). Les variantes A/B d'une
+   même animation existent pour pouvoir la REJOUER quand l'état est redemandé :
+   changer de nom d'animation force le navigateur à repartir de zéro, ce qu'un
+   simple re-render ne fait pas.
+   --------------------------------------------------------------------------- */
+@keyframes hBreathe { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.012) translateY(-1.5px); } }
+@keyframes hSway    { 0%, 100% { transform: rotate(-0.5deg); } 50% { transform: rotate(0.5deg); } }
+@keyframes hBlink   { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+@keyframes hNodA  { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-7px) rotate(1.2deg); } 55% { transform: translateY(2px) rotate(-0.6deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hNodB  { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-7px) rotate(1.2deg); } 55% { transform: translateY(2px) rotate(-0.6deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hWaveA { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(2.6deg); } 45% { transform: rotate(-1.8deg); } 70% { transform: rotate(2deg); } }
+@keyframes hWaveB { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(2.6deg); } 45% { transform: rotate(-1.8deg); } 70% { transform: rotate(2deg); } }
+@keyframes hShrugA { 0% { transform: translateY(0) rotate(0); } 30%, 70% { transform: translateY(-5px) rotate(-2.2deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hShrugB { 0% { transform: translateY(0) rotate(0); } 30%, 70% { transform: translateY(-5px) rotate(-2.2deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hHopA  { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(0.97); } 45% { transform: translateY(-14px) scaleY(1.02); } 75% { transform: translateY(0) scaleY(0.99); } }
+@keyframes hHopB  { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(0.97); } 45% { transform: translateY(-14px) scaleY(1.02); } 75% { transform: translateY(0) scaleY(0.99); } }
+@keyframes hSlumpA { 0% { transform: translateY(0) rotate(0); } 35%, 80% { transform: translateY(5px) rotate(1.6deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hSlumpB { 0% { transform: translateY(0) rotate(0); } 35%, 80% { transform: translateY(5px) rotate(1.6deg); } 100% { transform: translateY(0) rotate(0); } }
+
+@keyframes hPop  { 0% { opacity: 0; transform: translateY(8px) scale(0.7); } 60% { opacity: 1; transform: translateY(-2px) scale(1.06); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes hGlow { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+@keyframes hDots { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* Accessibilité : l'avatar redevient une illustration fixe si l'utilisateur
+   demande moins de mouvement. Les expressions (yeux, bouche) restent, elles ne
+   bougent pas — seul le mouvement du corps disparaît. */
+@media (prefers-reduced-motion: reduce) {
+  .helios-avatar, .helios-avatar * { animation: none !important; }
+}
+
 /* De nombreux champs du site utilisent text-sm (14px, spécificité de classe > sélecteur de
    type — d'où le !important, seul moyen fiable de gagner sur toutes les classes Tailwind
    existantes sans éditer ~15 fichiers un par un). Sous 16px, iOS Safari zoome automatiquement

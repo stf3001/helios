@@ -42,13 +42,28 @@ class Settings(BaseSettings):
     )
 
     # --- Simulateur solaire (doc 09 §1) — ordres de grandeur France 2026, À CALIBRER, jamais donnés comme certains ---
-    solar_prix_achat_eur_kwh: float = 0.25       # prix du kWh évité par l'autoconsommation (TRV ~2026)
-    solar_prix_revente_eur_kwh: float = 0.13     # tarif de rachat du surplus (obligation d'achat < 9 kWc)
+    # Prix du kWh évité par l'autoconsommation. TRV option Base au 1er août 2026 :
+    # 0,2001 €/kWh TTC jusqu'à 6 kVA, 0,1985 € à partir de 9 kVA. Valeur prudente retenue : 0,20.
+    solar_prix_achat_eur_kwh: float = 0.20
+    # Rachat du surplus résidentiel : 1,1 c€/kWh depuis l'arrêté du 1er juin 2026 (réforme S21),
+    # qui a aussi supprimé la prime à l'autoconsommation. C'était 0,13 € avant la réforme —
+    # une valeur périmée surestimait la rentabilité d'un facteur 12 sur cette ligne.
+    # La rentabilité du solaire repose désormais sur l'autoconsommation, pas sur la revente.
+    solar_prix_revente_eur_kwh: float = 0.011
     solar_conso_defaut_kwh_an: int = 4500        # conso annuelle par défaut (mode public sans fiche)
     solar_autoconso_sans_pilotage: float = 0.30  # part de la production consommée sur place, sans pilotage
     solar_autoconso_avec_pilotage: float = 0.45  # avec pilotage ballon + usages décalés
     solar_gain_autoconso_batterie: float = 0.25  # points d'autoconso gagnés avec batterie
-    solar_cout_par_kwc_eur: int = 2500           # coût installation clé en main (€/kWc, prime non déduite)
+    # Coût d'installation clé en main (€/kWc, hors batterie). Une grille par palier et non un
+    # taux unique : le prix au kWc BAISSE fortement avec la puissance (coûts fixes d'étude, de
+    # pose et de raccordement amortis sur plus de panneaux). Un taux unique fausserait justement
+    # la comparaison 3/6/9 kWc que produit le simulateur.
+    # Calée sur les devis réels AD Solar (2026) : 3 kWc ~2 170, 6 kWc ~1 700, 9 kWc ~1 600,
+    # 13 kWc ~1 270 €/kWc. Valeurs interpolées entre les paliers (cf. solar_engine).
+    solar_cout_paliers_kwc: tuple[tuple[int, int], ...] = (
+        (3, 2100), (6, 1750), (9, 1600), (12, 1400),
+    )
+    solar_cout_par_kwc_eur: int = 1750           # repli si la grille est indisponible
     solar_cout_batterie_par_kwh_eur: int = 700   # coût batterie LFP posée (€/kWh utile)
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 

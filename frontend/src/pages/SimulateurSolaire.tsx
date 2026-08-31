@@ -118,7 +118,7 @@ export default function SimulateurSolaire() {
         <h1 className="text-2xl font-bold">Simulateur de potentiel solaire</h1>
       </div>
       <p className="text-gray-600 mb-8">
-        Estimez la production photovoltaïque de votre toiture — gratuitement, sans engagement.
+        Estimez la production photovoltaïque de votre toiture, à partir des données de production de la Commission européenne.
         Données de production issues de PVGIS (Commission européenne).
       </p>
 

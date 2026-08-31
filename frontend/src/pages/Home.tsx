@@ -3,6 +3,7 @@ import { MessageSquare, ClipboardList, Sparkles, ArrowRight, Sun, BatteryChargin
 import HierarchieColibri from '../components/HierarchieColibri'
 import ScrollReveal from '../components/ScrollReveal'
 import HeroSearch from '../components/HeroSearch'
+import HeliosAvatar from '../components/HeliosAvatar'
 import { useTitle } from '../hooks/useTitle'
 
 const ETAPES = [
@@ -43,7 +44,9 @@ export default function Home() {
             </div>
           </div>
           <div className="hidden md:flex justify-center">
-            <img src="/brand/helios-salute.png" alt="Helios vous accueille" className="h-64 drop-shadow-xl" />
+            {/* Helios salue à l'arrivée, puis reste en respiration légère. Rien de
+                clignotant : la page doit rester lisible, pas réclamer l'attention. */}
+            <HeliosAvatar state="salutation" restPose="hero" height={280} className="drop-shadow-xl" showBadges={false} />
           </div>
         </div>
       </section>
@@ -91,7 +94,7 @@ export default function Home() {
       {/* 3 étapes */}
       <section className="max-w-[1100px] mx-auto px-4 py-16 bg-cream rounded-3xl">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-3">Comment ça marche</h2>
-        <p className="text-center text-gray-600 mb-10">Trois étapes, à votre rythme — sans engagement.</p>
+        <p className="text-center text-gray-600 mb-10">Trois étapes, à votre rythme.</p>
         <div className="grid gap-6 md:grid-cols-3">
           {ETAPES.map((e, i) => (
             <ScrollReveal key={e.titre} delay={i * 80} className="rounded-2xl border border-gray-200 p-6 bg-white">

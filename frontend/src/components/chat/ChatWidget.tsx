@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Flag, Send, Sparkles } from 'lucide-react'
+import HeliosAvatar, { type HeliosState } from '../HeliosAvatar'
 
 interface Citation {
   titre: string
@@ -82,6 +83,11 @@ export default function ChatWidget({
   const [simplified, setSimplified] = useState(false)
   const conversationId = useRef<string | null>(initialConversationId)
 
+  /** État de l'avatar. `n` sert à rejouer l'animation quand deux réponses
+   *  d'affilée tombent dans le même état (deux « il a trouvé » de suite). */
+  const [avatar, setAvatar] = useState<{ state: HeliosState; n: number }>({ state: 'salutation', n: 0 })
+  const showAvatar = (state: HeliosState) => setAvatar((a) => ({ state, n: a.n + 1 }))
+
   function updateLastHelios(update: (m: ChatMessage) => ChatMessage) {
     setMessages((m) => {
       const next = [...m]
@@ -125,6 +131,13 @@ export default function ChatWidget({
       setMessages((m) => [...m, { role: 'user', content: question }, { role: 'helios', content: '', question }])
     }
     setSending(true)
+    showAvatar('reflexion')
+
+    // Une réponse SANS citation veut dire qu'aucune fiche n'a dépassé le seuil de
+    // pertinence : Helios répond hors de sa base. C'est exactement le signal que
+    // le back-office compte en « questions sans réponse » — on l'affiche
+    // honnêtement au client plutôt que de mimer l'assurance.
+    let cited = false
 
     try {
       const res = await fetchImpl('/api/chat/messages', {
@@ -155,6 +168,7 @@ export default function ChatWidget({
           } else if (event.type === 'token') {
             updateLastHelios((msg) => ({ ...msg, content: msg.content + event.text }))
           } else if (event.type === 'citations') {
+            cited = Array.isArray(event.citations) && event.citations.length > 0
             updateLastHelios((msg) => ({ ...msg, citations: event.citations }))
           } else if (event.type === 'message_id') {
             // Émis une fois la réponse enregistrée : débloque le bouton « signaler ».
@@ -162,11 +176,13 @@ export default function ChatWidget({
           }
         }
       }
+      showAvatar(cited ? 'reponse' : 'nesaitpas')
     } catch (err) {
       updateLastHelios(() => ({
         role: 'helios',
         content: err instanceof Error ? err.message : 'Une erreur est survenue.',
       }))
+      showAvatar('erreur')
     } finally {
       setSending(false)
     }
@@ -175,13 +191,32 @@ export default function ChatWidget({
   const onlyGreeting = messages.length === 1 && messages[0].role === 'helios'
 
   return (
-    <div className="rounded-2xl border border-black/5 bg-white shadow-sm max-w-[700px] mx-auto flex flex-col h-[70vh] max-h-[600px] min-h-[440px] overflow-hidden">
-      {/* En-tête : le visage d'Helios */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-black/5 bg-cream">
-        <img src="/brand/helios-thumbsup.png" alt="Helios" className="h-9 w-9 object-contain" />
+    /* Deux colonnes : Helios en pied, en grand, à gauche — la conversation à
+       droite. L'avatar réagit à ce qui se passe (il réfléchit, il a trouvé, il
+       ne sait pas, ça a raté) : à cette taille le jeu d'expressions se voit
+       vraiment, ce qui n'était pas le cas d'une vignette d'en-tête. */
+    <div className="rounded-2xl border border-black/5 bg-white shadow-sm max-w-[920px] mx-auto flex h-[70vh] max-h-[620px] min-h-[440px] overflow-hidden">
+      <aside className="hidden md:flex flex-col items-center justify-end w-[260px] shrink-0 border-r border-black/5 bg-cream px-5 py-6 bg-gradient-to-b from-white to-cream">
+        <div className="flex-1 flex items-center justify-center">
+          <HeliosAvatar state={avatar.state} replay={avatar.n} height={300} />
+        </div>
+        <div className="text-center leading-tight mt-4">
+          <div className="font-display font-semibold text-ink text-lg">Helios</div>
+          <div className="text-xs text-gray-500 mt-0.5">Assistant énergie</div>
+          <div className="text-xs text-gray-500">franc &amp; indépendant</div>
+        </div>
+      </aside>
+
+      <div className="flex-1 flex flex-col min-w-0">
+      {/* Mobile : pas de place pour une colonne — Helios repasse en en-tête,
+          plus petit mais toujours vivant. */}
+      <div className="md:hidden flex items-center gap-3 px-4 py-2 border-b border-black/5 bg-cream">
+        <div className="w-16 h-16 flex items-end justify-center">
+          <HeliosAvatar state={avatar.state} replay={avatar.n} height={62} />
+        </div>
         <div className="leading-tight">
           <div className="font-display font-semibold text-ink">Helios</div>
-          <div className="text-xs text-gray-500">Assistant énergie · franc & indépendant</div>
+          <div className="text-xs text-gray-500">Assistant énergie · franc &amp; indépendant</div>
         </div>
       </div>
 
@@ -193,10 +228,10 @@ export default function ChatWidget({
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
         {messages.map((m, i) => (
-          <div key={i} className={'animate-fade-in ' + (m.role === 'user' ? 'flex justify-end' : 'flex justify-start gap-2')}>
-            {m.role === 'helios' && (
-              <img src="/brand/helios-thumbsup.png" alt="" className="h-7 w-7 object-contain shrink-0 mt-1" />
-            )}
+          /* Plus de vignette devant chaque bulle : Helios est présent une fois,
+             en grand, à côté de la conversation — le répéter à chaque message
+             encombrait la lecture sans rien apporter. */
+          <div key={i} className={'animate-fade-in ' + (m.role === 'user' ? 'flex justify-end' : 'flex justify-start')}>
             <div
               className={
                 'max-w-[80%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap ' +
@@ -282,6 +317,7 @@ export default function ChatWidget({
           <Send className="w-4 h-4" />
         </button>
       </form>
+      </div>
     </div>
   )
 }

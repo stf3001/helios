@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import piliers from '../../data/piliers.json'
 
 const ressources = [
   { to: '/qui-sommes-nous', label: 'Qui sommes-nous' },
@@ -17,13 +18,21 @@ const ressources = [
 export default function Footer() {
   return (
     <footer className="bg-ink text-white/80 mt-16">
-      <div className="max-w-[1200px] mx-auto px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
+      <div className="max-w-[1200px] mx-auto px-4 py-10 grid gap-8 md:grid-cols-5 text-sm">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <img src="/brand/logo-mark.png" alt="" className="h-7 w-auto" />
             <p className="font-display font-bold text-white text-lg">HELIOS</p>
           </div>
           <p>Diagnostic énergétique assisté par IA. Gratuit, indépendant, à votre rythme.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-white mb-2">Sujets</p>
+          <ul className="space-y-1.5">
+            {piliers.map((s) => (
+              <li key={s.slug}><Link to={`/${s.slug}`} className="hover:text-white">{s.titre}</Link></li>
+            ))}
+          </ul>
         </div>
         <div>
           <p className="font-semibold text-white mb-2">Ressources</p>

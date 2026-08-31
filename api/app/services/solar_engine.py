@@ -29,8 +29,32 @@ def _fourchette(value: float) -> dict:
     }
 
 
+def cout_par_kwc(power_kwc: float) -> float:
+    """€/kWc pour une puissance donnée, interpolé linéairement entre les paliers de `config`.
+
+    Le prix au kWc baisse avec la puissance (coûts fixes amortis). En dehors de la grille, on
+    reste sur la valeur du palier le plus proche plutôt que d'extrapoler : au-delà des puissances
+    observées, une extrapolation linéaire produirait vite des prix irréalistes.
+    """
+    paliers = sorted(settings.solar_cout_paliers_kwc)
+    if not paliers:
+        return float(settings.solar_cout_par_kwc_eur)
+    if power_kwc <= paliers[0][0]:
+        return float(paliers[0][1])
+    if power_kwc >= paliers[-1][0]:
+        return float(paliers[-1][1])
+    for (p1, c1), (p2, c2) in zip(paliers, paliers[1:]):
+        if p1 <= power_kwc <= p2:
+            return c1 + (c2 - c1) * (power_kwc - p1) / (p2 - p1)
+    return float(settings.solar_cout_par_kwc_eur)
+
+
+def cout_installation_eur(power_kwc: float) -> float:
+    return power_kwc * cout_par_kwc(power_kwc)
+
+
 def _scenario_for_power(power_kwc: int, annual_kwh: float, conso_kwh: int) -> dict:
-    cout_installation = power_kwc * settings.solar_cout_par_kwc_eur
+    cout_installation = cout_installation_eur(power_kwc)
 
     profils = {}
     for nom, taux in (

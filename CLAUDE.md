@@ -584,6 +584,169 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 > (production PVGIS, autoconso, batterie physique/virtuelle, tarifs) — l'écart restant est
 > documenté ici comme cible, pas comme promesse.
 
+> **Avatar animé d'Helios (05/08/2026)** — à partir des poses fournies par l'utilisateur
+> (maquette « Avatar animé HELIOS »). L'avatar cesse d'être une vignette figée : il réagit à ce
+> qui se passe réellement dans la conversation.
+> - **Assets** : `frontend/public/brand/poses/{crossed,thumbsup,salute,hero}.png` — mêmes dessins
+>   que les assets de marque existants mais **détourés au plus près et à fond transparent**
+>   (150-350 Ko), et surtout **au VISAGE VIDE**. Les anciens `brand/helios-*.png` sont conservés
+>   (encore utilisés par Vision / Qui sommes-nous / FicheMaison).
+> - **`components/HeliosAvatar.tsx`** : compose la pose PNG + un calque SVG qui dessine yeux et
+>   bouche. C'est ce qui permet 5 expressions (`calm/smile/happy/unsure/sad`) sans multiplier
+>   les fichiers. **Les coordonnées du visage ont été MESURÉES sur les pixels** (remplissage par
+>   diffusion depuis les bords pour isoler la zone fermée sous le casque), pas estimées à l'œil ;
+>   la maquette d'origine était décalée de 1 à 2 points sur deux poses.
+> - **Repère SVG carré** (`viewBox="0 0 100 100/ratio"`) et non un 100×100 étiré comme dans la
+>   maquette : sinon les yeux ronds deviennent des ovales, différemment selon la pose. Même
+>   logique pour l'épaisseur de la bouche, exprimée en unités du repère (≈ 2,9 % de la largeur =
+>   le trait du dessin) plutôt qu'en pixels CSS figés — elle grossit avec l'avatar.
+> - **7 états produit** : `repos` (bras croisés, respiration + clignements), `salutation`,
+>   `reflexion` (points), `reponse` (hochement + ampoule), `nesaitpas` (main au casque, haussement
+>   d'épaules, « ? »), `erreur` (affaissement, « ! »), `succes` (rebond). Les états transitoires
+>   retombent seuls au repos ; la prop `replay` permet de rejouer le même état deux fois d'affilée
+>   (les keyframes existent en variantes A/B — changer de nom d'animation est le seul moyen fiable
+>   de forcer un rejeu).
+> - **Keyframes dans `index.css`**, désactivées sous `prefers-reduced-motion` (les expressions,
+>   elles, restent : elles ne bougent pas).
+> - **Branchements** : `ChatWidget` (état piloté par le cycle réel du chat), hero d'accueil
+>   (pose `hero`, salutation à l'arrivée), accueil d'un `/espace` sans fiche.
+> - **Mise en page du chat refondue (retour utilisateur : « quel est l'avatar animé ? »)** — la
+>   première version mettait l'avatar en vignette d'en-tête (56 px) plus une vignette figée
+>   devant chaque bulle : personne ne voyait qu'il s'animait, et les deux bonshommes brouillaient
+>   le message. Désormais **une colonne dédiée à gauche (260 px) avec Helios en 300 px**, nom et
+>   fonction dessous, conversation à droite (`max-w-[920px]`) ; **les vignettes de bulles sont
+>   supprimées**. Sous `md`, la colonne disparaît et Helios repasse en en-tête compact (62 px).
+>   Dans la foulée : les états transitoires tiennent **1,2 s après le geste** (au lieu de 0,4 s)
+>   — réglé en regardant l'avatar en grand, l'ampoule disparaissait avant d'être lue.
+> - **Signal « je ne sais pas » : réel, pas mimé** — une réponse sans citation veut dire
+>   qu'aucune fiche n'a dépassé `rag_score_threshold`, c'est-à-dire exactement ce que le
+>   back-office compte en « questions sans réponse ». On l'affiche au client au lieu de simuler
+>   l'assurance. Vérifié en conditions réelles : « recette de la tarte tatin » → `nesaitpas`,
+>   « par quoi commencer pour isoler ma maison » → `reponse` (ampoule).
+> - **Validé** : géométrie du visage recomposée hors navigateur sur les 4 poses (relecture
+>   visuelle des 6 expressions), cycle complet observé en direct dans le vrai chat
+>   (`réfléchit → a une réponse → repos`, puis `réfléchit → n'a pas la réponse → repos`),
+>   hero d'accueil animé sans débordement horizontal, zéro erreur console, build front OK.
+
+> **SEO — phase 1 : pré-rendu des fiches (5/08/2026)** — audit SEO complet publié en artefact.
+> **Constat mesuré** (HTML réellement servi, 5 routes) : toutes renvoyaient le MÊME fichier de
+> 2 134 octets, **zéro H1**, titre et description identiques → pour un robot sans exécution JS,
+> le site entier était une page vide. 184 fiches rédigées, invisibles ; 8 URL sur ~240 possibles.
+> - `frontend/scripts/prerender.mjs` : lit `kb/*.md` (mêmes sources que le crawler, même
+>   expression régulière que `agents_engine._FAQ_RE` — **à garder synchronisés**) et génère
+>   **184 pages**, une par fiche, sans exception (exclure une source aurait créé des liens
+>   « Ouvrir cette fiche » menant à une coquille vide pour les moteurs).
+>   Chaque page : titre = la question, description tirée de la réponse (coupée sur une frontière
+>   de mot), balise canonique, **JSON-LD `FAQPage`** (affichage enrichi dans les résultats) et
+>   le contenu visible dans le HTML. Lancé automatiquement par `npm run build`.
+> - `frontend/src/lib/faqSlug.js` : **JavaScript simple et volontairement partagé** par le script
+>   Node ET l'application TypeScript (`allowJs` activé). Une seule implémentation — deux copies
+>   auraient divergé et fait pointer les liens internes vers des pages inexistantes. **Ne jamais
+>   modifier cette fonction sans redirections** : elle détermine toutes les URL du site.
+>   Le script échoue bruyamment en cas de collision de slug plutôt que d'écraser une fiche.
+> - `pages/FaqDetail.tsx` (route `/faq/:slug`) + lien « Ouvrir cette fiche » depuis la liste :
+>   c'est ce maillage interne qui rend les 180 pages découvrables. Chaque fiche renvoie vers
+>   5 fiches de la même catégorie et vers le chat pré-rempli.
+> - **Piège trouvé en testant, décisif** : `faq/<slug>/index.html` n'était servi qu'avec une barre
+>   oblique finale (vérifié : sans elle, repli sur la coquille vide). Basculé en fichiers plats
+>   `faq/<slug>.html` + `try_files $uri $uri.html $uri/ /index.html` dans `deploy/nginx.conf` —
+>   servi directement, sans redirection, l'URL correspondant exactement à la canonique.
+>   **Sans cette directive nginx, tout le pré-rendu est inopérant.**
+> - **Vérifié réellement** : 184 pages générées, JSON-LD valide (parsé), titres uniques, et test
+>   HTTP de bout en bout avec un serveur reproduisant `try_files` → fiches servies avec leur
+>   contenu (4 000+ octets, H1 présent), autres routes en repli SPA. Contrôle croisé final :
+>   les 184 questions de la base produisent 184 pages existantes — **zéro lien mort**. Rendu
+>   React et navigation entre fiches liées vérifiés en navigateur.
+> - **Risque à connaître** : le pré-rendu lit `kb/*.md` alors que l'application lit la base via
+>   `/api/faq`. Si une fiche est modifiée dans `kb/` sans relancer le crawler, le libellé diffère
+>   → slug différent → lien mort. Toujours réingérer après modification d'une fiche.
+>
+> **SEO — phase 2 : plan de site et robots.txt (5/08/2026)** — générés par le même script, qui
+> connaît déjà toutes les URL.
+> - `sitemap.xml` : **213 URL** (15 pages fixes + 184 fiches + 14 guides), avec `lastmod` tiré de
+>   la date de modification réelle des sources. Pas de `priority` ni `changefreq` : Google les
+>   ignore, mieux vaut ne pas émettre de faux signaux.
+> - `robots.txt` : zones privées interdites, plan de site déclaré.
+> - **Les pages fixes sont énumérées à la main** (`PAGES_FIXES`) plutôt que déduites du routeur :
+>   l'espace client et le back-office ne doivent jamais entrer dans le plan de site, et une liste
+>   explicite rend l'exclusion vérifiable.
+> - **Piège trouvé et corrigé** : `Disallow` fonctionne par PRÉFIXE — `/partenaire` bloquait aussi
+>   `/partenaires`, l'annuaire public, pourtant déclaré dans le plan de site. Corrigé en
+>   `/partenaire$` (fin d'URL, reconnu par Google). **Vérifier ce piège à chaque nouvelle règle.**
+> - **Vérifié** : XML parsé et valide, 0 doublon, 0 fuite d'URL privée, chaque fiche du plan de
+>   site correspond à une page réellement générée, et **0 page du plan de site bloquée par le
+>   robots.txt** (contrôle croisé automatisé des deux fichiers).
+> - `HELIOS_SITE_URL` ajouté à `.env.example` : **à définir avant le build de production**, une
+>   canonique pointant vers un mauvais domaine ferait perdre l'indexation de tout le site.
+>
+>
+> **SEO — phase 3 : hypothèses économiques périmées (5/08/2026)** — le simulateur surestimait
+> lourdement la rentabilité du solaire. Deux valeurs corrigées dans `config.py`, toutes deux
+> vérifiées (recherche web + base de connaissances interne, concordantes) :
+> - `solar_prix_revente_eur_kwh` : **0,13 → 0,011 €/kWh**. L'arrêté du 1er juin 2026 (réforme S21)
+>   a ramené le rachat du surplus résidentiel à 1,1 c€/kWh et supprimé la prime à
+>   l'autoconsommation. L'ancienne valeur surestimait cette ligne d'un facteur 12.
+> - `solar_prix_achat_eur_kwh` : **0,25 → 0,20 €/kWh**. TRV option Base au 1er août 2026 :
+>   0,2001 € jusqu'à 6 kVA, 0,1985 € dès 9 kVA. La base de connaissances disait déjà ~19 c€ —
+>   la config la contredisait depuis le début.
+> - **Effet mesuré** (6 kWc, 4 500 kWh consommés, avec pilotage) : économie annuelle
+>   **1 398 → 730 €/an**, temps de retour **10,7 → 20,5 ans**. Les chiffres affichés par le
+>   simulateur changent donc fortement — dans le sens de l'honnêteté.
+> - **TROISIÈME valeur périmée repérée, laissée à l'arbitrage de l'utilisateur** :
+>   `solar_cout_par_kwc_eur = 2500` alors que ses PROPRES devis AD Solar donnent
+>   **1 450–1 800 €/kWc** (3 kWc ~2 170, 6 kWc ~1 700, 9 kWc ~1 600, 13 kWc ~1 270) et que le
+>   marché 2026 annonce 1 800–2 200. Deux défauts : valeur trop haute, et **taux unique ignorant
+>   l'effet d'échelle** alors que le simulateur compare justement 3/6/9 kWc. Avec 1 600 €/kWc,
+>   le retour d'un 9 kWc passe de 23,1 à 14,8 ans — cohérent avec les 12-18 ans du marché.
+>   Non modifié : c'est la réalité commerciale de l'utilisateur, à lui de fixer la valeur.
+>
+> - **Coût d'installation corrigé** (arbitrage utilisateur, option « grille par palier ») :
+>   `solar_cout_par_kwc_eur = 2500` (taux unique) remplacé par `solar_cout_paliers_kwc`
+>   = 3 kWc→2 100, 6→1 750, 9→1 600, 12→1 400 €/kWc, avec interpolation linéaire
+>   (`solar_engine.cout_par_kwc`) et maintien du palier extrême au-delà (pas d'extrapolation :
+>   elle produirait vite des prix irréalistes). Calé sur les **devis réels AD Solar** :
+>   6 kWc → 10 500 € (prix exact du devis), 9 kWc → 14 400 € (devis 14 500 €).
+>   Un taux unique faussait la comparaison 3/6/9 kWc que produit justement le simulateur.
+> - **Résultat final vérifié** (6 kWc, 4 500 kWh, avec pilotage) : 730 €/an, retour **14,4 ans** —
+>   cohérent avec les 12-18 ans annoncés par le marché, là où l'ancienne config donnait 10,7 ans
+>   (trop optimiste) et la correction des seuls tarifs 20,5 ans (trop pessimiste).
+>
+> **SEO — phase 4 : titres et descriptions (5/08/2026)**
+> - **Génération automatique améliorée** (profite aux 184 fiches) : titre ≤ 60 caractères,
+>   coupe sur une frontière de MOT, et **abandon du suffixe « — HELIOS » quand la question est
+>   longue** — mieux vaut perdre la marque que tronquer la phrase. Résultat mesuré :
+>   **183/184 titres dans la limite contre 67 avant**, plus aucune coupe en plein mot.
+> - **Curation manuelle** : `seo_titre` / `seo_desc` peuvent être ajoutés aux métadonnées d'une
+>   fiche pour écrire titre et description à la main. **15 fiches à fort enjeu curées** (celles du
+>   tableau de mots-clés de l'audit), titres de 45-51 caractères avec le mot-clé en tête.
+> - **Séparation propre vérifiée** : le crawler Python ne retient que `cat`/`tags`/`verif` — les
+>   métadonnées SEO restent dans le Markdown, lues par le seul script de pré-rendu. Aucune
+>   réingestion nécessaire, aucun risque de pollution de la base vectorielle.
+> - Descriptions : **184/184 uniques**, 150 caractères en moyenne, toutes ≤ 160.
+>
+>
+> **SEO — phase 5 : pages chapeau (5/08/2026)** — 5 domaines : `/aides`, `/solaire`,
+> `/isolation`, `/reglementation`, `/eau` (cette dernière ajoutée à la demande de l'utilisateur).
+> - **Contenu éditorial dans `src/data/piliers.json`** (et non en TSX) : c'est la SEULE source,
+>   lue à la fois par les pages React et par le pré-rendu — la version servie aux moteurs dit
+>   donc exactement la même chose que la page. Un fichier TS aurait dû être analysé par
+>   expression régulière depuis le script Node, ce qui aurait été fragile.
+> - `components/FichesLiees.tsx` : bloc réutilisable listant les fiches d'un groupe de
+>   catégories. **Choix important** : composant réutilisable plutôt que gabarit rigide, ce qui
+>   permet à `/eau` de garder sa page sur mesure (partenaire Hydrolia, « pour qui », CTA) tout
+>   en gagnant ses 15 fiches liées. `piliers.json` porte un drapeau `pageDediee` pour que la
+>   route générique ne soit pas créée en double.
+> - **Boucle de maillage fermée** : chapeau → fiches du groupe, fiche → son chapeau
+>   (« Sujet : … » sous le titre) + 5 fiches voisines, et **colonne « Sujets » ajoutée au pied
+>   de page** — sans lien entrant, un moteur ne découvre pas ces pages.
+> - Pré-rendu : `/aides.html`, `/solaire.html`… servis par `try_files $uri $uri.html`, avec
+>   titre, description, canonique et contenu visible. Plan de site : **217 URL**.
+> - **Vérifié en navigateur** : `/solaire` affiche l'éditorial + **45 fiches** liées
+>   (photovoltaique 15 + stockage 23 + autoconso 7), `/eau` garde sa page riche + 15 fiches,
+>   et une fiche renvoie bien vers son chapeau. Titres des chapeaux : 43-48 caractères.
+>
+> - Reste : phase 6 (anti-arnaque et pages territoire) — chantier de rédaction, non démarré.
+
 ## Commandes
 - Front : `cd frontend && npm install && npm run dev` (build : `npm run build`)
 - API : `cd api && pip install -r requirements.txt && uvicorn app.main:app --reload`

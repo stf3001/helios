@@ -1,0 +1,187 @@
+[
+  {
+    "slug": "aides",
+    "titre": "Les aides à la rénovation énergétique",
+    "sousTitre": "MaPrimeRénov', CEE, TVA réduite : ce à quoi vous avez droit, et ce qui a changé en 2026.",
+    "metaTitre": "Aides rénovation énergétique 2026 : le guide",
+    "metaDesc": "MaPrimeRénov', CEE, TVA réduite, aides locales : les montants réels 2026, les conditions, et les pièges à éviter avant de signer un devis.",
+    "intro": "Le paysage des aides a beaucoup bougé en 2026, et pas toujours dans le sens qu'on croit. Certaines se sont renforcées, d'autres ont disparu du jour au lendemain — l'isolation des murs seule n'est plus aidée depuis janvier, et la prime à l'autoconsommation solaire a été supprimée en juin. Un devis calculé sur les règles de l'an dernier peut donc être franchement faux.",
+    "cats": [
+      "aides",
+      "financement"
+    ],
+    "sections": [
+      {
+        "titre": "Commencez par votre catégorie de revenus",
+        "contenu": "MaPrimeRénov' classe les ménages en quatre catégories — bleu, jaune, violet, rose — selon le revenu fiscal de référence et la taille du foyer. Tout le reste en découle : deux voisins qui font les mêmes travaux ne touchent pas la même somme. C'est la première chose à déterminer, avant même de demander un devis."
+      },
+      {
+        "titre": "Les aides se cumulent, mais pas n'importe comment",
+        "contenu": "MaPrimeRénov' et les CEE se cumulent dans la grande majorité des cas — c'est même l'objectif du dispositif. La TVA réduite s'ajoute par-dessus. En revanche les plafonds existent, et le parcours par geste est limité sur cinq ans. Un professionnel qui additionne toutes les aides possibles sans vérifier votre situation vous vend un chiffre, pas une estimation."
+      },
+      {
+        "titre": "Ne jamais se fier au montant annoncé par un vendeur",
+        "contenu": "C'est le conseil le plus utile de cette page. Les montants évoluent chaque année, parfois en cours d'année, et un démarcheur a intérêt à annoncer le maximum théorique. Vérifiez toujours sur le simulateur officiel france-renov.gouv.fr, ou faites-vous confirmer par un Espace Conseil France Rénov' — c'est gratuit et sans lien commercial."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      },
+      {
+        "to": "/espace/audits",
+        "label": "Chiffrer mes travaux prioritaires"
+      }
+    ]
+  },
+  {
+    "slug": "solaire",
+    "titre": "Le solaire et le stockage",
+    "sousTitre": "Produire son électricité, la consommer soi-même, et savoir si le stockage en vaut la peine.",
+    "metaTitre": "Panneaux solaires et stockage : le guide 2026",
+    "metaDesc": "Rentabilité réelle du photovoltaïque après la réforme de juin 2026, batterie physique ou virtuelle, dimensionnement : les réponses sans discours commercial.",
+    "intro": "La réforme de juin 2026 a changé l'équation du solaire résidentiel : le rachat du surplus est tombé à 1,1 centime le kWh, et la prime à l'autoconsommation a disparu. Conséquence directe : vendre son surplus n'est plus une stratégie. Ce qui fait la rentabilité aujourd'hui, c'est la part de votre production que vous consommez vous-même.",
+    "cats": [
+      "photovoltaique",
+      "stockage",
+      "autoconso"
+    ],
+    "sections": [
+      {
+        "titre": "Dimensionner selon sa consommation, pas selon sa toiture",
+        "contenu": "L'erreur la plus fréquente est de couvrir le toit. Puisque le surplus ne vaut presque plus rien, une installation surdimensionnée produit beaucoup d'électricité qui part au réseau pour un centime. Le bon réflexe : viser une production proche de ce que vous pouvez réellement consommer sur place, quitte à installer moins de panneaux."
+      },
+      {
+        "titre": "Le pilotage avant la batterie",
+        "contenu": "Décaler le ballon d'eau chaude, le lave-linge ou la recharge du véhicule sur les heures de production fait gagner des points d'autoconsommation pour quelques centaines d'euros. Une batterie coûte plusieurs milliers. Dans l'ordre : on pilote d'abord, on stocke ensuite — et seulement si les chiffres de votre foyer le justifient."
+      },
+      {
+        "titre": "Batterie physique ou virtuelle : ça dépend vraiment de vous",
+        "contenu": "La batterie physique permet de garder du courant en cas de coupure réseau et ne dépend d'aucun opérateur. La virtuelle ne demande aucun matériel ni entretien, mais suppose de passer chez un fournisseur alternatif. L'écart économique dépend de votre courbe de consommation. Helios compare les deux à consommation réelle égale et vous montre les deux résultats — le choix vous appartient."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/simulateur-solaire",
+        "label": "Estimer ma production solaire"
+      },
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      }
+    ]
+  },
+  {
+    "slug": "isolation",
+    "titre": "L'isolation et les travaux",
+    "sousTitre": "Par où commencer, quels repères de performance, et comment lire un devis sans se faire piéger.",
+    "metaTitre": "Isolation : par où commencer et à quel prix",
+    "metaDesc": "Combles, murs, planchers : l'ordre des priorités, les résistances thermiques à viser, les coûts au m² et les pièges de devis les plus fréquents.",
+    "intro": "Dans une maison non isolée, la chaleur s'échappe surtout par la toiture — de l'ordre du quart à un tiers des pertes. C'est pour cela qu'on commence presque toujours par là : c'est le meilleur rapport entre le coût et l'effet ressenti. Isoler avant d'installer un nouveau chauffage n'est pas un détail d'ordre : c'est ce qui évite de surdimensionner, donc de surpayer, l'équipement suivant.",
+    "cats": [
+      "isolation",
+      "chantier",
+      "menuiseries"
+    ],
+    "sections": [
+      {
+        "titre": "L'ordre qui fait économiser",
+        "contenu": "Toiture et combles d'abord, puis les murs, puis les planchers bas, et les menuiseries souvent en dernier — contrairement à l'intuition, changer les fenêtres est rarement le geste le plus rentable en premier. La ventilation doit être vérifiée à chaque étape : mieux isoler sans renouveler l'air correctement crée de l'humidité."
+      },
+      {
+        "titre": "Le seul chiffre à comparer entre deux devis",
+        "contenu": "La résistance thermique, notée R. Plus elle est élevée, mieux l'isolant freine la chaleur. C'est ce chiffre, et non l'épaisseur ou la marque, qui détermine la performance et l'accès aux aides. Un devis qui ne mentionne pas le R vous demande de signer à l'aveugle."
+      },
+      {
+        "titre": "Penser aussi à l'été",
+        "contenu": "Un critère est presque toujours oublié : le déphasage, c'est-à-dire le temps que met la chaleur à traverser l'isolant. Les isolants denses comme la fibre de bois ou la ouate de cellulose décalent l'arrivée de la chaleur au soir, quand on peut ventiler. À performance d'hiver équivalente, ils apportent un vrai confort en canicule."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/espace/audits",
+        "label": "Voir mes priorités de travaux"
+      },
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      }
+    ]
+  },
+  {
+    "slug": "reglementation",
+    "titre": "DPE, location et obligations",
+    "sousTitre": "Ce que la loi impose vraiment aux propriétaires, bailleurs et copropriétés.",
+    "metaTitre": "DPE, passoires thermiques : vos obligations 2026",
+    "metaDesc": "Calendrier d'interdiction de louer, gel des loyers, audit obligatoire à la vente, entretien des équipements : ce que la réglementation impose, avec les dates.",
+    "intro": "La réglementation du logement s'est durcie par étapes, et les échéances tombent maintenant. Les logements classés G ne peuvent plus être remis en location depuis 2025, les F suivront en 2028. Le loyer des passoires est gelé depuis 2022. Anticiper n'est plus un choix de bon élève : c'est ce qui protège la valeur du bien et la possibilité même de le louer.",
+    "cats": [
+      "reglementation",
+      "dpe",
+      "locataire",
+      "copropriete"
+    ],
+    "sections": [
+      {
+        "titre": "Le calendrier à connaître",
+        "contenu": "Interdiction de mise en location : G depuis janvier 2025, F au 1er janvier 2028, E au 1er janvier 2034. Audit énergétique obligatoire à la vente : F et G depuis 2023, E depuis 2025, D à partir de 2034. Ces dates peuvent faire l'objet d'ajustements législatifs — elles sont à vérifier à la date de votre projet."
+      },
+      {
+        "titre": "Le DPE n'est plus qu'informatif",
+        "contenu": "Depuis 2021, le DPE est opposable : sa fiabilité engage la responsabilité du diagnostiqueur et du vendeur. Il est valable dix ans. À noter, la méthode de calcul a été ajustée en 2024 pour corriger un biais qui pénalisait les logements de moins de 40 m² — certains ont changé d'étiquette à cette occasion."
+      },
+      {
+        "titre": "Les obligations d'entretien qu'on oublie",
+        "contenu": "Chaudière, pompe à chaleur, climatisation, ramonage : ces entretiens sont obligatoires, et surtout, leur certificat conditionne l'indemnisation par votre assurance en cas de sinistre. C'est l'obligation la moins connue et celle qui coûte le plus cher quand elle est négligée."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      },
+      {
+        "to": "/mon-espace",
+        "label": "Renseigner mon logement"
+      }
+    ]
+  },
+  {
+    "slug": "eau",
+    "pageDediee": true,
+    "titre": "Produire son eau chez soi",
+    "sousTitre": "L'eau atmosphérique : fabriquer de l'eau potable à partir de l'humidité de l'air.",
+    "metaTitre": "Produire son eau : le générateur atmosphérique",
+    "metaDesc": "Comment une machine fabrique de l'eau potable à partir de l'air, ce qu'elle produit selon le climat, ce qu'elle coûte et pour qui c'est pertinent.",
+    "intro": "Un générateur d'eau atmosphérique condense l'humidité de l'air, puis filtre et minéralise l'eau obtenue. Le principe est ancien, sa mise en oeuvre domestique est récente. La production dépend fortement du climat : plus l'air est chaud et humide, plus la machine est efficace — ce qui en fait une solution très inégale selon les régions, et c'est le premier point à vérifier avant tout achat.",
+    "cats": [
+      "eau",
+      "ecs"
+    ],
+    "sections": [
+      {
+        "titre": "La production dépend du climat, pas de la machine",
+        "contenu": "Deux foyers équipés du même appareil n'obtiendront pas la même quantité d'eau. La température et l'hygrométrie commandent le rendement. C'est pourquoi Helios estime la production à partir de données climatiques réelles de votre commune plutôt que d'annoncer un chiffre de brochure."
+      },
+      {
+        "titre": "L'électricité consommée est le vrai sujet",
+        "contenu": "Fabriquer de l'eau demande de l'énergie. La question honnête n'est donc pas seulement le prix du litre, mais le sens de l'opération selon votre situation : accès à l'eau, qualité du réseau local, et couplage éventuel avec une production solaire pour absorber cette consommation."
+      },
+      {
+        "titre": "À qui cela s'adresse vraiment",
+        "contenu": "Ce n'est pas une solution universelle. Elle prend son sens en cas d'eau de réseau de mauvaise qualité, d'accès difficile, ou de forte consommation d'eau en bouteille. Dans un logement raccordé à un réseau de bonne qualité, l'intérêt est surtout de confort, et il faut le dire clairement."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/potentiel-hydrique",
+        "label": "Estimer ma production d'eau"
+      },
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      }
+    ]
+  }
+]

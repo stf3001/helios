@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Droplets, Wind, Snowflake, Filter, BadgeCheck, Users, Building2, Landmark, Sun, MessageSquare } from 'lucide-react'
 import Hero from '../components/Hero'
+import FichesLiees from '../components/FichesLiees'
 import { useTitle } from '../hooks/useTitle'
 
 // Section publique « L'eau » — deuxième pilier de la maison autonome après l'énergie.
@@ -132,6 +133,7 @@ export default function Eau() {
           </span>
         </div>
       </section>
+      <FichesLiees cats={['eau', 'ecs']} />
     </>
   )
 }

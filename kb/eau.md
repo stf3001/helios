@@ -12,7 +12,7 @@ R: En quatre étapes : l'appareil aspire l'air ambiant et capte son humidité ; 
 R: Tout dépend du climat : la production varie fortement avec la température et l'humidité de votre région, et selon les mois de l'année. Un modèle familial produit jusqu'à 20 L/jour dans de bonnes conditions, et la gamme monte jusqu'aux besoins collectifs (100 L et plus). Pour une estimation sérieuse selon VOTRE ville, utilisez le simulateur « Mon potentiel hydrique » d'Helios : il croise les tables de production du constructeur avec le climat mensuel de votre région.
 
 ### Q: Combien coûte un générateur d'eau atmosphérique ?
-`cat:eau | tags:prix,hydrolia,budget | verif:partenaire`
+`cat:eau | tags:prix,hydrolia,budget | verif:partenaire | seo_titre:Prix d'un générateur d'eau atmosphérique | seo_desc:Combien coûte une machine qui fabrique de l'eau potable à partir de l'air, ce qu'elle consomme, et dans quels cas l'investissement se justifie.`
 R: Ordre de grandeur pour un modèle familial (20 L/jour) : environ 1 990 € TTC chez notre partenaire Hydrolia, kit de certification de la potabilité inclus. Les modèles plus grands (collectivités, entreprises) sont sur devis. Comme toujours avec Helios : ce sont des ordres de grandeur à confirmer au devis, et notre conseil reste indépendant — nous sommes apporteur d'affaires, jamais payés par vous.
 
 ### Q: L'eau produite par un AWG est-elle vraiment potable ?

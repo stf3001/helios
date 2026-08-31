@@ -8,6 +8,7 @@ import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
+import HeliosAvatar from '../components/HeliosAvatar'
 
 const NIVEAU_LABEL: Record<string, string> = {
   conseils_generaux: 'Conseils généraux',
@@ -95,7 +96,9 @@ export default function Espace() {
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <img src="/brand/helios-thumbsup.png" alt="" className="h-12 w-12 object-contain" />
+                  {/* Premier contact avec un espace vide : Helios accueille au lieu
+                      de laisser une vignette figée devant une page à remplir. */}
+                  <HeliosAvatar state="salutation" height={56} showBadges={false} />
                   <div>
                     <p className="font-semibold text-ink">Bienvenue ! Commençons par votre logement.</p>
                     <p className="text-sm text-gray-600">3 questions suffisent — Helios s'occupe du reste.</p>
