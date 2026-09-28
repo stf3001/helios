@@ -1,7 +1,12 @@
 /**
- * Le réglage d'un équipement : panneau latéral sur ordinateur, feuille qui glisse depuis
- * le bas sur mobile. Dans les deux cas il ne recouvre JAMAIS le bandeau d'indicateurs —
- * on doit voir bouger l'autonomie et la facture pendant qu'on règle.
+ * Le réglage d'un équipement : panneau flottant sur grand écran, feuille qui glisse depuis
+ * le bas sur petit écran. Dans les deux cas il ne recouvre JAMAIS les indicateurs — on doit
+ * voir bouger l'autonomie et la facture pendant qu'on règle.
+ *
+ * D'où l'ancrage EN BAS à droite à partir de `xl` : c'est là que se trouve la carte des
+ * indicateurs, en haut à droite. Un panneau posé en haut la masquerait. En dessous de `xl`,
+ * les indicateurs sont en bandeau collé en haut, et la feuille monte du bas sans les
+ * atteindre. Le seuil est le même que celui de la mise en page du simulateur.
  */
 
 import { useEffect, useRef, type ReactNode } from 'react'
@@ -29,8 +34,8 @@ export function Feuille({ titre, ouvert, onFermer, children }: Props) {
 
   return (
     <>
-      {/* Voile sur mobile seulement : sur ordinateur le panneau cohabite avec la scène. */}
-      <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={onFermer} aria-hidden="true" />
+      {/* Voile sur petit écran seulement : plus haut, le panneau cohabite avec la scène. */}
+      <div className="fixed inset-0 z-30 bg-black/30 xl:hidden" onClick={onFermer} aria-hidden="true" />
       <div
         ref={panneau}
         tabIndex={-1}
@@ -39,8 +44,8 @@ export function Feuille({ titre, ouvert, onFermer, children }: Props) {
         aria-label={titre}
         className="feuille-reglage fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl
           border-t border-ink/10 bg-white p-4 shadow-2xl outline-none
-          md:inset-x-auto md:bottom-auto md:right-4 md:top-40 md:max-h-[calc(100vh-11rem)] md:w-[22rem]
-          md:rounded-2xl md:border"
+          xl:inset-x-auto xl:bottom-4 xl:right-4 xl:top-auto xl:max-h-[min(60vh,32rem)] xl:w-[22rem]
+          xl:rounded-2xl xl:border"
       >
         <div className="mb-3 flex items-center justify-between gap-4">
           <h3 className="font-display text-lg font-bold text-ink">{titre}</h3>

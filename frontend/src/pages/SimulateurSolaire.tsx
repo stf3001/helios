@@ -5,12 +5,29 @@
  * par changement, avec anti-rebond ; la recherche d'options, plus coûteuse, n'est lancée
  * qu'à l'ouverture de l'onglet Étude et après un temps d'arrêt.
  *
+ * MISE EN PAGE (28/09/2026) — celle d'un configurateur, comme chez AD Solar : la scène
+ * occupe le centre et prend toute la place disponible, les réglages flottent à sa gauche
+ * derrière un rail d'icônes, les indicateurs se posent en carte en haut à droite, et
+ * « Et ensuite ? » passe en pleine largeur sous l'ensemble.
+ *
+ * Le pivot est à `xl` (1280 px) et non à `lg` : en dessous, une troisième colonne ne tient
+ * pas sans ramener la scène à 400 px de large, ce qui est exactement ce qu'on cherche à
+ * éviter. Sous ce seuil, les indicateurs redeviennent un bandeau en haut, les onglets une
+ * barre en bas, et la scène prend toute la largeur — elle y est plus grande encore.
+ *
+ * Les deux cartes flottantes ont leur gouttière RÉSERVÉE dans la grille : elles ont l'air
+ * posées sur la scène, mais elles n'en cachent rien. Un panneau par-dessus l'illustration
+ * masquerait la voiture et le garage, qui sont deux emplacements d'équipement cliquables.
+ *
  * AUCUN chiffre n'est écrit ici : tout vient de `/api/simulateur/*`.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Check, Info, Save, Users } from 'lucide-react'
+import {
+  Activity, AlertTriangle, ArrowRight, BatteryCharging, Check, CircleHelp, ClipboardList,
+  House, Info, Save, Sun, Users, type LucideIcon,
+} from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
@@ -32,13 +49,18 @@ import {
 
 type Onglet = 'maison' | 'panneaux' | 'stockage' | 'journee' | 'etude' | 'aide'
 
-const ONGLETS: { id: Onglet; label: string }[] = [
-  { id: 'maison', label: 'Maison' },
-  { id: 'panneaux', label: 'Panneaux' },
-  { id: 'stockage', label: 'Stockage' },
-  { id: 'journee', label: 'En direct' },
-  { id: 'etude', label: 'Étude' },
-  { id: 'aide', label: 'Aide' },
+/**
+ * Chaque onglet porte une icône : c'est elle qu'on voit dans le rail de gauche et dans la
+ * barre du bas. Le mot reste écrit dessous, en petit — une icône seule se devine, elle ne
+ * se lit pas, et « Étude » n'a pas de pictogramme évident.
+ */
+const ONGLETS: { id: Onglet; label: string; Icone: LucideIcon }[] = [
+  { id: 'maison', label: 'Maison', Icone: House },
+  { id: 'panneaux', label: 'Panneaux', Icone: Sun },
+  { id: 'stockage', label: 'Stockage', Icone: BatteryCharging },
+  { id: 'journee', label: 'En direct', Icone: Activity },
+  { id: 'etude', label: 'Étude', Icone: ClipboardList },
+  { id: 'aide', label: 'Aide', Icone: CircleHelp },
 ]
 
 const ANTI_REBOND_MS = 200
@@ -66,6 +88,9 @@ export default function SimulateurSolaire() {
     !new URLSearchParams(window.location.search).get('c'))
   const [guide, setGuide] = useState(false)
   const [messageEtude, setMessageEtude] = useState<string | null>(null)
+
+  /* Pour amener les réglages sous les yeux quand on choisit un onglet dans la barre du bas. */
+  const panneauReglages = useRef<HTMLDivElement>(null)
 
   const majConfig = useCallback((maj: (c: Config) => Config) => {
     setConfig((precedent) => maj(precedent))
@@ -262,15 +287,48 @@ export default function SimulateurSolaire() {
     )
   }
 
+  const ongletActif = ONGLETS.find((o) => o.id === onglet)
+
+  /* Le contenu de l'onglet courant, rendu UNE SEULE FOIS : il passe de la colonne de gauche
+     (grand écran) au flux de la page (petit écran) par l'ordre de la grille, jamais par un
+     second rendu — deux instances montées, ce sont deux recherches d'adresse. */
+  const contenuOnglet = (
+    <>
+      {onglet === 'maison' && (
+        <OngletMaison config={config} resultat={resultat} majConfig={majConfig} />
+      )}
+      {onglet === 'panneaux' && (
+        localise
+          ? <OngletPanneaux config={config} resultat={resultat} majConfig={majConfig} />
+          : <Vide message="Renseignez d’abord votre adresse, dans l’onglet Maison." />
+      )}
+      {onglet === 'stockage' && (
+        <OngletStockage config={config} resultat={resultat} majConfig={majConfig} />
+      )}
+      {onglet === 'journee' && (
+        <OngletJournee resultat={resultat} saison={saison} setSaison={setSaison}
+          heure={heure} setHeure={setHeure} />
+      )}
+      {onglet === 'etude' && (
+        <OngletEtude config={config} resultat={resultat} majConfig={majConfig}
+          options={options} chargementOptions={optionsEnCours}
+          onAppliquerOption={appliquerOption} />
+      )}
+      {onglet === 'aide' && <OngletAide />}
+    </>
+  )
+
   return (
     <div className="min-h-screen bg-cream">
-      <Bandeau indicateurs={resultat?.indicateurs ?? null} calculEnCours={calculEnCours} />
+      {/* Petit écran : les indicateurs en bandeau, collés sous l'en-tête du site. */}
+      <Bandeau indicateurs={resultat?.indicateurs ?? null} calculEnCours={calculEnCours}
+        variante="bandeau" />
 
       {guide && (
         <Guide5Questions config={config} majConfig={majConfig} onTerminer={() => setGuide(false)} />
       )}
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-[110rem] px-3 pb-4 pt-3 sm:px-4 xl:pb-10">
         {!localise && (
           <div className="mb-3 rounded-lg border border-primary/30 bg-white px-3 py-2">
             <p className="flex items-center gap-2 text-sm text-ink">
@@ -284,7 +342,7 @@ export default function SimulateurSolaire() {
         )}
 
         {erreur && (
-          <div className="mb-6 rounded-xl border border-terra/40 bg-terra/10 p-4 text-ink">
+          <div className="mb-3 rounded-xl border border-terra/40 bg-terra/10 p-4 text-ink">
             <p className="flex items-start gap-3">
               <AlertTriangle size={20} className="mt-0.5 shrink-0 text-terra" />
               <span>{erreur}</span>
@@ -305,23 +363,55 @@ export default function SimulateurSolaire() {
           </div>
         ))}
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-          <div className="min-w-0">
-            <section className="rounded-xl border border-ink/10 bg-white p-4">
-              {premierChargement && localise ? (
-                <div className="animate-pulse space-y-3">
-                  <div className="h-56 rounded-lg bg-cream" />
-                  <div className="h-4 w-2/3 rounded bg-cream" />
-                  <div className="h-4 w-1/2 rounded bg-cream" />
-                </div>
-              ) : (
-                <SceneMaison equipements={equipements} heure={heure} saison={saison} flux={flux}
-                  onEmplacement={setEmplacementOuvert} />
-              )}
-            </section>
+        <div className="grid items-start gap-3 xl:grid-cols-[19rem_minmax(0,1fr)_15rem]
+          2xl:gap-4 2xl:grid-cols-[22rem_minmax(0,1fr)_17rem]">
+
+          {/* ---------- LES RÉGLAGES, flottants à gauche ---------- */}
+          <aside ref={panneauReglages}
+            className="order-2 min-w-0 scroll-mt-36 xl:sticky xl:top-20 xl:order-1 xl:self-start
+              xl:scroll-mt-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-ink/10
+              xl:bg-cream/80 xl:shadow-xl xl:backdrop-blur">
+            <div className="xl:flex">
+              {/* Le rail : les onglets en icônes, à demeure le long du panneau. */}
+              <div role="tablist" aria-orientation="vertical" aria-label="Sections du simulateur"
+                className="hidden shrink-0 flex-col gap-1 border-r border-ink/10 p-1.5 xl:flex">
+                {ONGLETS.map(({ id, label, Icone }) => (
+                  <button key={id} role="tab" type="button" aria-selected={onglet === id}
+                    aria-controls="panneau-reglages" onClick={() => setOnglet(id)}
+                    className={`flex w-[3.75rem] flex-col items-center gap-1 rounded-xl px-1 py-2
+                      text-[10px] font-semibold leading-none transition
+                      ${onglet === id ? 'bg-primary text-white shadow' : 'text-ink hover:bg-white'}`}>
+                    <Icone size={20} strokeWidth={onglet === id ? 2.4 : 2} aria-hidden="true" />
+                    <span className="w-full truncate text-center">{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div id="panneau-reglages" role="tabpanel" aria-label={ongletActif?.label}
+                className="min-w-0 flex-1 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:p-2">
+                {/* Le titre rend le rail lisible : une icône allumée ne dit pas son nom. */}
+                <h2 className="hidden px-2 py-1 font-display text-lg font-bold text-ink xl:block">
+                  {ongletActif?.label}
+                </h2>
+                {contenuOnglet}
+              </div>
+            </div>
+          </aside>
+
+          {/* ---------- LA SCÈNE, au centre et en grand ---------- */}
+          <div className="order-1 min-w-0 xl:order-2">
+            {premierChargement && localise ? (
+              <div className="animate-pulse">
+                <div className="aspect-[1105/638] w-full rounded-xl bg-white/70" />
+                <div className="mx-auto mt-3 h-4 w-2/3 rounded bg-white/70" />
+              </div>
+            ) : (
+              <SceneMaison equipements={equipements} heure={heure} saison={saison} flux={flux}
+                onEmplacement={setEmplacementOuvert} />
+            )}
 
             {options?.prochaine_etape && (
-              <section className="mt-4 rounded-xl border-2 border-primary bg-white p-4">
+              <section className="mt-3 rounded-xl border-2 border-primary bg-white p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-primary">Prochaine étape</p>
                 <h2 className="mt-1 font-display text-xl font-bold text-ink">
                   {options.prochaine_etape.libelle}
@@ -337,20 +427,33 @@ export default function SimulateurSolaire() {
                 </button>
               </section>
             )}
+          </div>
 
-            {/* Le compte est la priorité : cette simulation n'est qu'une porte d'entrée. Ce qui
-                vaut vraiment, c'est qu'Helios garde la maison en mémoire et réponde ensuite sur
-                CE foyer. D'où un bouton unique et net, et trois promesses concrètes plutôt qu'une
-                phrase d'invitation. La mise en relation reste en second : elle ne se déclenche
-                qu'à la demande, et le dire est une obligation de la charte. */}
-            <section className="mt-4 rounded-xl border border-ink/10 bg-white p-4">
-              <h2 className="font-display text-lg font-bold text-ink">Et ensuite ?</h2>
+          {/* ---------- LES INDICATEURS, en carte en haut à droite ---------- */}
+          <div className="order-3 hidden xl:sticky xl:top-20 xl:block xl:self-start">
+            <Bandeau indicateurs={resultat?.indicateurs ?? null} calculEnCours={calculEnCours}
+              variante="carte" />
+          </div>
+        </div>
 
+        {/* ---------- ET ENSUITE ? en pleine largeur ----------
+            Le compte est la priorité : cette simulation n'est qu'une porte d'entrée. Ce qui
+            vaut vraiment, c'est qu'Helios garde la maison en mémoire et réponde ensuite sur
+            CE foyer. D'où un bouton unique et net, et trois promesses concrètes plutôt qu'une
+            phrase d'invitation. La mise en relation reste en second : elle ne se déclenche
+            qu'à la demande, et le dire est une obligation de la charte.
+            En pleine largeur, les deux propos se rangent côte à côte au lieu de s'empiler,
+            et les boutons cessent d'être étirés d'un bord à l'autre de la page. */}
+        <section className="mt-4 rounded-2xl border border-ink/10 bg-white p-4 sm:p-6">
+          <h2 className="font-display text-xl font-bold text-ink">Et ensuite ?</h2>
+
+          <div className="mt-3 grid gap-5 md:grid-cols-2 md:gap-8">
+            <div>
               {user ? (
                 <>
                   <button type="button" onClick={enregistrerEtude}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90">
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg
+                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90 sm:w-auto">
                     <Save size={18} /> Enregistrer mon étude
                   </button>
                   {messageEtude && <p className="mt-2 text-sm text-dark/80">{messageEtude}</p>}
@@ -362,8 +465,8 @@ export default function SimulateurSolaire() {
               ) : (
                 <>
                   <Link to="/inscription"
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90">
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg
+                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90 sm:w-auto">
                     Créer mon compte gratuit <ArrowRight size={18} />
                   </Link>
                   <ul className="mt-3 space-y-1.5 text-sm text-dark/80">
@@ -386,8 +489,10 @@ export default function SimulateurSolaire() {
                   </p>
                 </>
               )}
+            </div>
 
-              <p className="mt-4 border-t border-ink/10 pt-3 text-sm text-dark/80">
+            <div className="border-t border-ink/10 pt-4 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+              <p className="text-sm text-dark/80">
                 Helios peut aussi vous orienter vers des <strong>installateurs</strong>, de votre
                 région ou nationaux, retenus parce qu’ils ont accepté la charte Helios.
               </p>
@@ -397,53 +502,53 @@ export default function SimulateurSolaire() {
 
               <Link to="/espace/mises-en-relation"
                 className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                  border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white">
+                  border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white
+                  sm:w-auto">
                 <Users size={18} /> Être mis en relation
               </Link>
               <p className="mt-2 text-sm text-dark/60">
                 Uniquement si vous le demandez, et avec votre consentement. Helios n’est jamais
                 payé par vous, et ne transmet rien sans votre accord.
               </p>
-            </section>
-          </div>
-
-          <div className="min-w-0">
-            <div role="tablist" aria-label="Sections du simulateur"
-              className="mb-4 flex gap-1 overflow-x-auto rounded-xl border border-ink/10 bg-white p-1">
-              {ONGLETS.map((o) => (
-                <button key={o.id} role="tab" type="button" aria-selected={onglet === o.id}
-                  onClick={() => setOnglet(o.id)}
-                  className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold transition
-                    ${onglet === o.id ? 'bg-primary text-white' : 'text-ink hover:bg-cream'}`}>
-                  {o.label}
-                </button>
-              ))}
             </div>
-
-            {onglet === 'maison' && (
-              <OngletMaison config={config} resultat={resultat} majConfig={majConfig} />
-            )}
-            {onglet === 'panneaux' && (
-              localise
-                ? <OngletPanneaux config={config} resultat={resultat} majConfig={majConfig} />
-                : <Vide message="Renseignez d’abord votre adresse, dans l’onglet Maison." />
-            )}
-            {onglet === 'stockage' && (
-              <OngletStockage config={config} resultat={resultat} majConfig={majConfig} />
-            )}
-            {onglet === 'journee' && (
-              <OngletJournee resultat={resultat} saison={saison} setSaison={setSaison}
-                heure={heure} setHeure={setHeure} />
-            )}
-            {onglet === 'etude' && (
-              <OngletEtude config={config} resultat={resultat} majConfig={majConfig}
-                options={options} chargementOptions={optionsEnCours}
-                onAppliquerOption={appliquerOption} />
-            )}
-            {onglet === 'aide' && <OngletAide />}
           </div>
-        </div>
+        </section>
       </div>
+
+      {/* ---------- PETIT ÉCRAN : la barre d'onglets en bas ----------
+          Le pouce l'atteint sans quitter la scène. Choisir un onglet amène les réglages sous
+          les yeux : sans ce défilement, on toucherait « Panneaux » sans rien voir changer,
+          puisque le panneau vit plus bas dans la page. Le bandeau d'indicateurs, lui, reste
+          collé en haut pendant ce trajet.
+
+          `sticky` et non `fixed` : la barre garde sa place dans le flux, tout en bas du
+          simulateur. Elle flotte donc au bord de l'écran tant qu'on règle, puis s'arrête
+          d'elle-même et rend le pied de page entier — une barre fixée en masquait la
+          dernière ligne, sans qu'aucun rembourrage de cette page ne puisse y remédier,
+          le pied de page appartenant à la mise en page du site. */}
+      <nav role="tablist" aria-label="Sections du simulateur"
+        className="sticky bottom-0 z-20 border-t border-ink/10 bg-cream/95
+          pb-[env(safe-area-inset-bottom)] backdrop-blur xl:hidden">
+        <div className="mx-auto flex max-w-2xl">
+          {ONGLETS.map(({ id, label, Icone }) => (
+            <button key={id} role="tab" type="button" aria-selected={onglet === id}
+              aria-controls="panneau-reglages"
+              onClick={() => {
+                setOnglet(id)
+                panneauReglages.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className={`flex flex-1 flex-col items-center gap-1 px-0.5 py-1.5 text-[10px]
+                font-semibold leading-none transition
+                ${onglet === id ? 'text-primary' : 'text-dark/60'}`}>
+              <span className={`flex h-7 w-10 items-center justify-center rounded-full
+                ${onglet === id ? 'bg-primary text-white' : ''}`}>
+                <Icone size={18} strokeWidth={onglet === id ? 2.4 : 2} aria-hidden="true" />
+              </span>
+              <span className="w-full truncate text-center">{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
 
       <Feuille titre={titreDe(emplacementOuvert ?? '')} ouvert={emplacementOuvert !== null}
         onFermer={() => setEmplacementOuvert(null)}>
