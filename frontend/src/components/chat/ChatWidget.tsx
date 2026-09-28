@@ -234,6 +234,10 @@ export default function ChatWidget({
     // le back-office compte en « questions sans réponse » — on l'affiche
     // honnêtement au client plutôt que de mimer l'assurance.
     let cited = false
+    // Politesse : Helios salue au lieu de hausser les épaules. Sans ce drapeau, une
+    // réponse sans citation retombe sur « je ne sais pas » — ce qui n'a aucun sens
+    // en réponse à « bonjour ».
+    let civilite = false
 
     try {
       const res = await fetchImpl('/api/chat/messages', {
@@ -260,6 +264,7 @@ export default function ChatWidget({
           if (event.type === 'conversation') {
             conversationId.current = event.conversation_id
             setSimplified(!!event.simplified)
+            if (event.civilite) civilite = true
             if (event.instant) updateLastHelios((msg) => ({ ...msg, instant: true }))
           } else if (event.type === 'token') {
             updateLastHelios((msg) => ({ ...msg, content: msg.content + event.text }))
@@ -272,7 +277,7 @@ export default function ChatWidget({
           }
         }
       }
-      showAvatar(cited ? 'reponse' : 'nesaitpas')
+      showAvatar(civilite ? 'salutation' : cited ? 'reponse' : 'nesaitpas')
     } catch (err) {
       updateLastHelios(() => ({
         role: 'helios',

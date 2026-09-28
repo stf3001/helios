@@ -23,7 +23,7 @@ from app.models.solar import SolarStudy
 from app.models.user import User
 from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
-from app.services import ollama_client, rag, router_llm
+from app.services import civilites, ollama_client, rag, router_llm
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -110,6 +110,49 @@ async def send_message(
             )
             if water_study is not None:
                 water_context = rag.build_water_context(water_study)
+
+    # Civilité seule (« bonjour », « allo ? », « merci ») : réponse écrite, servie en
+    # quelques millisecondes. On sort AVANT le calcul d'embedding — il n'y a rien à
+    # chercher dans la base de connaissances, et rien à faire rédiger : la chaîne complète
+    # coûtait jusqu'à une minute pour un « allo ?? ». Voir `civilites.py` pour le filet,
+    # volontairement étroit.
+    #
+    # `force_llm` n'est pas consulté : le bouton « développer » ne s'affiche pas sur ces
+    # réponses, et il n'y a rien à développer sur un « merci ».
+    civilite = civilites.repondre(payload.content)
+    if civilite is not None:
+        conversation_id = conversation.id
+
+        async def stream_civilite():
+            yield json.dumps(
+                {
+                    "type": "conversation",
+                    "conversation_id": str(conversation_id),
+                    "mode": mode,
+                    "simplified": False,
+                    # Ni « instant » (ce n'est pas une fiche de la base) ni citation : c'est
+                    # une politesse. Le drapeau sert à l'écran, qui fait alors saluer Helios
+                    # au lieu de lui faire hausser les épaules faute de source citée.
+                    "civilite": True,
+                }
+            ) + "\n"
+            yield json.dumps({"type": "token", "text": civilite}) + "\n"
+
+            async with async_session() as db2:
+                msg = Message(
+                    conversation_id=conversation_id,
+                    role="helios",
+                    content=civilite,
+                    # `rag_score` reste nul : une politesse n'est pas un trou de la base de
+                    # connaissances, et elle ne doit pas gonfler les « questions sans réponse ».
+                    model_used="civilite",
+                    constitution_version=settings.constitution_version,
+                )
+                db2.add(msg)
+                await db2.commit()
+                yield json.dumps({"type": "message_id", "message_id": str(msg.id)}) + "\n"
+
+        return StreamingResponse(stream_civilite(), media_type="application/x-ndjson")
 
     query_embedding = await ollama_client.embed(payload.content)
     results = await rag.search_chunks(db, query_embedding)
