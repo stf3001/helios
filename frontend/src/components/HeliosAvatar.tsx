@@ -35,7 +35,9 @@ export type HeliosPose = keyof typeof POSES
 /** Les états sont nommés côté produit (ce qu'Helios *vit*), pas côté animation. */
 export type HeliosState =
   | 'repos'
+  | 'attention'
   | 'salutation'
+  | 'ecoute'
   | 'reflexion'
   | 'reponse'
   | 'nesaitpas'
@@ -62,7 +64,15 @@ type StateDef = {
 
 const STATES: Record<HeliosState, StateDef> = {
   repos: { pose: 'crossed', expr: 'calm', transient: false, label: 'Helios vous écoute' },
+  /* On tape une question : il ne fait rien de spectaculaire, il s'allume. Le sourire et
+     le regard qui se pose sur le champ suffisent — un geste ample, tenu pendant toute la
+     frappe d'une longue question, deviendrait vite agaçant. */
+  attention: { pose: 'crossed', expr: 'smile', transient: false, label: 'Helios vous écoute' },
   salutation: { pose: 'thumbsup', expr: 'happy', anim: 'hWave', dur: 1.1, transient: true, label: 'Helios vous salue' },
+  /* Dictée en cours : la main au casque est le geste de celui qui tend l'oreille. Pas
+     d'animation de geste — ce qui doit bouger pendant qu'on parle, c'est le micro, pas
+     Helios ; il écoute, et la respiration de repos suffit à le montrer vivant. */
+  ecoute: { pose: 'salute', expr: 'smile', transient: false, label: 'Helios vous écoute parler' },
   reflexion: { pose: 'crossed', expr: 'calm', badge: 'dots', transient: false, label: 'Helios réfléchit' },
   reponse: { pose: 'thumbsup', expr: 'smile', anim: 'hNod', dur: 0.9, badge: 'bulb', transient: true, label: 'Helios a une réponse' },
   nesaitpas: { pose: 'salute', expr: 'unsure', anim: 'hShrug', dur: 1.4, badge: 'question', transient: true, label: "Helios n'a pas la réponse" },
@@ -82,6 +92,8 @@ export default function HeliosAvatar({
   idle = true,
   restPose,
   replay = 0,
+  regard = true,
+  cible = null,
 }: {
   state?: HeliosState
   /** Incrémenter pour rejouer le MÊME état (deux réponses d'affilée, par ex.) :
@@ -97,6 +109,12 @@ export default function HeliosAvatar({
   /** Pose de repos (par défaut bras croisés). La pose `hero`, plus large et plus
    *  ouverte, convient aux grandes illustrations de page. */
   restPose?: HeliosPose
+  /** Le regard suit le pointeur. À couper pour une vignette décorative. */
+  regard?: boolean
+  /** Point de l'écran à regarder au lieu du pointeur — le champ de saisie pendant qu'on
+   *  y écrit, par exemple. Les mains sont sur le clavier : sans cela, les yeux resteraient
+   *  figés là où la souris a été abandonnée. */
+  cible?: { x: number; y: number } | null
 }) {
   // État réellement affiché : le parent décrit ce qui vient de se passer, le
   // composant se charge de retomber au repos quand l'animation est finie.
@@ -167,6 +185,72 @@ export default function HeliosAvatar({
     mouth = `M ${cx - m * 0.78} ${mouthY} Q ${cx} ${mouthY + m * 0.5} ${cx + m * 0.78} ${mouthY}`
   }
 
+  /* ------------------------------------------------------------------
+     LE REGARD
+
+     Les yeux sont deux taches d'encre, sans blanc autour : « suivre » veut donc
+     dire les décaler légèrement dans le visage, de l'ordre d'un demi-rayon. Au-delà,
+     ils sortent du masque et le personnage louche.
+
+     Le décalage est posé à la main sur un `<g>` dédié, PAS par un état React : à
+     chaque mouvement de souris, un rendu complet de l'avatar serait du gâchis. Et ce
+     `<g>` est distinct de celui du clignement, qui anime déjà `transform` — les deux
+     se marcheraient dessus.
+
+     La cible l'emporte sur le pointeur quand elle est donnée (cf. `cible`).
+     ------------------------------------------------------------------ */
+  const yeux = useRef<SVGGElement>(null)
+  const boite = useRef<HTMLDivElement>(null)
+  // Géométrie du visage de la pose courante, relue par l'écouteur sans le réabonner.
+  const geo = useRef({ cx: 0, eyeCy: 0, vbH: 0, ampli: 0 })
+  geo.current = { cx, eyeCy, vbH, ampli: r * 0.55 }
+
+  const cibleX = cible?.x ?? null
+  const cibleY = cible?.y ?? null
+
+  useEffect(() => {
+    const sobre = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (!regard || sobre) {
+      if (yeux.current) yeux.current.style.transform = ''
+      return
+    }
+
+    let image = 0
+    const viser = (x: number, y: number) => {
+      cancelAnimationFrame(image)
+      image = requestAnimationFrame(() => {
+        const cadre = boite.current?.getBoundingClientRect()
+        const g = yeux.current
+        if (!cadre || !cadre.width || !g) return
+        const { cx: fx, eyeCy: fy, vbH: h, ampli } = geo.current
+        // Les yeux, en coordonnées d'écran : le repère SVG fait 100 unités de large.
+        const ox = cadre.left + (fx / 100) * cadre.width
+        const oy = cadre.top + (fy / h) * cadre.height
+        const dx = x - ox
+        const dy = y - oy
+        const d = Math.hypot(dx, dy)
+        if (d < 1) { g.style.transform = ''; return }
+        // Amplitude pleine à 360 px : plus loin, le regard ne se creuse plus.
+        const force = Math.min(1, d / 360)
+        g.style.transform =
+          `translate(${(dx / d) * force * ampli}px, ${(dy / d) * force * ampli}px)`
+      })
+    }
+
+    if (cibleX !== null && cibleY !== null) {
+      viser(cibleX, cibleY)
+      return () => cancelAnimationFrame(image)
+    }
+
+    const surPointeur = (e: PointerEvent) => viser(e.clientX, e.clientY)
+    window.addEventListener('pointermove', surPointeur, { passive: true })
+    return () => {
+      window.removeEventListener('pointermove', surPointeur)
+      cancelAnimationFrame(image)
+    }
+    // `current` : changer de pose change la géométrie du visage, donc le décalage.
+  }, [regard, cibleX, cibleY, current])
+
   const variant = play % 2 ? 'A' : 'B'
   const bodyAnim = def.anim ? `${def.anim}${variant} ${def.dur}s cubic-bezier(.34,1.16,.44,1) both` : 'none'
   const idleAnim = idle ? 'hBreathe 5s ease-in-out infinite, hSway 9s ease-in-out infinite' : 'none'
@@ -177,6 +261,7 @@ export default function HeliosAvatar({
 
   return (
     <div
+      ref={boite}
       className={`helios-avatar relative shrink-0 ${className}`}
       style={{ width, height, animation: bodyAnim }}
       role="img"
@@ -189,9 +274,13 @@ export default function HeliosAvatar({
           className="absolute inset-0 w-full h-full pointer-events-none"
           aria-hidden="true"
         >
-          <g style={{ animation: blink, transformOrigin: `${cx}px ${eyeCy}px` }}>
-            <ellipse cx={cx - gap / 2} cy={eyeCy} rx={eyeRx} ry={eyeRy} fill={INK} />
-            <ellipse cx={cx + gap / 2} cy={eyeCy} rx={eyeRx} ry={eyeRy} fill={INK} />
+          {/* Deux groupes imbriqués, et non un seul : le clignement anime `transform`
+              (scaleY), le regard le pose à la main. Ensemble ils s'écraseraient. */}
+          <g ref={yeux} className="helios-regard">
+            <g style={{ animation: blink, transformOrigin: `${cx}px ${eyeCy}px` }}>
+              <ellipse cx={cx - gap / 2} cy={eyeCy} rx={eyeRx} ry={eyeRy} fill={INK} />
+              <ellipse cx={cx + gap / 2} cy={eyeCy} rx={eyeRx} ry={eyeRy} fill={INK} />
+            </g>
           </g>
           {/* Épaisseur exprimée en unités du repère (≈ 2,9 % de la largeur, soit
               le trait du dessin lui-même) : la bouche grossit avec l'avatar au

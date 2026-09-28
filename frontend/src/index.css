@@ -63,11 +63,20 @@
 @keyframes hGlow { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
 @keyframes hDots { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
+/* Le regard suit le pointeur. Le décalage lui-même est posé en JS, image par image ;
+   ce qui vient d'ici, c'est la douceur — sans elle les yeux sautent d'un point à
+   l'autre au lieu de glisser, et le personnage a l'air nerveux. Un quart de seconde :
+   assez pour que le regard traîne un peu derrière la souris, comme un vrai. */
+.helios-regard { transition: transform 0.28s ease-out; }
+
 /* Accessibilité : l'avatar redevient une illustration fixe si l'utilisateur
    demande moins de mouvement. Les expressions (yeux, bouche) restent, elles ne
-   bougent pas — seul le mouvement du corps disparaît. */
+   bougent pas — seul le mouvement du corps disparaît. Le regard se fige aussi :
+   le composant cesse de le calculer, et la transition est coupée ici, une
+   transition n'étant pas une animation. */
 @media (prefers-reduced-motion: reduce) {
   .helios-avatar, .helios-avatar * { animation: none !important; }
+  .helios-regard { transition: none; }
 }
 
 /* De nombreux champs du site utilisent text-sm (14px, spécificité de classe > sélecteur de
