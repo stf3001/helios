@@ -6,13 +6,13 @@ import { getCategoryIcon } from '../data/categoryIcons'
 import { useTitle } from '../hooks/useTitle'
 
 export default function Guides() {
-  useTitle('Guides & Aides')
+  useTitle('Guides')
   const [cat, setCat] = useState<string | null>(null)
   const list = cat ? guides.filter((g) => g.categorie === cat) : guides
 
   return (
     <>
-      <Hero title="Guides & Aides" subtitle="Comprendre avant d'agir — l'énergie de la maison, expliquée simplement." />
+      <Hero title="Guides" subtitle="Par où commencer, et dans quel ordre. Le détail de chaque sujet est dans la FAQ." />
       <section className="max-w-[1000px] mx-auto px-4 py-12">
         <div className="flex flex-wrap gap-2 mb-8">
           <button onClick={() => setCat(null)}
