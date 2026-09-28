@@ -171,6 +171,15 @@ class Settings(BaseSettings):
         (3, 9.7), (6, 12.9), (9, 16.3), (12, 19.7), (15, 22.8), (18, 26.0), (24, 33.8), (30, 40.7), (36, 47.6),
     )
 
+    # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
+    # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
+    # engage quelqu'un a appeler — a confirmer avec Stephane avant toute mise en ligne.
+    rdv_duree_min: int = 30
+    rdv_jours_ouvres: tuple[int, ...] = (0, 1, 2, 3, 4)   # lundi a vendredi
+    rdv_plages_horaires: tuple[tuple[float, float], ...] = ((9.0, 12.5), (14.0, 18.0))
+    rdv_horizon_jours: int = 14      # on ne propose pas au-dela : les agendas bougent
+    rdv_prevenance_h: int = 24       # pas d'appel dans dix minutes, personne ne le tiendrait
+
     # --- Raccordement ---
     simu_injection_max_kva_mono: float = 6.0        # plafond d'injection en monophase (verifie)
     # Part de la production au-dela de laquelle l'ecretage merite un avertissement.

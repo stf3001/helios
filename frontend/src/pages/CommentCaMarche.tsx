@@ -22,7 +22,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, MessageCircle, ShieldQuestion, Sparkles } from 'lucide-react'
 
+import AvatarExpert from '../components/AvatarExpert'
 import HeliosAvatar, { type HeliosPose, type HeliosState } from '../components/HeliosAvatar'
+import RendezVousTel from '../components/RendezVousTel'
 import HierarchieColibri from '../components/HierarchieColibri'
 import MaisonDemain from '../components/MaisonDemain'
 import { useTitle } from '../hooks/useTitle'
@@ -61,6 +63,40 @@ function HeliosAuPassage({
     </div>
   )
 }
+
+/**
+ * L'ÉQUIPE — CONTENU PROVISOIRE, À REMPLACER AVANT TOUTE MISE EN LIGNE.
+ *
+ * Ces quatre personnes n'existent pas. Stéphane fournira les vraies fiches ; en attendant,
+ * ces cartes tiennent la place et montrent la forme. Publier des biographies inventées
+ * sous l'étiquette « notre équipe » tromperait le visiteur — et c'est précisément ce que
+ * la charte interdit ailleurs sur ce site.
+ *
+ * Les portraits sont DESSINÉS et non photographiés : voir `AvatarExpert`. Le jour où les
+ * vraies photos arrivent, on remplace l'avatar par une balise `img`, rien d'autre ne bouge.
+ */
+const EQUIPE = [
+  {
+    prenom: 'Camille', nom: 'R.', age: 41, secteur: 'Sud-Est',
+    parcours: 'Ancienne conductrice de travaux en rénovation, passée au conseil après dix ans de chantiers.',
+    anciennete: '8 ans de conseil aux particuliers en énergies renouvelables',
+  },
+  {
+    prenom: 'Yanis', nom: 'B.', age: 35, secteur: 'Île-de-France',
+    parcours: 'Thermicien de formation, il a dimensionné des installations solaires avant de les expliquer.',
+    anciennete: '6 ans de conseil aux particuliers en énergies renouvelables',
+  },
+  {
+    prenom: 'Hélène', nom: 'M.', age: 52, secteur: 'Grand Ouest',
+    parcours: 'Vingt ans en maîtrise d’œuvre. Elle lit un devis comme d’autres lisent le journal.',
+    anciennete: '12 ans de conseil aux particuliers en énergies renouvelables',
+  },
+  {
+    prenom: 'Karim', nom: 'D.', age: 29, secteur: 'Nord et Est',
+    parcours: 'Venu du dépannage chauffage, il connaît les pannes avant qu’on les décrive.',
+    anciennete: '4 ans de conseil aux particuliers en énergies renouvelables',
+  },
+]
 
 /** Vraies questions, vrais liens : elles ouvrent le chat avec la question déjà écrite. */
 const AMORCES = [
@@ -242,8 +278,50 @@ export default function CommentCaMarche() {
         </div>
       </section>
 
-      {/* ---------------- LA MAISON DE DEMAIN ---------------- */}
+      {/* ---------------- QUAND IL FAUT DU FORMEL, ET QUAND IL FAUT QUELQU'UN ---------------- */}
       <section className="bg-cream py-14">
+        <div className="mx-auto max-w-[1100px] px-4">
+          <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
+            Et quand une machine ne suffit pas
+          </h2>
+          <p className="mt-3 max-w-[760px] text-lg text-dark/80">
+            Il y a deux moments où Helios s’efface. Quand il faut un document
+            <strong> officiel</strong> — pour une vente, une location, un dossier d’aide —
+            il vous oriente vers un <strong>DPE</strong> réalisé par un diagnostiqueur
+            certifié, et vous indique des professionnels si vous n’en connaissez pas. Et
+            quand la question demande une vraie conversation, vous prenez trente minutes
+            au téléphone avec quelqu’un de notre équipe.
+          </p>
+
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {EQUIPE.map((membre, i) => (
+              <div key={membre.prenom} className="rounded-2xl border border-ink/10 bg-white p-5">
+                <AvatarExpert variante={i} taille={72} className="rounded-full" />
+                <h3 className="mt-3 font-display text-lg font-bold text-ink">
+                  {membre.prenom} {membre.nom}
+                </h3>
+                <p className="text-sm text-dark/60">{membre.age} ans · {membre.secteur}</p>
+                <p className="mt-2 text-sm text-dark/80">{membre.parcours}</p>
+                <p className="mt-2 text-sm font-semibold text-primary">{membre.anciennete}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="mt-10 font-display text-xl font-bold text-ink">
+            Réserver trente minutes au téléphone
+          </h3>
+          <p className="mb-4 mt-1 max-w-[760px] text-dark/75">
+            Gratuit, sans engagement, et avec un être humain. Choisissez le moment qui vous
+            arrange — on vous rappelle.
+          </p>
+          <div className="max-w-[820px]">
+            <RendezVousTel />
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- LA MAISON DE DEMAIN ---------------- */}
+      <section className="py-14">
         <div className="mx-auto max-w-[1100px] px-4">
           <h2 className="text-center font-display text-2xl font-bold text-ink md:text-3xl">
             Ce vers quoi il vous emmène
