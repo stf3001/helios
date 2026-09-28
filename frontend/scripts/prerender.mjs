@@ -144,7 +144,7 @@ function pageHtml(coquille, fiche) {
  * site, et une liste explicite rend cette exclusion évidente et vérifiable.
  */
 const PAGES_FIXES = [
-  '/', '/comment-ca-marche', '/helios', '/faq', '/guides', '/glossaire',
+  '/', '/comment-ca-marche', '/helios', '/faq', '/glossaire',
   '/simulateur-solaire', '/potentiel-hydrique',
   '/partenaires', '/devenir-partenaire',
   '/engagements', '/vision', '/colibri', '/qui-sommes-nous',
@@ -195,12 +195,6 @@ const ZONES_PRIVEES = [
   '/connexion', '/inscription', '/verifier-email',
 ]
 
-/** Les guides vivent dans un fichier TypeScript : on en extrait les identifiants d'URL. */
-function lireGuides() {
-  const src = readFileSync(resolve(RACINE_FRONT, 'src/data/guides.ts'), 'utf-8')
-  return [...src.matchAll(/^\s*slug:\s*'([^']+)'/gm)].map((m) => m[1])
-}
-
 const jour = (chemin) => statSync(chemin).mtime.toISOString().slice(0, 10)
 
 /** HTML statique d'une page chapeau : intro + sections visibles sans JavaScript. */
@@ -226,9 +220,8 @@ ${pilier.sections.map((s) => `        <h2>${echapper(s.titre)}</h2>\n        <p>
     .replace('<div id="root"></div>', `<div id="root">${contenu}\n    </div>`)
 }
 
-function ecrireSitemap(fiches, guides) {
+function ecrireSitemap(fiches) {
   const majKb = jour(DOSSIER_KB)
-  const majGuides = jour(resolve(RACINE_FRONT, 'src/data/guides.ts'))
   const aujourdhui = new Date().toISOString().slice(0, 10)
 
   const urls = [
@@ -236,7 +229,6 @@ function ecrireSitemap(fiches, guides) {
     ...PILIERS.map((p) => ({ loc: `/${p.slug}`, maj: aujourdhui })),
     ...VILLES.map((v) => ({ loc: `/solaire/${v.slug}`, maj: aujourdhui })),
     ...fiches.map((f) => ({ loc: `/faq/${f.slug}`, maj: majKb })),
-    ...guides.map((g) => ({ loc: `/guides/${g}`, maj: majGuides })),
   ]
 
   const xml =
@@ -297,8 +289,7 @@ function main() {
     writeFileSync(join(DIST, 'solaire', `${v.slug}.html`), villeHtml(coquille, v), 'utf-8')
   }
 
-  const guides = lireGuides()
-  const nbUrls = ecrireSitemap(fiches, guides)
+  const nbUrls = ecrireSitemap(fiches)
   ecrireRobots()
 
   const parSource = fiches.reduce((acc, f) => ({ ...acc, [f.source]: (acc[f.source] || 0) + 1 }), {})
@@ -306,7 +297,7 @@ function main() {
   console.log('[pré-rendu] ' + Object.entries(parSource).map(([s, n]) => `${s}:${n}`).join(' '))
   console.log(`[pré-rendu] ${VILLES.length} pages locales sous /solaire/`)
   console.log(`[pré-rendu] ${PILIERS.length} pages chapeau : ${PILIERS.map((p) => '/' + p.slug).join(' ')}`)
-  console.log(`[pré-rendu] sitemap.xml : ${nbUrls} URL (${PAGES_FIXES.length} pages + ${PILIERS.length} chapeaux + ${fiches.length} fiches + ${guides.length} guides)`)
+  console.log(`[pré-rendu] sitemap.xml : ${nbUrls} URL (${PAGES_FIXES.length} pages + ${PILIERS.length} chapeaux + ${fiches.length} fiches)`)
   console.log(`[pré-rendu] robots.txt écrit · site déclaré : ${SITE}`)
 }
 

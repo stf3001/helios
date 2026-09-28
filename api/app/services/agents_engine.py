@@ -63,6 +63,9 @@ SOURCES: list[SourceSpec] = [
     # Fin de contrat de rachat et ajout de puissance (28/09/2026) : deux situations que la
     # base ignorait, alors qu'elles representent une bonne part des appels recus.
     SourceSpec(name="fin_contrat_rachat", kind="faq_markdown", location="helios/kb/fin_contrat_rachat.md"),
+    # Parcours (28/09/2026) : l'ordre des decisions, verse en fiches quand la section Guides
+    # a ete supprimee. Chez Helios on interroge le robot, on ne parcourt pas des pages.
+    SourceSpec(name="parcours", kind="faq_markdown", location="helios/kb/parcours.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

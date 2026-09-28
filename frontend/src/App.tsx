@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -23,8 +23,6 @@ import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
 import PartnerPortal from './pages/PartnerPortal'
 import Espace from './pages/Espace'
 import EspaceCompte from './pages/EspaceCompte'
-import Guides from './pages/Guides'
-import GuideDetail from './pages/GuideDetail'
 import Glossaire from './pages/Glossaire'
 import PotentielHydrique from './pages/PotentielHydrique'
 import EspacePro from './pages/EspacePro'
@@ -83,11 +81,14 @@ function SitePublic() {
           <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/helios" element={<HeliosIA />} />
-          <Route path="/guides" element={<Guides />} />
-          <Route path="/guides/:slug" element={<GuideDetail />} />
           <Route path="/glossaire" element={<Glossaire />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/faq/:slug" element={<FaqDetail />} />
+          {/* Section Guides supprimée le 28/09/2026 : elle redisait la FAQ. Les 301 vivent
+              dans deploy/nginx.conf pour les visiteurs venus d'un lien externe ; celle-ci
+              couvre le développement et le cas où la configuration nginx ne serait pas à jour. */}
+          <Route path="/guides/*" element={<Navigate to="/faq" replace />} />
+          <Route path="/guides" element={<Navigate to="/faq" replace />} />
           <Route path="/partenaires" element={<Partenaires />} />
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/partenaire" element={<PartnerPortal />} />

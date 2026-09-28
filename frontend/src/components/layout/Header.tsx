@@ -8,7 +8,6 @@ const links = [
   { to: '/helios', label: 'Helios (IA)' },
   { to: '/simulateur-solaire', label: 'Simulateur solaire' },
   { to: '/eau', label: 'Eau' },
-  { to: '/guides', label: 'Guides' },
   { to: '/faq', label: 'FAQ' },
 ]
 

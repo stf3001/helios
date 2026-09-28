@@ -5,7 +5,7 @@ import {
   Smile, Sparkles, Sun, Wind, Zap,
 } from 'lucide-react'
 
-/** Icône + couleur de marque par catégorie — guides (`data/guides.ts`, libellés capitalisés
+/** Icône + couleur de marque par catégorie — fiches de connaissance (libellés capitalisés
  * français) et FAQ (`/api/faq`, clés en minuscules sans accent) partagent ce même mapping,
  * normalisé via `normalizeCat`. Couleurs = tokens `tailwind.config.js` (primary/ink/sky/leaf/
  * sun/terra), pas de couleur inventée. Catégorie inconnue → fallback neutre, jamais d'erreur. */
