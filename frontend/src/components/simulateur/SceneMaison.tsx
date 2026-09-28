@@ -263,12 +263,14 @@ export default function SceneMaison({ equipements, heure, saison, flux, onEmplac
                     : 'border border-dashed border-primary text-primary'}`}>
                   {e.installe ? numero : '+'}
                 </span>
+                {/* Le libellé, et rien d'autre. Le résumé (« 18 panneaux · 9 kWc »,
+                    « Ballon électrique ») s'affichait ici : il allongeait chaque pastille,
+                    cassait l'alignement de la rangée et redisait ce que le panneau de
+                    réglage montre déjà. Il reste dans l'étiquette d'accessibilité, où il
+                    sert vraiment — un lecteur d'écran n'a pas la scène sous les yeux. */}
                 <span className={`text-sm ${e.installe ? 'font-semibold text-ink' : 'text-dark/70'}`}>
                   {e.label}
                 </span>
-                {e.installe && e.resume && (
-                  <span className="text-sm text-primary">· {e.resume}</span>
-                )}
               </button>
             </li>
           )
