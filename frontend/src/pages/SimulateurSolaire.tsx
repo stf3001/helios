@@ -363,8 +363,15 @@ export default function SimulateurSolaire() {
           </div>
         ))}
 
-        <div className="grid items-start gap-3 xl:grid-cols-[19rem_minmax(0,1fr)_15rem]
-          2xl:gap-4 2xl:grid-cols-[22rem_minmax(0,1fr)_17rem]">
+        {/* Largeur de la colonne de gauche : elle est calée sur la rangée de commandes de
+            l'onglet « En direct », la plus exigeante — bouton de lecture (44 px) et heure
+            (64 px) sont de taille fixe, et tout ce qui reste va au curseur des 24 heures.
+            À 19rem il tombait à 49 px, deux pixels par heure ; à 22rem il en fait 100. Les
+            quatre saisons, elles, restent sur deux rangées : les mettre sur une seule
+            demande 312 px de rangée contre 181 auparavant, soit 130 px pris sur la scène —
+            un mauvais échange pour un repli qui se lit très bien. */}
+        <div className="grid items-start gap-3 xl:grid-cols-[22rem_minmax(0,1fr)_15rem]
+          2xl:gap-4 2xl:grid-cols-[24rem_minmax(0,1fr)_17rem]">
 
           {/* ---------- LES RÉGLAGES, flottants à gauche ---------- */}
           <aside ref={panneauReglages}
