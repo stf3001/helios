@@ -156,6 +156,8 @@ async def offres():
             "cout_restitution_eur_kwh": offre.cout_restitution_eur_kwh,
             "grille_complete": offre.grille_complete,
             "note": offre.note,
+            "conseil": offre.conseil,
+            "recommandee": offre.recommandee,
         }
         for offre in batterie_virtuelle.offres().values()
     ]

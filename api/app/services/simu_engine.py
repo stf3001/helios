@@ -95,6 +95,9 @@ class BilanHoraire:
     achat_h: list[float]
     conso_h: list[float]
     prod_h: list[float]
+    #: Ce que la banque virtuelle a renvoyé, tel quel. Il contient la pointe de crédit et
+    #: le palier retenu, que personne ne peut retrouver à partir des seuls totaux annuels.
+    virtuel: dict | None = None
 
 
 def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configuration) -> BilanHoraire:
@@ -144,8 +147,13 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
     offre = batterie_virtuelle.offres().get(offre_code) if offre_code else None
     if offre is not None:
         kwc = _kwc_total(config)
+        # Les deux prix servent à choisir le palier : ce qui sort d'une petite réserve
+        # n'est pas perdu, il se vend. Sans eux, la banque ne saurait pas arbitrer.
         virtuel = batterie_virtuelle.simuler(
-            offre, besoin_h, injectable_h, kwc=kwc, palier_force=config.stockage.palier_virtuel_kwh
+            offre, besoin_h, injectable_h, kwc=kwc,
+            palier_force=config.stockage.palier_virtuel_kwh,
+            prix_achat_kwh=prix_kwh(config.maison.puissance_souscrite_kva),
+            prix_revente_kwh=settings.solar_prix_revente_eur_kwh,
         )
         achat_h = virtuel["achat_h"]
         restitue_h = [b - a for b, a in zip(besoin_h, achat_h)]
@@ -169,6 +177,7 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
         injecte_h=injecte_h, ecrete_h=ecrete_h,
         stocke_virtuel_h=stocke_h, restitue_virtuel_h=restitue_h,
         achat_h=achat_h, conso_h=conso_h, prod_h=prod_h,
+        virtuel=virtuel if offre is not None else None,
     )
 
 
@@ -208,6 +217,9 @@ def investissement(config: Configuration) -> dict:
     offre_code = config.stockage.batterie_virtuelle
     offre = batterie_virtuelle.offres().get(offre_code) if offre_code else None
     activation = offre.activation_eur if offre else 0.0
+    # Le coffret du stockage sur-mesure : du matériel posé chez le client, donc de
+    # l'investissement. Le stockage illimité n'en demande aucun et reste à zéro.
+    materiel_virtuel = offre.materiel_eur if offre else 0.0
 
     raison = (
         "Batterie physique dans le projet : TVA 20 % sur l'ensemble."
@@ -222,7 +234,8 @@ def investissement(config: Configuration) -> dict:
         "carport_eur": round(carport_ttc),
         "batterie_eur": round(batterie_ttc),
         "activation_virtuelle_eur": round(activation),
-        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + activation),
+        "materiel_virtuel_eur": round(materiel_virtuel),
+        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + activation + materiel_virtuel),
         "tva_pct": taux,
         "tva_raison": raison,
     }
@@ -470,21 +483,26 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float], de
     agregats = _agreger(bilan, detail=detail)
     annuel = agregats["annuel"]
 
+    # Le bilan de la banque vient du passage horaire, il n'est PAS refait ici : le palier
+    # retenu dépend de la pointe de crédit, que les totaux annuels ne portent pas. Le
+    # recalculer à partir du volume stocké dans l'année était précisément l'erreur qui
+    # louait 3 000 kWh de réserve à un foyer qui n'en détenait jamais 300.
     offre_code = config.stockage.batterie_virtuelle
     offre = batterie_virtuelle.offres().get(offre_code) if offre_code else None
     bilan_virtuel = None
-    if offre is not None:
+    if offre is not None and bilan.virtuel is not None:
         bilan_virtuel = {
             "code": offre.code, "label": offre.label,
             "stocke_kwh": annuel["stocke_virtuel"], "restitue_kwh": annuel["restitue_virtuel"],
-            "abonnement_annuel_eur": offre.abonnement_annuel_eur(
-                _kwc_total(config), annuel["stocke_virtuel"], config.stockage.palier_virtuel_kwh),
-            "cout_restitution_annuel_eur": round(
-                annuel["restitue_virtuel"] * offre.cout_restitution_eur_kwh, 2),
-            "palier_kwh": (offre.palier_pour(annuel["stocke_virtuel"]) or (None, None))[0],
+            "credit_maxi_kwh": bilan.virtuel["credit_maxi_kwh"],
+            "abonnement_annuel_eur": bilan.virtuel["abonnement_annuel_eur"],
+            "cout_restitution_annuel_eur": bilan.virtuel["cout_restitution_annuel_eur"],
+            "palier_kwh": bilan.virtuel["palier_kwh"],
             "grille_complete": offre.grille_complete,
             "fournisseur_impose": offre.fournisseur_impose,
             "note": offre.note,
+            "conseil": offre.conseil,
+            "recommandee": offre.recommandee,
         }
 
     invest = investissement(config)

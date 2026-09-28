@@ -110,15 +110,25 @@ class Settings(BaseSettings):
     # Batterie physique — mêmes ordres de grandeur que solar_engine.STORAGE_TECHS
     autoconso_battery_efficiency: float = 0.90        # rendement aller-retour (pertes onduleur/charge)
 
-    # MyLight — batterie virtuelle "MyBattery" (offre publique mylight150, tarifs 2026 relevés sur
-    # le web le 22/07/2026 : papernest.com et adsolar.fr, concordants — À CONFIRMER auprès de MyLight
-    # avant toute décision, ces montants peuvent évoluer). Nécessite de souscrire l'électricité chez
-    # mylight150 (fournisseur alternatif) — contrainte réelle à signaler à l'utilisateur.
-    # NEUTRALITÉ : adsolar.fr est l'une des deux sources concordantes relevées, pas la seule.
-    # On garde la provenance affichée ; à recouper avec la grille officielle MyLight.
-    mylight_activation_eur: float = 179.0
-    mylight_abonnement_eur_par_kwc_mois: float = 1.20   # TTC
-    mylight_restitution_eur_kwh: float = 0.083          # TURPE + accise (~4,93+3,37 cts HT)
+    # --- MyLight « Stockage illimité » (code mybattery) ---
+    # GRILLE OFFICIELLE mylight150, relevée sur la page produit et transmise par Stéphane le
+    # 28/09/2026. Elle REMPLACE les valeurs de presse du 22/07/2026 (papernest, adsolar,
+    # concordantes entre elles mais fausses) : la restitution y était à 0,083 EUR/kWh, soit
+    # un quart de moins que la réalité. Toute économie calculée avant cette date surestimait
+    # l'intérêt de cette offre.
+    #
+    # Ce que l'offre est : rien à installer chez soi, un abonnement proportionnel à la
+    # puissance posée, et le TRANSPORT de l'énergie restituée qui reste dû au kWh. Nécessite
+    # de souscrire l'électricité chez mylight150 — contrainte réelle, jamais masquée.
+    mylight_activation_eur: float = 179.0               # À CONFIRMER : absent de la grille publique
+    mylight_abonnement_eur_par_kwc_mois: float = 1.20   # TTC, par kWc installé
+    # Le kWh restitué se paie en trois morceaux. Le total annoncé par la grille (0,10862) est
+    # exactement leur somme — `test_batterie_virtuelle.py` le vérifie, pour qu'une correction
+    # partielle ne puisse pas passer inaperçue.
+    mylight_restitution_acheminement_eur_kwh: float = 0.05988
+    mylight_restitution_accise_eur_kwh: float = 0.03674
+    mylight_restitution_cee_eur_kwh: float = 0.01200
+    mylight_restitution_eur_kwh: float = 0.10862
 
     # SOBRY SoFlex / SoCap — grille de TEST fournie par l'utilisateur (structure réelle des offres,
     # valeurs à confirmer/mettre à jour auprès de SOBRY avant toute décision commerciale) :
@@ -218,14 +228,24 @@ class Settings(BaseSettings):
     simu_conso_ve_kwh_100km: float = 17.0           # consommation d'un vehicule electrique
     simu_conso_defaut_kwh_an: int = 4500            # repli si rien n'est connu
 
-    # --- Batterie virtuelle : offres du marche (moteur generique, cf. batterie_virtuelle.py) ---
-    # MySmartBattery : seuls les deux paliers extremes sont sources (12,99 EUR/mois a 20 kWh,
-    # 214,99 EUR/mois a 10 000 kWh, activation 279 EUR). LA GRILLE INTERMEDIAIRE RESTE A RELEVER
-    # ET A DATER aupres de MyLight — le simulateur signale qu'elle est incomplete plutot que
-    # d'interpoler des paliers qui n'existent pas.
-    simu_msb_activation_eur: float = 279.0
-    simu_msb_paliers: tuple[tuple[int, float], ...] = ((20, 12.99), (10000, 214.99))
-    simu_msb_grille_complete: bool = False
+    # --- MyLight « Stockage sur-mesure » (code mysmartbattery) ---
+    # GRILLE OFFICIELLE COMPLETE, relevee sur la page produit mylight150 et transmise par
+    # Stephane le 28/09/2026. Les dix paliers sont desormais connus ; seuls les deux extremes
+    # l'etaient avant, et le simulateur affichait une alerte « grille incomplete ».
+    #
+    # Ce que l'offre est : on LOUE UN VOLUME annuel. L'abonnement est tout compris et le
+    # transport n'est PAS facture en plus, contrairement au stockage illimite. C'est ce qui
+    # en fait le bon choix dans la quasi-totalite des cas (cf. batterie_virtuelle.py).
+    simu_msb_activation_eur: float = 279.0   # A CONFIRMER : absent de la grille publique
+    # Le coffret MyLight a poser chez le client, ordre de grandeur donne par Stephane le
+    # 28/09/2026. C'est la seule des deux offres qui demande du materiel : le stockage
+    # illimite n'en pose aucun, il ne coute que ses frais d'activation.
+    simu_msb_materiel_eur: float = 1000.0
+    simu_msb_paliers: tuple[tuple[int, float], ...] = (
+        (20, 12.99), (100, 16.99), (300, 26.99), (600, 34.99), (900, 39.99),
+        (1200, 44.99), (1800, 56.99), (3000, 89.99), (5000, 134.99), (10000, 214.99),
+    )
+    simu_msb_grille_complete: bool = True
 
     # extra="ignore" : ce .env est partage avec docker compose (POSTGRES_*) et le pre-rendu SEO
     # (HELIOS_SITE_URL). Ces cles ne sont pas des reglages de l'API ; sans cette tolerance,

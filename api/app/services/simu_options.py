@@ -115,11 +115,16 @@ def _resume(nom: str, label: str, candidat: dict, secours: bool) -> dict:
 def _offre_virtuelle_par_defaut() -> str | None:
     from app.services import batterie_virtuelle
     disponibles = batterie_virtuelle.offres()
-    # À grille égale, on part de l'offre complète : une grille incomplète produirait un
-    # chiffrage provisoire présenté comme une recommandation.
-    for code, offre in disponibles.items():
+    # L'offre qu'on conseille d'abord, et à condition que sa grille soit complète : un
+    # chiffrage provisoire ne doit jamais être présenté comme une recommandation.
+    # Tant que la grille MySmartBattery était incomplète, ce choix tombait sur le stockage
+    # illimité — par défaut de données, pas par jugement. Le 28/09/2026 a corrigé les deux.
+    for offre in disponibles.values():
+        if offre.recommandee and offre.grille_complete:
+            return offre.code
+    for offre in disponibles.values():
         if offre.grille_complete:
-            return code
+            return offre.code
     return next(iter(disponibles), None)
 
 

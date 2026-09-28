@@ -90,14 +90,15 @@ export interface Resultat {
     batterie_virtuelle: null | {
       code: string; label: string; stocke_kwh: number; restitue_kwh: number
       abonnement_annuel_eur: number; cout_restitution_annuel_eur: number
-      palier_kwh: number | null; grille_complete: boolean
+      palier_kwh: number | null; credit_maxi_kwh: number; grille_complete: boolean
       fournisseur_impose: string | null; note: string
+      conseil: string; recommandee: boolean
     }
     pilotage: { actif: boolean; nb_usages: number }
   }
   investissement: {
     panneaux_eur: number; carport_eur: number; batterie_eur: number
-    activation_virtuelle_eur: number; total_eur: number
+    activation_virtuelle_eur: number; materiel_virtuel_eur: number; total_eur: number
     tva_pct: number; tva_raison: string
   }
   economie: {

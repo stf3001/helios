@@ -151,16 +151,27 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
     case 'batterie_virtuelle':
       return (
         <>
+          {/* Le sur-mesure en premier : c'est celui qu'on conseille, et l'ordre d'une liste
+              est lu comme un classement. Noms commerciaux de MyLight — ce sont ceux que
+              l'utilisateur retrouvera sur leur site. */}
           <Choix label="Offre" valeur={stockage.batterie_virtuelle ?? 'aucune'}
             options={[
               { value: 'aucune', label: 'Aucune' },
-              { value: 'mybattery', label: 'MyLight — MyBattery' },
-              { value: 'mysmartbattery', label: 'MyLight — MySmartBattery' },
+              { value: 'mysmartbattery', label: 'MyLight — Stockage sur-mesure' },
+              { value: 'mybattery', label: 'MyLight — Stockage illimité' },
             ]}
             onChange={(v) => majStockage({ batterie_virtuelle: v === 'aucune' ? null : v })} />
           {resultat?.stockage.batterie_virtuelle && (
             <p className="rounded-lg border border-sky/40 bg-sky/10 px-3 py-2 text-sm text-ink">
               {resultat.stockage.batterie_virtuelle.note}
+            </p>
+          )}
+          {/* Le conseil est distingué du fait : encadré de la couleur de la marque, et
+              annoncé comme un avis. Un visiteur doit pouvoir faire la part des deux. */}
+          {resultat?.stockage.batterie_virtuelle?.conseil && (
+            <p className="rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-sm text-ink">
+              <strong>Notre avis — </strong>
+              {resultat.stockage.batterie_virtuelle.conseil}
             </p>
           )}
           {resultat?.stockage.batterie_virtuelle?.fournisseur_impose && (
