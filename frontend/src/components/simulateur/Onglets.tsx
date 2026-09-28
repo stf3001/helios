@@ -314,6 +314,29 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
         )}
       </Bloc>
 
+      <Bloc titre="Stockage par inertie"
+        aide="Une batterie enterrée, sans lithium, garantie 40 ans. Une seule unité — ce n’est pas un pack qu’on empile.">
+        <Bascule label="J’enterre un stockage par inertie" actif={s.inertie}
+          onChange={(v) => majStockage({ inertie: v })}
+          aide={resultat
+            ? `${resultat.stockage.inertie.capacite_kwh || 10} kWh, jusqu’à ${resultat.stockage.inertie.puissance_kw || 6} kW en sortie`
+            : '10 kWh, jusqu’à 6 kW en sortie'} />
+        {resultat?.stockage.inertie.presente && (
+          <div>
+            <Ligne label="Capacité" valeur={kwh(resultat.stockage.inertie.capacite_kwh)} />
+            <Ligne label="Puissance de sortie" valeur={`${resultat.stockage.inertie.puissance_kw} kW`} />
+            <Ligne label="Garantie" valeur={`${resultat.stockage.inertie.garantie_ans} ans`} />
+            <Ligne label="Investissement"
+              valeur={euros(resultat.investissement.inertie_eur)} />
+            {/* Le point qui explique tout l'écart de prix avec le lithium. */}
+            <p className="pt-2 text-xs text-dark/60">
+              Garantie plus longue que l’étude : aucun remplacement n’est compté sur
+              25 ans, là où un pack lithium se change une fois en cours de route.
+            </p>
+          </div>
+        )}
+      </Bloc>
+
       <Bloc titre="Batterie virtuelle"
         aide="Votre surplus est mis de côté chez un fournisseur au lieu d’être vendu. Cela impose de changer de fournisseur d’électricité.">
         {/* Le sur-mesure en premier : c'est celui qu'on conseille, et l'ordre d'une liste

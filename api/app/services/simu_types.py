@@ -82,6 +82,8 @@ class Panneaux:
 @dataclass(frozen=True)
 class Stockage:
     nb_packs: int = 0
+    #: Stockage par inertie : une unite ou rien. Pas un compteur — on n'en enterre pas deux.
+    inertie: bool = False
     batterie_virtuelle: str | None = None  # code d'offre, cf. batterie_virtuelle.OFFRES
     palier_virtuel_kwh: int | None = None
     pilotage: bool = False

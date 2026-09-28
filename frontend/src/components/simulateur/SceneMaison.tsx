@@ -78,6 +78,7 @@ const VOILES = [
 const POSITIONS: Record<string, { x: number; y: number }> = {
   panneaux: { x: 596, y: 296 },          // la nappe bleue sur le toit
   batterie: { x: 424, y: 566 },          // l'armoire verte du garage
+  inertie: { x: 700, y: 726 },           // approximatif : sous le terrain, elle est enterree
   voiture: { x: 214, y: 592 },           // la voiture et sa borne
   piscine: { x: 516, y: 700 },           // le bassin
   batterie_virtuelle: { x: 318, y: 154 }, // dans le ciel : elle n'a pas d'objet, c'est le propos

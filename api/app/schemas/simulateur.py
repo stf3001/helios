@@ -80,6 +80,8 @@ class PanneauxIn(Strict):
 
 class StockageIn(Strict):
     nb_packs: int = Field(default=0, ge=0, le=6)
+    #: Stockage par inertie : un booleen, pas un compteur. On n'en enterre qu'un.
+    inertie: bool = False
     batterie_virtuelle: str | None = Field(default=None, max_length=40)
     palier_virtuel_kwh: int | None = Field(default=None, ge=0, le=100000)
     pilotage: bool = False

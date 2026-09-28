@@ -65,7 +65,8 @@ def _vers_configuration(payload: SimulateurIn, lieu: Lieu) -> Configuration:
                           inclinaison=p.inclinaison, ombrage=p.ombrage,
                           nb_panneaux_carport=p.nb_panneaux_carport,
                           surface_toit_m2=p.surface_toit_m2),
-        stockage=Stockage(nb_packs=s.nb_packs, batterie_virtuelle=s.batterie_virtuelle,
+        stockage=Stockage(nb_packs=s.nb_packs, inertie=s.inertie,
+                          batterie_virtuelle=s.batterie_virtuelle,
                           palier_virtuel_kwh=s.palier_virtuel_kwh, pilotage=s.pilotage),
         hausse_prix_pct_an=payload.hausse_prix_pct_an,
     )

@@ -374,3 +374,36 @@ def test_les_hypotheses_portent_toutes_un_statut():
     for hypothese in simu_engine.hypotheses():
         assert hypothese["statut"], hypothese["libelle"]
         assert hypothese["valeur"]
+
+
+# --- Stockage par inertie ---------------------------------------------------------
+
+def test_l_inertie_ajoute_de_la_capacite_comme_une_batterie():
+    """10 kWh enterres valent 10 kWh en armoire : le moteur ne les distingue pas."""
+    sans = _resultat(config_type(nb_panneaux=14), detail=False)
+    avec = _resultat(config_type(nb_panneaux=14, inertie=True), detail=False)
+
+    assert avec["bilan_annuel"]["charge"] > sans["bilan_annuel"]["charge"]
+    assert avec["indicateurs"]["autonomie_pct"] > sans["indicateurs"]["autonomie_pct"]
+    assert avec["stockage"]["inertie"]["presente"] is True
+
+
+def test_l_inertie_ne_se_remplace_pas_dans_les_25_ans():
+    """C'est LA difference economique avec le lithium, et elle doit se voir.
+
+    Garantie 40 ans contre 15 : a capacite egale et economie annuelle egale, le lithium
+    porte un remplacement en cours d'etude, l'inertie non. Son temps de retour est donc
+    meilleur, alors meme qu'elle coute plus cher a l'achat.
+    """
+    inertie = _resultat(config_type(nb_panneaux=14, inertie=True), detail=False)
+    # 2 packs = 10 kWh, la meme capacite utile.
+    lithium = _resultat(config_type(nb_panneaux=14, nb_packs=2), detail=False)
+
+    assert inertie["investissement"]["total_eur"] > lithium["investissement"]["total_eur"]
+    assert inertie["economie"]["temps_retour_ans"] < lithium["economie"]["temps_retour_ans"]
+
+
+def test_l_inertie_fait_basculer_la_tva_comme_une_batterie():
+    """Hypothese prudente, signalee a l'ecran et dans la config : a confirmer."""
+    resultat = _resultat(config_type(nb_panneaux=14, inertie=True), detail=False)
+    assert resultat["investissement"]["tva_pct"] == settings.simu_tva_pleine_pct

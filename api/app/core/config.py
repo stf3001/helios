@@ -219,6 +219,24 @@ class Settings(BaseSettings):
     simu_batterie_perte_capacite_pct_an: float = 2.0
     simu_batterie_duree_vie_ans: int = 15           # au-dela : remplacement compte dans les 25 ans
 
+    # --- Stockage par inertie (batterie souterraine, sans lithium) ---
+    # Chiffres donnes par Stephane le 28/09/2026. UNE SEULE unite possible : ce n'est pas
+    # un pack qu'on empile, c'est un ouvrage qu'on enterre.
+    #
+    # La garantie de 40 ans depasse la duree de l'etude : contrairement au lithium, aucun
+    # remplacement n'est compte sur les 25 ans. C'est la difference economique qui compte.
+    #
+    # A CONFIRMER, deux points qui changent le resultat :
+    #   - le rendement aller-retour, suppose egal a celui du lithium faute de donnee ;
+    #   - le traitement fiscal : l'outil suppose qu'un stockage par inertie est une
+    #     batterie au sens de la TVA, et fait donc basculer le projet a 20 % comme le
+    #     lithium. Si l'administration en decide autrement, c'est ici qu'il faut revenir.
+    simu_inertie_capacite_kwh: float = 10.0
+    simu_inertie_puissance_kw: float = 6.0
+    simu_inertie_cout_ttc_eur: int = 8500
+    simu_inertie_tva_pct: float = 20.0
+    simu_inertie_garantie_ans: int = 40
+
     # --- Recherche de la meilleure taille ---
     # Un panneau de plus n'est retenu que si son gain marginal depasse ce rendement annuel.
     simu_seuil_rendement_marginal_pct: float = 5.0  # A CONFIRMER

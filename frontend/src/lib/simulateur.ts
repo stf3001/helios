@@ -45,6 +45,7 @@ export interface Config {
   }
   stockage: {
     nb_packs: number
+    inertie: boolean
     batterie_virtuelle: string | null
     palier_virtuel_kwh: number | null
     pilotage: boolean
@@ -88,6 +89,8 @@ export interface Resultat {
   journees: Record<Saison, PointJournee[]>
   stockage: {
     batterie_physique: { nb_packs: number; capacite_kwh: number; charge_kwh: number; restitue_kwh: number }
+    inertie: { presente: boolean; capacite_kwh: number; puissance_kw: number
+      garantie_ans: number; cout_ttc_eur: number }
     batterie_virtuelle: null | {
       code: string; label: string; stocke_kwh: number; restitue_kwh: number
       abonnement_annuel_eur: number; cout_restitution_annuel_eur: number
@@ -99,6 +102,7 @@ export interface Resultat {
   }
   investissement: {
     panneaux_eur: number; carport_eur: number; batterie_eur: number
+    inertie_eur: number
     activation_virtuelle_eur: number; materiel_virtuel_eur: number; total_eur: number
     tva_pct: number; tva_raison: string
   }
@@ -181,7 +185,7 @@ export const CONFIG_INITIALE: Config = {
     nb_panneaux_carport: 0,
     surface_toit_m2: null,
   },
-  stockage: { nb_packs: 0, batterie_virtuelle: null, palier_virtuel_kwh: null, pilotage: false },
+  stockage: { nb_packs: 0, inertie: false, batterie_virtuelle: null, palier_virtuel_kwh: null, pilotage: false },
   hausse_prix_pct_an: null,
 }
 

@@ -15,6 +15,7 @@ export const EQUIPEMENTS: { id: string; label: string }[] = [
   { id: 'panneaux', label: 'Panneaux sur le toit' },
   { id: 'carport', label: 'Carport' },
   { id: 'batterie', label: 'Batterie physique' },
+  { id: 'inertie', label: 'Stockage par inertie' },
   { id: 'batterie_virtuelle', label: 'Batterie virtuelle' },
   { id: 'ballon', label: 'Eau chaude' },
   { id: 'clim', label: 'Climatisation' },
@@ -34,6 +35,7 @@ export function estInstalle(id: string, config: Config): boolean {
     case 'panneaux': return panneaux.nb_panneaux > 0
     case 'carport': return panneaux.nb_panneaux_carport > 0
     case 'batterie': return stockage.nb_packs > 0
+    case 'inertie': return stockage.inertie
     case 'batterie_virtuelle': return stockage.batterie_virtuelle !== null
     case 'ballon': return maison.ecs === 'ballon_elec' || maison.ecs === 'thermodynamique'
     case 'clim': return maison.clim.present
@@ -56,6 +58,10 @@ export function resumeDe(id: string, config: Config, resultat: Resultat | null):
     case 'batterie':
       return stockage.nb_packs > 0
         ? `${stockage.nb_packs} pack(s)${resultat ? ` · ${resultat.stockage.batterie_physique.capacite_kwh} kWh` : ''}`
+        : null
+    case 'inertie':
+      return stockage.inertie
+        ? `${resultat?.stockage.inertie.capacite_kwh ?? 10} kWh · garanti ${resultat?.stockage.inertie.garantie_ans ?? 40} ans`
         : null
     case 'batterie_virtuelle':
       return resultat?.stockage.batterie_virtuelle?.label ?? (stockage.batterie_virtuelle ? 'Activée' : null)
@@ -145,6 +151,36 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
           <Bascule label="Je veux tenir en cas de coupure" actif={maison.besoin_secours}
             onChange={(v) => majMaison({ besoin_secours: v })}
             aide="C’est le seul avantage qu’aucune autre solution ne donne." />
+        </>
+      )
+
+    case 'inertie':
+      return (
+        <>
+          <p className="rounded-lg border border-terra/40 bg-terra/10 px-3 py-2 text-sm text-ink">
+            Comme toute batterie, elle fait passer <strong>tout le projet</strong> de 5,5 % à
+            20 % de TVA. Point à confirmer auprès de votre installateur.
+          </p>
+          <Bascule label="J’enterre un stockage par inertie" actif={stockage.inertie}
+            onChange={(v) => majStockage({ inertie: v })}
+            aide={resultat
+              ? `${resultat.stockage.inertie.capacite_kwh || 10} kWh, jusqu’à ${resultat.stockage.inertie.puissance_kw || 6} kW en sortie`
+              : '10 kWh, jusqu’à 6 kW en sortie'} />
+          {/* Ce qui la distingue d'un pack lithium, et qui justifie son prix : elle ne se
+              remplace pas dans la durée de l'étude. Le dire ici, c'est éviter la question
+              « pourquoi est-ce plus cher pour la même capacité ». */}
+          <ul className="space-y-1.5 text-sm text-dark/80">
+            <li>· Enterrée, garantie 40 ans — aucun remplacement sur les 25 ans de l’étude,
+              là où un pack lithium se change une fois.</li>
+            <li>· Sans lithium : rien à extraire, rien à recycler au bout du compte.</li>
+            <li>· Une seule unité possible. Ce n’est pas un pack qu’on empile, c’est un
+              ouvrage.</li>
+            <li>· Démarches d’urbanisme simples — une déclaration suffit.</li>
+          </ul>
+          <p className="text-sm text-dark/60">
+            {resultat ? `${resultat.stockage.inertie.cout_ttc_eur.toLocaleString('fr-FR')} € TTC` : '8 500 € TTC'},
+            pose comprise, TVA 20 % incluse.
+          </p>
         </>
       )
 

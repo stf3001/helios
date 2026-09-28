@@ -102,9 +102,16 @@ class BilanHoraire:
 
 def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configuration) -> BilanHoraire:
     """La passe horaire : autoconsommation, batterie, écrêtage, batterie virtuelle."""
+    # Deux stockages possibles, et ils s'additionnent : des packs lithium qu'on empile, et
+    # un stockage par inertie qu'on enterre (un seul). Le moteur ne les distingue pas au
+    # moment de charger et decharger — un kWh est un kWh. Ils ne different qu'au prix, a la
+    # duree de vie et a la fiscalite.
     packs = max(config.stockage.nb_packs, 0)
     capacite = packs * settings.simu_batterie_pack_kwh
     puissance = packs * settings.simu_batterie_pack_kw
+    if config.stockage.inertie:
+        capacite += settings.simu_inertie_capacite_kwh
+        puissance += settings.simu_inertie_puissance_kw
     rendement = settings.autoconso_battery_efficiency
 
     # Monophasé (« inconnu » compte comme monophasé, et c'est signalé) : l'injection est
@@ -198,7 +205,9 @@ def investissement(config: Configuration) -> dict:
 
     taux_reduit = settings.simu_tva_reduite_pct
     taux_plein = settings.simu_tva_pleine_pct
-    batterie_presente = packs > 0
+    # Un stockage par inertie reste un stockage : l'outil suppose qu'il fait basculer le
+    # projet a 20 % de TVA comme le lithium. Hypothese prudente et signalee (cf. config).
+    batterie_presente = packs > 0 or config.stockage.inertie
     hors_criteres = kwc > settings.simu_tva_seuil_kwc or batterie_presente
     taux = taux_plein if hors_criteres else taux_reduit
 
@@ -213,6 +222,9 @@ def investissement(config: Configuration) -> dict:
         1 + taux_plein / 100
     )
     batterie_ttc = batterie_ht * (1 + taux_plein / 100)
+
+    # Le stockage par inertie est donne TTC, TVA 20 % comprise : on le prend tel quel.
+    inertie_ttc = settings.simu_inertie_cout_ttc_eur if config.stockage.inertie else 0.0
 
     offre_code = config.stockage.batterie_virtuelle
     offre = batterie_virtuelle.offres().get(offre_code) if offre_code else None
@@ -233,9 +245,11 @@ def investissement(config: Configuration) -> dict:
         "panneaux_eur": round(pv_ttc),
         "carport_eur": round(carport_ttc),
         "batterie_eur": round(batterie_ttc),
+        "inertie_eur": round(inertie_ttc),
         "activation_virtuelle_eur": round(activation),
         "materiel_virtuel_eur": round(materiel_virtuel),
-        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + activation + materiel_virtuel),
+        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + inertie_ttc
+                           + activation + materiel_virtuel),
         "tva_pct": taux,
         "tva_raison": raison,
     }
@@ -339,6 +353,9 @@ def _economie(config: Configuration, annuel: dict, invest: dict, bilan_virtuel: 
             revente = 0.0  # après le contrat : hypothèse prudente, plus aucun revenu de revente
 
         cout_annuel = abo_virtuel + cout_restitution * facteur_prod
+        # Le lithium se remplace une fois dans les 25 ans. L'inertie, non : sa garantie
+        # de 40 ans depasse la duree de l'etude, et c'est precisement la qu'elle rattrape
+        # son prix d'achat.
         remplacement = 0.0
         if invest["batterie_eur"] and annee == settings.simu_batterie_duree_vie_ans + 1:
             remplacement = invest["batterie_eur"]
@@ -541,6 +558,17 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float], de
                 "nb_packs": config.stockage.nb_packs,
                 "capacite_kwh": round(config.stockage.nb_packs * settings.simu_batterie_pack_kwh, 1),
                 "charge_kwh": annuel["charge"], "restitue_kwh": annuel["decharge"],
+            },
+            # La charge et la decharge annuelles sont COMMUNES aux deux stockages : le
+            # moteur ne distingue pas d'ou vient un kWh rendu. Les separer demanderait
+            # de choisir lequel se vide en premier, une regle qu'aucun des deux
+            # fabricants ne donne.
+            "inertie": {
+                "presente": config.stockage.inertie,
+                "capacite_kwh": settings.simu_inertie_capacite_kwh if config.stockage.inertie else 0.0,
+                "puissance_kw": settings.simu_inertie_puissance_kw if config.stockage.inertie else 0.0,
+                "garantie_ans": settings.simu_inertie_garantie_ans,
+                "cout_ttc_eur": settings.simu_inertie_cout_ttc_eur,
             },
             "batterie_virtuelle": bilan_virtuel,
             "pilotage": {
