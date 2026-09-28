@@ -26,11 +26,17 @@ const DIST = resolve(RACINE_FRONT, 'dist')
 const SITE = process.env.HELIOS_SITE_URL || 'https://helios.fr'
 
 /**
- * Aucune source n'est exclue : toute fiche listée dans la FAQ doit avoir sa page.
- * Exclure une source créerait des liens « Ouvrir cette fiche » menant à une coquille vide
- * pour les moteurs — une incohérence qui coûte plus cher que les quelques pages économisées.
+ * Règle : toute fiche LISTÉE dans la FAQ doit avoir sa page. Exclure une source listée
+ * créerait des liens « Ouvrir cette fiche » menant à une coquille vide pour les moteurs —
+ * une incohérence qui coûte plus cher que les quelques pages économisées.
+ *
+ * La réciproque vaut aussi, et c'est le cas de `cas_terrain` : cette source est volontairement
+ * absente de la FAQ publique (ses intitulés sont des situations, pas des questions — voir
+ * `SOURCES_QR` dans `api/app/services/agents_engine.py`). Lui générer des pages produirait
+ * des pages orphelines, indexables mais liées depuis nulle part. Elle reste en revanche
+ * pleinement dans la base de connaissances : le chat s'en sert.
  */
-const SOURCES_EXCLUES = new Set()
+const SOURCES_EXCLUES = new Set(['cas_terrain'])
 
 /**
  * Même expression que le parseur Python (`agents_engine._FAQ_RE`) : format `### Q:` / `meta` / `R:`.
