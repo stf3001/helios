@@ -150,8 +150,8 @@ R: En France, le double vitrage performant (Uw ≤ 1,3) suffit presque partout. 
 ## 6. Photovoltaïque & autoconsommation
 
 ### Q: Le photovoltaïque est-il rentable pour un particulier ?
-`cat: photovoltaique | tags: rentabilite, autoconsommation | verif: tarifs`
-R: Avec la baisse des coûts (installation 3 kWc : ~7 000–9 000 € posée), l'autoconsommation est généralement rentable en 8–12 ans pour une maison bien orientée, avec un tarif de rachat du surplus. La rentabilité dépend surtout de la part autoconsommée : viser 50 %+ en adaptant ses usages (chauffe-eau en journée, programmation).
+`cat: photovoltaique | tags: rentabilite, autoconsommation | verif: tarifs | maj: reforme 06/2026`
+R: Le plus souvent oui, mais la rentabilité ne vient plus du même endroit et elle est nettement plus lente qu'avant. Depuis la réforme de juin 2026, le surplus n'est racheté que 1,1 c€/kWh et la prime à l'autoconsommation a été supprimée : ce qui rembourse l'installation, ce sont uniquement les kWh que vous ne rachetez plus au réseau (~20 c€). Il n'existe pas de temps de retour « du photovoltaïque » : il se calcule au cas par cas, et l'écart entre deux foyers est énorme. Pour fixer les idées seulement, sur une installation posée de l'ordre de 6 300 € en 3 kWc ou 10 500 € en 6 kWc, le retour se compte aujourd'hui plutôt en quinze à vingt ans que sur les huit à douze ans d'avant la réforme — et il s'allonge encore de plusieurs années quand rien n'est déplacé en journée. Ce qui fait vraiment bouger ce chiffre, c'est votre consommation réelle, sa répartition dans la journée, l'orientation du toit et ce que vous acceptez de piloter (chauffe-eau, lave-linge, recharge). Dimensionnez sur votre consommation (production ≈ consommation annuelle), jamais sur la surface disponible du toit. Attention : si vous avez déjà une installation sous contrat de revente, votre situation ne se raisonne pas comme une installation neuve — voir les fiches sur les contrats EDF OA. Le simulateur d'Helios fait ce calcul sur vos propres chiffres ; c'est la seule réponse qui vaille. `verif`
 
 ### Q: Quelle taille d'installation solaire choisir ?
 `cat: photovoltaique | tags: dimensionnement, kWc`
@@ -348,7 +348,7 @@ R: Oui : les études notariales montrent une décote des passoires (F-G) et une 
 
 ### Q: Quel temps de retour est « bon » pour des travaux ?
 `cat: financement | tags: rentabilite, tri`
-R: Repères : gestes et réglages < 1 an ; combles 2–5 ans ; chauffe-eau thermodynamique 5–8 ans ; PAC en remplacement fioul/élec 5–10 ans ; PV 8–12 ans ; fenêtres et ITE 15 ans+. Mais le temps de retour ignore le confort, la valeur du bien et la protection contre les hausses de prix — à intégrer au raisonnement.
+R: Repères : gestes et réglages < 1 an ; combles 2–5 ans ; chauffe-eau thermodynamique 5–8 ans ; PAC en remplacement fioul/élec 5–10 ans ; PV 14–20 ans depuis la réforme de juin 2026 (contre 8–12 ans avant) ; fenêtres et ITE 15 ans+. Mais le temps de retour ignore le confort, la valeur du bien et la protection contre les hausses de prix — à intégrer au raisonnement.
 
 ## 16. Compléments techniques
 

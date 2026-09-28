@@ -9,12 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.models.kb import KbChunk, KbDocument
+from app.services.agents_engine import SOURCES_QR as FAQ_SOURCES
 
 router = APIRouter(prefix="/faq", tags=["faq"])
-
-# Sources FAQ publiques (format Q:/R:) : les 109 fiches d'origine + les fiches
-# thématiques stockage/eau/pilotage/courtage ingérées ensuite. Même base que le chat.
-FAQ_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "autoconso", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss", "vigilance")
 
 
 def _answer_from_content(content: str) -> str:

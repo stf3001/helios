@@ -46,7 +46,35 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="reglementation", kind="faq_markdown", location="helios/kb/reglementation.md"),
     SourceSpec(name="voss", kind="faq_markdown", location="helios/kb/voss.md"),
     SourceSpec(name="vigilance", kind="faq_markdown", location="helios/kb/vigilance.md"),
+    # Sources de terrain (109 fiches, ajoutees le 28/09/2026). Tirees de syntheses clients
+    # anonymisees : elles apportent ce que la FAQ d'origine ignorait, notamment les contrats
+    # d'obligation d'achat (resiliation, indemnite) et le raisonnement sur l'existant.
+    SourceSpec(name="terrain", kind="faq_markdown", location="helios/kb/terrain.md"),
+    SourceSpec(name="pac_air_eau", kind="faq_markdown", location="helios/kb/pac_air_eau.md"),
+    SourceSpec(name="pac_air_air", kind="faq_markdown", location="helios/kb/pac_air_air.md"),
+    SourceSpec(name="ecs_solaire", kind="faq_markdown", location="helios/kb/ecs_solaire.md"),
+    SourceSpec(name="stockage_contrats", kind="faq_markdown", location="helios/kb/stockage_contrats.md"),
+    SourceSpec(name="autonomie_hors_reseau", kind="faq_markdown", location="helios/kb/autonomie_hors_reseau.md"),
+    SourceSpec(name="dimensionnement_pv", kind="faq_markdown", location="helios/kb/dimensionnement_pv.md"),
+    SourceSpec(name="supports_securite", kind="faq_markdown", location="helios/kb/supports_securite.md"),
+    SourceSpec(name="urbanisme_assurance", kind="faq_markdown", location="helios/kb/urbanisme_assurance.md"),
+    SourceSpec(name="financement_projet", kind="faq_markdown", location="helios/kb/financement_projet.md"),
+    SourceSpec(name="cas_terrain", kind="faq_markdown", location="helios/kb/cas_terrain.md"),
 ]
+
+# Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
+# (routers/faq.py) et reponse instantanee sans LLM (services/rag.py). Les deux tenaient
+# chacune sa propre copie de la liste, avec un commentaire demandant de les garder
+# identiques — une source ajoutee etait donc oubliee d'un cote ou de l'autre. Elle se
+# deduit maintenant de SOURCES : les sources "web" en sont exclues (texte decoupe a
+# l'aveugle, pas des Q/R), ainsi que les sources listees ci-dessous.
+# `cas_terrain` : ses intitules sont des situations (« Cas de terrain : ... »), pas des
+# questions. Precieux pour le raisonnement du chat, hors sujet dans une liste de questions.
+_HORS_FAQ_PUBLIQUE = ("cas_terrain",)
+
+SOURCES_QR: tuple[str, ...] = tuple(
+    s.name for s in SOURCES if s.kind == "faq_markdown" and s.name not in _HORS_FAQ_PUBLIQUE
+)
 
 _FAQ_RE = re.compile(
     r"^### Q:\s*(?P<question>.+?)\s*\n`(?P<meta>[^`]+)`\s*\n"
