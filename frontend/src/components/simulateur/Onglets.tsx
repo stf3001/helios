@@ -299,20 +299,31 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
 
       <Bloc titre="Batterie virtuelle"
         aide="Votre surplus est mis de côté chez un fournisseur au lieu d’être vendu. Cela impose de changer de fournisseur d’électricité.">
+        {/* Le sur-mesure en premier : c'est celui qu'on conseille, et l'ordre d'une liste
+            se lit comme un classement. Noms commerciaux de MyLight — ce sont ceux que
+            l'utilisateur retrouvera sur leur site. */}
         <Choix label="Offre" valeur={s.batterie_virtuelle ?? 'aucune'}
           options={[
             { value: 'aucune', label: 'Aucune' },
-            { value: 'mybattery', label: 'MyLight — MyBattery' },
-            { value: 'mysmartbattery', label: 'MyLight — MySmartBattery' },
+            { value: 'mysmartbattery', label: 'MyLight — Stockage sur-mesure' },
+            { value: 'mybattery', label: 'MyLight — Stockage illimité' },
           ]}
           onChange={(v) => majStockage({ batterie_virtuelle: v === 'aucune' ? null : v })} />
         {!virtuelle ? (
           <Vide message="Pas de batterie virtuelle : rien à afficher ici pour l’instant." />
         ) : (
           <>
-            {!virtuelle.grille_complete && (
-              <p className="rounded-lg border border-terra/40 bg-terra/10 px-3 py-2 text-sm text-ink">
-                {virtuelle.note}
+            {/* La note DÉCRIT l'offre : elle s'affiche toujours. Elle ne passe en rouge que
+                si la grille est incomplète, auquel cas elle porte un avertissement. */}
+            <p className={`rounded-lg border px-3 py-2 text-sm text-ink ${virtuelle.grille_complete
+              ? 'border-sky/40 bg-sky/10' : 'border-terra/40 bg-terra/10'}`}>
+              {virtuelle.note}
+            </p>
+            {/* Le conseil se distingue du fait : encadré aux couleurs de la marque, et
+                annoncé comme un avis. Un visiteur doit pouvoir faire la part des deux. */}
+            {virtuelle.conseil && (
+              <p className="rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-sm text-ink">
+                <strong>Notre avis — </strong>{virtuelle.conseil}
               </p>
             )}
             <div>
@@ -321,7 +332,13 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
               <Ligne label="Abonnement" valeur={`${euros(virtuelle.abonnement_annuel_eur)} / an`} />
               <Ligne label="Coût de restitution" valeur={`${euros(virtuelle.cout_restitution_annuel_eur)} / an`} />
               {virtuelle.palier_kwh !== null && (
-                <Ligne label="Palier retenu" valeur={kwh(virtuelle.palier_kwh)} />
+                <>
+                  <Ligne label="Réserve louée" valeur={kwh(virtuelle.palier_kwh)} />
+                  {/* La pointe explique le palier : sans elle, « réserve louée : 20 kWh »
+                      sur 2 000 kWh mis de côté dans l'année a l'air d'une erreur. */}
+                  <Ligne label="Réserve détenue au plus haut"
+                    valeur={kwh(virtuelle.credit_maxi_kwh)} />
+                </>
               )}
               <Ligne label="Fournisseur imposé" valeur={virtuelle.fournisseur_impose ?? '—'} />
             </div>
