@@ -51,8 +51,8 @@ const ETAPES = [
 const AVANT = [
   { icon: Ruler, titre: 'Sous 1,80 m, aucune démarche d’urbanisme',
     texte: 'Du sol au sommet de la machine. La production est un peu plus basse qu’avec un mât, mais on évite la déclaration préalable : une simple notice et une déclaration à Enedis suffisent. Au-delà, comptez une déclaration préalable, et un permis de construire à partir de 12 mètres.' },
-  { icon: Layers, titre: 'Plusieurs éoliennes valent mieux qu’une',
-    texte: 'Placées côte à côte, elles s’accélèrent mutuellement le vent — c’est l’effet Venturi, le même qui fait souffler plus fort entre deux immeubles. Le constructeur compte +5 % de production dès la deuxième machine, et propose des supports pour les monter en grappe, jusqu’à six.' },
+  { icon: Layers, titre: 'Une grande ou plusieurs petites, au choix',
+    texte: 'Neuf kilowatts, ce sont trois éoliennes de 3 kW ou six de 1,5 kW : même prix, même production. Groupées, elles s’accélèrent mutuellement le vent — c’est l’effet Venturi, celui qui fait souffler plus fort entre deux immeubles, et c’est ce qui rend plusieurs petites machines aussi efficaces qu’une grosse. Vous choisissez donc l’arrangement qui tient sur votre terrain, jusqu’à six ; le constructeur fournit les supports.' },
   { icon: ShieldCheck, titre: 'La tempête est prévue',
     texte: 'Un freinage automatique ralentit puis arrête les pales au-delà de 25 m/s, soit 90 km/h. À l’arrêt, la machine est conçue pour tenir des vents de 180 km/h.' },
   { icon: Gauge, titre: 'Ce qu’on peut en attendre',
@@ -158,18 +158,12 @@ export default function Vent() {
 
       {/* Pas de simulateur ici : il vit dans « La maison de demain », et c'est voulu. */}
       <section className="mx-auto max-w-[1100px] px-4 pb-12">
-        <div className="rounded-2xl bg-ink p-6 text-white sm:p-8">
-          <h2 className="font-display text-2xl font-bold">
-            Combien chez vous ? Le simulateur le dit.
-          </h2>
-          <p className="mt-2 max-w-[700px] text-white/85">
-            L’éolienne n’a pas de page de calcul à elle : elle se pose dans « La maison de
-            demain », à côté des panneaux, du stockage et de la voiture. C’est là qu’on voit
-            ce qu’elle change — parce que la bonne question n’est pas « combien produit une
-            éolienne », mais « combien elle me fait économiser, en plus du reste ».
-          </p>
+        {/* Le bouton, et rien d'autre. Le paragraphe qui l'accompagnait expliquait
+            pourquoi le chiffrage est ailleurs — une justification interne, que le visiteur
+            n'a pas demandée. Arrivé ici, il veut agir, pas lire. */}
+        <div className="flex justify-center rounded-2xl bg-ink p-6 sm:p-8">
           <Link to="/simulateur-solaire"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3
               font-semibold text-ink transition hover:bg-cream">
             Équiper ma maison <ArrowRight className="h-5 w-5" />
           </Link>

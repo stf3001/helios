@@ -44,9 +44,9 @@ R: Très peu. Un contrôle visuel annuel — état des pales, fixations, câbles
 `cat:eolien | tags:stockage,batterie,autoconsommation | verif:generique`
 R: Oui, exactement comme celle des panneaux : un onduleur hybride gère indifféremment les deux sources et le stockage. L'électricité alimente la maison en priorité, le surplus part en batterie, et ce qui reste va au réseau. C'est d'ailleurs une combinaison plus équilibrée qu'avec le solaire seul : l'éolien produisant la nuit, il recharge la batterie aux heures où elle se viderait, ce qui limite les cycles à vide. Le simulateur « La maison de demain » permet de tester les deux ensemble.
 
-### Q: Pourquoi installer plusieurs éoliennes plutôt qu'une seule ?
+### Q: Faut-il une grosse éolienne ou plusieurs petites ?
 `cat:eolien | tags:grappe,venturi,production | verif:partenaire`
-R: Parce qu'elles s'aident entre elles. Placées côte à côte, deux éoliennes accélèrent le vent qui passe entre elles — c'est l'effet Venturi, le même qui fait souffler plus fort dans une rue étroite ou entre deux immeubles. Le constructeur compte +5 % de production dès la deuxième machine, et propose des supports conçus pour les monter en grappe, jusqu'à six. À puissance totale égale, plusieurs petites machines groupées produisent donc davantage qu'une seule grosse — et elles se répartissent mieux sur un terrain, ce qui aide à rester sous les seuils d'urbanisme.
+R: Les deux se valent, et c'est une bonne nouvelle : pour 9 kW, vous pouvez poser trois éoliennes de 3 kW ou six de 1,5 kW, pour le même prix et la même production. Ce qui rend l'équivalence possible, c'est l'effet Venturi : groupées, les machines accélèrent mutuellement le vent qui passe entre elles — le même phénomène qui fait souffler plus fort dans une rue étroite ou entre deux immeubles. Ce qui se perd en taille se regagne en accélération. Vous choisissez donc l'arrangement qui tient sur votre terrain et qui vous convient visuellement, jusqu'à six machines ; le constructeur fournit les supports adaptés. Seule la puissance totale compte pour le chiffrage.
 
 ### Q: Peut-on éviter toute démarche d'urbanisme pour une éolienne ?
 `cat:eolien | tags:urbanisme,demarches,hauteur | verif:partenaire`

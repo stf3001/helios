@@ -148,7 +148,14 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
         <>
           <Nombre label="Puissance" valeur={config.eolien.kwc} min={0} max={9} pas={1} suffixe="kWc"
             onChange={(v) => majEolien({ kwc: v === 1 || v === 2 ? 3 : v })}
-            aide="0 pour aucune éolienne, sinon de 3 à 9 kWc." />
+            aide="0 pour aucune éolienne, sinon de 3 à 9 kWc — c’est la puissance TOTALE." />
+          {config.eolien.kwc > 0 && (
+            <p className="text-sm text-dark/70">
+              Une grande ou plusieurs petites, au choix : 9 kWc, ce sont trois éoliennes de
+              3 kW ou six de 1,5 kW — même prix, même production. Groupées, elles
+              s’accélèrent mutuellement le vent.
+            </p>
+          )}
           {resultat && config.eolien.kwc > 0 && (
             <>
               <div className="space-y-1">
