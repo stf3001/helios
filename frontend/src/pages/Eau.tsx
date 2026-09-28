@@ -84,19 +84,23 @@ export default function Eau() {
         </div>
       </section>
 
-      {/* Simulateur — le cœur de la section */}
+      {/* Le chiffrage a quitte cette page : il faisait doublon avec « La maison de demain »,
+          ou l'eau se pose a cote du solaire, du stockage et du reste. Deux calculateurs qui
+          disent la meme chose finissent toujours par ne plus la dire pareil. */}
       <section className="max-w-[900px] mx-auto px-4 pb-12">
         <div className="bg-sky/5 border border-sky/20 rounded-2xl p-8 text-center">
           <Droplets className="w-10 h-10 text-sky mx-auto mb-3" />
           <h2 className="text-2xl font-bold mb-2">Combien d'eau chez vous ?</h2>
           <p className="text-gray-600 max-w-[560px] mx-auto mb-6">
-            La production dépend du climat de votre région, mois par mois. Notre simulateur croise les
-            tables de production réelles avec la météo de votre ville — en fourchettes, jamais en promesses.
+            Cela dépend du climat de votre région, mois par mois. Le simulateur croise les
+            tables de production réelles avec la météo de votre ville — en fourchettes, jamais
+            en promesses — et le fait au milieu de tout le reste : ce que l'eau coûte en
+            électricité, et ce que votre solaire peut en couvrir.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/potentiel-hydrique"
+            <Link to="/simulateur-solaire"
               className="rounded-xl bg-sky text-white font-semibold px-6 py-3 hover:opacity-90">
-              Estimer mon potentiel hydrique
+              Équiper ma maison
             </Link>
             <Link to="/helios"
               className="inline-flex items-center gap-2 rounded-xl border border-sky text-sky font-semibold px-6 py-3 hover:bg-sky/5">

@@ -16,6 +16,7 @@ import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
 import EspaceHelios from './pages/EspaceHelios'
 import SimulateurSolaire from './pages/SimulateurSolaire'
+import Vent from './pages/Vent'
 import EspaceAudits from './pages/EspaceAudits'
 import EspaceEnergie from './pages/EspaceEnergie'
 import DevenirPartenaire from './pages/DevenirPartenaire'
@@ -94,6 +95,7 @@ function SitePublic() {
           <Route path="/partenaire" element={<PartnerPortal />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/eau" element={<Eau />} />
+          <Route path="/le-vent" element={<Vent />} />
           {/* Pages chapeau : routes dérivées de data/piliers.json. Celles marquées
               `pageDediee` ont déjà leur propre page (ex. /eau) et sont donc exclues. */}
           <Route path="/solaire/:slug" element={<Ville />} />

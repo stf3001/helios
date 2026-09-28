@@ -66,6 +66,10 @@ SOURCES: list[SourceSpec] = [
     # Parcours (28/09/2026) : l'ordre des decisions, verse en fiches quand la section Guides
     # a ete supprimee. Chez Helios on interroge le robot, on ne parcourt pas des pages.
     SourceSpec(name="parcours", kind="faq_markdown", location="helios/kb/parcours.md"),
+    # Eolien domestique (29/09/2026), en meme temps que la page « Le vent » et que
+    # l'eolienne du simulateur. Chiffres techniques du constructeur, regles d'urbanisme
+    # marquees comme telles.
+    SourceSpec(name="eolien", kind="faq_markdown", location="helios/kb/eolien.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

@@ -9,7 +9,7 @@ R: En quatre étapes : l'appareil aspire l'air ambiant et capte son humidité ; 
 
 ### Q: Combien d'eau produit un générateur atmosphérique chez moi ?
 `cat:eau | tags:production,simulateur,climat | verif:generique`
-R: Tout dépend du climat : la production varie fortement avec la température et l'humidité de votre région, et selon les mois de l'année. Un modèle familial produit jusqu'à 20 L/jour dans de bonnes conditions, et la gamme monte jusqu'aux besoins collectifs (100 L et plus). Pour une estimation sérieuse selon VOTRE ville, utilisez le simulateur « Mon potentiel hydrique » d'Helios : il croise les tables de production du constructeur avec le climat mensuel de votre région.
+R: Tout dépend du climat : la production varie fortement avec la température et l'humidité de votre région, et selon les mois de l'année. Un modèle familial produit jusqu'à 20 L/jour dans de bonnes conditions, et la gamme monte jusqu'aux besoins collectifs (100 L et plus). Pour une estimation sérieuse selon VOTRE ville, utilisez le simulateur « La maison de demain » d'Helios : il croise les tables de production du constructeur avec le climat mensuel de votre région, et le fait au milieu du reste — l'eau coûte de l'électricité, et c'est ensemble qu'il faut regarder les deux.
 
 ### Q: Combien coûte un générateur d'eau atmosphérique ?
 `cat:eau | tags:prix,hydrolia,budget | verif:partenaire | seo_titre:Prix d'un générateur d'eau atmosphérique | seo_desc:Combien coûte une machine qui fabrique de l'eau potable à partir de l'air, ce qu'elle consomme, et dans quels cas l'investissement se justifie.`
@@ -38,3 +38,7 @@ R: Hydrolia est née autour d'une table, entre amis — des quadras, parents, pr
 ### Q: Quel entretien pour un générateur d'eau atmosphérique ?
 `cat:eau | tags:entretien,filtres,application | verif:partenaire`
 R: L'essentiel de l'entretien consiste à remplacer régulièrement les filtres, comme pour une carafe filtrante ou un frigo américain — c'est la condition d'une eau de qualité constante. L'application connectée du fabricant vous alerte quand un filtre arrive en fin de vie et suit votre production au quotidien. Prévoyez ce coût récurrent dans votre budget : demandez le prix et la fréquence des consommables au devis.
+
+### Q: Peut-on faire tourner un générateur d'eau uniquement sur le solaire ?
+`cat:eau | tags:awg,autoconsommation,solaire | verif:generique`
+R: Oui, et c'est le montage le plus intéressant. Un générateur d'eau atmosphérique consomme de l'électricité en continu, et cette consommation-là a un avantage rare : elle est DÉPLAÇABLE. Rien n'oblige à produire son eau la nuit. En le pilotant pour qu'il ne tourne que lorsque les panneaux produisent, l'eau ne coûte plus rien sur la facture — on transforme du surplus qui serait parti au réseau pour quelques centimes en litres d'eau potable. La contrepartie est une production d'eau plus faible, puisque l'appareil ne tourne qu'une partie de la journée. Sans ce pilotage, comptez qu'environ deux tiers de sa consommation seront pris sur le réseau. Le simulateur « La maison de demain » permet de comparer les deux.

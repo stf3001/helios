@@ -7,7 +7,8 @@ const links = [
   { to: '/comment-ca-marche', label: 'Qui est Helios' },
   { to: '/helios', label: 'Helios (IA)' },
   { to: '/simulateur-solaire', label: 'La maison de demain' },
-  { to: '/eau', label: 'Eau' },
+  { to: '/le-vent', label: 'Le vent' },
+  { to: '/eau', label: 'L’eau' },
   { to: '/faq', label: 'FAQ' },
 ]
 
