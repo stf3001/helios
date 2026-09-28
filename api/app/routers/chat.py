@@ -16,6 +16,7 @@ from app.models.conversation import Conversation, Message
 from app.models.energy import EnergyStudy
 from app.models.house import House
 from app.models.moderation import MOTIFS, MessageReport
+from app.models.partner import Partner
 from app.models.pro import ProProfile
 from app.models.autoconso import AutoconsoStudy
 from app.models.simulateur import SimulateurStudy
@@ -23,7 +24,7 @@ from app.models.solar import SolarStudy
 from app.models.user import User
 from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
-from app.services import civilites, ollama_client, rag, router_llm
+from app.services import civilites, ollama_client, rag, regions, router_llm
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -56,6 +57,8 @@ async def send_message(
     await db.commit()
 
     house_context = None
+    #: Le departement du foyer, qui decide quels partenaires Helios a sous les yeux.
+    departement = None
     pro_context = None
     autoconso_context = None
     simulation_context = None
@@ -72,6 +75,7 @@ async def send_message(
         if house is not None:
             house_context = rag.build_house_context(house)
             niveau = house_context["niveau"]
+            departement = regions.departement_du_code_postal(house.code_postal or "")
 
             autoconso_study = await db.scalar(
                 select(AutoconsoStudy).where(AutoconsoStudy.house_id == house.id).order_by(AutoconsoStudy.created_at.desc())
@@ -201,6 +205,21 @@ async def send_message(
 
             return StreamingResponse(stream_instant(), media_type="application/x-ndjson")
 
+    # L'annuaire : les partenaires actifs qui couvrent le departement de CE foyer, ranges
+    # par metier. On interroge a chaque message plutot que de mettre en cache — l'annuaire
+    # bouge rarement, mais un partenaire suspendu ne doit jamais etre propose une fois de
+    # trop. Sans departement connu (visiteur anonyme, ou code postal hors metropole), le
+    # bloc dit a Helios de demander le code postal avant de citer qui que ce soit.
+    par_metier: dict[str, list[str]] = {}
+    if departement is not None:
+        actifs = await db.scalars(select(Partner).where(Partner.statut == "actif"))
+        for partenaire in actifs:
+            if departement not in (partenaire.zones or []):
+                continue
+            for metier in partenaire.metiers or []:
+                par_metier.setdefault(metier, []).append(partenaire.raison_sociale)
+    partenaires_context = rag.build_partenaires_context(par_metier, departement)
+
     user_content = rag.build_user_content(
         payload.content,
         results,
@@ -212,6 +231,7 @@ async def send_message(
         energy_context,
         water_context,
         simulation_context=simulation_context,
+        partenaires_context=partenaires_context,
     )
 
     route, simplified, token_stream = await router_llm.generate_route(

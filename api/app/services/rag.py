@@ -60,6 +60,39 @@ def instant_answer(results: list[dict]) -> str | None:
     return content[idx + len(marker):].strip()
 
 
+def build_partenaires_context(par_metier: dict[str, list[str]], departement: str | None) -> str:
+    """Le bloc « annuaire » du prompt : qui couvre la zone de CE visiteur.
+
+    POURQUOI UN BLOC ET PAS UN OUTIL : le modèle local est petit, et un appel de fonction
+    qu'il devrait décider lui-même serait raté une fois sur deux. Les noms qui le
+    concernent sont donc posés dans le prompt, déjà filtrés par département — il n'a plus
+    qu'à les lire.
+
+    LA RÈGLE DE LA CHARTE VIT DANS LE BLOC, pas ailleurs : « ne propose jamais un
+    partenaire sans qu'on te le demande » doit être à côté des noms. Enterrée dans la
+    constitution, elle est perdue de vue au moment précis où elle compte.
+    """
+    regle = (
+        "RÈGLE ABSOLUE : tu ne cites ces entreprises QUE si le visiteur demande un "
+        "professionnel, un installateur, un artisan ou un devis. Jamais de toi-même, "
+        "jamais pour appuyer un conseil. Quand tu en cites, donne-les TOUTES pour le "
+        "métier concerné — le visiteur choisit, tu ne recommandes pas l'une d'elles."
+    )
+    if departement is None or not par_metier:
+        return (
+            "ANNUAIRE DES PARTENAIRES : tu ne sais pas encore où habite ce visiteur. "
+            "S'il demande un professionnel, demande-lui d'abord son code postal — "
+            "l'annuaire est organisé par département.\n" + regle
+        )
+    lignes = "\n".join(
+        f"- {metier} : {', '.join(noms)}" for metier, noms in sorted(par_metier.items())
+    )
+    return (
+        f"ANNUAIRE DES PARTENAIRES couvrant le département {departement} de ce visiteur :\n"
+        f"{lignes}\n{regle}"
+    )
+
+
 def build_citations(results: list[dict]) -> list[dict]:
     if not results or best_score(results) < settings.rag_score_threshold:
         return []
@@ -202,6 +235,7 @@ def build_user_content(
     energy_context: dict | None = None,
     water_context: dict | None = None,
     simulation_context: dict | None = None,
+    partenaires_context: str | None = None,
 ) -> str:
     """Tout ce qui est variable d'une question à l'autre (sources RAG, fiche foyer, études,
     question) — sans la constitution, envoyée séparément en `system` côté API (mise en cache,
@@ -264,6 +298,9 @@ def build_user_content(
         )
     studies_block = ("\n\n---\n" + "\n\n---\n".join(studies_blocks)) if studies_blocks else ""
 
+    # Pose juste avant la question, comme tout ce qui concerne CE visiteur.
+    annuaire_block = f"---\n{partenaires_context}\n\n" if partenaires_context else ""
+
     # Ordre volontaire : les modèles locaux (3B) suivent bien mieux ce qui est proche de la question
     # que ce qui est enterré tôt dans un long prompt (constitution + sources) — le profil du foyer et
     # ses études réelles sont donc placés juste avant la question, jamais avant.
@@ -273,6 +310,7 @@ def build_user_content(
         f"{sources_block}\n\n"
         "---\n"
         f"{mode_block}{studies_block}\n\n"
+        f"{annuaire_block}"
         "---\n"
         f"{question_label} : {question}\n"
         "Réponse d'Helios :"

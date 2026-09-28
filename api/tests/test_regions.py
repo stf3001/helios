@@ -51,28 +51,51 @@ def test_les_metiers_de_l_annuaire_sont_ceux_du_seed():
             assert metier in regions.METIERS, metier
 
 
-def test_chaque_departement_a_exactement_un_partenaire_solaire():
-    """AD Solar en PACA, Ensol ailleurs : aucun trou, aucun doublon.
-
-    C'est la promesse faite au visiteur — « Helios saura qui conseiller ». Un departement
-    sans partenaire la casse en silence.
-    """
+def _couverture(metier: str) -> dict[str, list[str]]:
     from scripts.seed_partenaires import PARTENAIRES
     couverture: dict[str, list[str]] = {}
     for nom, (zones, metiers, _) in PARTENAIRES.items():
-        if "solaire" not in metiers:
+        if metier not in metiers:
             continue
         for zone in zones:
             couverture.setdefault(zone, []).append(nom)
+    return couverture
 
+
+@pytest.mark.parametrize("metier", ["solaire", "pac", "isolation"])
+def test_aucun_departement_ne_reste_sans_partenaire(metier):
+    """La promesse faite au visiteur : « Helios saura qui conseiller ».
+
+    Un departement sans personne la casse en silence — Helios repondrait « je n'ai
+    personne a vous proposer » sans que rien ne signale l'oubli.
+    """
+    couverture = _couverture(metier)
     for departement in regions.TOUS_DEPARTEMENTS:
-        assert couverture.get(departement), f"aucun partenaire solaire en {departement}"
-        assert len(couverture[departement]) == 1, (departement, couverture[departement])
+        assert couverture.get(departement), f"aucun partenaire {metier} en {departement}"
 
-    assert couverture["13"] == ["AD Solar"]
-    assert couverture["35"] == ["Ensol"]
+
+@pytest.mark.parametrize("metier", ["solaire", "pac", "isolation"])
+def test_trois_partenaires_par_departement_pour_pouvoir_comparer(metier):
+    """Un seul nom ressemble a une recommandation ; trois laissent le choix.
+
+    C'est ce que la charte demande : Helios oriente, il ne pousse pas. Si ce compte
+    change, c'est une decision a prendre, pas un effet de bord d'un seed.
+    """
+    couverture = _couverture(metier)
+    for departement in regions.TOUS_DEPARTEMENTS:
+        assert len(couverture[departement]) == 3, (departement, couverture[departement])
+
+
+def test_les_partenaires_historiques_couvrent_bien_leur_zone():
+    """AD Solar sur PACA, Ensol ailleurs : la repartition voulue par Stephane."""
+    solaire = _couverture("solaire")
+    assert "AD Solar" in solaire["13"]
+    assert "AD Solar" not in solaire["35"]
+    assert "Ensol" in solaire["35"]
+    assert "Ensol" not in solaire["13"]
 
 
 def test_chaque_region_a_son_partenaire_isolation():
-    from scripts.seed_partenaires import ISOLATION_PROVISOIRE
+    from scripts.seed_partenaires import ISOLATION_PROVISOIRE, RACINES_REGIONALES
     assert set(ISOLATION_PROVISOIRE) == set(regions.REGIONS)
+    assert set(RACINES_REGIONALES) == set(regions.REGIONS)
