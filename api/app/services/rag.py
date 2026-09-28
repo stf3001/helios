@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.house import House
 from app.models.kb import KbChunk, KbDocument
+from app.services.agents_engine import SOURCES_QR as _QR_SOURCES
 from app.services.completeness import _is_filled, compute_score, niveau_for_score
 
 # Version de constitution pilotée par la config (settings.constitution_version) — synchro avec le doc 03.
@@ -36,9 +37,8 @@ def best_score(results: list[dict]) -> float:
     return max((r["score"] for r in results), default=0.0)
 
 
-# Sources dont les chunks sont des fiches Q/R servables telles quelles (mêmes
-# sources que la FAQ publique — cf. routers/faq.py).
-_QR_SOURCES = ("faq_maison", "solutions", "pilotage", "eau", "autoconso", "complements", "cas_pratiques", "baremes_aides", "confort_ete", "reglementation", "voss", "vigilance")
+# Sources dont les chunks sont des fiches Q/R servables telles quelles : `_QR_SOURCES`,
+# importee en tete, est declaree une seule fois a cote de SOURCES (services/agents_engine).
 
 
 def instant_answer(results: list[dict]) -> str | None:
