@@ -1,4 +1,11 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Le .env vit a la racine du depot (helios/), pas dans api/. On le resout en absolu depuis ce
+# fichier : un chemin relatif dependait du dossier de lancement, or l'API demarre depuis api/
+# et les agents en ligne de commande depuis helios/ - les deux ne voyaient pas le meme fichier.
+_ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
@@ -110,8 +117,10 @@ class Settings(BaseSettings):
     sobry_socap_prix_min_eur_kwh: float = 0.00     # plafonné à 0 (jamais négatif), creux au midi solaire
     sobry_socap_prix_max_eur_kwh: float = 0.25     # plafonné la nuit
 
-    class Config:
-        env_file = ".env"
+    # extra="ignore" : ce .env est partage avec docker compose (POSTGRES_*) et le pre-rendu SEO
+    # (HELIOS_SITE_URL). Ces cles ne sont pas des reglages de l'API ; sans cette tolerance,
+    # pydantic refuse de demarrer des qu'il rencontre une cle qu'il ne declare pas.
+    model_config = SettingsConfigDict(env_file=_ENV_FILE, extra="ignore")
 
 
 settings = Settings()
