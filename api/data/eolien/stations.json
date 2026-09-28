@@ -1,0 +1,14 @@
+{
+  "13": {"city": "Marseille", "lat": 43.2965, "lon": 5.3698},
+  "29": {"city": "Brest", "lat": 48.3904, "lon": -4.4861},
+  "31": {"city": "Toulouse", "lat": 43.6047, "lon": 1.4442},
+  "33": {"city": "Bordeaux", "lat": 44.8378, "lon": -0.5792},
+  "34": {"city": "Montpellier", "lat": 43.6108, "lon": 3.8767},
+  "38": {"city": "Grenoble", "lat": 45.1885, "lon": 5.7245},
+  "44": {"city": "Nantes", "lat": 47.2184, "lon": -1.5536},
+  "59": {"city": "Lille", "lat": 50.6292, "lon": 3.0573},
+  "67": {"city": "Strasbourg", "lat": 48.5734, "lon": 7.7521},
+  "69": {"city": "Lyon", "lat": 45.7640, "lon": 4.8357},
+  "75": {"city": "Paris", "lat": 48.8566, "lon": 2.3522},
+  "2A": {"city": "Ajaccio", "lat": 41.9272, "lon": 8.7346}
+}

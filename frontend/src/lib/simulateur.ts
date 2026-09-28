@@ -43,6 +43,10 @@ export interface Config {
     nb_panneaux_carport: number
     surface_toit_m2: number | null
   }
+  eolien: {
+    kwc: number
+    facteur_anemometre: number
+  }
   stockage: {
     nb_packs: number
     inertie: boolean
@@ -80,6 +84,8 @@ export interface Resultat {
     annuel_kwh: number; par_kwc_kwh: number
     kwc_toit: number; kwc_carport: number; pertes_pct: number
     ecrete_kwh: number; ecrete_seuil_pct: number
+    vent: { station?: string; departement_station?: string; distance_km?: number
+      vent_moyen_ms?: number }
   }
   panneaux_max_toit: number | null
   version_moteur: string
@@ -98,11 +104,13 @@ export interface Resultat {
       fournisseur_impose: string | null; note: string
       conseil: string; recommandee: boolean
     }
+    eolien: { kwc: number; production_kwh: number; facteur_anemometre: number }
     pilotage: { actif: boolean; nb_usages: number }
   }
   investissement: {
     panneaux_eur: number; carport_eur: number; batterie_eur: number
     inertie_eur: number
+    eolien_eur: number
     activation_virtuelle_eur: number; materiel_virtuel_eur: number; total_eur: number
     tva_pct: number; tva_raison: string
   }
@@ -185,6 +193,7 @@ export const CONFIG_INITIALE: Config = {
     nb_panneaux_carport: 0,
     surface_toit_m2: null,
   },
+  eolien: { kwc: 0, facteur_anemometre: 1 },
   stockage: { nb_packs: 0, inertie: false, batterie_virtuelle: null, palier_virtuel_kwh: null, pilotage: false },
   hausse_prix_pct_an: null,
 }

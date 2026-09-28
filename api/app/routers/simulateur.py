@@ -20,11 +20,11 @@ from app.models.house import House
 from app.models.simulateur import SimulateurStudy
 from app.models.user import User
 from app.schemas.simulateur import EtudeIn, SimulateurIn
-from app.services import batterie_virtuelle, geocoding, simu_conso, simu_engine, simu_options, simu_pv
+from app.services import batterie_virtuelle, eolien, geocoding, simu_conso, simu_engine, simu_options, simu_pv
 from app.services.geocoding import GeocodingError
 from app.services.pvgis import PvgisError
 from app.services.simu_types import (
-    Clim, Configuration, Lieu, Maison, Panneaux, Piscine, Stockage, Voiture,
+    Clim, Configuration, Eolien, Lieu, Maison, Panneaux, Piscine, Stockage, Voiture,
 )
 
 router = APIRouter(prefix="/simulateur", tags=["simulateur"])
@@ -65,6 +65,8 @@ def _vers_configuration(payload: SimulateurIn, lieu: Lieu) -> Configuration:
                           inclinaison=p.inclinaison, ombrage=p.ombrage,
                           nb_panneaux_carport=p.nb_panneaux_carport,
                           surface_toit_m2=p.surface_toit_m2),
+        eolien=Eolien(kwc=payload.eolien.kwc,
+                      facteur_anemometre=payload.eolien.facteur_anemometre),
         stockage=Stockage(nb_packs=s.nb_packs, inertie=s.inertie,
                           batterie_virtuelle=s.batterie_virtuelle,
                           palier_virtuel_kwh=s.palier_virtuel_kwh, pilotage=s.pilotage),
@@ -111,7 +113,11 @@ def _lieu_public(config: Configuration) -> dict:
 async def calcul(request: Request, payload: SimulateurIn):
     """Les indicateurs de la configuration courante. Appelé à chaque changement de réglage."""
     config, profil, production = await _preparer(payload)
-    resultat = simu_engine.calculer(config, profil, production["total_h"])
+    # L'eolienne se calcule ici, pas dans le moteur : elle depend du LIEU, et le moteur
+    # ne connait que des series horaires. La station retenue est renvoyee a l'ecran.
+    eolien_h, info_vent = eolien.production_horaire(
+        config.eolien.kwc, config.lieu.lat, config.lieu.lon, config.eolien.facteur_anemometre)
+    resultat = simu_engine.calculer(config, profil, production["total_h"], eolien_h=eolien_h)
     return {
         "lieu": _lieu_public(config),
         "production": {
@@ -125,6 +131,9 @@ async def calcul(request: Request, payload: SimulateurIn):
             # le taire, ou d'en faire un bandeau rouge pour quelques euros par an.
             "ecrete_kwh": round(resultat["bilan_annuel"]["ecrete"], 1),
             "ecrete_seuil_pct": settings.simu_ecretage_alerte_pct,
+            # D'ou vient l'estimation du vent : la station et sa distance, pour que
+            # personne ne prenne un profil releve a 200 km pour une mesure locale.
+            "vent": info_vent,
         },
         "panneaux_max_toit": simu_pv.panneaux_max_du_toit(payload.panneaux.surface_toit_m2),
         "version_moteur": simu_engine.VERSION_MOTEUR,

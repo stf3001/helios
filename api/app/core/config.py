@@ -219,6 +219,18 @@ class Settings(BaseSettings):
     simu_batterie_perte_capacite_pct_an: float = 2.0
     simu_batterie_duree_vie_ans: int = 15           # au-dela : remplacement compte dans les 25 ans
 
+    # --- Eolien domestique (eolienne Tulipe d'EOLIA) ---
+    # Gamme et tarifs donnes par Stephane le 28/09/2026 : 6 900 EUR TTC a 3 kWc,
+    # 12 000 EUR a 9 kWc, pose et demarches comprises, pour moins de 50 m entre le tableau
+    # et l'eolienne. Au-dela, EOLIA chiffre des options que l'outil ne connait pas : le
+    # prix est donc INDICATIF, interpole lineairement entre les deux bornes, et affiche
+    # comme tel. TVA 20 %, l'eolien ne beneficie pas du taux reduit du photovoltaique.
+    simu_eolien_kwc_min: float = 3.0
+    simu_eolien_kwc_max: float = 9.0
+    simu_eolien_cout_min_eur: int = 6900
+    simu_eolien_cout_max_eur: int = 12000
+    simu_eolien_tva_pct: float = 20.0
+
     # --- Stockage par inertie (batterie souterraine, sans lithium) ---
     # Chiffres donnes par Stephane le 28/09/2026. UNE SEULE unite possible : ce n'est pas
     # un pack qu'on empile, c'est un ouvrage qu'on enterre.

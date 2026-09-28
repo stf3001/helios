@@ -78,6 +78,13 @@ class PanneauxIn(Strict):
     surface_toit_m2: int | None = Field(default=None, ge=0, le=2000)
 
 
+class EolienIn(Strict):
+    """L'eolienne : 0 pour aucune, sinon entre le minimum et le maximum de la gamme."""
+
+    kwc: float = Field(default=0.0, ge=0, le=9)
+    facteur_anemometre: float = Field(default=1.0, gt=0, le=3)
+
+
 class StockageIn(Strict):
     nb_packs: int = Field(default=0, ge=0, le=6)
     #: Stockage par inertie : un booleen, pas un compteur. On n'en enterre qu'un.
@@ -95,6 +102,7 @@ class SimulateurIn(Strict):
     lon: float | None = Field(default=None, ge=-180, le=180)
     maison: MaisonIn = Field(default_factory=MaisonIn)
     panneaux: PanneauxIn = Field(default_factory=PanneauxIn)
+    eolien: EolienIn = Field(default_factory=EolienIn)
     stockage: StockageIn = Field(default_factory=StockageIn)
     hausse_prix_pct_an: float | None = Field(default=None, ge=0, le=15)
 

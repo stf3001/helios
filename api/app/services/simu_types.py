@@ -90,6 +90,17 @@ class Stockage:
 
 
 @dataclass(frozen=True)
+class Eolien:
+    """Une eolienne Tulipe, ou rien. `kwc` a zero veut dire pas d'eolienne."""
+
+    kwc: float = 0.0
+    #: Recalage sur une mesure d'anemometre : EOLIA prete l'appareil un mois, et le
+    #: rapport entre le vent mesure et celui de la station donne ce coefficient. Sans
+    #: mesure il vaut 1, et l'estimation reste celle de la station la plus proche.
+    facteur_anemometre: float = 1.0
+
+
+@dataclass(frozen=True)
 class Lieu:
     lat: float
     lon: float
@@ -103,6 +114,7 @@ class Configuration:
     lieu: Lieu
     maison: Maison = field(default_factory=Maison)
     panneaux: Panneaux = field(default_factory=Panneaux)
+    eolien: Eolien = field(default_factory=Eolien)
     stockage: Stockage = field(default_factory=Stockage)
     hausse_prix_pct_an: float | None = None  # None = valeur par défaut de la config
 

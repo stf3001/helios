@@ -6,7 +6,7 @@
  */
 
 import {
-  CHAUFFAGES, ECS_OPTIONS, kwh, OMBRAGES, ORIENTATIONS,
+  CHAUFFAGES, ECS_OPTIONS, euros, kwh, OMBRAGES, ORIENTATIONS,
   type Config, type Resultat,
 } from '../../lib/simulateur'
 import { Bascule, Champ, Choix, DejaLa, Nombre } from './Reglage'
@@ -14,6 +14,7 @@ import { Bascule, Champ, Choix, DejaLa, Nombre } from './Reglage'
 export const EQUIPEMENTS: { id: string; label: string }[] = [
   { id: 'panneaux', label: 'Panneaux sur le toit' },
   { id: 'carport', label: 'Carport' },
+  { id: 'eolienne', label: 'Éolienne' },
   { id: 'batterie', label: 'Batterie physique' },
   { id: 'inertie', label: 'Stockage par inertie' },
   { id: 'batterie_virtuelle', label: 'Batterie virtuelle' },
@@ -34,6 +35,7 @@ export function estInstalle(id: string, config: Config): boolean {
   switch (id) {
     case 'panneaux': return panneaux.nb_panneaux > 0
     case 'carport': return panneaux.nb_panneaux_carport > 0
+    case 'eolienne': return config.eolien.kwc > 0
     case 'batterie': return stockage.nb_packs > 0
     case 'inertie': return stockage.inertie
     case 'batterie_virtuelle': return stockage.batterie_virtuelle !== null
@@ -55,6 +57,8 @@ export function resumeDe(id: string, config: Config, resultat: Resultat | null):
         : null
     case 'carport':
       return panneaux.nb_panneaux_carport > 0 ? `${panneaux.nb_panneaux_carport} panneaux` : null
+    case 'eolienne':
+      return config.eolien.kwc > 0 ? `${config.eolien.kwc} kWc` : null
     case 'batterie':
       return stockage.nb_packs > 0
         ? `${stockage.nb_packs} pack(s)${resultat ? ` · ${resultat.stockage.batterie_physique.capacite_kwh} kWh` : ''}`
@@ -94,6 +98,8 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
     majConfig((c) => ({ ...c, maison: { ...c.maison, ...maj } }))
   const majPanneaux = (maj: Partial<Config['panneaux']>) =>
     majConfig((c) => ({ ...c, panneaux: { ...c.panneaux, ...maj } }))
+  const majEolien = (maj: Partial<Config['eolien']>) =>
+    majConfig((c) => ({ ...c, eolien: { ...c.eolien, ...maj } }))
   const majStockage = (maj: Partial<Config['stockage']>) =>
     majConfig((c) => ({ ...c, stockage: { ...c.stockage, ...maj } }))
 
@@ -134,6 +140,51 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
           </p>
           <Nombre label="Panneaux sur le carport" valeur={panneaux.nb_panneaux_carport} min={0} max={40}
             onChange={(v) => majPanneaux({ nb_panneaux_carport: v })} />
+        </>
+      )
+
+    case 'eolienne':
+      return (
+        <>
+          <Nombre label="Puissance" valeur={config.eolien.kwc} min={0} max={9} pas={1} suffixe="kWc"
+            onChange={(v) => majEolien({ kwc: v === 1 || v === 2 ? 3 : v })}
+            aide="0 pour aucune éolienne, sinon de 3 à 9 kWc." />
+          {resultat && config.eolien.kwc > 0 && (
+            <>
+              <div className="space-y-1">
+                <p className="flex items-baseline justify-between gap-4">
+                  <span className="text-dark/70">Production estimée</span>
+                  <strong className="text-ink">{kwh(resultat.stockage.eolien.production_kwh)} / an</strong>
+                </p>
+                <p className="flex items-baseline justify-between gap-4">
+                  <span className="text-dark/70">Investissement</span>
+                  <strong className="text-ink">{euros(resultat.investissement.eolien_eur)}</strong>
+                </p>
+              </div>
+              {/* D'où vient le chiffre. Douze stations pour la France entière : un visiteur
+                  de la Creuse doit savoir que son estimation vient de Lyon, sinon il la
+                  prend pour une mesure chez lui. */}
+              {resultat.production.vent?.station && (
+                <p className="rounded-lg border border-sky/40 bg-sky/10 px-3 py-2 text-sm text-ink">
+                  Estimation d’après les vents de <strong>{resultat.production.vent.station}</strong>
+                  {resultat.production.vent.distance_km !== undefined
+                    && ` — la station la plus proche, à ${resultat.production.vent.distance_km} km`}
+                  . Vent moyen {resultat.production.vent.vent_moyen_ms} m/s.
+                </p>
+              )}
+              <p className="text-sm text-dark/80">
+                <strong>EOLIA prête un anémomètre.</strong> Vous le plantez un mois à
+                l’endroit prévu, vous envoyez les relevés, et la production est recalée sur
+                VOTRE terrain. C’est la seule façon de savoir vraiment — le vent change
+                d’une parcelle à l’autre, bien plus que le soleil.
+              </p>
+              <p className="text-sm text-dark/60">
+                Tarif indicatif, pose et démarches comprises, pour moins de 50 m entre le
+                tableau et l’éolienne. Au-delà, EOLIA chiffre des options que le simulateur
+                ne connaît pas.
+              </p>
+            </>
+          )}
         </>
       )
 

@@ -84,6 +84,7 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
   batterie_virtuelle: { x: 318, y: 154 }, // dans le ciel : elle n'a pas d'objet, c'est le propos
   reseau: { x: 1068, y: 286 },           // approximatif : pas de poteau dessiné
   carport: { x: 286, y: 500 },           // approximatif : l'auvent du garage en tient lieu
+  eolienne: { x: 1108, y: 176 },         // approximatif : dans le ciel, a droite du toit
   ballon: { x: 664, y: 474 },            // approximatif : posé sur le circuit orange (chaleur)
   clim: { x: 968, y: 574 },              // approximatif : côté technique de la maison
 }

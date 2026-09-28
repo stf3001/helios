@@ -15,7 +15,7 @@ Si un bilan cesse de se fermer, c'est que de l'énergie est créée ou perdue qu
 from dataclasses import dataclass
 
 from app.core.config import settings
-from app.services import batterie_virtuelle, simu_conso, solar_engine
+from app.services import batterie_virtuelle, eolien, simu_conso, solar_engine
 from app.services.simu_conso import HEURES, ProfilConso
 from app.services.simu_types import Configuration
 
@@ -226,6 +226,12 @@ def investissement(config: Configuration) -> dict:
     # Le stockage par inertie est donne TTC, TVA 20 % comprise : on le prend tel quel.
     inertie_ttc = settings.simu_inertie_cout_ttc_eur if config.stockage.inertie else 0.0
 
+    # L'eolienne est chiffree TTC par EOLIA, TVA 20 % comprise. Elle ne change PAS le
+    # taux du photovoltaique : ce sont deux installations distinctes, et la condition
+    # des 5,5 % porte sur l'installation solaire elle-meme. A confirmer aupres d'un
+    # installateur avant d'en faire un argument.
+    eolien_ttc = float(eolien.cout_ttc_eur(config.eolien.kwc)) if config.eolien.kwc > 0 else 0.0
+
     offre_code = config.stockage.batterie_virtuelle
     offre = batterie_virtuelle.offres().get(offre_code) if offre_code else None
     activation = offre.activation_eur if offre else 0.0
@@ -246,9 +252,10 @@ def investissement(config: Configuration) -> dict:
         "carport_eur": round(carport_ttc),
         "batterie_eur": round(batterie_ttc),
         "inertie_eur": round(inertie_ttc),
+        "eolien_eur": round(eolien_ttc),
         "activation_virtuelle_eur": round(activation),
         "materiel_virtuel_eur": round(materiel_virtuel),
-        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + inertie_ttc
+        "total_eur": round(pv_ttc + carport_ttc + batterie_ttc + inertie_ttc + eolien_ttc
                            + activation + materiel_virtuel),
         "tva_pct": taux,
         "tva_raison": raison,
@@ -490,13 +497,23 @@ def hypotheses() -> list[dict]:
     ]
 
 
-def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float], detail: bool = True) -> dict:
+def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float],
+             detail: bool = True, eolien_h: list[float] | None = None) -> dict:
     """Le calcul complet pour une configuration. C'est l'unique porte d'entrée du moteur.
 
     `detail=False` renvoie tout sauf les bilans mensuels et les journées moyennes : c'est
     le mode de la recherche d'options, qui fait des dizaines de passages et n'a besoin que
     des totaux annuels et de l'économie.
     """
+    # L'eolienne produit AVANT tout arbitrage : pour la maison, un kWh de vent et un kWh
+    # de soleil sont le meme kWh. Ils se distinguent au prix, a la saison et a l'heure —
+    # le vent souffle la nuit et en hiver, quand les panneaux ne donnent rien — mais pas
+    # dans le bilan horaire, qui ne connait qu'une production et une consommation.
+    eolien_annuel = 0.0
+    if eolien_h:
+        eolien_annuel = sum(eolien_h)
+        prod_h = [p + e for p, e in zip(prod_h, eolien_h)]
+
     conso_h = profil.total_h
     if config.stockage.pilotage:
         conso_h = _piloter(conso_h, profil.pilotable_h(), prod_h)
@@ -571,6 +588,11 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float], de
                 "cout_ttc_eur": settings.simu_inertie_cout_ttc_eur,
             },
             "batterie_virtuelle": bilan_virtuel,
+            "eolien": {
+                "kwc": config.eolien.kwc,
+                "production_kwh": round(eolien_annuel, 1),
+                "facteur_anemometre": config.eolien.facteur_anemometre,
+            },
             "pilotage": {
                 "actif": config.stockage.pilotage,
                 "nb_usages": profil.nb_usages_pilotables() if config.stockage.pilotage else 0,
