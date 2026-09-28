@@ -243,26 +243,31 @@ export default function SceneMaison({ equipements, heure, saison, flux, onEmplac
         ))}
       </svg>
 
-      {/* La liste porte les mots. Le dessin ne porte que des numéros — rien ne peut se chevaucher. */}
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+      {/* Les mots vivent ici, le dessin ne porte que des numéros — rien ne peut se chevaucher.
+          Pastilles SANS fond ni cadre : seuls le rond et le mot sont visibles, et ils entourent
+          la scène au lieu de la concurrencer. Le résumé d'un équipement installé (« 12 panneaux »)
+          remplace le libellé plutôt que de s'ajouter dessous : deux fois moins de hauteur. */}
+      <ul className="mt-3 flex flex-wrap justify-center gap-x-1 gap-y-0.5">
         {equipements.map((e) => {
           const numero = numeroDe.get(e.id)
           return (
             <li key={e.id}>
               <button type="button" onClick={() => onEmplacement(e.id)}
-                className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition
-                  ${e.installe ? 'border-primary/40 bg-white' : 'border-dashed border-primary/40 bg-cream'}
-                  hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50`}>
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold
-                  ${e.installe ? 'bg-primary text-white' : 'bg-white text-primary border border-primary'}`}>
+                aria-label={`${e.label} — ${e.installe ? e.resume ?? 'installé' : 'non installé, ajouter'}`}
+                className="flex items-center gap-1.5 rounded-full px-2 py-1 text-left transition
+                  hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold
+                  ${e.installe
+                    ? 'bg-primary text-white'
+                    : 'border border-dashed border-primary text-primary'}`}>
                   {e.installe ? numero : '+'}
                 </span>
-                <span className="min-w-0">
-                  <span className="block font-semibold text-ink">{e.label}</span>
-                  <span className="block truncate text-sm text-dark/70">
-                    {e.installe ? e.resume ?? 'Installé' : 'Non installé — appuyez pour ajouter'}
-                  </span>
+                <span className={`text-sm ${e.installe ? 'font-semibold text-ink' : 'text-dark/70'}`}>
+                  {e.label}
                 </span>
+                {e.installe && e.resume && (
+                  <span className="text-sm text-primary">· {e.resume}</span>
+                )}
               </button>
             </li>
           )

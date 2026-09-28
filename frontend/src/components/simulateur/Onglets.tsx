@@ -26,13 +26,32 @@ interface OngletProps {
   majConfig: MajConfig
 }
 
-function Bloc({ titre, children, aide }: { titre: string; children: React.ReactNode; aide?: string }) {
+/**
+ * Un bloc de réglages, repliable.
+ *
+ * `<details>` natif plutôt qu'un état React : le clavier, le lecteur d'écran et la recherche
+ * dans la page fonctionnent sans qu'on ait à les recoder, et l'ouverture reste fluide.
+ *
+ * Replié par défaut, SAUF le premier bloc de chaque onglet (`ouvert`) : arriver sur une
+ * colonne entièrement fermée ne donne rien à faire. Ce qui est gagné en hauteur ici revient
+ * à la scène, qui est ce qu'on veut mettre en avant.
+ */
+function Bloc({
+  titre, children, aide, ouvert = false,
+}: { titre: string; children: React.ReactNode; aide?: string; ouvert?: boolean }) {
   return (
-    <section className="rounded-xl border border-ink/10 bg-white p-4">
-      <h3 className="font-display text-lg font-bold text-ink">{titre}</h3>
-      {aide && <p className="mt-1 text-sm text-dark/70">{aide}</p>}
-      <div className="mt-3 space-y-4">{children}</div>
-    </section>
+    <details open={ouvert} className="group rounded-xl border border-ink/10 bg-white">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl
+        px-4 py-3 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+        <h3 className="font-display text-lg font-bold text-ink">{titre}</h3>
+        <ChevronDown size={20}
+          className="shrink-0 text-primary transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="px-4 pb-4">
+        {aide && <p className="-mt-1 mb-3 text-sm text-dark/70">{aide}</p>}
+        <div className="space-y-4">{children}</div>
+      </div>
+    </details>
   )
 }
 
@@ -100,7 +119,7 @@ export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Où ?" >
+      <Bloc titre="Où ?" ouvert>
         <ChampAdresse config={config} majConfig={majConfig} />
       </Bloc>
 
@@ -185,7 +204,7 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Sur le toit">
+      <Bloc titre="Sur le toit" ouvert>
         <Nombre label="Panneaux" valeur={p.nb_panneaux} min={0} max={40}
           onChange={(v) => majPanneaux({ nb_panneaux: v })}
           aide={resultat ? `${resultat.production.kwc_toit} kWc en toiture` : undefined} />
@@ -248,7 +267,7 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Pilotage des usages"
+      <Bloc titre="Pilotage des usages" ouvert
         aide="Décaler le ballon, la filtration et la recharge vers les heures de soleil. Cela ne coûte presque rien.">
         <Bascule label="Piloter mes usages" actif={s.pilotage}
           onChange={(v) => majStockage({ pilotage: v })} />
@@ -377,7 +396,7 @@ export function OngletJournee({
 
   return (
     <div className="space-y-4">
-      <Bloc titre="La journée en direct">
+      <Bloc titre="La journée en direct" ouvert>
         <div className="flex flex-wrap items-center gap-2">
           {SAISONS.map((s) => (
             <button key={s.value} type="button" aria-pressed={saison === s.value}
@@ -546,7 +565,7 @@ export function OngletEtude({
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Trois chemins possibles"
+      <Bloc titre="Trois chemins possibles" ouvert
         aide="Chacun est chiffré à sa taille la plus rentable. La recommandation est celle qui rapporte le plus net sur 25 ans.">
         {chargementOptions && !options && <Vide message="Calcul des options en cours…" />}
         {!chargementOptions && !options && <Vide message="Renseignez votre adresse pour voir les options." />}
@@ -655,7 +674,7 @@ export function OngletEtude({
 export function OngletAide() {
   return (
     <div className="space-y-4">
-      <Bloc titre="Comment ça marche">
+      <Bloc titre="Comment ça marche" ouvert>
         <ol className="list-decimal space-y-3 pl-5 text-dark/85">
           <li>
             Nous récupérons <strong>l’ensoleillement réel de votre commune</strong> auprès de

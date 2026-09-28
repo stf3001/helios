@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Info, Save, Users } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Check, Info, Save, Users } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
@@ -272,12 +272,12 @@ export default function SimulateurSolaire() {
 
       <div className="mx-auto max-w-6xl px-4 py-6">
         {!localise && (
-          <div className="mb-6 rounded-xl border border-primary/30 bg-white p-4">
-            <p className="flex items-start gap-3 text-ink">
-              <Info size={20} className="mt-0.5 shrink-0 text-primary" />
+          <div className="mb-3 rounded-lg border border-primary/30 bg-white px-3 py-2">
+            <p className="flex items-center gap-2 text-sm text-ink">
+              <Info size={16} className="shrink-0 text-primary" />
               <span>
-                Commencez par votre adresse, dans l’onglet <strong>Maison</strong> : c’est elle qui
-                donne l’ensoleillement réel de votre commune.
+                Commencez par votre adresse, onglet <strong>Maison</strong> — elle donne
+                l’ensoleillement réel de votre commune.
               </span>
             </p>
           </div>
@@ -338,33 +338,70 @@ export default function SimulateurSolaire() {
               </section>
             )}
 
+            {/* Le compte est la priorité : cette simulation n'est qu'une porte d'entrée. Ce qui
+                vaut vraiment, c'est qu'Helios garde la maison en mémoire et réponde ensuite sur
+                CE foyer. D'où un bouton unique et net, et trois promesses concrètes plutôt qu'une
+                phrase d'invitation. La mise en relation reste en second : elle ne se déclenche
+                qu'à la demande, et le dire est une obligation de la charte. */}
             <section className="mt-4 rounded-xl border border-ink/10 bg-white p-4">
               <h2 className="font-display text-lg font-bold text-ink">Et ensuite ?</h2>
+
               {user ? (
                 <>
                   <button type="button" onClick={enregistrerEtude}
                     className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                      border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white">
+                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90">
                     <Save size={18} /> Enregistrer mon étude
                   </button>
                   {messageEtude && <p className="mt-2 text-sm text-dark/80">{messageEtude}</p>}
+                  <p className="mt-2 text-sm text-dark/70">
+                    Elle rejoint votre maison : Helios s’en servira quand vous lui poserez
+                    une question.
+                  </p>
                 </>
               ) : (
-                <p className="mt-2 text-dark/80">
-                  <Link to="/inscription" className="font-semibold text-primary underline">
-                    Créez un compte gratuit
-                  </Link>{' '}
-                  pour enregistrer cette étude et qu’Helios s’en serve quand vous lui posez
-                  une question. Rien n’est enregistré pour l’instant.
-                </p>
+                <>
+                  <Link to="/inscription"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
+                      bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary/90">
+                    Créer mon compte gratuit <ArrowRight size={18} />
+                  </Link>
+                  <ul className="mt-3 space-y-1.5 text-sm text-dark/80">
+                    <li className="flex items-start gap-2">
+                      <Check size={16} className="mt-0.5 shrink-0 text-leaf" />
+                      Vos études sont conservées, et vous les reprenez quand vous voulez.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={16} className="mt-0.5 shrink-0 text-leaf" />
+                      Vous complétez votre maison pièce par pièce — plus Helios la connaît,
+                      plus ses réponses sont justes.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={16} className="mt-0.5 shrink-0 text-leaf" />
+                      Vous lui demandez ce que vous voulez, sur votre logement à vous.
+                    </li>
+                  </ul>
+                  <p className="mt-2 text-sm text-dark/60">
+                    Rien n’est enregistré pour l’instant.
+                  </p>
+                </>
               )}
+
+              <p className="mt-4 border-t border-ink/10 pt-3 text-sm text-dark/80">
+                Helios peut aussi vous orienter vers des <strong>installateurs</strong>, de votre
+                région ou nationaux, retenus parce qu’ils ont accepté la charte Helios.
+              </p>
+              <p className="mt-2 text-sm text-dark/80">
+                Et le moment venu, montrez-lui un devis : il vous dira ce qu’il en pense.
+              </p>
+
               <Link to="/espace/mises-en-relation"
                 className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                  bg-ink px-4 py-2 font-semibold text-white hover:bg-ink/90">
-                <Users size={18} /> Être mis en relation avec un installateur RGE
+                  border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white">
+                <Users size={18} /> Être mis en relation
               </Link>
               <p className="mt-2 text-sm text-dark/60">
-                Uniquement si vous le demandez, et avec votre consentement. Hélios n’est jamais
+                Uniquement si vous le demandez, et avec votre consentement. Helios n’est jamais
                 payé par vous, et ne transmet rien sans votre accord.
               </p>
             </section>

@@ -20,7 +20,7 @@ function Case({ label, valeur, sous }: { label: string; valeur: string; sous?: s
   return (
     <div className="min-w-0">
       <p className="truncate text-xs uppercase tracking-wide text-dark/60">{label}</p>
-      <p className="truncate font-display text-[15px] font-bold leading-tight text-ink sm:text-2xl">{valeur}</p>
+      <p className="truncate font-display text-[15px] font-bold leading-tight text-ink sm:text-xl">{valeur}</p>
       {sous && <p className="truncate text-xs text-dark/60">{sous}</p>}
     </div>
   )
@@ -54,39 +54,41 @@ export default function Bandeau({ indicateurs, calculEnCours }: Props) {
 
   return (
     <div className="sticky top-0 z-20 border-b border-ink/10 bg-cream/95 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 py-3">
-        <div className="flex items-center gap-4">
-          <div className="shrink-0">
-            <Anneau pct={i?.autonomie_pct ?? 0} partVirtuelle={i?.autonomie_part_virtuelle_pct ?? 0}
-              classe="h-20 w-20 sm:h-28 sm:w-28" />
-          </div>
-          <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 sm:gap-3">
-            <Case label="Facture / mois"
-              valeur={i ? euros(i.facture_mois_eur) : '—'}
-              sous={i ? `au lieu de ${euros(i.facture_mois_reference_eur)}` : undefined} />
-            <Case label="Économies"
-              valeur={i ? euros(i.economie_1re_annee_eur) : '—'}
-              sous="la 1re année" />
-            <Case label="Retour"
-              valeur={i ? ans(i.temps_retour_ans) : '—'}
-              sous="sur l’investissement" />
-          </div>
+      {/* Une seule rangée : l'anneau, les trois chiffres, et l'état du calcul à droite.
+          La hauteur de ce bandeau est prise sur la scène, qui est l'élément à mettre en
+          avant — d'où l'anneau réduit et la notification ramenée sur la même ligne. */}
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 sm:gap-4">
+        <Anneau pct={i?.autonomie_pct ?? 0} partVirtuelle={i?.autonomie_part_virtuelle_pct ?? 0}
+          classe="h-14 w-14 shrink-0 sm:h-16 sm:w-16" />
+
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 sm:gap-3">
+          <Case label="Facture / mois"
+            valeur={i ? euros(i.facture_mois_eur) : '—'}
+            sous={i ? `au lieu de ${euros(i.facture_mois_reference_eur)}` : undefined} />
+          <Case label="Économies"
+            valeur={i ? euros(i.economie_1re_annee_eur) : '—'}
+            sous="la 1re année" />
+          <Case label="Retour"
+            valeur={i ? ans(i.temps_retour_ans) : '—'}
+            sous="sur l’investissement" />
         </div>
 
-        <div className="mt-1 flex min-h-[1.25rem] items-center gap-3 text-sm" aria-live="polite">
+        <div className="flex shrink-0 items-center gap-2 text-sm" aria-live="polite">
           {variation && (
-            <span className="animate-fade-in rounded-full bg-leaf/15 px-2.5 py-0.5 font-semibold text-leaf">
+            <span className="animate-fade-in whitespace-nowrap rounded-full bg-leaf/15 px-2.5 py-0.5
+              font-semibold text-leaf">
               {variation}
             </span>
           )}
           {calculEnCours && <span className="text-dark/50">calcul…</span>}
-          {i?.conso_estimee && (
-            <span className="truncate text-dark/60">
-              Consommation estimée — indiquez la vôtre pour affiner.
-            </span>
-          )}
         </div>
       </div>
+
+      {i?.conso_estimee && (
+        <p className="mx-auto max-w-6xl px-4 pb-1.5 text-xs text-dark/60">
+          Consommation estimée — indiquez la vôtre pour affiner.
+        </p>
+      )}
     </div>
   )
 }
