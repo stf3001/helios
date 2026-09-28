@@ -1,0 +1,16 @@
+Deposer ici les 7 images de la scene, EN PNG (pas en JPEG : le JPEG
+perd la transparence et colle un damier autour des objets).
+
+  01-base.png       la scene complete, toit nu, sans aucun equipement
+  02-carport.png    le carport seul, toit clair, vide
+  03-piscine.png    la piscine seule
+  04-voiture.png    la voiture + la borne murale
+  05-batterie.png   le coffret de batterie
+  06-clim.png       le groupe de climatisation
+  07-panneau.png    UN panneau vu a plat, de face
+
+Sauf 01-base, toutes doivent avoir un fond VRAIMENT transparent.
+Si Gemini n'y arrive pas : fond vert vif uniforme #00FF00, je le retire.
+
+Ces fichiers sont les originaux. Ne pas les reduire ni les recompresser :
+la version optimisee pour le site est generee a part, dans public/scene/.

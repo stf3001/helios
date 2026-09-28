@@ -1,267 +1,420 @@
-import { useState, type FormEvent } from 'react'
+/**
+ * Simulateur « maison + équipements ».
+ *
+ * On équipe une maison, on voit immédiatement ce que ça change. Un seul appel au moteur
+ * par changement, avec anti-rebond ; la recherche d'options, plus coûteuse, n'est lancée
+ * qu'à l'ouverture de l'onglet Étude et après un temps d'arrêt.
+ *
+ * AUCUN chiffre n'est écrit ici : tout vient de `/api/simulateur/*`.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Sun } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Info, Save, Users } from 'lucide-react'
+
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
-import AutoconsoPanel from '../components/AutoconsoPanel'
+import Bandeau from '../components/simulateur/Bandeau'
+import SceneMaison, { type EmplacementScene, type FluxScene } from '../components/simulateur/SceneMaison'
+import ReglageEquipement, {
+  EQUIPEMENTS, estInstalle, resumeDe, titreDe,
+} from '../components/simulateur/ReglageEquipement'
+import { Feuille } from '../components/simulateur/Reglage'
+import {
+  OngletAide, OngletEtude, OngletJournee, OngletMaison, OngletPanneaux, OngletStockage,
+} from '../components/simulateur/Onglets'
+import { Vide } from '../components/simulateur/Graphiques'
+import Guide5Questions from '../components/simulateur/Guide5Questions'
+import {
+  calculer, chercherOptions, CONFIG_INITIALE, depuisUrl, euros, versUrl,
+  type Config, type Option, type Options, type Resultat, type Saison,
+} from '../lib/simulateur'
 
-const ORIENTATIONS = [
-  { value: 'sud', label: 'Sud' },
-  { value: 'sud_est', label: 'Sud-Est' },
-  { value: 'sud_ouest', label: 'Sud-Ouest' },
-  { value: 'est', label: 'Est' },
-  { value: 'ouest', label: 'Ouest' },
-  { value: 'nord_est', label: 'Nord-Est' },
-  { value: 'nord_ouest', label: 'Nord-Ouest' },
-  { value: 'nord', label: 'Nord' },
+type Onglet = 'maison' | 'panneaux' | 'stockage' | 'journee' | 'etude' | 'aide'
+
+const ONGLETS: { id: Onglet; label: string }[] = [
+  { id: 'maison', label: 'Maison' },
+  { id: 'panneaux', label: 'Panneaux' },
+  { id: 'stockage', label: 'Stockage' },
+  { id: 'journee', label: 'En direct' },
+  { id: 'etude', label: 'Étude' },
+  { id: 'aide', label: 'Aide' },
 ]
 
-const OMBRAGES = [
-  { value: 'aucun', label: 'Aucun' },
-  { value: 'partiel', label: 'Partiel' },
-  { value: 'important', label: 'Important' },
-]
-
-interface Fourchette {
-  bas: number
-  haut: number
-  central: number
-}
-
-interface Profil {
-  taux_autoconso_pct: number
-  economie_annuelle_eur: Fourchette
-  temps_retour_ans: number | null
-}
-
-interface ScenarioPuissance {
-  puissance_kwc: number
-  production_annuelle_kwh: number
-  cout_installation_eur: Fourchette
-  profils_autoconso: { sans_pilotage: Profil; avec_pilotage: Profil }
-  stockage_options: StockageOption[]
-}
-
-interface StockageOption {
-  tech: string
-  label: string
-  capacite_kwh: number
-  taux_autoconso_pct: number
-  economie_annuelle_eur: Fourchette
-  cout_total_eur: Fourchette
-  temps_retour_ans: number | null
-  garantie_ans: number
-  note: string
-}
-
-interface SimResult {
-  partiel: boolean
-  params: { gps: { label: string | null }; orientation: string | null; pente: number; ombrage: string }
-  production?: Record<string, { annual_kwh: number; monthly_kwh: number[] }>
-  message?: string
-  scenarios?: {
-    conso_reference_kwh: number
-    conso_estimee: boolean
-    par_puissance: Record<string, ScenarioPuissance>
-    avertissement: string
-  }
-}
-
-const eur = (n: number) => n.toLocaleString('fr-FR') + ' €'
+const ANTI_REBOND_MS = 200
+const INACTIVITE_OPTIONS_MS = 2000
 
 export default function SimulateurSolaire() {
-  useTitle('Simulateur solaire')
+  useTitle('Simulateur solaire — équipez votre maison | HELIOS')
   const { user, authFetch } = useAuth()
-  const [adresse, setAdresse] = useState('')
-  const [orientation, setOrientation] = useState('sud')
-  const [pente, setPente] = useState('30')
-  const [ombrage, setOmbrage] = useState('aucun')
-  const [conso, setConso] = useState('')
-  const [result, setResult] = useState<SimResult | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setResult(null)
-    setLoading(true)
-    const doFetch = user ? authFetch : fetch
+  const [config, setConfig] = useState<Config>(() => {
+    const code = new URLSearchParams(window.location.search).get('c')
+    return (code && depuisUrl(code)) || CONFIG_INITIALE
+  })
+  const [resultat, setResultat] = useState<Resultat | null>(null)
+  const [options, setOptions] = useState<Options | null>(null)
+  const [onglet, setOnglet] = useState<Onglet>('maison')
+  const [emplacementOuvert, setEmplacementOuvert] = useState<string | null>(null)
+  const [saison, setSaison] = useState<Saison>('ete')
+  const [heure, setHeure] = useState(13)
+  const [premierChargement, setPremierChargement] = useState(true)
+  const [calculEnCours, setCalculEnCours] = useState(false)
+  const [optionsEnCours, setOptionsEnCours] = useState(false)
+  const [erreur, setErreur] = useState<string | null>(null)
+  const [accueil, setAccueil] = useState(() =>
+    !new URLSearchParams(window.location.search).get('c'))
+  const [guide, setGuide] = useState(false)
+  const [messageEtude, setMessageEtude] = useState<string | null>(null)
+
+  const majConfig = useCallback((maj: (c: Config) => Config) => {
+    setConfig((precedent) => maj(precedent))
+  }, [])
+
+  const localise = config.lat !== null && config.lon !== null
+
+  /* --- Pré-remplissage depuis la fiche Maison, pour un utilisateur connecté --- */
+  const prerempli = useRef(false)
+  useEffect(() => {
+    if (!user || prerempli.current) return
+    prerempli.current = true
+    authFetch('/api/houses/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((fiche) => {
+        if (!fiche) return
+        setConfig((c) => ({
+          ...c,
+          adresse: c.adresse ?? fiche.code_postal ?? null,
+          maison: {
+            ...c.maison,
+            surface_m2: fiche.surface_habitable ?? c.maison.surface_m2,
+            nb_occupants: fiche.nb_occupants ?? c.maison.nb_occupants,
+            chauffage: fiche.chauffage_principal ?? c.maison.chauffage,
+            ecs: fiche.ecs ?? c.maison.ecs,
+            conso_connue_kwh_an: fiche.conso_elec_kwh_an ?? c.maison.conso_connue_kwh_an,
+            puissance_souscrite_kva: fiche.puissance_souscrite
+              ? Number(fiche.puissance_souscrite) : c.maison.puissance_souscrite_kva,
+            residence_secondaire: fiche.residence_principale === false,
+            clim: { ...c.maison.clim, present: fiche.clim ?? c.maison.clim.present },
+          },
+          panneaux: {
+            ...c.panneaux,
+            orientation: fiche.orientation_toiture ?? c.panneaux.orientation,
+            inclinaison: fiche.pente ?? c.panneaux.inclinaison,
+            ombrage: fiche.ombrage ?? c.panneaux.ombrage,
+            surface_toit_m2: fiche.surface_toit_exploitable ?? c.panneaux.surface_toit_m2,
+          },
+        }))
+      })
+      .catch(() => { /* la fiche est facultative */ })
+  }, [user, authFetch])
+
+  /* --- Le calcul, à chaque changement, avec anti-rebond et annulation --- */
+  useEffect(() => {
+    if (!localise) return
+    const controleur = new AbortController()
+    setCalculEnCours(true)
+    const minuteur = setTimeout(() => {
+      calculer(config, controleur.signal)
+        .then((r) => { setResultat(r); setErreur(null) })
+        .catch((e) => { if (e.name !== 'AbortError') setErreur(e.message) })
+        .finally(() => {
+          if (!controleur.signal.aborted) { setCalculEnCours(false); setPremierChargement(false) }
+        })
+    }, ANTI_REBOND_MS)
+    return () => { clearTimeout(minuteur); controleur.abort() }
+  }, [config, localise])
+
+  /* --- Les options : à l'ouverture de l'onglet Étude, et après un temps d'arrêt --- */
+  useEffect(() => {
+    if (!localise) return
+    const controleur = new AbortController()
+    const attente = onglet === 'etude' ? ANTI_REBOND_MS : INACTIVITE_OPTIONS_MS
+    const minuteur = setTimeout(() => {
+      setOptionsEnCours(true)
+      chercherOptions(config, controleur.signal)
+        .then(setOptions)
+        .catch(() => { /* silencieux : les options sont un complément, pas le cœur */ })
+        .finally(() => { if (!controleur.signal.aborted) setOptionsEnCours(false) })
+    }, attente)
+    return () => { clearTimeout(minuteur); controleur.abort() }
+  }, [config, localise, onglet])
+
+  /* --- L'URL de partage : commune et coordonnées arrondies, jamais l'adresse --- */
+  useEffect(() => {
+    if (!localise) return
+    const minuteur = setTimeout(() => {
+      const code = versUrl(config, resultat?.lieu.commune ?? null)
+      window.history.replaceState(null, '', `${window.location.pathname}?c=${code}`)
+    }, 600)
+    return () => clearTimeout(minuteur)
+  }, [config, localise, resultat?.lieu.commune])
+
+  /* --- Ce que la scène doit montrer --- */
+  const equipements: EmplacementScene[] = useMemo(
+    () => EQUIPEMENTS.map((e) => ({
+      id: e.id,
+      label: e.label,
+      installe: estInstalle(e.id, config),
+      resume: resumeDe(e.id, config, resultat),
+    })),
+    [config, resultat],
+  )
+
+  const flux: FluxScene = useMemo(() => {
+    const point = resultat?.journees[saison]?.[heure]
+    if (!point) {
+      return { soleilMaison: 0, soleilBatterie: 0, soleilReseau: 0, reseauMaison: 0, batterieMaison: 0 }
+    }
+    return {
+      soleilMaison: point.direct,
+      soleilBatterie: point.charge,
+      soleilReseau: point.injecte + point.stocke_virtuel,
+      reseauMaison: point.achat + point.restitue_virtuel,
+      batterieMaison: point.decharge,
+    }
+  }, [resultat, saison, heure])
+
+  const appliquerOption = (option: Option) => {
+    majConfig((c) => ({
+      ...c,
+      panneaux: {
+        ...c.panneaux,
+        nb_panneaux: option.configuration.nb_panneaux,
+        nb_panneaux_carport: option.configuration.nb_panneaux_carport,
+      },
+      stockage: {
+        ...c.stockage,
+        nb_packs: option.configuration.nb_packs,
+        batterie_virtuelle: option.configuration.batterie_virtuelle,
+        pilotage: option.configuration.pilotage,
+      },
+    }))
+  }
+
+  const appliquerProchaineEtape = () => {
+    const etape = options?.prochaine_etape
+    if (!etape) return
+    majConfig((c) => ({
+      ...c,
+      panneaux: etape.appliquer.nb_panneaux !== undefined
+        ? { ...c.panneaux, nb_panneaux: etape.appliquer.nb_panneaux }
+        : c.panneaux,
+      stockage: {
+        ...c.stockage,
+        nb_packs: etape.appliquer.nb_packs ?? c.stockage.nb_packs,
+        batterie_virtuelle: etape.appliquer.batterie_virtuelle ?? c.stockage.batterie_virtuelle,
+        pilotage: etape.appliquer.pilotage ?? c.stockage.pilotage,
+      },
+    }))
+  }
+
+  const enregistrerEtude = async () => {
+    setMessageEtude(null)
     try {
-      const res = await doFetch('/api/solar/simulate', {
+      const reponse = await authFetch('/api/simulateur/etudes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adresse,
-          orientation,
-          pente: Number(pente),
-          ombrage,
-          conso_kwh_an: conso ? Number(conso) : undefined,
-        }),
+        body: JSON.stringify({ configuration: config }),
       })
-      if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        throw new Error(body?.detail || 'Simulation impossible, réessayez.')
+      if (reponse.ok) {
+        setMessageEtude('Étude enregistrée. Vous la retrouverez dans votre espace, et Helios s’en sert dans le chat.')
+      } else if (reponse.status === 409) {
+        setMessageEtude('Créez d’abord votre fiche Maison pour enregistrer une étude.')
+      } else {
+        setMessageEtude('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
       }
-      setResult(await res.json())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue')
-    } finally {
-      setLoading(false)
+    } catch {
+      setMessageEtude('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
     }
   }
 
-  return (
-    <section className="max-w-[900px] mx-auto px-4 py-12">
-      <div className="flex items-center gap-2 mb-2">
-        <Sun className="w-7 h-7 text-primary" />
-        <h1 className="text-2xl font-bold">Simulateur de potentiel solaire</h1>
-      </div>
-      <p className="text-gray-600 mb-8">
-        Estimez la production photovoltaïque de votre toiture, à partir des données de production de la Commission européenne.
-        Données de production issues de PVGIS (Commission européenne).
-      </p>
-
-      <form onSubmit={onSubmit} className="bg-gray-50 rounded-2xl p-6 grid gap-4 sm:grid-cols-2 mb-8">
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium mb-1">Adresse de la maison</label>
-          <input
-            required value={adresse} onChange={(e) => setAdresse(e.target.value)}
-            placeholder="12 rue de la République, Lyon"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Orientation de la toiture</label>
-          <select value={orientation} onChange={(e) => setOrientation(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            {ORIENTATIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Inclinaison (degrés)</label>
-          <input type="number" min={0} max={90} value={pente} onChange={(e) => setPente(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Ombrage</label>
-          <select value={ombrage} onChange={(e) => setOmbrage(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            {OMBRAGES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Conso élec. annuelle (kWh, optionnel)</label>
-          <input type="number" min={0} value={conso} onChange={(e) => setConso(e.target.value)}
-            placeholder="ex. 4500"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-        </div>
-        <div className="sm:col-span-2">
-          <button type="submit" disabled={loading}
-            className="rounded-xl bg-primary text-white font-semibold px-6 py-2.5 hover:opacity-90 disabled:opacity-50">
-            {loading ? 'Calcul en cours…' : 'Estimer ma production'}
+  /* --- Accueil : se laisser guider, ou tout régler soi-même --- */
+  if (accueil) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">
+          Équipez votre maison, voyez ce que ça change
+        </h1>
+        <p className="mt-3 text-lg text-dark/80">
+          Le soleil de votre adresse, votre consommation réelle, heure par heure sur une année
+          entière. Vous ajoutez des panneaux, une batterie, une voiture — les chiffres bougent
+          devant vous. Sans compte, sans engagement.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <button type="button" onClick={() => { setAccueil(false); setGuide(true) }}
+            className="rounded-xl bg-primary px-5 py-4 text-left text-white transition hover:bg-primary/90">
+            <span className="block font-display text-lg font-bold">Me laisser guider</span>
+            <span className="block text-sm text-white/90">5 questions simples — recommandé</span>
+          </button>
+          <button type="button" onClick={() => setAccueil(false)}
+            className="rounded-xl border-2 border-primary px-5 py-4 text-left text-primary transition
+              hover:bg-primary hover:text-white">
+            <span className="block font-display text-lg font-bold">Tout régler moi-même</span>
+            <span className="block text-sm opacity-90">J’ai déjà mes informations sous la main</span>
           </button>
         </div>
-      </form>
+        <p className="mt-8 text-sm text-dark/60">
+          Tous les résultats sont des <strong>estimations</strong>. Les hypothèses sont affichées
+          dans l’onglet Étude, et ne remplacent pas l’étude d’un installateur certifié.
+        </p>
+      </div>
+    )
+  }
 
-      {error && <p className="text-sm text-red-600 mb-6">{error}</p>}
+  return (
+    <div className="min-h-screen bg-cream">
+      <Bandeau indicateurs={resultat?.indicateurs ?? null} calculEnCours={calculEnCours} />
 
-      {result && (
-        <div className="space-y-6">
-          {result.params.gps.label && (
-            <p className="text-sm text-gray-500">📍 {result.params.gps.label}</p>
-          )}
+      {guide && (
+        <Guide5Questions config={config} majConfig={majConfig} onTerminer={() => setGuide(false)} />
+      )}
 
-          {/* Production (toujours affichée) */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {result.production &&
-              Object.entries(result.production).map(([kwc, prod]) => (
-                <div key={kwc} className="bg-white border border-gray-200 rounded-2xl p-5 text-center">
-                  <div className="text-sm text-gray-500">Installation {kwc} kWc</div>
-                  <div className="text-3xl font-bold text-primary my-1">
-                    {prod.annual_kwh.toLocaleString('fr-FR')}
-                  </div>
-                  <div className="text-xs text-gray-500">kWh produits par an</div>
-                </div>
-              ))}
-            {result.scenarios &&
-              Object.entries(result.scenarios.par_puissance).map(([kwc, s]) => (
-                <div key={kwc} className="bg-white border border-gray-200 rounded-2xl p-5 text-center">
-                  <div className="text-sm text-gray-500">Installation {kwc} kWc</div>
-                  <div className="text-3xl font-bold text-primary my-1">
-                    {s.production_annuelle_kwh.toLocaleString('fr-FR')}
-                  </div>
-                  <div className="text-xs text-gray-500">kWh produits par an</div>
-                </div>
-              ))}
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        {!localise && (
+          <div className="mb-6 rounded-xl border border-primary/30 bg-white p-4">
+            <p className="flex items-start gap-3 text-ink">
+              <Info size={20} className="mt-0.5 shrink-0 text-primary" />
+              <span>
+                Commencez par votre adresse, dans l’onglet <strong>Maison</strong> : c’est elle qui
+                donne l’ensoleillement réel de votre commune.
+              </span>
+            </p>
           </div>
+        )}
 
-          {/* Mode public : CTA inscription */}
-          {result.partiel && (
-            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-center">
-              <p className="text-gray-700 mb-4">{result.message}</p>
-              <Link to="/inscription"
-                className="inline-block rounded-xl bg-primary text-white font-semibold px-6 py-2.5 hover:opacity-90">
-                Créer mon compte gratuit
-              </Link>
-            </div>
-          )}
+        {erreur && (
+          <div className="mb-6 rounded-xl border border-terra/40 bg-terra/10 p-4 text-ink">
+            <p className="flex items-start gap-3">
+              <AlertTriangle size={20} className="mt-0.5 shrink-0 text-terra" />
+              <span>{erreur}</span>
+            </p>
+          </div>
+        )}
 
-          {/* Mode connecté : scénarios économiques complets */}
-          {result.scenarios && (
-            <div className="space-y-4">
-              {result.scenarios.conso_estimee && (
-                <p className="text-xs text-gray-500">
-                  Conso de référence estimée à {result.scenarios.conso_reference_kwh.toLocaleString('fr-FR')} kWh/an —
-                  renseignez votre conso réelle dans votre fiche maison pour affiner.
+        {resultat?.alertes.map((alerte) => (
+          <div key={alerte.texte}
+            className={`mb-3 rounded-xl border p-4 text-ink ${alerte.niveau === 'attention'
+              ? 'border-terra/40 bg-terra/10' : 'border-sky/40 bg-sky/10'}`}>
+            <p className="flex items-start gap-3">
+              {alerte.niveau === 'attention'
+                ? <AlertTriangle size={20} className="mt-0.5 shrink-0 text-terra" />
+                : <Info size={20} className="mt-0.5 shrink-0 text-sky" />}
+              <span>{alerte.texte}</span>
+            </p>
+          </div>
+        ))}
+
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+          <div className="min-w-0">
+            <section className="rounded-xl border border-ink/10 bg-white p-4">
+              {premierChargement && localise ? (
+                <div className="animate-pulse space-y-3">
+                  <div className="h-56 rounded-lg bg-cream" />
+                  <div className="h-4 w-2/3 rounded bg-cream" />
+                  <div className="h-4 w-1/2 rounded bg-cream" />
+                </div>
+              ) : (
+                <SceneMaison equipements={equipements} heure={heure} saison={saison} flux={flux}
+                  onEmplacement={setEmplacementOuvert} />
+              )}
+            </section>
+
+            {options?.prochaine_etape && (
+              <section className="mt-4 rounded-xl border-2 border-primary bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-primary">Prochaine étape</p>
+                <h2 className="mt-1 font-display text-xl font-bold text-ink">
+                  {options.prochaine_etape.libelle}
+                </h2>
+                <p className="mt-1 text-dark/80">
+                  {euros(options.prochaine_etape.gain_annuel_eur)} par an sur la facture ·
+                  investissement {euros(options.prochaine_etape.investissement_eur)}
+                </p>
+                <button type="button" onClick={appliquerProchaineEtape}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2
+                    font-semibold text-white hover:bg-primary/90">
+                  Appliquer <ArrowRight size={18} />
+                </button>
+              </section>
+            )}
+
+            <section className="mt-4 rounded-xl border border-ink/10 bg-white p-4">
+              <h2 className="font-display text-lg font-bold text-ink">Et ensuite ?</h2>
+              {user ? (
+                <>
+                  <button type="button" onClick={enregistrerEtude}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
+                      border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white">
+                    <Save size={18} /> Enregistrer mon étude
+                  </button>
+                  {messageEtude && <p className="mt-2 text-sm text-dark/80">{messageEtude}</p>}
+                </>
+              ) : (
+                <p className="mt-2 text-dark/80">
+                  <Link to="/inscription" className="font-semibold text-primary underline">
+                    Créez un compte gratuit
+                  </Link>{' '}
+                  pour enregistrer cette étude et qu’Helios s’en serve quand vous lui posez
+                  une question. Rien n’est enregistré pour l’instant.
                 </p>
               )}
-              {Object.entries(result.scenarios.par_puissance).map(([kwc, s]) => (
-                <div key={kwc} className="bg-white border border-gray-200 rounded-2xl p-6">
-                  <h3 className="font-semibold text-lg mb-3">Installation {kwc} kWc — coût estimé {eur(s.cout_installation_eur.bas)} à {eur(s.cout_installation_eur.haut)}</h3>
-                  <div className="grid sm:grid-cols-2 gap-4 text-sm mb-4">
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <div className="font-medium mb-1">Sans pilotage</div>
-                      <div className="text-gray-600">Autoconso {s.profils_autoconso.sans_pilotage.taux_autoconso_pct} %</div>
-                      <div className="text-gray-600">
-                        Éco. {eur(s.profils_autoconso.sans_pilotage.economie_annuelle_eur.bas)}–{eur(s.profils_autoconso.sans_pilotage.economie_annuelle_eur.haut)}/an
-                      </div>
-                      <div className="text-gray-600">Retour ~{s.profils_autoconso.sans_pilotage.temps_retour_ans} ans</div>
-                    </div>
-                    <div className="rounded-xl bg-primary/5 p-4">
-                      <div className="font-medium mb-1">Avec pilotage</div>
-                      <div className="text-gray-600">Autoconso {s.profils_autoconso.avec_pilotage.taux_autoconso_pct} %</div>
-                      <div className="text-gray-600">
-                        Éco. {eur(s.profils_autoconso.avec_pilotage.economie_annuelle_eur.bas)}–{eur(s.profils_autoconso.avec_pilotage.economie_annuelle_eur.haut)}/an
-                      </div>
-                      <div className="text-gray-600">Retour ~{s.profils_autoconso.avec_pilotage.temps_retour_ans} ans</div>
-                    </div>
-                  </div>
+              <Link to="/espace/mises-en-relation"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
+                  bg-ink px-4 py-2 font-semibold text-white hover:bg-ink/90">
+                <Users size={18} /> Être mis en relation avec un installateur RGE
+              </Link>
+              <p className="mt-2 text-sm text-dark/60">
+                Uniquement si vous le demandez, et avec votre consentement. Hélios n’est jamais
+                payé par vous, et ne transmet rien sans votre accord.
+              </p>
+            </section>
+          </div>
 
-                  {/* Comparaison des technologies de stockage */}
-                  <div className="text-sm font-medium text-ink mb-2">Ajouter un stockage ({s.stockage_options[0]?.capacite_kwh} kWh) — autoconso {s.stockage_options[0]?.taux_autoconso_pct} %</div>
-                  <div className="grid sm:grid-cols-3 gap-3 text-sm">
-                    {s.stockage_options.map((o) => (
-                      <div key={o.tech} className="rounded-xl border border-gray-200 p-4">
-                        <div className="font-medium text-ink mb-1">{o.label}</div>
-                        <div className="text-gray-600">Coût total ~{eur(o.cout_total_eur.central)}</div>
-                        <div className="text-gray-600">Retour ~{o.temps_retour_ans} ans</div>
-                        <div className="text-leaf font-medium">Garantie {o.garantie_ans} ans</div>
-                        <div className="text-xs text-gray-400 mt-1">{o.note}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+          <div className="min-w-0">
+            <div role="tablist" aria-label="Sections du simulateur"
+              className="mb-4 flex gap-1 overflow-x-auto rounded-xl border border-ink/10 bg-white p-1">
+              {ONGLETS.map((o) => (
+                <button key={o.id} role="tab" type="button" aria-selected={onglet === o.id}
+                  onClick={() => setOnglet(o.id)}
+                  className={`shrink-0 rounded-lg px-3 py-2 text-sm font-semibold transition
+                    ${onglet === o.id ? 'bg-primary text-white' : 'text-ink hover:bg-cream'}`}>
+                  {o.label}
+                </button>
               ))}
-              <p className="text-xs text-gray-400">{result.scenarios.avertissement}</p>
-
-              <AutoconsoPanel
-                defaultPowerKwc={Number(Object.keys(result.scenarios.par_puissance)[0] ?? 6)}
-              />
             </div>
-          )}
+
+            {onglet === 'maison' && (
+              <OngletMaison config={config} resultat={resultat} majConfig={majConfig} />
+            )}
+            {onglet === 'panneaux' && (
+              localise
+                ? <OngletPanneaux config={config} resultat={resultat} majConfig={majConfig} />
+                : <Vide message="Renseignez d’abord votre adresse, dans l’onglet Maison." />
+            )}
+            {onglet === 'stockage' && (
+              <OngletStockage config={config} resultat={resultat} majConfig={majConfig} />
+            )}
+            {onglet === 'journee' && (
+              <OngletJournee resultat={resultat} saison={saison} setSaison={setSaison}
+                heure={heure} setHeure={setHeure} />
+            )}
+            {onglet === 'etude' && (
+              <OngletEtude config={config} resultat={resultat} majConfig={majConfig}
+                options={options} chargementOptions={optionsEnCours}
+                onAppliquerOption={appliquerOption} />
+            )}
+            {onglet === 'aide' && <OngletAide />}
+          </div>
         </div>
-      )}
-    </section>
+      </div>
+
+      <Feuille titre={titreDe(emplacementOuvert ?? '')} ouvert={emplacementOuvert !== null}
+        onFermer={() => setEmplacementOuvert(null)}>
+        {emplacementOuvert && (
+          <ReglageEquipement id={emplacementOuvert} config={config} resultat={resultat}
+            majConfig={majConfig} />
+        )}
+      </Feuille>
+    </div>
   )
 }

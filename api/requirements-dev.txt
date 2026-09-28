@@ -1,0 +1,3 @@
+# Dependances de developpement uniquement (jamais installees en production).
+-r requirements.txt
+pytest==8.3.*

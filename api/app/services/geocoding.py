@@ -25,6 +25,7 @@ async def geocode(address: str) -> dict:
         "lat": lat,
         "lon": lon,
         "label": props.get("label"),
+        "commune": props.get("city"),  # seul champ renvoye aux visiteurs anonymes
         "code_postal": props.get("postcode"),
         "citycode": props.get("citycode"),
     }

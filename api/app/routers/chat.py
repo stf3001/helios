@@ -18,6 +18,7 @@ from app.models.house import House
 from app.models.moderation import MOTIFS, MessageReport
 from app.models.pro import ProProfile
 from app.models.autoconso import AutoconsoStudy
+from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
 from app.models.user import User
 from app.models.water import WaterStudy
@@ -57,6 +58,7 @@ async def send_message(
     house_context = None
     pro_context = None
     autoconso_context = None
+    simulation_context = None
     solar_context = None
     audit_context = None
     energy_context = None
@@ -76,6 +78,14 @@ async def send_message(
             )
             if autoconso_study is not None:
                 autoconso_context = rag.build_autoconso_context(autoconso_study)
+
+            etude_simulateur = await db.scalar(
+                select(SimulateurStudy)
+                .where(SimulateurStudy.house_id == house.id)
+                .order_by(SimulateurStudy.created_at.desc())
+            )
+            if etude_simulateur is not None:
+                simulation_context = rag.build_simulation_context(etude_simulateur)
 
             solar_study = await db.scalar(
                 select(SolarStudy).where(SolarStudy.house_id == house.id).order_by(SolarStudy.created_at.desc())
@@ -158,6 +168,7 @@ async def send_message(
         audit_context,
         energy_context,
         water_context,
+        simulation_context=simulation_context,
     )
 
     route, simplified, token_stream = await router_llm.generate_route(

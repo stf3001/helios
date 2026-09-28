@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Le .env vit a la racine du depot (helios/), pas dans api/. On le resout en absolu depuis ce
 # fichier : un chemin relatif dependait du dossier de lancement, or l'API demarre depuis api/
-# et les agents en ligne de commande depuis helios/ - les deux ne voyaient pas le meme fichier.
+# et les agents en ligne de commande depuis helios/ — les deux ne voyaient pas le meme fichier.
 _ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:3b"
     embed_model: str = "bge-m3"
+    # Durée de maintien des modèles en RAM par Ollama. Par défaut Ollama les décharge au bout
+    # de 5 min : la requête suivante repaie le chargement (~10 s) ET le prefill du prompt
+    # (~85 s mesurées sur le poste de dev, la constitution pesant 1 400 des 2 325 tokens).
+    # Exprimé en SECONDES (Ollama refuse la chaîne « -1 », qu'il lit comme une durée sans
+    # unité) ; -1 = ne jamais décharger. ~3,2 Go de RAM pour les deux modèles, contre ~95 s
+    # par requête après une période d'inactivité. Mettre 1800 (30 min) si la RAM est comptée.
+    ollama_keep_alive: int = -1
     sobry_partner_link: str = ""
 
     jwt_algorithm: str = "HS256"
@@ -67,6 +74,9 @@ class Settings(BaseSettings):
     # la comparaison 3/6/9 kWc que produit le simulateur.
     # Calée sur les devis réels AD Solar (2026) : 3 kWc ~2 170, 6 kWc ~1 700, 9 kWc ~1 600,
     # 13 kWc ~1 270 €/kWc. Valeurs interpolées entre les paliers (cf. solar_engine).
+    # SOURCE ASSUMÉE, À RECALIBRER : ces prix viennent d'un seul installateur. Hélios se veut
+    # neutre — on garde la provenance visible plutôt que de l'effacer, et on l'élargit à des
+    # sources publiques dès qu'on en dispose.
     solar_cout_paliers_kwc: tuple[tuple[int, int], ...] = (
         (3, 2100), (6, 1750), (9, 1600), (12, 1400),
     )
@@ -104,6 +114,8 @@ class Settings(BaseSettings):
     # le web le 22/07/2026 : papernest.com et adsolar.fr, concordants — À CONFIRMER auprès de MyLight
     # avant toute décision, ces montants peuvent évoluer). Nécessite de souscrire l'électricité chez
     # mylight150 (fournisseur alternatif) — contrainte réelle à signaler à l'utilisateur.
+    # NEUTRALITÉ : adsolar.fr est l'une des deux sources concordantes relevées, pas la seule.
+    # On garde la provenance affichée ; à recouper avec la grille officielle MyLight.
     mylight_activation_eur: float = 179.0
     mylight_abonnement_eur_par_kwc_mois: float = 1.20   # TTC
     mylight_restitution_eur_kwh: float = 0.083          # TURPE + accise (~4,93+3,37 cts HT)
@@ -116,6 +128,104 @@ class Settings(BaseSettings):
     sobry_soflex_heures_negatives_an: int = 1000   # ~1000 h/an à prix négatif ou nul
     sobry_socap_prix_min_eur_kwh: float = 0.00     # plafonné à 0 (jamais négatif), creux au midi solaire
     sobry_socap_prix_max_eur_kwh: float = 0.25     # plafonné la nuit
+
+    # =====================================================================
+    # Simulateur "maison + equipements" (etape 1) — TOUTES les hypotheses
+    # sont ici et remontent a l'ecran via /api/simulateur/calcul ("hypotheses").
+    # Chacune porte son statut : verifie / a recalibrer / a confirmer.
+    # =====================================================================
+
+    # --- Appels PVGIS ---
+    # Une seule serie horaire par (lieu, inclinaison, orientation, pertes), pour 1 kWc :
+    # toute puissance s'en deduit par multiplication. Les coordonnees sont ramenees sur une
+    # grille : l'ensoleillement ne change pas sur 5 km, et un arrondi plus fin multiplierait
+    # les appels sortants sur un point d'entree PUBLIC (PVGIS bloque les IP abusives).
+    simu_pvgis_pas_grille_deg: float = 0.05
+    simu_pvgis_cache_max: int = 128            # series gardees en memoire (~9 Mo)
+
+    # --- Materiel ---
+    simu_panneau_wc: int = 500                      # panneau de reference (a recalibrer)
+    simu_panneau_surface_m2: float = 2.1            # pour "Remplir le toit" (a recalibrer)
+    simu_panneaux_max: int = 40                     # borne haute du simulateur
+    simu_carport_pente_deg: int = 5                 # carport : faible inclinaison, plein sud
+    simu_carport_cout_par_panneau_eur: int = 250    # structure seule, hors panneau (a calibrer)
+    simu_carport_tva_pct: float = 20.0              # carport a 20 % par defaut (A CONFIRMER)
+
+    # --- Prix de l'electricite (TRV option Base au 1er aout 2026, verifie) ---
+    # Le prix du kWh depend de la puissance souscrite : 0,2001 jusqu'a 6 kVA, 0,1985 des 9 kVA.
+    simu_prix_kwh_par_kva: tuple[tuple[int, float], ...] = ((6, 0.2001), (9, 0.1985), (36, 0.1985))
+    # Abonnement mensuel TTC par puissance souscrite (ordres de grandeur, A RECALIBRER).
+    # Il n'entre pas dans les economies (il ne change pas avec le solaire) mais il est
+    # AFFICHE dans la facture : sans lui, le chiffre ne correspond pas a la vraie facture.
+    simu_abonnement_eur_mois_par_kva: tuple[tuple[int, float], ...] = (
+        (3, 9.7), (6, 12.9), (9, 16.3), (12, 19.7), (15, 22.8), (18, 26.0), (24, 33.8), (30, 40.7), (36, 47.6),
+    )
+
+    # --- Raccordement ---
+    simu_injection_max_kva_mono: float = 6.0        # plafond d'injection en monophase (verifie)
+
+    # --- Fiscalite ---
+    # TVA 5,5 % si <= 9 kWc, logement, SANS batterie physique, modules bas carbone,
+    # gestion d'energie integree et installateur RGE ; sinon 20 % sur tout le projet.
+    # La batterie virtuelle ne change pas la TVA. (verifie)
+    simu_tva_seuil_kwc: float = 9.0
+    simu_tva_reduite_pct: float = 5.5
+    simu_tva_pleine_pct: float = 20.0
+
+    # --- Economie sur 25 ans ---
+    simu_duree_etude_ans: int = 25
+    simu_hausse_prix_kwh_pct_an: float = 2.0        # defaut prudent ; selecteur 2/4/6 a l'ecran
+    simu_hausse_prix_kwh_choix_pct: tuple[float, ...] = (2.0, 4.0, 6.0)
+    simu_vieillissement_panneau_pct_an: float = 0.4  # A CALIBRER
+    simu_revente_contrat_ans: int = 20              # contrat d'achat du surplus (verifie)
+    simu_revente_indexation_pct_an: float = 2.0     # indexation du tarif de rachat (verifie)
+
+    # --- Batterie physique (par packs) ---
+    simu_batterie_pack_kwh: float = 5.0             # capacite utile d'un pack (a calibrer)
+    simu_batterie_pack_kw: float = 2.5              # puissance de charge/decharge d'un pack
+    simu_batterie_packs_max: int = 6
+    simu_batterie_cout_par_kwh_eur: int = 700       # pose comprise (a calibrer)
+    simu_batterie_perte_capacite_pct_an: float = 2.0
+    simu_batterie_duree_vie_ans: int = 15           # au-dela : remplacement compte dans les 25 ans
+
+    # --- Recherche de la meilleure taille ---
+    # Un panneau de plus n'est retenu que si son gain marginal depasse ce rendement annuel.
+    simu_seuil_rendement_marginal_pct: float = 5.0  # A CONFIRMER
+
+    # --- Objectifs coches automatiquement ---
+    simu_objectif_autonomie_pct: float = 50.0
+    simu_objectif_retour_ans: int = 12
+    simu_objectif_usages_pilotes: int = 2
+
+    # --- Couches de consommation (kWh/an, ordres de grandeur A CALIBRER) ---
+    # Base = electromenager + eclairage + veilles, hors chauffage/ECS/usages speciaux.
+    simu_conso_base_fixe_kwh_an: int = 900          # socle du logement
+    simu_conso_base_par_occupant_kwh_an: int = 450  # par personne
+    simu_conso_veille_pct: float = 12.0             # part de la base qui tourne en continu
+    # Chauffage : kWh/an par m2 chauffe, par type d'equipement.
+    simu_conso_chauffage_kwh_m2_an: tuple[tuple[str, float], ...] = (
+        ("elec_direct", 75.0), ("PAC_air_eau", 28.0), ("PAC_air_air", 30.0),
+        ("gaz", 0.0), ("fioul", 0.0), ("bois", 0.0), ("reseau", 0.0), ("autre", 0.0),
+    )
+    # Eau chaude : kWh/an par occupant.
+    simu_conso_ecs_kwh_occupant_an: tuple[tuple[str, float], ...] = (
+        ("ballon_elec", 800.0), ("thermodynamique", 280.0),
+        ("gaz", 0.0), ("solaire", 150.0), ("instantane", 700.0),
+    )
+    simu_conso_clim_kwh_piece_an: float = 250.0     # par piece climatisee, juin a septembre
+    simu_conso_piscine_kwh_m3_an: float = 22.0      # filtration, mai a septembre, par m3 de bassin
+    simu_conso_piscine_pompe_kw_defaut: float = 0.75
+    simu_conso_ve_kwh_100km: float = 17.0           # consommation d'un vehicule electrique
+    simu_conso_defaut_kwh_an: int = 4500            # repli si rien n'est connu
+
+    # --- Batterie virtuelle : offres du marche (moteur generique, cf. batterie_virtuelle.py) ---
+    # MySmartBattery : seuls les deux paliers extremes sont sources (12,99 EUR/mois a 20 kWh,
+    # 214,99 EUR/mois a 10 000 kWh, activation 279 EUR). LA GRILLE INTERMEDIAIRE RESTE A RELEVER
+    # ET A DATER aupres de MyLight — le simulateur signale qu'elle est incomplete plutot que
+    # d'interpoler des paliers qui n'existent pas.
+    simu_msb_activation_eur: float = 279.0
+    simu_msb_paliers: tuple[tuple[int, float], ...] = ((20, 12.99), (10000, 214.99))
+    simu_msb_grille_complete: bool = False
 
     # extra="ignore" : ce .env est partage avec docker compose (POSTGRES_*) et le pre-rendu SEO
     # (HELIOS_SITE_URL). Ces cles ne sont pas des reglages de l'API ; sans cette tolerance,

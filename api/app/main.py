@@ -7,7 +7,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.ratelimit import limiter
 from app.routers import (
     account, admin, audits, auth, chat, documents, energy, faq, houses, leads,
-    partner_portal, partners, pro, autoconso, solar, water,
+    partner_portal, partners, pro, autoconso, simulateur, solar, water,
 )
 
 app = FastAPI(title="HELIOS API", version="0.1.0")
@@ -46,6 +46,7 @@ app.include_router(account.router, prefix="/api")
 app.include_router(water.router, prefix="/api")
 app.include_router(pro.router, prefix="/api")
 app.include_router(autoconso.router, prefix="/api")
+app.include_router(simulateur.router, prefix="/api")
 
 
 @app.get("/health")

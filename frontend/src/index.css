@@ -77,3 +77,27 @@
 input, select, textarea {
   font-size: 16px !important;
 }
+
+/* --- Simulateur : flux d'energie de la scene ------------------------------- */
+/* Le trait pointille defile le long du chemin : c'est ce qui donne le sens du flux. */
+@keyframes scene-flux-defile {
+  to { stroke-dashoffset: -52; }
+}
+.scene-flux {
+  animation-name: scene-flux-defile;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-flux { animation: none; }
+}
+
+/* Feuille de reglage qui monte depuis le bas, sur mobile. */
+@keyframes feuille-monte {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.feuille-reglage { animation: feuille-monte 0.22s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .feuille-reglage { animation: none; }
+}

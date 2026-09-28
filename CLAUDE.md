@@ -781,3 +781,10 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 
 ## Remote
 https://github.com/stf3001/helios.git
+
+## Simulateur « maison + équipements » (`/simulateur-solaire`)
+- Moteur horaire déterministe : `simu_conso` (courbe par couches), `simu_pv` (une série PVGIS pour 1 kWc, mise en cache, coordonnées sur grille), `simu_engine` (autoconso, batteries, écrêtage 6 kVA, 25 ans), `simu_options` (3 options + prochaine étape).
+- Deux invariants tenus par `api/tests/` : les bilans se ferment, et la prochaine étape ne contredit jamais la recommandation. Ne pas les assouplir.
+- Toutes les hypothèses sont dans `config.py` sous `simu_*`, chacune avec son statut, et remontent à l'écran dans « Hypothèses et méthode ».
+- `/api/simulateur/calcul` et `/options` sont publics : rien n'est enregistré pour un anonyme, et seule la commune sort dans l'URL de partage.
+- `/api/solar/*` et `/api/autoconso/*` sont remplacés dans le parcours mais restent en place.

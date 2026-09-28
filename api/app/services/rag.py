@@ -127,6 +127,31 @@ def build_autoconso_context(study) -> dict:
     }
 
 
+def build_simulation_context(etude) -> dict:
+    """Résumé de la dernière étude du simulateur « maison + équipements » du foyer.
+
+    Helios doit repartir de CE calcul plutôt que d'en refaire un de tête. La version du
+    moteur est transmise : une étude ancienne repose sur des tarifs qui ont pu changer.
+    """
+    indicateurs = (etude.resultat or {}).get("indicateurs", {})
+    investissement = (etude.resultat or {}).get("investissement", {})
+    return {
+        "date_simulation": etude.created_at.isoformat()
+        if hasattr(etude.created_at, "isoformat") else str(etude.created_at),
+        "version_moteur": etude.version_moteur,
+        "nom": etude.nom,
+        "puissance_kwc": indicateurs.get("puissance_kwc"),
+        "autonomie_pct": indicateurs.get("autonomie_pct"),
+        "facture_mois_eur": indicateurs.get("facture_mois_eur"),
+        "economie_1re_annee_eur": indicateurs.get("economie_1re_annee_eur"),
+        "gain_net_25_ans_eur": indicateurs.get("gain_net_25_ans_eur"),
+        "temps_retour_ans": indicateurs.get("temps_retour_ans"),
+        "investissement_eur": investissement.get("total_eur"),
+        "tva_pct": investissement.get("tva_pct"),
+        "consommation_estimee": indicateurs.get("conso_estimee"),
+    }
+
+
 def build_solar_context(study) -> dict:
     """Résumé de la dernière étude solaire (PVGIS + scénarios, par puissance 3/6/9 kWc) du foyer —
     évite de renvoyer Helios sur des généralités photovoltaïques quand un calcul chiffré existe déjà."""
@@ -176,6 +201,7 @@ def build_user_content(
     audit_context: dict | None = None,
     energy_context: dict | None = None,
     water_context: dict | None = None,
+    simulation_context: dict | None = None,
 ) -> str:
     """Tout ce qui est variable d'une question à l'autre (sources RAG, fiche foyer, études,
     question) — sans la constitution, envoyée séparément en `system` côté API (mise en cache,
@@ -222,6 +248,8 @@ def build_user_content(
         ("DERNIÈRE ÉTUDE ÉNERGIE (SOBRY/courtage, avis Helios déjà rendu)", energy_context),
         ("DERNIÈRE SIMULATION AUTOCONSO (PV/batterie/tarifs dynamiques)", autoconso_context),
         ("DERNIÈRE ÉTUDE DE POTENTIEL HYDRIQUE (Hydrolia)", water_context),
+        ("DERNIÈRE ÉTUDE DU SIMULATEUR (maison équipée : panneaux, stockage, pilotage)",
+         simulation_context),
     ):
         if ctx is not None:
             studies_blocks.append(
