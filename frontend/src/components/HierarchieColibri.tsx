@@ -1,7 +1,7 @@
 import { Leaf, ShieldCheck, Flame, Sun } from 'lucide-react'
 
 /** La hiérarchie de conseil d'Helios (constitution §3) : toujours dans cet ordre.
- *  Réutilisable sur l'accueil, « Comment ça marche », les pré-audits. */
+ *  Réutilisable sur l'accueil, « Qui est Helios ? », les pré-audits. */
 
 const ETAPES = [
   {

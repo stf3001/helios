@@ -4,7 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const links = [
-  { to: '/comment-ca-marche', label: 'Comment ça marche' },
+  { to: '/comment-ca-marche', label: 'Qui est Helios' },
   { to: '/helios', label: 'Helios (IA)' },
   { to: '/simulateur-solaire', label: 'Simulateur solaire' },
   { to: '/eau', label: 'Eau' },

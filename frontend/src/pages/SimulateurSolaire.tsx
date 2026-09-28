@@ -92,6 +92,19 @@ export default function SimulateurSolaire() {
   /* Pour amener les réglages sous les yeux quand on choisit un onglet dans la barre du bas. */
   const panneauReglages = useRef<HTMLDivElement>(null)
 
+  /* Le calque d'accueil bloque le défilement de la page derrière lui, et Échap le ferme —
+     ce qui revient à choisir « tout régler moi-même », le choix qui n'engage à rien. */
+  useEffect(() => {
+    if (!accueil) return
+    const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') setAccueil(false) }
+    window.addEventListener('keydown', echap)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', echap)
+      document.body.style.overflow = ''
+    }
+  }, [accueil])
+
   const majConfig = useCallback((maj: (c: Config) => Config) => {
     setConfig((precedent) => maj(precedent))
   }, [])
@@ -252,39 +265,6 @@ export default function SimulateurSolaire() {
     } catch {
       setMessageEtude('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
     }
-  }
-
-  /* --- Accueil : se laisser guider, ou tout régler soi-même --- */
-  if (accueil) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">
-          Équipez votre maison, voyez ce que ça change
-        </h1>
-        <p className="mt-3 text-lg text-dark/80">
-          Le soleil de votre adresse, votre consommation réelle, heure par heure sur une année
-          entière. Vous ajoutez des panneaux, une batterie, une voiture — les chiffres bougent
-          devant vous. Sans compte, sans engagement.
-        </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <button type="button" onClick={() => { setAccueil(false); setGuide(true) }}
-            className="rounded-xl bg-primary px-5 py-4 text-left text-white transition hover:bg-primary/90">
-            <span className="block font-display text-lg font-bold">Me laisser guider</span>
-            <span className="block text-sm text-white/90">5 questions simples — recommandé</span>
-          </button>
-          <button type="button" onClick={() => setAccueil(false)}
-            className="rounded-xl border-2 border-primary px-5 py-4 text-left text-primary transition
-              hover:bg-primary hover:text-white">
-            <span className="block font-display text-lg font-bold">Tout régler moi-même</span>
-            <span className="block text-sm opacity-90">J’ai déjà mes informations sous la main</span>
-          </button>
-        </div>
-        <p className="mt-8 text-sm text-dark/60">
-          Tous les résultats sont des <strong>estimations</strong>. Les hypothèses sont affichées
-          dans l’onglet Étude, et ne remplacent pas l’étude d’un installateur certifié.
-        </p>
-      </div>
-    )
   }
 
   const ongletActif = ONGLETS.find((o) => o.id === onglet)
@@ -556,6 +536,48 @@ export default function SimulateurSolaire() {
           ))}
         </div>
       </nav>
+
+      {/* ---------- LE CALQUE D'ACCUEIL ----------
+          La maison est DERRIÈRE, visible et déjà dessinée. Avant, ce choix occupait une
+          page à lui seul, sans la moindre image : on demandait au visiteur de se décider
+          sur un simulateur qu'il n'avait pas encore vu. Ici il voit ce qu'il vient
+          chercher, et le calque ne fait que lui demander par quel bout le prendre. */}
+      {accueil && (
+        <div role="dialog" aria-modal="true" aria-labelledby="accueil-titre"
+          className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto
+            bg-ink/40 px-4 py-8 backdrop-blur-[3px]">
+          <div className="animate-slide-up w-full max-w-2xl rounded-2xl border border-white/60
+            bg-white/95 p-6 shadow-2xl sm:p-8">
+            <h1 id="accueil-titre" className="font-display text-2xl font-bold text-ink sm:text-3xl">
+              Équipez votre maison, voyez ce que ça change
+            </h1>
+            <p className="mt-3 text-dark/80">
+              Le soleil de votre adresse, votre consommation réelle, heure par heure sur une
+              année entière. Vous ajoutez des panneaux, une batterie, une voiture — les
+              chiffres bougent devant vous. Sans compte, sans engagement.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => { setAccueil(false); setGuide(true) }}
+                className="rounded-xl bg-primary px-5 py-4 text-left text-white transition
+                  hover:bg-primary/90">
+                <span className="block font-display text-lg font-bold">Me laisser guider</span>
+                <span className="block text-sm text-white/90">5 questions simples — recommandé</span>
+              </button>
+              <button type="button" onClick={() => setAccueil(false)}
+                className="rounded-xl border-2 border-primary px-5 py-4 text-left text-primary
+                  transition hover:bg-primary hover:text-white">
+                <span className="block font-display text-lg font-bold">Tout régler moi-même</span>
+                <span className="block text-sm opacity-90">J’ai déjà mes informations sous la main</span>
+              </button>
+            </div>
+            <p className="mt-5 text-sm text-dark/60">
+              Tous les résultats sont des <strong>estimations</strong>. Les hypothèses sont
+              affichées dans l’onglet Étude, et ne remplacent pas l’étude d’un installateur
+              certifié.
+            </p>
+          </div>
+        </div>
+      )}
 
       <Feuille titre={titreDe(emplacementOuvert ?? '')} ouvert={emplacementOuvert !== null}
         onFermer={() => setEmplacementOuvert(null)}>
