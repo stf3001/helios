@@ -63,6 +63,22 @@
 @keyframes hGlow { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
 @keyframes hDots { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
+/* Les eoliennes verticales de la scene. Une pale helicoidale vue de cote s'affine quand
+   elle passe de profil et s'elargit quand elle revient de face : ecraser le rotor
+   horizontalement, en rythme, c'est exactement ce mouvement-la. Lent — 3,4 s le tour —
+   parce qu'une eolienne domestique tourne lentement, et qu'un mouvement rapide dans un
+   coin de l'ecran fatigue.
+   L'amplitude s'est reglee a l'oeil : a 0,58 le rotor s'aplatissait au lieu de tourner,
+   et le mur strie derriere la premiere eolienne se compressait avec lui. */
+@keyframes eolienne-tourne {
+  0%, 100% { transform: scaleX(1); }
+  50%      { transform: scaleX(0.74); }
+}
+.scene-eolienne { animation: eolienne-tourne 4.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .scene-eolienne { animation: none; }
+}
+
 /* Le regard suit le pointeur. Le décalage lui-même est posé en JS, image par image ;
    ce qui vient d'ici, c'est la douceur — sans elle les yeux sautent d'un point à
    l'autre au lieu de glisser, et le personnage a l'air nerveux. Un quart de seconde :

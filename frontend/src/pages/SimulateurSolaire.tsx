@@ -393,7 +393,8 @@ export default function SimulateurSolaire() {
                 <div className="mx-auto mt-3 h-4 w-2/3 rounded bg-white/70" />
               </div>
             ) : (
-              <SceneMaison equipements={equipements} heure={heure} saison={saison} flux={flux}
+              <SceneMaison equipements={equipements} eolienne={config.eolien.kwc > 0}
+                heure={heure} saison={saison} flux={flux}
                 onEmplacement={setEmplacementOuvert} />
             )}
 

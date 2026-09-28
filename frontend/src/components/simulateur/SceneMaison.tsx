@@ -38,6 +38,8 @@ export interface FluxScene {
 
 interface Props {
   equipements: EmplacementScene[]
+  /** Une éolienne est posée : les rotors se mettent à tourner. */
+  eolienne: boolean
   heure: number
   saison: Saison
   flux: FluxScene
@@ -88,6 +90,24 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
   ballon: { x: 664, y: 474 },            // approximatif : posé sur le circuit orange (chaleur)
   clim: { x: 968, y: 574 },              // approximatif : côté technique de la maison
 }
+
+/**
+ * Les trois rotors des éoliennes verticales, relevés sur l'image source.
+ *
+ * Elles TOURNENT quand une éolienne est posée, et restent immobiles sinon — c'est ce qui
+ * donne l'information : la scène montre l'état du foyer, elle ne décore pas.
+ *
+ * COMMENT : on redécoupe le rotor dans l'image elle-même et on l'écrase horizontalement,
+ * en rythme. Une pale hélicoïdale vue de côté fait exactement cela en tournant — elle
+ * s'affine quand elle passe de profil, s'élargit quand elle revient de face. Pas de
+ * redessin, donc pas de dédoublement avec le trait d'origine ; pas de cache blanc non
+ * plus, qui ferait un trou dans le mur strié derrière la première.
+ */
+const ROTORS = [
+  { x0: 1056, x1: 1108, y0: 484, y1: 594 },
+  { x0: 1131, x1: 1178, y0: 484, y1: 590 },
+  { x0: 1189, x1: 1238, y0: 486, y1: 590 },
+]
 
 /** Où arrivent et d'où partent les flux, en pixels de l'image source. */
 const ANCRE = {
@@ -159,7 +179,7 @@ function Repere({
   )
 }
 
-export default function SceneMaison({ equipements, heure, saison, flux, onEmplacement }: Props) {
+export default function SceneMaison({ equipements, eolienne, heure, saison, flux, onEmplacement }: Props) {
   const nuit = estNuit(heure, saison)
   const installes = equipements.filter((e) => e.installe)
   const numeroDe = new Map(installes.map((e, i) => [e.id, i + 1]))
@@ -200,6 +220,23 @@ export default function SceneMaison({ equipements, heure, saison, flux, onEmplac
 
         {/* LE DÉCOR : l'illustration du site, à sa taille naturelle. Le viewBox fait le cadrage. */}
         <image href="/maison-demain.webp" x="0" y="0" width={IMAGE.w} height={IMAGE.h} />
+
+        {/* Les rotors qui tournent, redécoupés dans le décor et posés par-dessus. Chacun
+            part avec un décalage : trois éoliennes parfaitement synchrones auraient l'air
+            d'un mécanisme, pas de trois machines dans le vent. */}
+        {eolienne && ROTORS.map((r, i) => (
+          <g key={i} className="scene-eolienne"
+            style={{
+              transformOrigin: `${(r.x0 + r.x1) / 2}px ${(r.y0 + r.y1) / 2}px`,
+              animationDelay: `${-i * 1.1}s`,
+            }}>
+            <clipPath id={`sc-rotor-${i}`}>
+              <rect x={r.x0} y={r.y0} width={r.x1 - r.x0} height={r.y1 - r.y0} />
+            </clipPath>
+            <image href="/maison-demain.webp" x="0" y="0" width={IMAGE.w} height={IMAGE.h}
+              clipPath={`url(#sc-rotor-${i})`} />
+          </g>
+        ))}
 
         {/* Voiles sur les légendes gravées qui tombent dans le cadre. */}
         {VOILES.map((v, i) => (
