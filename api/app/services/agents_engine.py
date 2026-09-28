@@ -60,6 +60,9 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="urbanisme_assurance", kind="faq_markdown", location="helios/kb/urbanisme_assurance.md"),
     SourceSpec(name="financement_projet", kind="faq_markdown", location="helios/kb/financement_projet.md"),
     SourceSpec(name="cas_terrain", kind="faq_markdown", location="helios/kb/cas_terrain.md"),
+    # Fin de contrat de rachat et ajout de puissance (28/09/2026) : deux situations que la
+    # base ignorait, alors qu'elles representent une bonne part des appels recus.
+    SourceSpec(name="fin_contrat_rachat", kind="faq_markdown", location="helios/kb/fin_contrat_rachat.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

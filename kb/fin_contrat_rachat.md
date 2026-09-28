@@ -1,0 +1,45 @@
+# Base de connaissances — Fin de contrat de rachat et ajout de puissance (source fin_contrat_rachat)
+# Format identique à la FAQ : ### Q: / `meta` / R: — ingéré par l'agent crawler (source fin_contrat_rachat).
+# Origine : synthèse client d'un conseiller de terrain (septembre 2026), anonymisée.
+# Règle de rédaction : aucune donnée client, aucun prix d'installateur, aucune marque mise en avant.
+# Sources citées dans le document d'origine : arrêté du 1er juin 2026 modifiant l'arrêté du
+# 6 octobre 2021 (publié au JO le 4 juin, applicable depuis le 5 juin) ; Enedis, « Mon contrat
+# d'obligation d'achat prend fin ».
+
+---
+
+## 1. La fin d'un contrat de vente totale
+
+### Q: Mon contrat de vente totale arrive à son terme : que se passe-t-il ?
+`cat: photovoltaique | tags: vente_totale, edf_oa, fin_contrat, echeance | verif: reglementation | maj: reforme 06/2026`
+R: À la date anniversaire, l'acheteur cesse d'acheter votre production. Si votre installation envoie tout sur le réseau par son propre compteur de production, elle continue de produire — mais plus personne ne paie cette électricité, et elle n'alimente pas votre maison. En clair : elle produit pour rien. C'est une échéance qui se prépare avant, pas après. Deux points à retenir : le contrat s'arrête **de lui-même**, il n'y a aucune résiliation à faire ; et si vous avez une seconde installation sous un autre contrat, celle-ci n'est pas concernée par cette échéance. `verif`
+
+### Q: Faut-il résilier un contrat de vente totale qui arrive à échéance ?
+`cat: photovoltaique | tags: vente_totale, edf_oa, fin_contrat, resiliation | verif: reglementation`
+R: Non, et c'est une confusion fréquente. Un contrat qui arrive à son terme s'éteint seul à sa date anniversaire : aucune lettre, aucune démarche de rupture, aucune indemnité. La résiliation — avec préavis, indemnité éventuelle et remboursement possible de la prime — ne concerne que les contrats qu'on interrompt **avant** leur terme. Ne confondez pas les deux : on ne paie pas pour sortir d'un contrat qui se termine tout seul.
+
+### Q: Que dois-je faire concrètement à la date de fin de mon contrat de rachat ?
+`cat: photovoltaique | tags: vente_totale, edf_oa, demarches, fin_contrat | verif: reglementation`
+R: Trois choses simples. **Vérifiez la date exacte** de fin sur votre contrat ou sur le courrier de l'acheteur — c'est une date anniversaire, pas une fin d'année civile. **Envoyez votre dernière facture de production**, avec le relevé de l'index du compteur à cette date. Et **n'attendez pas** pour décider de la suite : chaque mois qui passe après l'échéance est un mois où vos panneaux produisent sans que personne n'en profite. Si vous avez plusieurs installations, vérifiez laquelle est concernée : elles ont chacune leur contrat et leur date.
+
+### Q: En fin de contrat, puis-je trouver un autre acheteur pour toute ma production ?
+`cat: photovoltaique | tags: vente_totale, fin_contrat, acheteur, marche | verif: CRITIQUE, offres`
+R: En pratique, non, pour une installation résidentielle. D'une part les installations de 9 kWc ou moins ne sont plus éligibles à la vente en totalité au tarif réglementé. D'autre part les offres du marché portent sur le rachat du **surplus** d'une installation en autoconsommation, pas sur la totalité de la production : il n'existe pas aujourd'hui d'acheteur sérieux et reconnu pour une production totale de cette taille. Un point de vigilance important : **sans acheteur désigné à la fin du contrat, le gestionnaire de réseau suspend l'accès au réseau pendant trois mois, puis le résilie.** Ne restez pas sans solution en espérant trouver preneur plus tard. `verif`
+
+### Q: Que faire de panneaux dont le contrat de rachat est terminé ?
+`cat: photovoltaique | tags: vente_totale, fin_contrat, autoconsommation, reemploi | verif: generique`
+R: Des panneaux de quinze ou vingt ans produisent encore, souvent à 80–85 % de leur puissance d'origine : les déposer est un gâchis, et c'est le dernier recours, pas la première idée. La voie qui a du sens aujourd'hui est de **rebrancher cette production sur votre maison** au lieu de l'envoyer au réseau. Concrètement : l'installation ne passe plus par son compteur de production mais alimente votre tableau électrique, un onduleur unique peut reprendre plusieurs champs de panneaux, et l'onduleur se règle pour ne rien réinjecter. Une batterie prolonge l'usage en soirée. La contrepartie à connaître honnêtement : quand la batterie est pleine et que la maison ne consomme plus, la production est bridée et ce surplus-là est perdu — mais il ne serait racheté qu'un centime environ, donc l'arbitrage est vite fait. Décaler le lave-linge, le lave-vaisselle ou le chauffe-eau en journée en récupère une bonne partie.
+
+## 2. Ajouter de la puissance sur une installation existante
+
+### Q: Puis-je ajouter des panneaux à une installation déjà sous contrat de rachat ?
+`cat: photovoltaique | tags: extension, ajout_panneaux, edf_oa, contrat_rachat, comptage | verif: CRITIQUE, reglementation | maj: reforme 06/2026`
+R: Vous pouvez poser les panneaux, mais **leur production ne sera pas rachetée**, et c'est ce qui change tout. Depuis l'arrêté du 1er juin 2026, la règle est « une installation, un comptage » : ajouter des panneaux sur un branchement qui porte déjà une installation sous contrat ne donne plus droit au rachat, et on ne peut pas rattacher les nouveaux panneaux au contrat existant. Autrement dit, l'extension d'une installation sous contrat n'est plus une opération qui se valorise à la revente. Si vous voulez tout de même plus de production, elle n'a de sens que si vous la **consommez** : ce qui compte alors n'est plus la puissance posée mais votre capacité à l'utiliser sur place. Faites étudier votre cas avant d'engager quoi que ce soit. `verif`
+
+### Q: Puis-je regrouper deux installations derrière un seul compteur pour signer un nouveau contrat ?
+`cat: photovoltaique | tags: extension, regroupement, edf_oa, resiliation, comptage | verif: CRITIQUE, tarifs`
+R: C'est techniquement envisageable et presque toujours une mauvaise affaire. Regrouper suppose de résilier le contrat en cours, donc d'y renoncer définitivement : une indemnité de résiliation est due sur la plupart des contrats — son montant n'est connu qu'après calcul par l'acheteur, l'ordre de grandeur cité étant d'environ 500 € pour une installation de 3 kWc résiliée après un an et demi — et la prime à l'autoconsommation perçue à la mise en service peut être réclamée en tout ou partie. Vous payez donc pour sortir d'un contrat signé à un tarif qui ne se signe plus, afin d'en signer un nouveau dont le surplus est racheté 1,1 centime le kWh. Avant toute décision : faites chiffrer l'indemnité par l'acheteur, c'est gratuit, et comparez-la à ce que le contrat actuel vous rapporte encore jusqu'à son terme. `verif`
+
+### Q: Pourquoi la règle « une installation, un compteur » change-t-elle mes options ?
+`cat: photovoltaique | tags: comptage, reforme, extension, edf_oa | verif: reglementation | maj: reforme 06/2026`
+R: Parce qu'elle ferme la porte qui permettait d'agrandir une installation en restant dans son contrat. Depuis l'arrêté du 1er juin 2026 (publié au Journal officiel le 4 juin, applicable depuis le 5 juin), chaque installation doit avoir son propre comptage pour être rachetée. Combinée aux deux autres changements de la même réforme — surplus d'une nouvelle installation racheté 1,1 centime le kWh, et suppression des primes à l'investissement — elle fait qu'une électricité solaire vendue ne vaut presque plus rien, alors que la même électricité consommée chez soi vaut une vingtaine de centimes. Toute la réflexion se déplace donc de « combien je peux produire et vendre » vers « combien je peux réellement consommer ». `verif`
