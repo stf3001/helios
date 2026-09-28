@@ -250,6 +250,23 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
               <Ligne label="Production valorisée"
                 valeur={`${resultat.indicateurs.production_valorisee_pct} %`} />
             </div>
+            {/* L'écrêtage se dit EN PETIT tant qu'il ne pèse rien. Il a longtemps déclenché
+                un bandeau rouge, y compris quand rien n'était écrêté du tout : un 9 kWc
+                plein sud culmine vers 7,8 kW à midi en juin, dont le talon de la maison et
+                les usages du moment mangent une bonne part — il ne sort quasiment jamais
+                plus de 6 kVA. Au-delà du seuil, c'est l'alerte en haut de page qui parle,
+                et cette ligne se tait pour ne pas dire deux fois la même chose. */}
+            {resultat.production.ecrete_kwh > 0
+              && (100 * resultat.production.ecrete_kwh / resultat.production.annuel_kwh)
+                 < resultat.production.ecrete_seuil_pct && (
+              <p className="pt-2 text-xs text-dark/60">
+                Aux heures de plus forte production, une petite part ne peut pas sortir sur
+                le réseau — {kwh(resultat.production.ecrete_kwh)} sur l’année, soit{' '}
+                {(100 * resultat.production.ecrete_kwh / resultat.production.annuel_kwh)
+                  .toFixed(1).replace('.', ',')} %
+                de votre production. C’est négligeable à ce niveau.
+              </p>
+            )}
           </>
         )}
       </Bloc>

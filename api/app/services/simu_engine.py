@@ -399,7 +399,6 @@ def _tri(flux: list[float]) -> float | None:
 def _alertes(config: Configuration, annuel: dict, bilan_virtuel: dict | None) -> list[dict]:
     alertes: list[dict] = []
     mono = config.maison.raccordement in ("monophase", "inconnu")
-    kwc = _kwc_total(config)
 
     if config.maison.raccordement == "inconnu":
         alertes.append({
@@ -407,20 +406,26 @@ def _alertes(config: Configuration, annuel: dict, bilan_virtuel: dict | None) ->
             "texte": "Raccordement inconnu : le calcul suppose du monophasé, plus contraignant. "
                      "Vérifiez sur votre compteur, le résultat peut changer.",
         })
-    if mono and annuel["ecrete"] > 0:
+    # L'écrêtage n'alerte QUE s'il pèse vraiment. Mesuré sur une maison de référence :
+    # un 9 kWc monophasé n'écrête rien du tout, et un 12 kWc perd 4 € par an. Deux bandeaux
+    # rouges pour cela usaient l'attention du lecteur, qui finissait par ne plus lire les
+    # alertes qui comptent. En dessous du seuil, l'écran le dit en petit (onglet Panneaux).
+    part_ecretee = 100 * annuel["ecrete"] / annuel["production"] if annuel["production"] else 0.0
+    if mono and part_ecretee >= settings.simu_ecretage_alerte_pct:
         alertes.append({
             "niveau": "attention",
             "texte": f"En monophasé, l'injection est plafonnée à "
-                     f"{settings.simu_injection_max_kva_mono:g} kVA : "
-                     f"{annuel['ecrete']:.0f} kWh par an sont perdus faute de pouvoir sortir.",
+                     f"{settings.simu_injection_max_kva_mono:g} kVA, et votre installation "
+                     f"dépasse ce plafond une bonne partie de l'été : "
+                     f"{annuel['ecrete']:.0f} kWh par an ne peuvent pas sortir, soit "
+                     f"{part_ecretee:.0f} % de votre production. Le passage en triphasé "
+                     f"mérite d'être chiffré.",
         })
-    if mono and kwc > settings.simu_injection_max_kva_mono:
-        alertes.append({
-            "niveau": "attention",
-            "texte": f"{kwc:g} kWc installés pour un raccordement monophasé qui n'en accepte que "
-                     f"{settings.simu_injection_max_kva_mono:g} en injection : renseignez-vous sur "
-                     "le passage en triphasé, ou réduisez la puissance.",
-        })
+    # Il y avait ici une seconde alerte, déclenchée dès que la puissance POSÉE dépassait
+    # le plafond d'injection. Elle était fausse en pratique : mesurée sur une maison de
+    # référence, une installation de 8, 9 ou 10 kWc en monophasé n'écrête pas un seul kWh,
+    # et l'alerte se déclenchait quand même. Ce qui compte n'est pas ce qu'on pose, c'est
+    # ce qui sort réellement — et c'est l'écrêtage mesuré, juste au-dessus, qui le dit.
     if bilan_virtuel and not bilan_virtuel["grille_complete"]:
         alertes.append({"niveau": "attention", "texte": bilan_virtuel["note"]})
     if bilan_virtuel and bilan_virtuel["fournisseur_impose"]:

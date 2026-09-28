@@ -78,6 +78,7 @@ export interface Resultat {
   production: {
     annuel_kwh: number; par_kwc_kwh: number
     kwc_toit: number; kwc_carport: number; pertes_pct: number
+    ecrete_kwh: number; ecrete_seuil_pct: number
   }
   panneaux_max_toit: number | null
   version_moteur: string

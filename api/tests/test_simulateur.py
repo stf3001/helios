@@ -175,19 +175,64 @@ def test_la_batterie_virtuelle_ne_change_pas_la_tva():
     assert invest["tva_pct"] == settings.simu_tva_reduite_pct
 
 
+def _petit_foyer(raccordement: str):
+    return maison_type(conso_connue_kwh_an=2500, raccordement=raccordement,
+                       chauffage="gaz", ecs="gaz")
+
+
 def test_le_monophase_ecrete_l_injection_a_6_kva():
-    """Une grosse installation sur un petit foyer : le monophasé perd de l'énergie."""
-    petite_conso = maison_type(conso_connue_kwh_an=2500, raccordement="monophase",
-                               chauffage="gaz", ecs="gaz")
-    mono = _resultat(config_type(nb_panneaux=24, maison=petite_conso), detail=False)
-    triphase = _resultat(
-        config_type(nb_panneaux=24, maison=maison_type(
-            conso_connue_kwh_an=2500, raccordement="triphase", chauffage="gaz", ecs="gaz")),
-        detail=False)
+    """La physique : en monophasé le surplus bute sur le plafond, en triphasé non."""
+    mono = _resultat(config_type(nb_panneaux=24, maison=_petit_foyer("monophase")), detail=False)
+    triphase = _resultat(config_type(nb_panneaux=24, maison=_petit_foyer("triphase")), detail=False)
 
     assert mono["bilan_annuel"]["ecrete"] > 0
     assert triphase["bilan_annuel"]["ecrete"] == 0
-    assert any("plafonn" in a["texte"] for a in mono["alertes"])
+
+
+def test_un_ecretage_negligeable_n_alerte_pas():
+    """Et c'est le point : ce test demandait l'inverse jusqu'au 28/09/2026.
+
+    L'alerte se declenchait des qu'un seul kWh etait ecrete — et meme, par une seconde
+    regle, des que la puissance POSEE depassait le plafond, sans qu'un seul kWh ne soit
+    perdu. Stephane l'a signale sur un cas reel : un 9 kWc plein sud bien incline culmine
+    vers 7,8 kW a midi en juin, dont le talon de la maison (300 a 500 W) et les usages du
+    moment mangent une bonne part. Il ne sort quasiment jamais plus de 6 kVA.
+
+    Mesure ici : 12 kWc sur un foyer de 2 500 kWh perd 142 kWh par an, soit 1 % de la
+    production, environ 6 EUR. Un bandeau rouge pour cela use l'attention du lecteur, qui
+    finit par ne plus lire les alertes qui comptent.
+    """
+    resultat = _resultat(config_type(nb_panneaux=24, maison=_petit_foyer("monophase")),
+                         detail=False)
+    annuel = resultat["bilan_annuel"]
+    part = 100 * annuel["ecrete"] / annuel["production"]
+
+    assert 0 < part < settings.simu_ecretage_alerte_pct
+    assert not any("plafonn" in a["texte"] for a in resultat["alertes"])
+
+
+def test_un_ecretage_qui_pese_alerte_toujours():
+    """Au-dela du seuil, l'avertissement reste — c'est la que le triphase se chiffre."""
+    resultat = _resultat(config_type(nb_panneaux=32, maison=_petit_foyer("monophase")),
+                         detail=False)
+    annuel = resultat["bilan_annuel"]
+    part = 100 * annuel["ecrete"] / annuel["production"]
+
+    assert part >= settings.simu_ecretage_alerte_pct
+    assert any("plafonn" in a["texte"] for a in resultat["alertes"])
+
+
+def test_aucune_alerte_sur_la_seule_puissance_posee():
+    """9 kWc en monophase : rien n'est ecrete, donc rien ne doit crier.
+
+    C'est le cas exact de la capture d'ecran du 28/09/2026 : deux bandeaux rouges pour
+    zero kWh perdu.
+    """
+    resultat = _resultat(config_type(nb_panneaux=18, maison=_petit_foyer("monophase")),
+                         detail=False)
+
+    assert resultat["bilan_annuel"]["ecrete"] == 0
+    assert not any(a["niveau"] == "attention" for a in resultat["alertes"])
 
 
 def test_un_raccordement_inconnu_est_traite_en_monophase_et_le_dit():

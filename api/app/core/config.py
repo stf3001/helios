@@ -173,6 +173,18 @@ class Settings(BaseSettings):
 
     # --- Raccordement ---
     simu_injection_max_kva_mono: float = 6.0        # plafond d'injection en monophase (verifie)
+    # Part de la production au-dela de laquelle l'ecretage merite un avertissement.
+    #
+    # Mesure le 28/09/2026 sur une maison de reference a Marseille, raccordement monophase :
+    #   8, 9 et 10 kWc -> 0 kWh ecrete      12 kWc -> 96 kWh (0,7 %, 4 EUR/an)
+    #   14 kWc -> 596 kWh (3,9 %, 24 EUR/an)   17 kWc -> 1 898 kWh (10,1 %, 76 EUR/an)
+    #
+    # Un 9 kWc plein sud bien incline culmine vers 7,8 kW a midi en juin ; le talon de la
+    # maison (300 a 500 W) et un usage comme une piscine (800 W) en mangent une bonne part,
+    # et il ne sort quasiment jamais plus de 6 kVA. Alerter dans ces cas-la, c'est crier au
+    # loup : l'alerte perd son sens pour les vraies surpuissances. En dessous du seuil,
+    # l'ecran le mentionne en petit, sans alerte.
+    simu_ecretage_alerte_pct: float = 5.0
 
     # --- Fiscalite ---
     # TVA 5,5 % si <= 9 kWc, logement, SANS batterie physique, modules bas carbone,

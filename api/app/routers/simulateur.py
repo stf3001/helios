@@ -119,6 +119,11 @@ async def calcul(request: Request, payload: SimulateurIn):
             "kwc_toit": production["kwc_toit"],
             "kwc_carport": production["kwc_carport"],
             "pertes_pct": production["pertes_pct"],
+            # L'ecretage et le seuil au-dela duquel il devient un avertissement. L'ecran
+            # s'en sert pour en parler EN PETIT tant qu'il est negligeable — plutot que de
+            # le taire, ou d'en faire un bandeau rouge pour quelques euros par an.
+            "ecrete_kwh": round(resultat["bilan_annuel"]["ecrete"], 1),
+            "ecrete_seuil_pct": settings.simu_ecretage_alerte_pct,
         },
         "panneaux_max_toit": simu_pv.panneaux_max_du_toit(payload.panneaux.surface_toit_m2),
         "version_moteur": simu_engine.VERSION_MOTEUR,
