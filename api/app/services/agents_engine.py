@@ -164,6 +164,37 @@ async def _log(db: AsyncSession, agent: str, action: str, detail: str) -> None:
     db.add(AgentLog(agent=agent, action=action, detail=detail))
 
 
+async def _elaguer(db: AsyncSession, source: SourceSpec, titres_du_fichier: set[str]) -> int:
+    """Retire de la base les fiches de cette source qui ne sont plus dans son fichier.
+
+    Sans ça le crawler ne sait qu'ajouter : une fiche supprimée du markdown restait en base
+    pour toujours. Elle continuait d'être listée sur /faq alors que le pré-rendu, qui lit le
+    markdown, ne lui générait plus de page — le lien « ouvrir cette fiche » tombait en 404 —
+    et le chat pouvait encore la servir. Constaté le 29/09/2026 sur une fiche d'éolien.
+
+    GARDE-FOU : on n'élague jamais à partir d'un fichier qui n'a produit aucune fiche. Une
+    erreur de lecture ou une expression de parsing cassée effacerait sinon la source entière,
+    silencieusement. Mieux vaut une fiche périmée de trop qu'une source disparue.
+
+    Les chunks partent avant le document : la clé étrangère n'a pas de suppression en cascade.
+    """
+    if not titres_du_fichier:
+        return 0
+
+    perimes = list(await db.scalars(
+        select(KbDocument).where(
+            KbDocument.source == source.name,
+            KbDocument.titre.notin_(titres_du_fichier),
+        )
+    ))
+    for doc in perimes:
+        for chunk in await db.scalars(select(KbChunk).where(KbChunk.document_id == doc.id)):
+            await db.delete(chunk)
+        await db.delete(doc)
+        await _log(db, "crawler", "retrait", f"{source.name}: « {doc.titre} » n'est plus dans le fichier")
+    return len(perimes)
+
+
 async def crawl_source(db: AsyncSession, source: SourceSpec) -> dict:
     """Ingestion/rafraîchissement d'une source dans le RAG. Upsert par (source, titre)."""
     try:
@@ -198,10 +229,14 @@ async def crawl_source(db: AsyncSession, source: SourceSpec) -> dict:
             chunk.embedding = embedding
             chunk.chunk_metadata = entry["metadata"]
 
+    retires = await _elaguer(db, source, {e["titre"] for e in entries})
+
     await _log(db, "crawler", "ingest_source",
-               f"{source.name}: {added} ajoutés, {updated} mis à jour ({len(entries)} entrées)")
+               f"{source.name}: {added} ajoutés, {updated} mis à jour, {retires} retirés "
+               f"({len(entries)} entrées)")
     await db.commit()
-    return {"source": source.name, "added": added, "updated": updated, "total": len(entries)}
+    return {"source": source.name, "added": added, "updated": updated,
+            "removed": retires, "total": len(entries)}
 
 
 async def run_crawler(db: AsyncSession) -> list[dict]:
