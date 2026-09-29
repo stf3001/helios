@@ -9,6 +9,7 @@ const links = [
   { to: '/simulateur-solaire', label: 'La maison de demain' },
   { to: '/le-vent', label: 'Le vent' },
   { to: '/eau', label: 'L’eau' },
+  { to: '/la-terre', label: 'La terre' },
   { to: '/faq', label: 'FAQ' },
 ]
 
@@ -35,16 +36,16 @@ export default function Header() {
         <Logo />
 
         {/* Desktop */}
-        <nav className="hidden md:flex items-center gap-6 text-sm">
+        <nav className="hidden lg:flex items-center gap-3 text-[13px] xl:gap-6 xl:text-sm">
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} className={({ isActive }) =>
-              isActive ? 'text-primary font-semibold' : 'text-dark/80 hover:text-primary'
+              'whitespace-nowrap ' + (isActive ? 'text-primary font-semibold' : 'text-dark/80 hover:text-primary')
             }>
               {l.label}
             </NavLink>
           ))}
         </nav>
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2 xl:gap-3">
           {user ? (
             <>
               <Link to="/espace/helios" className="text-sm text-dark/80 hover:text-primary">Mon Helios</Link>
@@ -60,14 +61,14 @@ export default function Header() {
         </div>
 
         {/* Burger mobile */}
-        <button className="md:hidden p-2 -mr-2 text-ink" onClick={() => setOpen((v) => !v)} aria-label="Menu">
+        <button className="lg:hidden p-2 -mr-2 text-ink" onClick={() => setOpen((v) => !v)} aria-label="Menu">
           {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Panneau mobile */}
       {open && (
-        <div className="md:hidden border-t border-black/5 bg-cream animate-slide-up">
+        <div className="lg:hidden border-t border-black/5 bg-cream animate-slide-up">
           <nav className="px-4 py-3 flex flex-col">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} onClick={close} className={({ isActive }) =>

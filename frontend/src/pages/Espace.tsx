@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, ArrowRight,
+  Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, ArrowRight, Sprout,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
@@ -19,6 +19,7 @@ const NIVEAU_LABEL: Record<string, string> = {
 const SIMULATEURS = [
   { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'PV, batterie, tarifs — autoconsommation' },
   { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique (Hydrolia)' },
+  { to: '/espace/jardin', icon: Sprout, title: 'Mon programme de cultures', desc: 'Le potager mois par mois, selon ma région' },
 ]
 
 const AUTRES_TUILES = [

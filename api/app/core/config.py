@@ -298,6 +298,54 @@ class Settings(BaseSettings):
     )
     simu_msb_grille_complete: bool = True
 
+    # =====================================================================
+    # Le jardin nourricier (services/jardin.py) — TOUTES les hypotheses sont
+    # ici et remontent a l'ecran, chacune avec sa source. Aucune n'est un
+    # reglage commercial : ce sont des ordres de grandeur releves, et le
+    # calcul les presente comme tels.
+    # =====================================================================
+
+    # Ce qu'un adulte mange de legumes en un an. 508 kg pour une famille de
+    # quatre, soit 127 kg par personne (references de jardinage francaises,
+    # relevees le 29/09/2026). Pommes de terre comprises.
+    jardin_legumes_kg_personne_an: float = 127.0
+
+    # Rendement de la surface CULTIVEE, hors allees. Une etude de potagers
+    # domestiques donne 0,5 a 3,9 kg/m2 selon la tenue du jardin, moyenne
+    # ~1,8. On retient donc le bas de la fourchette pour un debutant et le
+    # haut pour un jardin rode — jamais le maximum, qui est un record.
+    jardin_rendement_kg_m2_an: tuple[tuple[str, float], ...] = (
+        ("debutant", 1.5), ("rodee", 2.5),
+    )
+
+    # Heures d'entretien par m2 cultive et par an. Les temoignages releves
+    # tournent autour de 260 a 365 h/an pour 100 m2, soit 2,6 a 3,65 h/m2.
+    # On prend le haut pour un debutant (on est lent quand on apprend) et le
+    # bas pour un jardin rode (paillage, arrosage automatique, successions).
+    jardin_temps_h_m2_an: tuple[tuple[str, float], ...] = (
+        ("debutant", 3.5), ("rodee", 2.6),
+    )
+
+    # Part de la surface totale qui n'est PAS cultivee : allees, compost,
+    # cabane, bordures. A CONFIRMER — ordre de grandeur courant.
+    jardin_part_allees_pct: float = 30.0
+
+    # Le budget de temps propose par defaut. C'est la contrainte d'entree du
+    # calcul, pas son resultat : on montre ce qu'une heure par jour permet,
+    # au lieu d'annoncer un temps qu'il faudrait tronquer pour rassurer.
+    jardin_heures_jour_defaut: float = 1.0
+    jardin_heures_jour_min: float = 0.25
+    jardin_heures_jour_max: float = 3.0
+    jardin_personnes_max: int = 10
+
+    # Repartition du travail dans l'annee, en % du total. Le potager n'est
+    # pas une corvee reguliere : mars-juin concentre la moitie de l'effort.
+    # C'est CE chiffre qui evite la promesse trompeuse d'une moyenne lissee.
+    # Ordre de grandeur A CONFIRMER, la forme compte plus que la valeur.
+    jardin_saison_pct: tuple[float, ...] = (
+        2.0, 4.0, 9.0, 13.0, 15.0, 13.0, 11.0, 9.0, 8.0, 8.0, 5.0, 3.0,
+    )
+
     # extra="ignore" : ce .env est partage avec docker compose (POSTGRES_*) et le pre-rendu SEO
     # (HELIOS_SITE_URL). Ces cles ne sont pas des reglages de l'API ; sans cette tolerance,
     # pydantic refuse de demarrer des qu'il rencontre une cle qu'il ne declare pas.

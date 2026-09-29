@@ -1,0 +1,150 @@
+{
+  "version": "2026-09-29",
+  "avertissement": "Calendrier indicatif. La vraie référence locale est la date moyenne des dernières gelées de votre commune : elle peut décaler ces mois de deux à trois semaines dans un sens ou dans l'autre. À latitude égale, l'est continental gèle plus tard que l'ouest océanique.",
+  "legumes": [
+    {"nom": "Ail", "famille": "Bulbes", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [10, 11, 2, 3], "recolte": [6, 7]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [10, 11, 12], "recolte": [6, 7]},
+     "note": "Planté en automne, il donne de plus grosses têtes qu'au printemps."},
+
+    {"nom": "Aubergine", "famille": "Légumes-fruits", "facile": false,
+     "nord": {"semis_abri": [3], "semis": [], "plantation": [5], "recolte": [7, 8, 9]},
+     "sud":  {"semis_abri": [2, 3], "semis": [], "plantation": [4], "recolte": [6, 7, 8, 9, 10]},
+     "note": "Exigeante en chaleur : sans été franc, la récolte reste maigre."},
+
+    {"nom": "Basilic", "famille": "Aromatiques", "facile": true,
+     "nord": {"semis_abri": [3, 4], "semis": [], "plantation": [5], "recolte": [6, 7, 8, 9]},
+     "sud":  {"semis_abri": [3], "semis": [4], "plantation": [4], "recolte": [5, 6, 7, 8, 9, 10]},
+     "note": "Réussit très bien en pot sur un rebord de fenêtre."},
+
+    {"nom": "Betterave", "famille": "Légumes-racines", "facile": true,
+     "nord": {"semis_abri": [], "semis": [4, 5, 6], "plantation": [], "recolte": [7, 8, 9, 10]},
+     "sud":  {"semis_abri": [], "semis": [3, 4, 5, 6], "plantation": [], "recolte": [6, 7, 8, 9, 10, 11]},
+     "note": "Se conserve plusieurs mois au frais, dans du sable ou en cave."},
+
+    {"nom": "Blette", "famille": "Légumes-feuilles", "facile": true,
+     "nord": {"semis_abri": [], "semis": [4, 5, 6], "plantation": [], "recolte": [7, 8, 9, 10, 11]},
+     "sud":  {"semis_abri": [], "semis": [3, 4, 5, 6, 8], "plantation": [], "recolte": [6, 7, 8, 9, 10, 11, 12]},
+     "note": "On récolte feuille à feuille pendant des mois : très rentable au m²."},
+
+    {"nom": "Carotte", "famille": "Légumes-racines", "facile": false,
+     "nord": {"semis_abri": [], "semis": [3, 4, 5, 6, 7], "plantation": [], "recolte": [6, 7, 8, 9, 10, 11]},
+     "sud":  {"semis_abri": [], "semis": [2, 3, 4, 5, 6, 7, 8], "plantation": [], "recolte": [5, 6, 7, 8, 9, 10, 11, 12]},
+     "note": "Difficile en sol lourd ou caillouteux : il lui faut du meuble et du profond."},
+
+    {"nom": "Chou d'hiver", "famille": "Choux", "facile": true,
+     "nord": {"semis_abri": [], "semis": [4, 5, 6], "plantation": [6, 7], "recolte": [10, 11, 12, 1, 2]},
+     "sud":  {"semis_abri": [], "semis": [4, 5, 6], "plantation": [6, 7], "recolte": [10, 11, 12, 1, 2, 3]},
+     "note": "Le semis d'été est celui qu'on oublie, et c'est lui qui donne l'hiver."},
+
+    {"nom": "Ciboulette", "famille": "Aromatiques", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [3, 4], "recolte": [4, 5, 6, 7, 8, 9, 10]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [3], "recolte": [3, 4, 5, 6, 7, 8, 9, 10, 11]},
+     "note": "Vivace : une touffe plantée une fois revient chaque année."},
+
+    {"nom": "Concombre", "famille": "Légumes-fruits", "facile": true,
+     "nord": {"semis_abri": [4], "semis": [], "plantation": [5], "recolte": [7, 8, 9]},
+     "sud":  {"semis_abri": [3], "semis": [4], "plantation": [4], "recolte": [6, 7, 8, 9]},
+     "note": "Gourmand en eau : pailler, et arroser au pied plutôt que sur le feuillage."},
+
+    {"nom": "Courge et potiron", "famille": "Légumes-fruits", "facile": true,
+     "nord": {"semis_abri": [4], "semis": [5], "plantation": [5], "recolte": [9, 10]},
+     "sud":  {"semis_abri": [3], "semis": [4], "plantation": [4], "recolte": [9, 10]},
+     "note": "Prend beaucoup de place, mais se conserve tout l'hiver au sec."},
+
+    {"nom": "Courgette", "famille": "Légumes-fruits", "facile": true,
+     "nord": {"semis_abri": [4], "semis": [5], "plantation": [5], "recolte": [6, 7, 8, 9]},
+     "sud":  {"semis_abri": [3], "semis": [4], "plantation": [4], "recolte": [6, 7, 8, 9, 10]},
+     "note": "Deux pieds suffisent souvent pour une famille : n'en mettez pas six."},
+
+    {"nom": "Échalote", "famille": "Bulbes", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [2, 3], "recolte": [6, 7]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [1, 2, 3], "recolte": [6, 7]},
+     "note": "Sol bien drainé indispensable : elle pourrit dans l'humidité."},
+
+    {"nom": "Épinard", "famille": "Légumes-feuilles", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4, 8, 9], "plantation": [], "recolte": [3, 4, 5, 6, 10, 11]},
+     "sud":  {"semis_abri": [], "semis": [2, 3, 9, 10], "plantation": [], "recolte": [1, 2, 3, 4, 5, 11, 12]},
+     "note": "Monte en graines à la chaleur : évitez le semis de plein été."},
+
+    {"nom": "Fraisier", "famille": "Petits fruits", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [8, 9], "recolte": [5, 6]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [9, 10], "recolte": [4, 5, 6]},
+     "note": "À replanter tous les trois ans : au-delà, la production chute."},
+
+    {"nom": "Haricot vert", "famille": "Légumineuses", "facile": true,
+     "nord": {"semis_abri": [], "semis": [5, 6, 7], "plantation": [], "recolte": [7, 8, 9]},
+     "sud":  {"semis_abri": [], "semis": [4, 5, 6, 7], "plantation": [], "recolte": [6, 7, 8, 9, 10]},
+     "note": "Semez en plusieurs fois, toutes les trois semaines, pour étaler la récolte."},
+
+    {"nom": "Laitue", "famille": "Salades", "facile": true,
+     "nord": {"semis_abri": [2, 3], "semis": [3, 4, 5, 6, 7, 8], "plantation": [4, 5, 6, 7, 8], "recolte": [5, 6, 7, 8, 9, 10, 11]},
+     "sud":  {"semis_abri": [1, 2], "semis": [2, 3, 4, 5, 6, 7, 8, 9], "plantation": [3, 4, 5, 6, 7, 8, 9], "recolte": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
+     "note": "La culture la plus rapide à donner un résultat : idéale pour débuter."},
+
+    {"nom": "Mâche", "famille": "Salades", "facile": true,
+     "nord": {"semis_abri": [], "semis": [8, 9], "plantation": [], "recolte": [10, 11, 12, 1, 2]},
+     "sud":  {"semis_abri": [], "semis": [8, 9, 10], "plantation": [], "recolte": [10, 11, 12, 1, 2, 3]},
+     "note": "Résiste au gel : elle occupe le jardin quand tout le reste est fini."},
+
+    {"nom": "Melon", "famille": "Légumes-fruits", "facile": false,
+     "nord": {"semis_abri": [4], "semis": [], "plantation": [5], "recolte": [8, 9]},
+     "sud":  {"semis_abri": [3], "semis": [4], "plantation": [4], "recolte": [7, 8, 9]},
+     "note": "Demande chaleur et soleil : hasardeux au nord de la Loire."},
+
+    {"nom": "Navet", "famille": "Légumes-racines", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4, 8], "plantation": [], "recolte": [5, 6, 10, 11]},
+     "sud":  {"semis_abri": [], "semis": [2, 3, 8, 9], "plantation": [], "recolte": [4, 5, 10, 11, 12]},
+     "note": "Rapide : deux à trois mois entre le semis et l'assiette."},
+
+    {"nom": "Oignon", "famille": "Bulbes", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4], "plantation": [3, 4], "recolte": [7, 8]},
+     "sud":  {"semis_abri": [], "semis": [2, 3], "plantation": [2, 3], "recolte": [6, 7]},
+     "note": "Les bulbilles sont plus simples que le semis, et rattrapent leur retard."},
+
+    {"nom": "Persil", "famille": "Aromatiques", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4, 5, 6, 7], "plantation": [], "recolte": [6, 7, 8, 9, 10, 11]},
+     "sud":  {"semis_abri": [], "semis": [2, 3, 4, 5, 6, 7, 8], "plantation": [], "recolte": [5, 6, 7, 8, 9, 10, 11, 12]},
+     "note": "Lève lentement, souvent trois semaines : ne concluez pas trop vite à un échec."},
+
+    {"nom": "Petit pois", "famille": "Légumineuses", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4], "plantation": [], "recolte": [6, 7]},
+     "sud":  {"semis_abri": [], "semis": [10, 11, 2, 3], "plantation": [], "recolte": [4, 5, 6]},
+     "note": "Légumineuse : elle enrichit le sol en azote pour la culture suivante."},
+
+    {"nom": "Poireau", "famille": "Légumes-tiges", "facile": true,
+     "nord": {"semis_abri": [], "semis": [3, 4], "plantation": [6, 7], "recolte": [1, 2, 3, 10, 11, 12]},
+     "sud":  {"semis_abri": [], "semis": [2, 3], "plantation": [5, 6], "recolte": [1, 2, 3, 9, 10, 11, 12]},
+     "note": "Occupe la planche longtemps, mais assure les récoltes d'hiver."},
+
+    {"nom": "Poivron et piment", "famille": "Légumes-fruits", "facile": false,
+     "nord": {"semis_abri": [3], "semis": [], "plantation": [5], "recolte": [8, 9]},
+     "sud":  {"semis_abri": [2, 3], "semis": [], "plantation": [4], "recolte": [7, 8, 9, 10]},
+     "note": "Comme la tomate, il ne supporte aucune gelée."},
+
+    {"nom": "Pomme de terre", "famille": "Légumes-racines", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [4], "recolte": [7, 8]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [3], "recolte": [6, 7]},
+     "note": "Gros volume au m², mais c'est l'un des légumes les moins chers du commerce."},
+
+    {"nom": "Radis", "famille": "Légumes-racines", "facile": true,
+     "nord": {"semis_abri": [2], "semis": [3, 4, 5, 6, 7, 8, 9], "plantation": [], "recolte": [4, 5, 6, 7, 8, 9, 10]},
+     "sud":  {"semis_abri": [1], "semis": [2, 3, 4, 5, 6, 7, 8, 9, 10], "plantation": [], "recolte": [3, 4, 5, 6, 7, 8, 9, 10, 11]},
+     "note": "Trois à quatre semaines du semis à la récolte : le premier succès d'un débutant."},
+
+    {"nom": "Roquette", "famille": "Salades", "facile": true,
+     "nord": {"semis_abri": [], "semis": [4, 5, 6, 7, 8, 9], "plantation": [], "recolte": [5, 6, 7, 8, 9, 10]},
+     "sud":  {"semis_abri": [], "semis": [3, 4, 5, 6, 7, 8, 9, 10], "plantation": [], "recolte": [4, 5, 6, 7, 8, 9, 10, 11]},
+     "note": "Plus piquante en plein été : les semis de printemps et d'automne sont plus doux."},
+
+    {"nom": "Thym", "famille": "Aromatiques", "facile": true,
+     "nord": {"semis_abri": [], "semis": [], "plantation": [4, 5], "recolte": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
+     "sud":  {"semis_abri": [], "semis": [], "plantation": [3, 4], "recolte": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]},
+     "note": "Vivace, supporte la sécheresse : à planter une fois, puis à oublier."},
+
+    {"nom": "Tomate", "famille": "Légumes-fruits", "facile": false,
+     "nord": {"semis_abri": [3, 4], "semis": [], "plantation": [5], "recolte": [7, 8, 9]},
+     "sud":  {"semis_abri": [2, 3], "semis": [], "plantation": [4], "recolte": [6, 7, 8, 9, 10]},
+     "note": "Aucune gelée tolérée. Plantée trop tôt en sol froid, elle stagne et se fait rattraper."}
+  ]
+}

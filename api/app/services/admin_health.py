@@ -82,10 +82,40 @@ def _sobry() -> dict:
     return _ok("SOBRY (prix spot)", "ok", settings.sobry_spot_api_url)
 
 
+async def _recherche_kb(db: AsyncSession) -> dict:
+    """La recherche dans la base de connaissances est-elle EXACTE ?
+
+    Pourquoi cette sonde existe : le 29/09/2026, un index `ivfflat` pose en migration 0002
+    faisait rater la bonne fiche a presque toutes les questions. Un index approximatif ne
+    visite qu'une fraction des vecteurs ; avec quelques centaines de fiches reparties en
+    cent paquets, il n'en voyait que trois ou quatre par recherche. La migration 0020 l'a
+    retire.
+
+    Cette panne-la ne se voit pas : Helios continue de repondre, avec la mauvaise fiche.
+    D'ou une sonde plutot qu'un test — c'est l'etat de la base qui compte, pas le code.
+    """
+    try:
+        nb = await db.scalar(text("SELECT count(*) FROM kb_chunks"))
+        index = await db.scalar(text(
+            "SELECT indexdef FROM pg_indexes "
+            "WHERE tablename = 'kb_chunks' AND indexdef ILIKE '%ivfflat%'"
+        ))
+    except Exception as exc:  # noqa: BLE001
+        return _ok("Recherche (base de connaissances)", "erreur", str(exc)[:200])
+    if index:
+        return _ok(
+            "Recherche (base de connaissances)", "attention",
+            f"Index approximatif ivfflat actif sur {nb} fiches : la bonne fiche peut être "
+            "manquée sans que rien ne le signale. Voir la migration 0020.",
+        )
+    return _ok("Recherche (base de connaissances)", "ok", f"Exacte sur {nb} fiches")
+
+
 async def etat_services(db: AsyncSession) -> dict:
     """Les sondes réseau tournent en parallèle : l'écran reste rapide même si l'une traîne."""
     postgres, ollama, pvgis = await asyncio.gather(_postgres(db), _ollama(), _pvgis())
-    services = [postgres, ollama, _anthropic(), pvgis, _enedis(), _sobry()]
+    kb = await _recherche_kb(db)
+    services = [postgres, kb, ollama, _anthropic(), pvgis, _enedis(), _sobry()]
     return {
         "services": services,
         "en_erreur": sum(1 for s in services if s["etat"] == "erreur"),

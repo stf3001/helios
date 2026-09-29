@@ -218,5 +218,45 @@
         "label": "Poser ma question à Helios"
       }
     ]
+  },
+  {
+    "slug": "la-terre",
+    "pageDediee": true,
+    "titre": "Cultiver sa terre",
+    "sousTitre": "Le potager, l'intérieur et l'hydroponie : ce qu'on peut vraiment produire chez soi, et ce que ça demande.",
+    "metaTitre": "Potager : quelle surface, combien de temps",
+    "metaDesc": "Combien de m² et combien d'heures pour cultiver ses légumes : les ordres de grandeur réels, en extérieur, en intérieur et en hydroponie, sans promesse d'autonomie.",
+    "intro": "Après l'énergie, l'eau et le vent, la terre. Un potager ne nourrit pas un foyer — il lui donne ses légumes, ce qui est déjà beaucoup. La question honnête n'est donc pas « peut-on être autonome », mais « qu'est-ce qu'une heure par jour me rapporte vraiment ». C'est la seule façon de commencer un jardin sans l'abandonner au mois de juin, quand le travail arrive d'un coup.",
+    "cats": [
+      "jardin"
+    ],
+    "sections": [
+      {
+        "titre": "Commencez par le temps, pas par la surface",
+        "contenu": "L'erreur classique est de dessiner un grand potager, puis de découvrir en mai qu'on n'a pas les heures pour le tenir. Prenez le problème à l'envers : décidez du temps que vous y passerez, et taillez le jardin à cette mesure. Comptez environ trois heures par mètre carré et par an quand on débute — soit une heure par jour pour un peu plus de cent mètres carrés. Un petit potager bien tenu produit davantage qu'un grand laissé en retard sur les semis."
+      },
+      {
+        "titre": "Le travail n'est pas régulier, et c'est ce qui piège",
+        "contenu": "De mars à juin se concentre la moitié de l'effort de l'année : semis, repiquages, désherbage, tout tombe en même temps. En décembre, il n'y a presque rien à faire. Une moyenne annuelle rassure mais trompe. Deux choses changent vraiment la vie sur cette période : le paillage, qui supprime l'essentiel du désherbage et de l'arrosage, et un arrosage automatique programmé."
+      },
+      {
+        "titre": "L'intérieur, c'est l'appoint — pas le repas",
+        "contenu": "Sur un rebord de fenêtre, on réussit les aromatiques, les jeunes pousses et les radis. Les tomates et les courgettes, non : elles demandent une lumière qu'un vitrage ne donne pas. L'intérieur est donc un complément de goût et de fraîcheur, pas une source de volume. Le dire évite de dépenser dans du matériel qui ne tiendra pas la promesse."
+      },
+      {
+        "titre": "L'hydroponie consomme de l'électricité, et c'est le vrai sujet",
+        "contenu": "Cultiver hors-sol sous lampes donne des résultats réguliers et une croissance rapide, indépendante des saisons. Mais l'éclairage tourne de douze à seize heures par jour, et cette consommation est ce qui décide de l'intérêt de l'opération. C'est exactement le raisonnement que nous tenons sur l'eau atmosphérique : couplée à une production solaire, l'hydroponie transforme un surplus qui partait au réseau pour un centime en salades. Seule, sur du courant acheté, elle revient cher au kilo."
+      }
+    ],
+    "liens": [
+      {
+        "to": "/simulateur-solaire",
+        "label": "Calculer mon potager"
+      },
+      {
+        "to": "/helios",
+        "label": "Poser ma question à Helios"
+      }
+    ]
   }
 ]

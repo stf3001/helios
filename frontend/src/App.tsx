@@ -15,6 +15,7 @@ import Register from './pages/auth/Register'
 import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
 import EspaceHelios from './pages/EspaceHelios'
+import EspaceJardin from './pages/EspaceJardin'
 import SimulateurSolaire from './pages/SimulateurSolaire'
 import Vent from './pages/Vent'
 import EspaceAudits from './pages/EspaceAudits'
@@ -29,6 +30,7 @@ import PotentielHydrique from './pages/PotentielHydrique'
 import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
+import Terre from './pages/Terre'
 import QuiSommesNous from './pages/QuiSommesNous'
 import Pilier from './pages/Pilier'
 import Ville from './pages/Ville'
@@ -96,6 +98,7 @@ function SitePublic() {
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/eau" element={<Eau />} />
           <Route path="/le-vent" element={<Vent />} />
+          <Route path="/la-terre" element={<Terre />} />
           {/* Pages chapeau : routes dérivées de data/piliers.json. Celles marquées
               `pageDediee` ont déjà leur propre page (ex. /eau) et sont donc exclues. */}
           <Route path="/solaire/:slug" element={<Ville />} />
@@ -111,6 +114,7 @@ function SitePublic() {
           <Route path="/espace/pro" element={<ProtectedRoute><EspacePro /></ProtectedRoute>} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
           <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
+          <Route path="/espace/jardin" element={<ProtectedRoute><EspaceJardin /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />
           <Route path="/espace/energie" element={<ProtectedRoute><EspaceEnergie /></ProtectedRoute>} />
           <Route path="/espace/mises-en-relation" element={<ProtectedRoute><EspaceMisesEnRelation /></ProtectedRoute>} />

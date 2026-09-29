@@ -8,6 +8,7 @@ const ressources = [
   { to: '/comment-ca-marche', label: 'Qui est Helios' },
   { to: '/engagements', label: 'Nos engagements' },
   { to: '/eau', label: "L'eau atmosphérique" },
+  { to: '/la-terre', label: 'Cultiver sa terre' },
   { to: '/glossaire', label: 'Glossaire' },
   { to: '/faq', label: 'FAQ' },
   { to: '/partenaires', label: 'Partenaires' },

@@ -70,6 +70,11 @@ SOURCES: list[SourceSpec] = [
     # l'eolienne du simulateur. Chiffres techniques du constructeur, regles d'urbanisme
     # marquees comme telles.
     SourceSpec(name="eolien", kind="faq_markdown", location="helios/kb/eolien.md"),
+    # Le jardin nourricier (29/09/2026), en meme temps que la page « La terre » et que le
+    # potager du simulateur. Les ordres de grandeur (kg par personne, kg/m2, heures
+    # d'entretien) sont ceux de services/jardin.py : les deux doivent rester d'accord,
+    # sinon le chat contredira le calculateur sur la meme page.
+    SourceSpec(name="potager", kind="faq_markdown", location="helios/kb/potager.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

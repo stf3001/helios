@@ -53,10 +53,25 @@ function WaitIndicator() {
 /* L'accueil invite, il ne plaide pas. Annoncer « je n'ai rien à vous vendre » avant
    qu'on ait rien demandé sonnait comme un argument de vendeur — et la franchise
    d'Helios se démontre dans ses réponses, pas dans sa présentation. L'engagement
-   lui-même n'a pas bougé : il est tenu par la charte et affiché sur /engagements. */
+   lui-même n'a pas bougé : il est tenu par la charte et affiché sur /engagements.
+
+   LA DEUXIÈME PHRASE EST UN MODE D'EMPLOI DÉGUISÉ, et elle a une raison technique.
+   Sans elle, les visiteurs écrivent des paragraphes contenant trois questions à la
+   fois : le modèle en traite une, parfois aucune, et la réponse paraît à côté de la
+   plaque. Demander des questions courtes améliore la réponse bien plus sûrement que
+   n'importe quel réglage du moteur.
+
+   Elle est dite à la première personne et sans se cacher derrière un avertissement
+   technique : c'est la même humilité que la charte demande à Helios dans ses réponses,
+   appliquée à lui-même. Ne pas la remplacer par « ce service est fourni sans
+   garantie » — personne ne lit cette phrase-là. */
 const GREETING: ChatMessage = {
   role: 'helios',
-  content: "Bonjour, je suis Helios 👋 Posez-moi toutes les questions que vous voulez sur votre maison, je suis là pour ça 🙂",
+  content:
+    "Bonjour, je suis Helios 👋 Posez-moi vos questions sur votre maison, je suis là pour ça.\n\n"
+    + "Un mot sur moi avant de commencer : j’apprends vite, mais je ne suis pas un génie 🙂 "
+    + "Une question à la fois, en une ou deux phrases, et je réponds bien mieux. "
+    + "Si ma réponse tombe à côté, reformulez plus simplement — ça marche presque toujours.",
 }
 
 /**
