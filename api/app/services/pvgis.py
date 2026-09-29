@@ -9,6 +9,7 @@ import httpx
 
 _BASE = "https://re.jrc.ec.europa.eu/api/v5_2/PVcalc"
 _BASE_SERIES = "https://re.jrc.ec.europa.eu/api/v5_2/seriescalc"
+_BASE_TMY = "https://re.jrc.ec.europa.eu/api/v5_2/tmy"
 _SERIES_YEAR = 2019  # année non bissextile → exactement 8760 points, cohérent avec enedis_client
 
 # Orientation texte → azimut PVGIS (degrés). Valeurs proposées par le formulaire du simulateur.
@@ -104,6 +105,30 @@ async def production_series_hourly(
     hourly = data["outputs"]["hourly"]
     # "P" = puissance moyenne sur l'heure (W) → kWh sur ce pas d'une heure = P / 1000.
     return [round(point["P"] / 1000, 4) for point in hourly]
+
+
+async def climat_horaire(*, lat: float, lon: float) -> tuple[list[float], list[float]]:
+    """Température (°C) et humidité relative (%) heure par heure, sur une année type.
+
+    Endpoint `tmy` de PVGIS — Typical Meteorological Year, construit à partir de vingt ans
+    de relevés satellites. Même fournisseur que la série solaire, même absence de clé, et
+    surtout : des données RÉELLES, en tout point du territoire.
+
+    POURQUOI CET ENDPOINT PLUTÔT QU'UNE TABLE DE VILLES : la table de climat livrée avec
+    les données Hydrolia est synthétique. Trois profils sinusoïdaux pour douze villes —
+    Toulouse y a le climat de Strasbourg — et tous culminent en AVRIL, minimum en octobre.
+    Un générateur d'eau atmosphérique produit selon la chaleur et l'humidité : bâtir son
+    chiffrage sur un été placé au printemps fausse tout, et la production annuelle avec.
+    """
+    params = {"lat": lat, "lon": lon, "outputformat": "json"}
+    async with httpx.AsyncClient(timeout=90) as client:
+        res = await client.get(_BASE_TMY, params=params)
+        if res.status_code != 200:
+            raise PvgisError(f"PVGIS (climat horaire) a renvoyé {res.status_code}")
+        data = res.json()
+
+    heures = data["outputs"]["tmy_hourly"]
+    return ([h["T2m"] for h in heures], [h["RH"] for h in heures])
 
 
 async def simulate(*, lat: float, lon: float, orientation: str | None, pente: int | None, ombrage: str | None) -> dict:

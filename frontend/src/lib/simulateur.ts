@@ -47,6 +47,10 @@ export interface Config {
     kwc: number
     facteur_anemometre: number
   }
+  eau: {
+    modele: string | null
+    solaire_uniquement: boolean
+  }
   stockage: {
     nb_packs: number
     inertie: boolean
@@ -104,6 +108,8 @@ export interface Resultat {
       fournisseur_impose: string | null; note: string
       conseil: string; recommandee: boolean
     }
+    eau: { modele: string | null; solaire_uniquement: boolean; litres_an: number
+      kwh_an: number; litres_potentiels_an: number }
     eolien: { kwc: number; production_kwh: number; facteur_anemometre: number }
     pilotage: { actif: boolean; nb_usages: number }
   }
@@ -194,6 +200,7 @@ export const CONFIG_INITIALE: Config = {
     surface_toit_m2: null,
   },
   eolien: { kwc: 0, facteur_anemometre: 1 },
+  eau: { modele: null, solaire_uniquement: false },
   stockage: { nb_packs: 0, inertie: false, batterie_virtuelle: null, palier_virtuel_kwh: null, pilotage: false },
   hausse_prix_pct_an: null,
 }

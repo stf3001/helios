@@ -85,6 +85,13 @@ class EolienIn(Strict):
     facteur_anemometre: float = Field(default=1.0, gt=0, le=3)
 
 
+class EauIn(Strict):
+    """La machine a eau : un modele de la gamme domestique, ou rien."""
+
+    modele: str | None = Field(default=None, max_length=8)
+    solaire_uniquement: bool = False
+
+
 class StockageIn(Strict):
     nb_packs: int = Field(default=0, ge=0, le=6)
     #: Stockage par inertie : un booleen, pas un compteur. On n'en enterre qu'un.
@@ -103,6 +110,7 @@ class SimulateurIn(Strict):
     maison: MaisonIn = Field(default_factory=MaisonIn)
     panneaux: PanneauxIn = Field(default_factory=PanneauxIn)
     eolien: EolienIn = Field(default_factory=EolienIn)
+    eau: EauIn = Field(default_factory=EauIn)
     stockage: StockageIn = Field(default_factory=StockageIn)
     hausse_prix_pct_an: float | None = Field(default=None, ge=0, le=15)
 

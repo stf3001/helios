@@ -49,11 +49,22 @@ interface Props {
 const IMAGE = { w: 1536, h: 1024 }
 /**
  * Fenêtre montrée : la maison et son terrain. Les bornes sont choisies pour écarter le titre
- * gravé (au-dessus de y = 110), la colonne de légendes de droite (au-delà de x = 1246) et le
- * bandeau de bénéfices du bas (sous y = 775), tout en gardant la voiture, qui commence à
- * x = 140 et qui est l'un des équipements.
+ * gravé (au-dessus de y = 110) et le bandeau de bénéfices du bas (sous y = 775), tout en
+ * gardant la voiture, qui commence à x = 140 et qui est l'un des équipements.
+ *
+ * ÉLARGI À DROITE LE 29/09/2026 (1105 → 1245) POUR FAIRE ENTRER LE POTAGER. Au cadrage
+ * précédent il tombait entièrement hors champ : seul un coin de planche dépassait au bord,
+ * et un repère posé dessus aurait été coupé par le bord du cadre. Le potager étant devenu
+ * un emplacement cliquable, il lui fallait la place d'exister.
+ *
+ * CE QUE ÇA COÛTE, ET C'EST ASSUMÉ : à largeur d'écran égale, la maison perd environ 11 %.
+ * La contrepartie est un objet de plus dans la scène — et la partie gagnée est presque
+ * entièrement du ciel et du potager, pas de la maison.
+ *
+ * Le bas descend de 750 à 760, ce qui suffit à dégager les légumes sans aller chercher les
+ * légendes gravées du bas, dont la première (« GESTION DE L'EAU ») commence à y = 760.
  */
-const CADRE = { x: 118, y: 112, w: 1105, h: 638 }
+const CADRE = { x: 118, y: 112, w: 1245, h: 648 }
 
 /**
  * Certaines légendes gravées tombent DANS le cadre et ne peuvent pas en être exclues sans
@@ -66,8 +77,21 @@ const VOILES = [
   { x: 112, y: 116, w: 206, h: 416, sens: 'droite' as const },
   // Sous la voiture : « mobilité électrique ».
   { x: 112, y: 668, w: 216, h: 92, sens: 'droite' as const },
-  // Amorces de légendes et traits de rappel du bord droit.
-  { x: 1150, y: 116, w: 78, h: 360, sens: 'gauche' as const },
+  // Colonne de droite : « maison connectée », « confort & bien-être », « éoliennes
+  // verticales ». Elle entre dans le cadre depuis l'élargissement du 29/09/2026, et
+  // c'est ce voile qui la fait disparaître.
+  //
+  // IL EST EN DEUX MORCEAUX, ET CE DÉCOUPAGE N'EST PAS DÉCORATIF. Un seul rectangle
+  // large recouvrait le rotor de la TROISIÈME ÉOLIENNE (x 1189→1238, y 486→590) en
+  // laissant son pied dessous : à l'écran, une éolienne décapitée. Pire, les rotors
+  // animés sont dessinés AVANT les voiles, donc la troisième ne tournait pas non plus.
+  //
+  // Le premier morceau couvre toute la largeur, mais s'arrête à y = 470, juste
+  // au-dessus des rotors. Le second reprend en dessous en partant de x = 1246, à
+  // droite des rotors : il efface le texte « éoliennes verticales » et son trait de
+  // rappel, sans toucher aux machines. Il s'arrête à y = 600, où commence le potager.
+  { x: 1150, y: 112, w: 218, h: 358, sens: 'gauche' as const },
+  { x: 1246, y: 470, w: 122, h: 130, sens: 'gauche' as const },
 ]
 
 /**
@@ -87,8 +111,10 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
   reseau: { x: 1068, y: 286 },           // approximatif : pas de poteau dessiné
   carport: { x: 286, y: 500 },           // approximatif : l'auvent du garage en tient lieu
   eolienne: { x: 1108, y: 176 },         // approximatif : dans le ciel, a droite du toit
+  eau: { x: 1008, y: 680 },              // le boitier blanc au pied des eoliennes (AWG)
   ballon: { x: 664, y: 474 },            // approximatif : posé sur le circuit orange (chaleur)
   clim: { x: 968, y: 574 },              // approximatif : côté technique de la maison
+  jardin: { x: 1250, y: 688 },           // les planches du potager, en bas à droite
 }
 
 /**

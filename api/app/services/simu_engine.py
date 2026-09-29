@@ -12,7 +12,7 @@ Deux invariants que les tests vérifient et qu'il ne faut jamais casser :
 Si un bilan cesse de se fermer, c'est que de l'énergie est créée ou perdue quelque part.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.core.config import settings
 from app.services import batterie_virtuelle, eolien, simu_conso, solar_engine
@@ -98,9 +98,14 @@ class BilanHoraire:
     #: Ce que la banque virtuelle a renvoyé, tel quel. Il contient la pointe de crédit et
     #: le palier retenu, que personne ne peut retrouver à partir des seuls totaux annuels.
     virtuel: dict | None = None
+    #: Machine à eau en mode « solaire seul » : ce qu'elle a pu consommer et produire.
+    eau_kwh_h: list[float] = field(default_factory=list)
+    eau_litres_h: list[float] = field(default_factory=list)
 
 
-def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configuration) -> BilanHoraire:
+def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configuration,
+                     eau_potentiel_kwh: list[float] | None = None,
+                     eau_potentiel_litres: list[float] | None = None) -> BilanHoraire:
     """La passe horaire : autoconsommation, batterie, écrêtage, batterie virtuelle."""
     # Deux stockages possibles, et ils s'additionnent : des packs lithium qu'on empile, et
     # un stockage par inertie qu'on enterre (un seul). Le moteur ne les distingue pas au
@@ -122,11 +127,28 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
     soc = 0.0
     direct_h, charge_h, decharge_h = [], [], []
     injectable_h, ecrete_h, besoin_h = [], [], []
+    #: Ce que la machine a eau a reellement consomme et produit, heure par heure. En marche
+    #: continue elle est deja dans `conso_h` et ces listes restent a zero ; c'est le mode
+    #: « sur solaire seul » qui les remplit, puisque lui seul module la marche.
+    eau_kwh_h: list[float] = []
+    eau_litres_h: list[float] = []
 
-    for conso, prod in zip(conso_h, prod_h):
+    for i, (conso, prod) in enumerate(zip(conso_h, prod_h)):
         direct = min(conso, prod)
         surplus = prod - direct
         besoin = conso - direct
+
+        # La machine a eau sur solaire seul : elle se sert AVANT la batterie. Elle consomme
+        # sur-le-champ, et stocker pour faire de l'eau plus tard ajouterait les pertes de la
+        # batterie a une operation deja couteuse en energie. Ce qu'elle laisse continue son
+        # chemin : batterie, puis injection.
+        if eau_potentiel_kwh is not None:
+            besoin_eau = eau_potentiel_kwh[i]
+            pris = min(surplus, besoin_eau) if besoin_eau > 0 else 0.0
+            surplus -= pris
+            eau_kwh_h.append(pris)
+            eau_litres_h.append(
+                eau_potentiel_litres[i] * (pris / besoin_eau) if besoin_eau > 0 else 0.0)
 
         charge = min(surplus, puissance, max(capacite - soc, 0.0)) if (capacite and surplus > 0) else 0.0
         soc += charge * rendement
@@ -185,6 +207,7 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
         stocke_virtuel_h=stocke_h, restitue_virtuel_h=restitue_h,
         achat_h=achat_h, conso_h=conso_h, prod_h=prod_h,
         virtuel=virtuel if offre is not None else None,
+        eau_kwh_h=eau_kwh_h, eau_litres_h=eau_litres_h,
     )
 
 
@@ -498,7 +521,9 @@ def hypotheses() -> list[dict]:
 
 
 def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float],
-             detail: bool = True, eolien_h: list[float] | None = None) -> dict:
+             detail: bool = True, eolien_h: list[float] | None = None,
+             eau_litres_h: list[float] | None = None,
+             eau_kwh_h: list[float] | None = None) -> dict:
     """Le calcul complet pour une configuration. C'est l'unique porte d'entrée du moteur.
 
     `detail=False` renvoie tout sauf les bilans mensuels et les journées moyennes : c'est
@@ -515,10 +540,28 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float],
         prod_h = [p + e for p, e in zip(prod_h, eolien_h)]
 
     conso_h = profil.total_h
+
+    # LA MACHINE A EAU, deux regimes qui ne se modelisent pas au meme endroit.
+    #
+    # En marche continue, elle est un usage comme un autre : on l'ajoute a la consommation
+    # du foyer AVANT tout arbitrage, et la logique d'autoconsommation decide toute seule
+    # de ce que le solaire couvre. Aucune regle speciale, aucun coefficient.
+    #
+    # Sur solaire seul, elle ne peut plus etre dans la consommation : sa marche DEPEND du
+    # surplus disponible, heure par heure. Elle est alors traitee dans la boucle horaire,
+    # ou elle se sert avant la batterie.
+    eau_sur_surplus = bool(config.eau.modele) and config.eau.solaire_uniquement
+    if config.eau.modele and eau_kwh_h and not eau_sur_surplus:
+        conso_h = [c + e for c, e in zip(conso_h, eau_kwh_h)]
+
     if config.stockage.pilotage:
         conso_h = _piloter(conso_h, profil.pilotable_h(), prod_h)
 
-    bilan = _simuler_horaire(conso_h, prod_h, config)
+    bilan = _simuler_horaire(
+        conso_h, prod_h, config,
+        eau_potentiel_kwh=eau_kwh_h if eau_sur_surplus else None,
+        eau_potentiel_litres=eau_litres_h if eau_sur_surplus else None,
+    )
     agregats = _agreger(bilan, detail=detail)
     annuel = agregats["annuel"]
 
@@ -588,6 +631,18 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float],
                 "cout_ttc_eur": settings.simu_inertie_cout_ttc_eur,
             },
             "batterie_virtuelle": bilan_virtuel,
+            # En marche continue la machine tourne a plein : litres et kWh sont ceux du
+            # potentiel. Sur solaire seul, c'est la boucle horaire qui a decide, et ses
+            # totaux sont plus bas — parfois beaucoup.
+            "eau": {
+                "modele": config.eau.modele,
+                "solaire_uniquement": config.eau.solaire_uniquement,
+                "litres_an": round(
+                    sum(bilan.eau_litres_h) if eau_sur_surplus else sum(eau_litres_h or [])),
+                "kwh_an": round(
+                    sum(bilan.eau_kwh_h) if eau_sur_surplus else sum(eau_kwh_h or []), 1),
+                "litres_potentiels_an": round(sum(eau_litres_h or [])),
+            },
             "eolien": {
                 "kwc": config.eolien.kwc,
                 "production_kwh": round(eolien_annuel, 1),

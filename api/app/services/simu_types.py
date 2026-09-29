@@ -101,6 +101,17 @@ class Eolien:
 
 
 @dataclass(frozen=True)
+class Eau:
+    """Un generateur d'eau atmospherique, ou rien. `modele` a None veut dire pas de machine."""
+
+    modele: str | None = None
+    #: La machine ne tourne que sur le surplus solaire. Elle produit moins d'eau, mais
+    #: cette eau ne coute rien sur la facture — le surplus serait parti au reseau pour
+    #: quelques centimes.
+    solaire_uniquement: bool = False
+
+
+@dataclass(frozen=True)
 class Lieu:
     lat: float
     lon: float
@@ -115,6 +126,7 @@ class Configuration:
     maison: Maison = field(default_factory=Maison)
     panneaux: Panneaux = field(default_factory=Panneaux)
     eolien: Eolien = field(default_factory=Eolien)
+    eau: Eau = field(default_factory=Eau)
     stockage: Stockage = field(default_factory=Stockage)
     hausse_prix_pct_an: float | None = None  # None = valeur par défaut de la config
 

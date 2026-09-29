@@ -15,6 +15,7 @@ export const EQUIPEMENTS: { id: string; label: string }[] = [
   { id: 'panneaux', label: 'Panneaux sur le toit' },
   { id: 'carport', label: 'Carport' },
   { id: 'eolienne', label: 'Éolienne' },
+  { id: 'eau', label: 'Machine à eau' },
   { id: 'batterie', label: 'Batterie physique' },
   { id: 'inertie', label: 'Stockage par inertie' },
   { id: 'batterie_virtuelle', label: 'Batterie virtuelle' },
@@ -36,6 +37,7 @@ export function estInstalle(id: string, config: Config): boolean {
     case 'panneaux': return panneaux.nb_panneaux > 0
     case 'carport': return panneaux.nb_panneaux_carport > 0
     case 'eolienne': return config.eolien.kwc > 0
+    case 'eau': return config.eau.modele !== null
     case 'batterie': return stockage.nb_packs > 0
     case 'inertie': return stockage.inertie
     case 'batterie_virtuelle': return stockage.batterie_virtuelle !== null
@@ -59,6 +61,10 @@ export function resumeDe(id: string, config: Config, resultat: Resultat | null):
       return panneaux.nb_panneaux_carport > 0 ? `${panneaux.nb_panneaux_carport} panneaux` : null
     case 'eolienne':
       return config.eolien.kwc > 0 ? `${config.eolien.kwc} kWc` : null
+    case 'eau':
+      return config.eau.modele
+        ? `${config.eau.modele}${config.eau.solaire_uniquement ? ' · solaire seul' : ''}`
+        : null
     case 'batterie':
       return stockage.nb_packs > 0
         ? `${stockage.nb_packs} pack(s)${resultat ? ` · ${resultat.stockage.batterie_physique.capacite_kwh} kWh` : ''}`
@@ -98,6 +104,8 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
     majConfig((c) => ({ ...c, maison: { ...c.maison, ...maj } }))
   const majPanneaux = (maj: Partial<Config['panneaux']>) =>
     majConfig((c) => ({ ...c, panneaux: { ...c.panneaux, ...maj } }))
+  const majEau = (maj: Partial<Config['eau']>) =>
+    majConfig((c) => ({ ...c, eau: { ...c.eau, ...maj } }))
   const majEolien = (maj: Partial<Config['eolien']>) =>
     majConfig((c) => ({ ...c, eolien: { ...c.eolien, ...maj } }))
   const majStockage = (maj: Partial<Config['stockage']>) =>
@@ -140,6 +148,70 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
           </p>
           <Nombre label="Panneaux sur le carport" valeur={panneaux.nb_panneaux_carport} min={0} max={40}
             onChange={(v) => majPanneaux({ nb_panneaux_carport: v })} />
+        </>
+      )
+
+    case 'eau':
+      return (
+        <>
+          <Choix label="Modèle" valeur={config.eau.modele ?? 'aucune'}
+            options={[
+              { value: 'aucune', label: 'Aucune' },
+              { value: '20L', label: '20 L par jour — un foyer' },
+              { value: '50L', label: '50 L par jour' },
+              { value: '100L', label: '100 L par jour — grande maison' },
+            ]}
+            onChange={(v) => majEau({ modele: v === 'aucune' ? null : v })} />
+
+          {config.eau.modele && (
+            <>
+              {/* Le choix qui décide de tout : une machine à eau consomme énormément. */}
+              <Bascule label="Ne la faire tourner que sur le solaire"
+                actif={config.eau.solaire_uniquement}
+                onChange={(v) => majEau({ solaire_uniquement: v })}
+                aide="Elle produit moins d’eau, mais cette eau ne coûte rien : elle est faite avec le surplus qui serait parti au réseau." />
+
+              {resultat && (
+                <div className="space-y-1">
+                  <p className="flex items-baseline justify-between gap-4">
+                    <span className="text-dark/70">Eau produite</span>
+                    <strong className="text-ink">
+                      {Math.round(resultat.stockage.eau.litres_an).toLocaleString('fr-FR')} L / an
+                    </strong>
+                  </p>
+                  <p className="flex items-baseline justify-between gap-4">
+                    <span className="text-dark/70">Soit par jour</span>
+                    <strong className="text-ink">
+                      {(resultat.stockage.eau.litres_an / 365).toFixed(1)} L
+                    </strong>
+                  </p>
+                  <p className="flex items-baseline justify-between gap-4">
+                    <span className="text-dark/70">Électricité consommée</span>
+                    <strong className="text-ink">{kwh(resultat.stockage.eau.kwh_an)} / an</strong>
+                  </p>
+                </div>
+              )}
+
+              {/* Ce que le mode solaire coûte en litres : le dire, sinon le visiteur
+                  croit que c'est gratuit sans contrepartie. */}
+              {resultat && config.eau.solaire_uniquement
+                && resultat.stockage.eau.litres_potentiels_an > 0 && (
+                <p className="rounded-lg border border-sky/40 bg-sky/10 px-3 py-2 text-sm text-ink">
+                  En marche continue, la même machine ferait{' '}
+                  {Math.round(resultat.stockage.eau.litres_potentiels_an).toLocaleString('fr-FR')} L
+                  par an — mais les deux tiers de son électricité seraient achetés au réseau,
+                  et la facture monterait d’autant.
+                </p>
+              )}
+
+              <p className="text-sm text-dark/70">
+                Une machine à eau consomme beaucoup : environ un demi-kilowattheure par
+                litre. C’est ce qui rend le pilotage sur le solaire si intéressant — la
+                production d’eau est l’un des rares usages qu’on peut déplacer entièrement
+                aux heures d’ensoleillement.
+              </p>
+            </>
+          )}
         </>
       )
 

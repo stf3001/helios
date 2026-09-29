@@ -37,13 +37,18 @@ import ReglageEquipement, {
   EQUIPEMENTS, estInstalle, resumeDe, titreDe,
 } from '../components/simulateur/ReglageEquipement'
 import { Feuille } from '../components/simulateur/Reglage'
+import ReglageJardin from '../components/simulateur/ReglageJardin'
 import {
   OngletAide, OngletEtude, OngletJournee, OngletMaison, OngletPanneaux, OngletStockage,
 } from '../components/simulateur/Onglets'
+import {
+  calculerJardin, JARDIN_INITIAL, type JardinConfig, type JardinResultat,
+} from '../lib/jardin'
 import { Vide } from '../components/simulateur/Graphiques'
 import Guide5Questions from '../components/simulateur/Guide5Questions'
 import {
-  calculer, chercherOptions, CONFIG_INITIALE, depuisUrl, euros, versUrl,
+  calculer, CHAUFFAGES, chercherOptions, CONFIG_INITIALE, depuisUrl, ECS_OPTIONS, euros,
+  OMBRAGES, ORIENTATIONS, versUrl,
   type Config, type Option, type Options, type Resultat, type Saison,
 } from '../lib/simulateur'
 
@@ -62,6 +67,28 @@ const ONGLETS: { id: Onglet; label: string; Icone: LucideIcon }[] = [
   { id: 'etude', label: 'Étude', Icone: ClipboardList },
   { id: 'aide', label: 'Aide', Icone: CircleHelp },
 ]
+
+/**
+ * Une valeur venue de la fiche Maison n'entre dans la configuration QUE si le simulateur
+ * la connaît. Sinon on garde le défaut.
+ *
+ * Trouvé en production le 29/09/2026 : la fiche de Stéphane porte
+ * `orientation_toiture: "SUD"`, en capitales, et le simulateur la recopiait telle quelle
+ * dans un champ qui n'accepte que « sud ». L'API refusait alors CHAQUE calcul avec un 422,
+ * et l'écran restait muet — des tirets partout, aucun message. Un utilisateur connecté
+ * dans ce cas n'avait tout simplement pas de simulateur, sans comprendre pourquoi.
+ *
+ * La comparaison ignore la casse et les espaces : c'est la seule souplesse qu'on
+ * s'autorise. Une valeur vraiment inconnue est ignorée, jamais devinée — mieux vaut un
+ * défaut visible et modifiable qu'un champ rempli de travers.
+ */
+function valeurAdmise<T extends string>(
+  brut: unknown, admises: readonly { value: T }[], defaut: T,
+): T {
+  if (typeof brut !== 'string') return defaut
+  const nettoye = brut.trim().toLowerCase()
+  return admises.find((o) => o.value.toLowerCase() === nettoye)?.value ?? defaut
+}
 
 const ANTI_REBOND_MS = 200
 const INACTIVITE_OPTIONS_MS = 2000
@@ -88,6 +115,19 @@ export default function SimulateurSolaire() {
     !new URLSearchParams(window.location.search).get('c'))
   const [guide, setGuide] = useState(false)
   const [messageEtude, setMessageEtude] = useState<string | null>(null)
+
+  /* --- Le jardin ---
+     Il vit À CÔTÉ de `config`, et c'est voulu : un potager ne produit pas d'électricité,
+     il n'entre dans aucun bilan du moteur horaire, et il n'a rien à faire dans l'URL de
+     partage d'une étude solaire. La scène le montre, le calcul est ailleurs.
+
+     `jardinOuvert` ne devient vrai qu'une fois le potager cliqué : avant, son repère
+     affiche un « + », comme tout emplacement non équipé. On ne calcule donc rien pour
+     un visiteur qui ne s'y intéresse pas. */
+  const [jardinOuvert, setJardinOuvert] = useState(false)
+  const [jardinConfig, setJardinConfig] = useState<JardinConfig>(JARDIN_INITIAL)
+  const [jardinResultat, setJardinResultat] = useState<JardinResultat | null>(null)
+  const [jardinErreur, setJardinErreur] = useState<string | null>(null)
 
   /* Pour amener les réglages sous les yeux quand on choisit un onglet dans la barre du bas. */
   const panneauReglages = useRef<HTMLDivElement>(null)
@@ -127,8 +167,8 @@ export default function SimulateurSolaire() {
             ...c.maison,
             surface_m2: fiche.surface_habitable ?? c.maison.surface_m2,
             nb_occupants: fiche.nb_occupants ?? c.maison.nb_occupants,
-            chauffage: fiche.chauffage_principal ?? c.maison.chauffage,
-            ecs: fiche.ecs ?? c.maison.ecs,
+            chauffage: valeurAdmise(fiche.chauffage_principal, CHAUFFAGES, c.maison.chauffage),
+            ecs: valeurAdmise(fiche.ecs, ECS_OPTIONS, c.maison.ecs),
             conso_connue_kwh_an: fiche.conso_elec_kwh_an ?? c.maison.conso_connue_kwh_an,
             puissance_souscrite_kva: fiche.puissance_souscrite
               ? Number(fiche.puissance_souscrite) : c.maison.puissance_souscrite_kva,
@@ -137,9 +177,9 @@ export default function SimulateurSolaire() {
           },
           panneaux: {
             ...c.panneaux,
-            orientation: fiche.orientation_toiture ?? c.panneaux.orientation,
+            orientation: valeurAdmise(fiche.orientation_toiture, ORIENTATIONS, c.panneaux.orientation),
             inclinaison: fiche.pente ?? c.panneaux.inclinaison,
-            ombrage: fiche.ombrage ?? c.panneaux.ombrage,
+            ombrage: valeurAdmise(fiche.ombrage, OMBRAGES, c.panneaux.ombrage),
             surface_toit_m2: fiche.surface_toit_exploitable ?? c.panneaux.surface_toit_m2,
           },
         }))
@@ -188,15 +228,43 @@ export default function SimulateurSolaire() {
     return () => clearTimeout(minuteur)
   }, [config, localise, resultat?.lieu.commune])
 
+  /* --- Le calcul du jardin, une fois le potager ouvert --- */
+  useEffect(() => {
+    if (!jardinOuvert) return
+    const controleur = new AbortController()
+    const minuteur = setTimeout(() => {
+      calculerJardin(jardinConfig, controleur.signal)
+        .then((r) => { setJardinResultat(r); setJardinErreur(null) })
+        .catch((e) => { if (e.name !== 'AbortError') setJardinErreur(e.message) })
+    }, ANTI_REBOND_MS)
+    return () => { clearTimeout(minuteur); controleur.abort() }
+  }, [jardinConfig, jardinOuvert])
+
+  /* Le code postal de l'adresse sert la zone de jardinage (nord ou sud), rien d'autre. */
+  useEffect(() => {
+    const code = config.adresse?.match(/\b(\d{5})\b/)?.[1] ?? null
+    setJardinConfig((c) => (c.code_postal === code ? c : { ...c, code_postal: code }))
+  }, [config.adresse])
+
   /* --- Ce que la scène doit montrer --- */
   const equipements: EmplacementScene[] = useMemo(
-    () => EQUIPEMENTS.map((e) => ({
-      id: e.id,
-      label: e.label,
-      installe: estInstalle(e.id, config),
-      resume: resumeDe(e.id, config, resultat),
-    })),
-    [config, resultat],
+    () => [
+      ...EQUIPEMENTS.map((e) => ({
+        id: e.id,
+        label: e.label,
+        installe: estInstalle(e.id, config),
+        resume: resumeDe(e.id, config, resultat),
+      })),
+      {
+        id: 'jardin',
+        label: 'Jardin',
+        installe: jardinOuvert,
+        resume: jardinResultat
+          ? `${jardinResultat.surface_totale_m2} m² · ${jardinResultat.couverture_pct} % de vos légumes`
+          : null,
+      },
+    ],
+    [config, resultat, jardinOuvert, jardinResultat],
   )
 
   const flux: FluxScene = useMemo(() => {
@@ -395,7 +463,10 @@ export default function SimulateurSolaire() {
             ) : (
               <SceneMaison equipements={equipements} eolienne={config.eolien.kwc > 0}
                 heure={heure} saison={saison} flux={flux}
-                onEmplacement={setEmplacementOuvert} />
+                onEmplacement={(id) => {
+                  if (id === 'jardin') setJardinOuvert(true)
+                  setEmplacementOuvert(id)
+                }} />
             )}
 
             {options?.prochaine_etape && (
@@ -580,9 +651,14 @@ export default function SimulateurSolaire() {
         </div>
       )}
 
-      <Feuille titre={titreDe(emplacementOuvert ?? '')} ouvert={emplacementOuvert !== null}
+      <Feuille
+        titre={emplacementOuvert === 'jardin' ? 'Le jardin' : titreDe(emplacementOuvert ?? '')}
+        ouvert={emplacementOuvert !== null}
         onFermer={() => setEmplacementOuvert(null)}>
-        {emplacementOuvert && (
+        {emplacementOuvert === 'jardin' ? (
+          <ReglageJardin config={jardinConfig} resultat={jardinResultat}
+            majConfig={(maj) => setJardinConfig(maj)} erreur={jardinErreur} />
+        ) : emplacementOuvert && (
           <ReglageEquipement id={emplacementOuvert} config={config} resultat={resultat}
             majConfig={majConfig} />
         )}

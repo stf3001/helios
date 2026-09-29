@@ -20,11 +20,14 @@ from app.models.house import House
 from app.models.simulateur import SimulateurStudy
 from app.models.user import User
 from app.schemas.simulateur import EtudeIn, SimulateurIn
-from app.services import batterie_virtuelle, eolien, geocoding, simu_conso, simu_engine, simu_options, simu_pv
+from app.services import (
+    awg, batterie_virtuelle, eolien, geocoding, simu_climat, simu_conso, simu_engine,
+    simu_options, simu_pv,
+)
 from app.services.geocoding import GeocodingError
 from app.services.pvgis import PvgisError
 from app.services.simu_types import (
-    Clim, Configuration, Eolien, Lieu, Maison, Panneaux, Piscine, Stockage, Voiture,
+    Clim, Configuration, Eau, Eolien, Lieu, Maison, Panneaux, Piscine, Stockage, Voiture,
 )
 
 router = APIRouter(prefix="/simulateur", tags=["simulateur"])
@@ -55,6 +58,9 @@ def _vers_configuration(payload: SimulateurIn, lieu: Lieu) -> Configuration:
     )
     p = payload.panneaux
     s = payload.stockage
+    if payload.eau.modele and payload.eau.modele not in awg.MODELES:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            f"Modele de machine a eau inconnu : {payload.eau.modele}")
     if s.batterie_virtuelle and s.batterie_virtuelle not in batterie_virtuelle.offres():
         raise HTTPException(status.HTTP_400_BAD_REQUEST,
                             f"Offre de batterie virtuelle inconnue : {s.batterie_virtuelle}")
@@ -67,6 +73,8 @@ def _vers_configuration(payload: SimulateurIn, lieu: Lieu) -> Configuration:
                           surface_toit_m2=p.surface_toit_m2),
         eolien=Eolien(kwc=payload.eolien.kwc,
                       facteur_anemometre=payload.eolien.facteur_anemometre),
+        eau=Eau(modele=payload.eau.modele,
+                solaire_uniquement=payload.eau.solaire_uniquement),
         stockage=Stockage(nb_packs=s.nb_packs, inertie=s.inertie,
                           batterie_virtuelle=s.batterie_virtuelle,
                           palier_virtuel_kwh=s.palier_virtuel_kwh, pilotage=s.pilotage),
@@ -117,7 +125,17 @@ async def calcul(request: Request, payload: SimulateurIn):
     # ne connait que des series horaires. La station retenue est renvoyee a l'ecran.
     eolien_h, info_vent = eolien.production_horaire(
         config.eolien.kwc, config.lieu.lat, config.lieu.lon, config.eolien.facteur_anemometre)
-    resultat = simu_engine.calculer(config, profil, production["total_h"], eolien_h=eolien_h)
+
+    # La machine a eau ne declenche l'appel climat QUE si elle est posee : PVGIS renvoie
+    # 1,2 Mo pour une annee type, on ne le demande pas pour rien. Ensuite c'est en cache.
+    eau_litres_h = eau_kwh_h = None
+    if config.eau.modele:
+        temperature_h, humidite_h = await simu_climat.climat(
+            lat=config.lieu.lat, lon=config.lieu.lon)
+        eau_litres_h, eau_kwh_h = awg.horaire(config.eau.modele, temperature_h, humidite_h)
+
+    resultat = simu_engine.calculer(config, profil, production["total_h"], eolien_h=eolien_h,
+                                    eau_litres_h=eau_litres_h, eau_kwh_h=eau_kwh_h)
     return {
         "lieu": _lieu_public(config),
         "production": {
