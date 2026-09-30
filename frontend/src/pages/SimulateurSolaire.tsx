@@ -450,8 +450,8 @@ export default function SimulateurSolaire() {
             partir de xl — en dessous, les réglages sont déjà empilés sous la scène et
             les onglets vivent dans la barre du bas. */}
         <div className={`grid items-start gap-3 2xl:gap-4 ${reglagesReplies
-          ? 'xl:grid-cols-[4.75rem_minmax(0,1fr)_15rem] 2xl:grid-cols-[4.75rem_minmax(0,1fr)_17rem]'
-          : 'xl:grid-cols-[22rem_minmax(0,1fr)_15rem] 2xl:grid-cols-[24rem_minmax(0,1fr)_17rem]'}`}>
+          ? 'xl:grid-cols-[4.75rem_minmax(0,1fr)_11rem] 2xl:grid-cols-[4.75rem_minmax(0,1fr)_12rem]'
+          : 'xl:grid-cols-[22rem_minmax(0,1fr)_11rem] 2xl:grid-cols-[24rem_minmax(0,1fr)_12rem]'}`}>
 
           {/* ---------- LES RÉGLAGES, flottants à gauche ---------- */}
           <aside ref={panneauReglages}

@@ -64,15 +64,25 @@ function Case({ label, valeur, sous }: { label: string; valeur: string; sous?: s
   )
 }
 
-/** Une ligne de la carte : le mot à gauche, le chiffre à droite, la précision dessous. */
+/**
+ * Une ligne de la carte : le mot, le chiffre dessous, la précision en dessous encore.
+ *
+ * Empilé et non côte à côte : mis sur une seule ligne, « Facture / mois » et son montant
+ * imposaient à eux seuls la largeur de la colonne, et la carte mangeait la scène. En
+ * hauteur, la colonne se resserre à 11 rem sans qu'aucun chiffre soit tronqué.
+ */
 function Rangee({ label, valeur, sous }: { label: string; valeur: string; sous?: string }) {
   return (
-    <div className="py-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <dt className="min-w-0 truncate text-xs uppercase tracking-wide text-dark/60">{label}</dt>
-        <dd className="shrink-0 font-display text-lg font-bold leading-tight text-ink">{valeur}</dd>
-      </div>
-      {sous && <p className="text-xs text-dark/60">{sous}</p>}
+    <div className="py-2">
+      <dt className="text-[11px] uppercase leading-tight tracking-wide text-dark/60">{label}</dt>
+      <dd className="font-display text-xl font-bold leading-tight text-ink">
+        {valeur}
+        {sous && (
+          <span className="mt-0.5 block font-sans text-xs font-normal leading-snug text-dark/60">
+            {sous}
+          </span>
+        )}
+      </dd>
     </div>
   )
 }
@@ -97,10 +107,10 @@ export default function Bandeau({ indicateurs, calculEnCours, variante = 'bandea
   if (variante === 'carte') {
     return (
       <section aria-label="Vos indicateurs"
-        className="rounded-2xl border border-ink/10 bg-white/95 p-4 shadow-xl backdrop-blur">
+        className="rounded-2xl border border-ink/10 bg-white/95 p-3 shadow-xl backdrop-blur">
         <div className="flex justify-center">
           <Anneau pct={i?.autonomie_pct ?? 0} partVirtuelle={i?.autonomie_part_virtuelle_pct ?? 0}
-            classe="h-24 w-24" />
+            classe="h-20 w-20" />
         </div>
 
         <dl className="mt-1 divide-y divide-ink/5">
