@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import FieldInput from './FieldInput'
 import type { Draft, FieldSpec, FieldValue } from './types'
 
@@ -59,7 +60,11 @@ export default function BlockCard({
         >
           {saving ? 'Enregistrement…' : 'Enregistrer ce bloc'}
         </button>
-        {saved && <span className="text-sm text-green-600">Enregistré ✓</span>}
+        {saved && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-leaf">
+            <Check className="w-4 h-4" aria-hidden="true" /> Enregistré
+          </span>
+        )}
       </div>
     </div>
   )

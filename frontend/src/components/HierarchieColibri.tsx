@@ -5,22 +5,22 @@ import { Leaf, ShieldCheck, Flame, Sun } from 'lucide-react'
 
 const ETAPES = [
   {
-    n: 1, icon: Leaf, color: 'text-leaf', ring: 'bg-leaf/10 border-leaf/30',
+    n: 1, icon: Leaf, color: 'text-leaf', ring: 'bg-leaf/[0.06] border-leaf/25',
     titre: 'Sobriété',
     desc: 'Les gestes gratuits d\'abord : réglages, température, programmation. Rien à acheter.',
   },
   {
-    n: 2, icon: ShieldCheck, color: 'text-sky', ring: 'bg-sky/10 border-sky/30',
+    n: 2, icon: ShieldCheck, color: 'text-sky', ring: 'bg-sky/[0.06] border-sky/25',
     titre: 'Isolation',
     desc: 'On isole avant tout : on n\'installe pas une pompe à chaleur dans une passoire.',
   },
   {
-    n: 3, icon: Flame, color: 'text-primary', ring: 'bg-primary/10 border-primary/30',
+    n: 3, icon: Flame, color: 'text-terra', ring: 'bg-terra/[0.06] border-terra/25',
     titre: 'Systèmes performants',
     desc: 'Chauffage, eau chaude, ventilation, régulation : une fois la maison bien isolée.',
   },
   {
-    n: 4, icon: Sun, color: 'text-sun', ring: 'bg-sun/10 border-sun/40',
+    n: 4, icon: Sun, color: 'text-primary', ring: 'bg-primary/5 border-primary/25',
     titre: 'Production',
     desc: 'Le solaire en dernier — quand vos besoins sont déjà réduits au minimum.',
   },

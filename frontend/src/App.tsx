@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -13,7 +13,6 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import VerifyEmail from './pages/auth/VerifyEmail'
 import FicheMaison from './pages/FicheMaison'
-import EspaceHelios from './pages/EspaceHelios'
 import EspaceJardin from './pages/EspaceJardin'
 import SimulateurSolaire from './pages/SimulateurSolaire'
 import Vent from './pages/Vent'
@@ -60,6 +59,12 @@ function AdminRoutes() {
       <Route path="/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
     </Routes>
   )
+}
+
+/** Redirection qui conserve la requête, ce que `<Navigate to="/espace">` seul ne fait pas. */
+function VersEspace() {
+  const { search } = useLocation()
+  return <Navigate to={`/espace${search}`} replace />
 }
 
 export default function App() {
@@ -117,7 +122,11 @@ function SitePublic() {
           <Route path="/espace/compte" element={<ProtectedRoute><EspaceCompte /></ProtectedRoute>} />
           <Route path="/espace/pro" element={<ProtectedRoute><EspacePro /></ProtectedRoute>} />
           <Route path="/mon-espace" element={<ProtectedRoute><FicheMaison /></ProtectedRoute>} />
-          <Route path="/espace/helios" element={<ProtectedRoute><EspaceHelios /></ProtectedRoute>} />
+          {/* « Mon Helios » a fusionné avec « Mon espace » le 30/09/2026 : la conversation
+              vit désormais dans l'espace, l'historique dans son menu déroulant. L'ancienne
+              adresse redirige plutôt que de disparaître — elle est dans des liens existants,
+              et elle porte parfois une question en paramètre (`?ask=`) qu'il faut conserver. */}
+          <Route path="/espace/helios" element={<VersEspace />} />
           <Route path="/espace/jardin" element={<ProtectedRoute><EspaceJardin /></ProtectedRoute>} />
           <Route path="/espace/audits" element={<ProtectedRoute><EspaceAudits /></ProtectedRoute>} />
           <Route path="/espace/energie" element={<ProtectedRoute><EspaceEnergie /></ProtectedRoute>} />

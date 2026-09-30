@@ -457,7 +457,7 @@ export default function SimulateurSolaire() {
           <aside ref={panneauReglages}
             className="order-2 min-w-0 scroll-mt-36 xl:sticky xl:top-20 xl:order-1 xl:self-start
               xl:scroll-mt-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-ink/10
-              xl:bg-cream/80 xl:shadow-xl xl:backdrop-blur">
+              xl:bg-cream/80 xl:shadow-question xl:backdrop-blur">
             <div className="xl:flex">
               {/* Le rail : les onglets en icônes, à demeure le long du panneau. */}
               <div role="tablist" aria-orientation="vertical" aria-label="Sections du simulateur"
@@ -613,7 +613,7 @@ export default function SimulateurSolaire() {
 
               <Link to="/espace/mises-en-relation"
                 className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg
-                  border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-white
+                  border border-ink px-4 py-2 font-semibold text-ink hover:bg-ink hover:text-sable
                   sm:w-auto">
                 <Users size={18} /> Être mis en relation
               </Link>
@@ -669,9 +669,9 @@ export default function SimulateurSolaire() {
       {accueil && (
         <div role="dialog" aria-modal="true" aria-labelledby="accueil-titre"
           className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto
-            bg-ink/40 px-4 py-8 backdrop-blur-[3px]">
-          <div className="animate-slide-up w-full max-w-2xl rounded-2xl border border-white/60
-            bg-white/95 p-6 shadow-2xl sm:p-8">
+            bg-ink/50 px-4 py-8 backdrop-blur-[3px]">
+          <div className="animate-slide-up w-full max-w-2xl rounded-2xl border border-bord
+            bg-white p-6 shadow-question sm:p-8">
             <h1 id="accueil-titre" className="font-display text-2xl font-bold text-ink sm:text-3xl">
               Équipez votre maison, voyez ce que ça change
             </h1>
@@ -683,8 +683,8 @@ export default function SimulateurSolaire() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={() => { setAccueil(false); setGuide(true) }}
                 className="rounded-xl bg-primary px-5 py-4 text-left text-white transition
-                  hover:bg-primary/90">
-                <span className="block font-display text-lg font-bold">Me laisser guider</span>
+                  hover:bg-terra">
+                <span className="block font-display text-lg">Me laisser guider</span>
                 <span className="block text-sm text-white/90">5 questions simples — recommandé</span>
               </button>
               <button type="button" onClick={() => setAccueil(false)}

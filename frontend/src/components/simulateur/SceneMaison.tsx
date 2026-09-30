@@ -20,6 +20,7 @@
  */
 
 import type { Saison } from '../../lib/simulateur'
+import { COULEURS } from '../../data/couleurs'
 
 export interface EmplacementScene {
   id: string
@@ -162,7 +163,7 @@ function Flux({ d, kw, couleur }: { d: string; kw: number; couleur: string }) {
   return (
     <g>
       {/* Un liseré blanc détache le flux du décor, qui est clair et chargé. */}
-      <path d={d} fill="none" stroke="#FFFFFF" strokeWidth={largeur + 6} strokeOpacity={0.55}
+      <path d={d} fill="none" stroke={COULEURS.blanc} strokeWidth={largeur + 6} strokeOpacity={0.55}
         strokeLinecap="round" />
       <path d={d} fill="none" stroke={couleur} strokeWidth={largeur} strokeOpacity={0.28}
         strokeLinecap="round" />
@@ -190,15 +191,15 @@ function Repere({
       style={{ cursor: 'pointer' }}
     >
       {/* Halo : ce qui est installé s'allume sur le décor. */}
-      {installe && <circle cx={pos.x} cy={pos.y} r={r + 14} fill="#B85A08" opacity={0.16} />}
-      <circle cx={pos.x} cy={pos.y + 3} r={r} fill="#1D3F63" opacity={0.2} />
+      {installe && <circle cx={pos.x} cy={pos.y} r={r + 14} fill={COULEURS.accent} opacity={0.16} />}
+      <circle cx={pos.x} cy={pos.y + 3} r={r} fill={COULEURS.ink} opacity={0.2} />
       <circle cx={pos.x} cy={pos.y} r={r}
-        fill={installe ? '#B85A08' : '#FDF8F3'}
-        stroke={installe ? '#FDF8F3' : '#B85A08'}
+        fill={installe ? COULEURS.accent : COULEURS.sable}
+        stroke={installe ? COULEURS.sable : COULEURS.accent}
         strokeWidth={3}
         strokeDasharray={installe ? undefined : '7 5'} />
       <text x={pos.x} y={pos.y + 11} textAnchor="middle" fontSize={30} fontWeight={700}
-        fill={installe ? '#FFFFFF' : '#B85A08'} style={{ pointerEvents: 'none' }}>
+        fill={installe ? COULEURS.blanc : COULEURS.accent} style={{ pointerEvents: 'none' }}>
         {installe ? numero : '+'}
       </text>
     </g>
@@ -222,25 +223,25 @@ export default function SceneMaison({ equipements, eolienne, heure, saison, flux
       >
         <defs>
           <radialGradient id="sc-halo-soleil" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F5B700" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#F5B700" stopOpacity="0" />
+            <stop offset="0%" stopColor={COULEURS.or} stopOpacity="0.55" />
+            <stop offset="100%" stopColor={COULEURS.or} stopOpacity="0" />
           </radialGradient>
           <linearGradient id="sc-nuit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0E1C33" stopOpacity="0.72" />
-            <stop offset="100%" stopColor="#1D3F63" stopOpacity="0.5" />
+            <stop offset="0%" stopColor={COULEURS.nuit} stopOpacity="0.72" />
+            <stop offset="100%" stopColor={COULEURS.ink} stopOpacity="0.5" />
           </linearGradient>
           <filter id="sc-lueur" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="26" />
           </filter>
           <linearGradient id="sc-voile-droite" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#FDF8F3" stopOpacity="1" />
-            <stop offset="86%" stopColor="#FDF8F3" stopOpacity="0.99" />
-            <stop offset="100%" stopColor="#FDF8F3" stopOpacity="0" />
+            <stop offset="0%" stopColor={COULEURS.sable} stopOpacity="1" />
+            <stop offset="86%" stopColor={COULEURS.sable} stopOpacity="0.99" />
+            <stop offset="100%" stopColor={COULEURS.sable} stopOpacity="0" />
           </linearGradient>
           <linearGradient id="sc-voile-gauche" x1="1" y1="0" x2="0" y2="0">
-            <stop offset="0%" stopColor="#FDF8F3" stopOpacity="1" />
-            <stop offset="86%" stopColor="#FDF8F3" stopOpacity="0.99" />
-            <stop offset="100%" stopColor="#FDF8F3" stopOpacity="0" />
+            <stop offset="0%" stopColor={COULEURS.sable} stopOpacity="1" />
+            <stop offset="86%" stopColor={COULEURS.sable} stopOpacity="0.99" />
+            <stop offset="100%" stopColor={COULEURS.sable} stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -275,9 +276,9 @@ export default function SceneMaison({ equipements, eolienne, heure, saison, flux
           <>
             <rect x="0" y="0" width={IMAGE.w} height={IMAGE.h} fill="url(#sc-nuit)" />
             <g filter="url(#sc-lueur)" opacity="0.85">
-              <ellipse cx="830" cy="300" rx="120" ry="60" fill="#F5B700" />
-              <ellipse cx="900" cy="500" rx="150" ry="70" fill="#F5B700" />
-              <ellipse cx="640" cy="520" rx="90" ry="46" fill="#F5B700" />
+              <ellipse cx="830" cy="300" rx="120" ry="60" fill={COULEURS.or} />
+              <ellipse cx="900" cy="500" rx="150" ry="70" fill={COULEURS.or} />
+              <ellipse cx="640" cy="520" rx="90" ry="46" fill={COULEURS.or} />
             </g>
           </>
         )}
@@ -291,15 +292,15 @@ export default function SceneMaison({ equipements, eolienne, heure, saison, flux
 
         {/* ---------- LES FLUX ---------- */}
         <Flux d={`M ${soleil.x + 40} ${soleil.y + 60} Q ${maison.x - 180} ${maison.y - 240} ${maison.x - 30} ${maison.y - 20}`}
-          kw={flux.soleilMaison} couleur="#F5B700" />
+          kw={flux.soleilMaison} couleur={COULEURS.or} />
         <Flux d={`M ${soleil.x - 10} ${soleil.y + 70} Q ${batterie.x + 20} ${batterie.y - 300} ${batterie.x + 10} ${batterie.y - 50}`}
-          kw={flux.soleilBatterie} couleur="#57A64A" />
+          kw={flux.soleilBatterie} couleur={COULEURS.vert} />
         <Flux d={`M ${soleil.x + 70} ${soleil.y - 10} Q ${reseau.x - 280} ${reseau.y - 130} ${reseau.x - 30} ${reseau.y - 10}`}
-          kw={flux.soleilReseau} couleur="#2E86C1" />
+          kw={flux.soleilReseau} couleur={COULEURS.bleu} />
         <Flux d={`M ${reseau.x - 20} ${reseau.y + 40} Q ${maison.x + 340} ${maison.y - 30} ${maison.x + 110} ${maison.y + 30}`}
-          kw={flux.reseauMaison} couleur="#2E86C1" />
+          kw={flux.reseauMaison} couleur={COULEURS.bleu} />
         <Flux d={`M ${batterie.x + 40} ${batterie.y - 20} Q ${maison.x - 250} ${maison.y + 150} ${maison.x - 60} ${maison.y + 60}`}
-          kw={flux.batterieMaison} couleur="#57A64A" />
+          kw={flux.batterieMaison} couleur={COULEURS.vert} />
 
         {/* ---------- LES REPÈRES ---------- */}
         {equipements.map((e) => (

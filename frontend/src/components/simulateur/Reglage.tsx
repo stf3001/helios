@@ -43,7 +43,7 @@ export function Feuille({ titre, ouvert, onFermer, children }: Props) {
         aria-modal="false"
         aria-label={titre}
         className="feuille-reglage fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl
-          border-t border-ink/10 bg-white p-4 shadow-2xl outline-none
+          border-t border-ink/10 bg-white p-4 shadow-question outline-none
           xl:inset-x-auto xl:bottom-4 xl:right-4 xl:top-auto xl:max-h-[min(60vh,32rem)] xl:w-[22rem]
           xl:rounded-2xl xl:border"
       >

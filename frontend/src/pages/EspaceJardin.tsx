@@ -45,7 +45,7 @@ interface Programme {
 
 /** Les quatre gestes du calendrier, avec ce qui les distingue à l'œil. */
 const PHASES = [
-  { cle: 'semis_abri' as const, label: 'Semis à l’abri', Icone: Home, classe: 'bg-sun/70' },
+  { cle: 'semis_abri' as const, label: 'Semis à l’abri', Icone: Home, classe: 'bg-primary/60' },
   { cle: 'semis' as const, label: 'Semis en place', Icone: Sprout, classe: 'bg-leaf/70' },
   { cle: 'plantation' as const, label: 'Plantation', Icone: Shovel, classe: 'bg-primary/70' },
   { cle: 'recolte' as const, label: 'Récolte', Icone: Scissors, classe: 'bg-terra/70' },

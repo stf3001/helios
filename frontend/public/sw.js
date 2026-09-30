@@ -1,6 +1,6 @@
 // Service worker HELIOS — coquille minimale pour l'installabilité PWA + cache léger.
 // Stratégie : network-first pour la navigation (contenu frais), cache des assets statiques.
-const CACHE = 'helios-v2'
+const CACHE = 'helios-v3'
 const SHELL = ['/', '/helios', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (e) => {

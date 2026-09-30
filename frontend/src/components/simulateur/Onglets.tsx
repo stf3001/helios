@@ -17,6 +17,7 @@ import {
 } from '../../lib/simulateur'
 import { Anneau, BarresMensuelles, Courbe25Ans, CourbeJournee, Repartition, Vide } from './Graphiques'
 import { Bascule, Champ, Choix, DejaLa, Nombre } from './Reglage'
+import { COULEURS } from '../../data/couleurs'
 
 type MajConfig = (maj: (c: Config) => Config) => void
 
@@ -93,7 +94,7 @@ function ChampAdresse({ config, majConfig }: { config: Config; majConfig: MajCon
         enregistrée ni mise dans le lien de partage — seule la commune l’est.
       </p>
       {ouvert && suggestions.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-ink/20 bg-white shadow-lg">
+        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-ink/20 bg-white shadow-question">
           {suggestions.map((s) => (
             <li key={s.label}>
               <button type="button"
@@ -242,8 +243,8 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
         ) : (
           <>
             <BarresMensuelles series={[
-              { nom: 'Production', couleur: '#F5B700', valeurs: resultat.bilan_mensuel.map((m) => m.production) },
-              { nom: 'Consommation', couleur: '#2E86C1', valeurs: resultat.bilan_mensuel.map((m) => m.consommation) },
+              { nom: 'Production', couleur: COULEURS.or, valeurs: resultat.bilan_mensuel.map((m) => m.production) },
+              { nom: 'Consommation', couleur: COULEURS.bleu, valeurs: resultat.bilan_mensuel.map((m) => m.consommation) },
             ]} />
             <div className="pt-2">
               <Ligne label="Production sur l’année" valeur={kwh(resultat.production.annuel_kwh)} />
@@ -386,8 +387,8 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
             </div>
             {resultat && (
               <BarresMensuelles series={[
-                { nom: 'Mis de côté', couleur: '#57A64A', valeurs: resultat.bilan_mensuel.map((m) => m.stocke_virtuel) },
-                { nom: 'Récupéré', couleur: '#2E86C1', valeurs: resultat.bilan_mensuel.map((m) => m.restitue_virtuel) },
+                { nom: 'Mis de côté', couleur: COULEURS.vert, valeurs: resultat.bilan_mensuel.map((m) => m.stocke_virtuel) },
+                { nom: 'Récupéré', couleur: COULEURS.bleu, valeurs: resultat.bilan_mensuel.map((m) => m.restitue_virtuel) },
               ]} />
             )}
           </>
@@ -510,11 +511,11 @@ export function OngletJournee({
             <p className="mt-1 text-sm text-dark/70">Il fait nuit : rien ne sort des panneaux.</p>
           ) : (
             <Repartition parts={[
-              { nom: 'La maison, directement', valeur: point.direct, couleur: '#F5B700' },
-              { nom: 'La batterie', valeur: point.charge, couleur: '#57A64A' },
-              { nom: 'Mis de côté (virtuelle)', valeur: point.stocke_virtuel, couleur: '#1D3F63' },
-              { nom: 'Le réseau', valeur: point.injecte, couleur: '#2E86C1' },
-              { nom: 'Perdu (écrêtage)', valeur: point.ecrete, couleur: '#C05621' },
+              { nom: 'La maison, directement', valeur: point.direct, couleur: COULEURS.or },
+              { nom: 'La batterie', valeur: point.charge, couleur: COULEURS.vert },
+              { nom: 'Mis de côté (virtuelle)', valeur: point.stocke_virtuel, couleur: COULEURS.ink },
+              { nom: 'Le réseau', valeur: point.injecte, couleur: COULEURS.bleu },
+              { nom: 'Perdu (écrêtage)', valeur: point.ecrete, couleur: COULEURS.accentFonce },
             ]} />
           )}
         </div>
@@ -522,18 +523,18 @@ export function OngletJournee({
         <div>
           <p className="font-semibold text-ink">La maison est alimentée par…</p>
           <Repartition parts={[
-            { nom: 'Le soleil, directement', valeur: point.direct, couleur: '#F5B700' },
-            { nom: 'La batterie', valeur: point.decharge, couleur: '#57A64A' },
-            { nom: 'La batterie virtuelle', valeur: point.restitue_virtuel, couleur: '#1D3F63' },
-            { nom: 'Le réseau', valeur: point.achat, couleur: '#2E86C1' },
+            { nom: 'Le soleil, directement', valeur: point.direct, couleur: COULEURS.or },
+            { nom: 'La batterie', valeur: point.decharge, couleur: COULEURS.vert },
+            { nom: 'La batterie virtuelle', valeur: point.restitue_virtuel, couleur: COULEURS.ink },
+            { nom: 'Le réseau', valeur: point.achat, couleur: COULEURS.bleu },
           ]} />
         </div>
       </Bloc>
 
       <Bloc titre={`Cumul sur une ${LIBELLE_SAISON[saison]}`}>
         <CourbeJournee heureActive={heure} series={[
-          { nom: 'Production', couleur: '#F5B700', valeurs: points.map((p) => p.production) },
-          { nom: 'Consommation', couleur: '#2E86C1', valeurs: points.map((p) => p.consommation) },
+          { nom: 'Production', couleur: COULEURS.or, valeurs: points.map((p) => p.production) },
+          { nom: 'Consommation', couleur: COULEURS.bleu, valeurs: points.map((p) => p.consommation) },
         ]} />
         <div className="pt-2">
           <Ligne label="Produit" valeur={`${cumul.production.toFixed(1)} kWh`} />
@@ -584,7 +585,7 @@ function CarteOption({
         </p>
       )}
       <button type="button" onClick={onChoisir}
-        className="mt-3 w-full rounded-lg bg-ink px-3 py-2 font-semibold text-white hover:bg-ink/90">
+        className="mt-3 w-full rounded-lg bg-ink px-3 py-2 font-semibold text-sable hover:bg-ink/90">
         Choisir cette option
       </button>
     </article>

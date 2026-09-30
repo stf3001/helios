@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Check, Star } from 'lucide-react'
 import Hero from '../components/Hero'
 import { useTitle } from '../hooks/useTitle'
 import ApiError from '../components/ApiError'
@@ -48,15 +49,15 @@ export default function Partenaires() {
     <>
       <Hero title="Des entreprises choisies, une charte exigeante." />
       <section className="max-w-[800px] mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6">La charte partenaire</h2>
+        <h2 className="font-display text-3xl mb-6">La charte partenaire</h2>
         <ul className="space-y-3">
           {engagements.map((e, i) => (
-            <li key={i} className="flex gap-3 text-gray-700">
-              <span className="text-primary font-bold">✓</span> {e}
+            <li key={i} className="flex items-start gap-3 text-gray-600">
+              <Check className="mt-0.5 w-4 h-4 shrink-0 text-leaf" aria-hidden="true" /> {e}
             </li>
           ))}
         </ul>
-        <div className="mt-10 border-l-4 border-primary bg-gray-50 rounded-r-2xl p-6 text-gray-700">
+        <div className="mt-10 border-l-2 border-primary bg-white border-y border-r border-bord rounded-r-2xl p-6 text-gray-600">
           <strong>Transparence.</strong> Les partenaires versent à HELIOS une commission d'apport d'affaires
           quand un client leur confie des travaux via la plateforme. Cette commission ne modifie jamais les
           préconisations d'Helios, et n'est jamais facturée au client.
@@ -84,13 +85,15 @@ export default function Partenaires() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="font-semibold">{p.raison_sociale}</div>
                   {p.note_moyenne != null && (
-                    <div className="text-sm text-amber-600 shrink-0">★ {p.note_moyenne}</div>
+                    <div className="inline-flex items-center gap-1 text-sm text-primary shrink-0">
+                      <Star className="w-3.5 h-3.5 fill-current" aria-hidden="true" /> {p.note_moyenne}
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {p.rge && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">RGE</span>}
+                  {p.rge && <span className="text-xs bg-leaf/10 text-leaf px-2 py-0.5 rounded-full">RGE</span>}
                   {p.metiers.map((m) => (
-                    <span key={m} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                    <span key={m} className="text-xs bg-cream text-gray-600 px-2 py-0.5 rounded-full">
                       {METIER_LABEL[m] ?? m}
                     </span>
                   ))}

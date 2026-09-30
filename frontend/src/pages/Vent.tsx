@@ -163,7 +163,7 @@ export default function Vent() {
             n'a pas demandée. Arrivé ici, il veut agir, pas lire. */}
         <div className="flex justify-center rounded-2xl bg-ink p-6 sm:p-8">
           <Link to="/simulateur-solaire"
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3
+            className="inline-flex items-center gap-2 rounded-xl bg-sable px-5 py-3
               font-semibold text-ink transition hover:bg-cream">
             Équiper ma maison <ArrowRight className="h-5 w-5" />
           </Link>

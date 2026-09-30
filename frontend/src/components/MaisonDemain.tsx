@@ -24,7 +24,7 @@ export default function MaisonDemain() {
       <button
         type="button"
         onClick={() => setZoom(true)}
-        className="group relative block w-full overflow-hidden rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition"
+        className="group relative block w-full overflow-hidden rounded-2xl border border-bord hover:border-gray-300 transition-colors"
         aria-label="Agrandir l'illustration de la maison de demain"
       >
         <img
@@ -35,7 +35,7 @@ export default function MaisonDemain() {
           loading="lazy"
           className="w-full h-auto"
         />
-        <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-ink/80 text-white text-xs px-3 py-1.5 opacity-90 group-hover:opacity-100">
+        <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-ink/85 text-sable text-xs px-3 py-1.5 opacity-90 group-hover:opacity-100">
           <ZoomIn className="w-3.5 h-3.5" /> Agrandir
         </span>
       </button>

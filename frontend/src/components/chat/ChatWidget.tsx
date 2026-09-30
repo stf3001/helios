@@ -1,7 +1,44 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Flag, Mic, Send, Sparkles } from 'lucide-react'
-import HeliosAvatar, { type HeliosState } from '../HeliosAvatar'
+import { Check, Flag, Mic, Paperclip, Send, Sparkles } from 'lucide-react'
+import MarqueHelios from '../MarqueHelios'
+
+/** Ce que vit Helios pendant la conversation. Le nommage vient du produit et non
+ *  de l'animation : c'est ce qui a permis de retirer la mascotte casquée le
+ *  30/09/2026 sans toucher à un seul appel de `showAvatar()` dans ce fichier. */
+export type HeliosState =
+  | 'repos' | 'attention' | 'salutation' | 'ecoute'
+  | 'reflexion' | 'reponse' | 'nesaitpas' | 'erreur' | 'succes'
+
+const PHRASE: Record<HeliosState, string> = {
+  repos: 'Assistant énergie',
+  attention: 'Il vous écoute',
+  salutation: 'Assistant énergie',
+  ecoute: 'Il vous écoute parler',
+  reflexion: 'Il cherche…',
+  reponse: 'Il a répondu',
+  nesaitpas: 'Il n’a pas trouvé',
+  erreur: 'Quelque chose a échoué',
+  succes: 'C’est fait',
+}
+
+/** La présence d'Helios en tête de la conversation : la marque, son nom, et ce
+ *  qu'il est en train de faire. Le halo ne respire que lorsqu'il cherche — le
+ *  reste du temps, rien ne bouge. */
+function PresenceHelios({ etat, taille }: { etat: HeliosState; taille: number }) {
+  const cherche = etat === 'reflexion'
+  return (
+    <div className="flex items-center gap-3">
+      <MarqueHelios taille={taille} anime={cherche} className={etat === 'erreur' ? 'text-gray-400' : 'text-primary'} />
+      <div className="leading-tight">
+        <div className="font-display text-lg text-ink">Helios</div>
+        {/* `aria-live` : un lecteur d'écran annonce « il cherche… » comme un voyant
+            le montrerait à l'œil. */}
+        <div className="text-xs text-gray-500" aria-live="polite">{PHRASE[etat]}</div>
+      </div>
+    </div>
+  )
+}
 
 interface Citation {
   titre: string
@@ -68,8 +105,8 @@ function WaitIndicator() {
 const GREETING: ChatMessage = {
   role: 'helios',
   content:
-    "Bonjour, je suis Helios 👋 Posez-moi vos questions sur votre maison, je suis là pour ça.\n\n"
-    + "Un mot sur moi avant de commencer : j’apprends vite, mais je ne suis pas un génie 🙂 "
+    "Bonjour, je suis Helios. Posez-moi vos questions sur votre maison, je suis là pour ça.\n\n"
+    + "Un mot sur moi avant de commencer : j’apprends vite, mais je ne suis pas un génie. "
     + "Une question à la fois, en une ou deux phrases, et je réponds bien mieux. "
     + "Si ma réponse tombe à côté, reformulez plus simplement — ça marche presque toujours.",
 }
@@ -184,17 +221,7 @@ export default function ChatWidget({
   // Quitter la page pendant une dictée laisserait le micro ouvert.
   useEffect(() => () => { moteur.current?.stop() }, [])
 
-  /* --- Il vous regarde écrire ---
-     Le champ, en coordonnées d'écran : les yeux d'Helios s'y posent tant qu'on y écrit.
-     Le point visé est le DÉBUT du champ, là où le curseur clignote, et non son milieu —
-     c'est l'endroit que l'on regarde soi-même en tapant. Aucun suivi du défilement n'est
-     nécessaire : l'avatar et le champ descendent ensemble, la direction ne change pas. */
   const champ = useRef<HTMLInputElement>(null)
-  const [cibleRegard, setCibleRegard] = useState<{ x: number; y: number } | null>(null)
-  const viserLeChamp = () => {
-    const cadre = champ.current?.getBoundingClientRect()
-    setCibleRegard(cadre ? { x: cadre.left + 40, y: cadre.top + cadre.height / 2 } : null)
-  }
 
   /* On écrit : Helios s'allume. Le champ se vide : il revient au repos. Le basculement
      seulement, jamais à chaque touche — sinon l'animation se rejouerait lettre à lettre. */
@@ -317,36 +344,16 @@ export default function ChatWidget({
   const onlyGreeting = messages.length === 1 && messages[0].role === 'helios'
 
   return (
-    /* Deux colonnes : Helios en pied, en grand, à gauche — la conversation à
-       droite. L'avatar réagit à ce qui se passe (il réfléchit, il a trouvé, il
-       ne sait pas, ça a raté) : à cette taille le jeu d'expressions se voit
-       vraiment, ce qui n'était pas le cas d'une vignette d'en-tête. */
-    <div className="rounded-2xl border border-black/5 bg-white shadow-sm max-w-[920px] mx-auto flex h-[70vh] max-h-[620px] min-h-[440px] overflow-hidden">
-      <aside className="hidden md:flex flex-col items-center justify-end w-[260px] shrink-0 border-r border-black/5 bg-cream px-5 py-6 bg-gradient-to-b from-white to-cream">
-        <div className="flex-1 flex items-center justify-center">
-          <HeliosAvatar state={avatar.state} replay={avatar.n} height={300} cible={cibleRegard} />
-        </div>
-        <div className="text-center leading-tight mt-4">
-          <div className="font-display font-semibold text-ink text-lg">Helios</div>
-          <div className="text-xs text-gray-500 mt-0.5">Assistant énergie</div>
-        </div>
-      </aside>
-
-      <div className="flex-1 flex flex-col min-w-0">
-      {/* Mobile : pas de place pour une colonne — Helios repasse en en-tête,
-          plus petit mais toujours vivant. */}
-      <div className="md:hidden flex items-center gap-3 px-4 py-2 border-b border-black/5 bg-cream">
-        <div className="w-16 h-16 flex items-end justify-center">
-          <HeliosAvatar state={avatar.state} replay={avatar.n} height={62} cible={cibleRegard} />
-        </div>
-        <div className="leading-tight">
-          <div className="font-display font-semibold text-ink">Helios</div>
-          <div className="text-xs text-gray-500">Assistant énergie</div>
-        </div>
+    /* Un seul en-tête, quelle que soit la largeur : la marque, le nom, et ce
+       qu'Helios est en train de faire. La colonne latérale n'existait que pour
+       loger la mascotte en pied ; sans elle, elle ne portait plus que du vide. */
+    <div className="rounded-2xl border border-bord bg-white max-w-[920px] mx-auto flex flex-col h-[70vh] max-h-[620px] min-h-[440px] overflow-hidden">
+      <div className="px-4 py-3 border-b border-bord bg-cream">
+        <PresenceHelios etat={avatar.state} taille={30} />
       </div>
 
       {simplified && (
-        <div className="px-4 py-2 text-xs text-center bg-sun/10 text-gray-600 border-b border-black/5">
+        <div className="px-4 py-2 text-xs text-center bg-cream text-gray-600 border-b border-bord">
           Mode simplifié : réponse générée localement (service avancé indisponible ou limite atteinte).
         </div>
       )}
@@ -368,7 +375,7 @@ export default function ChatWidget({
                 <div className="mt-2 pt-2 border-t border-black/10 text-xs text-gray-500 space-y-0.5">
                   {m.citations.map((c, ci) => (
                     <div key={ci}>
-                      📎{' '}
+                      <Paperclip className="inline w-3.5 h-3.5 mr-1 -mt-0.5" aria-hidden="true" />
                       <Link to={`/faq?q=${encodeURIComponent(c.titre)}`} className="underline hover:text-primary">
                         {c.titre}
                       </Link>
@@ -426,7 +433,7 @@ export default function ChatWidget({
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="border-t border-black/5 p-3 flex gap-2">
+      <form onSubmit={onSubmit} className="border-t border-bord p-3 flex gap-2">
         {/* Le micro est DANS le champ : dicter, c'est une façon d'écrire, pas une action
             à part. D'où aussi le texte qui s'inscrit au fur et à mesure qu'on parle —
             on relit et on corrige avant d'envoyer, rien ne part tout seul. */}
@@ -434,9 +441,7 @@ export default function ChatWidget({
           <input
             ref={champ}
             value={input}
-            onChange={(e) => { setInput(e.target.value); viserLeChamp() }}
-            onFocus={viserLeChamp}
-            onBlur={() => setCibleRegard(null)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder={dictee ? 'Parlez, Helios vous écoute…' : 'Posez votre question à Helios…'}
             disabled={sending}
             className={
@@ -476,7 +481,6 @@ export default function ChatWidget({
           <Send className="w-4 h-4" />
         </button>
       </form>
-      </div>
     </div>
   )
 }

@@ -107,7 +107,7 @@ export default function Bandeau({ indicateurs, calculEnCours, variante = 'bandea
   if (variante === 'carte') {
     return (
       <section aria-label="Vos indicateurs"
-        className="rounded-2xl border border-ink/10 bg-white/95 p-3 shadow-xl backdrop-blur">
+        className="rounded-2xl border border-ink/10 bg-white/95 p-3 shadow-question backdrop-blur">
         <div className="flex justify-center">
           <Anneau pct={i?.autonomie_pct ?? 0} partVirtuelle={i?.autonomie_part_virtuelle_pct ?? 0}
             classe="h-20 w-20" />

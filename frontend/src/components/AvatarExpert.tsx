@@ -1,3 +1,5 @@
+import { COULEURS } from '../data/couleurs'
+
 /**
  * Portrait d'un conseiller — DESSINÉ, pas photographié.
  *
@@ -14,10 +16,10 @@
 
 /** Quatre déclinaisons, pour que les visages ne se ressemblent pas. */
 const TEINTES = [
-  { fond: '#FDE8D0', peau: '#E8B88A', cheveux: '#3D2B1F', vetement: '#2E86C1' },
-  { fond: '#E7F0E4', peau: '#C98D63', cheveux: '#1D1410', vetement: '#57A64A' },
-  { fond: '#FBE6DA', peau: '#F0C9A6', cheveux: '#8A5A2B', vetement: '#B85A08' },
-  { fond: '#E3ECF5', peau: '#9C6B45', cheveux: '#2A1C13', vetement: '#1D3F63' },
+  { fond: '#EDE3D1', peau: '#E8B88A', cheveux: '#3D2B1F', vetement: COULEURS.bleu },
+  { fond: '#E4EBE7', peau: '#C98D63', cheveux: '#1D1410', vetement: COULEURS.vert },
+  { fond: '#F1E4D8', peau: '#F0C9A6', cheveux: '#8A5A2B', vetement: COULEURS.accent },
+  { fond: '#E3EAED', peau: '#9C6B45', cheveux: '#2A1C13', vetement: COULEURS.ink },
 ] as const
 
 export default function AvatarExpert({
@@ -46,9 +48,9 @@ export default function AvatarExpert({
         <path d="M 32 44 Q 30 19 50 19 Q 70 19 68 44 Q 66 28 50 27 Q 34 28 32 44 Z" fill={t.cheveux} />
       )}
       {/* Yeux et sourire — le minimum pour que ce soit quelqu'un, pas un pictogramme */}
-      <circle cx="43.5" cy="42" r="1.9" fill="#1D3F63" />
-      <circle cx="56.5" cy="42" r="1.9" fill="#1D3F63" />
-      <path d="M 44 50 Q 50 54 56 50" fill="none" stroke="#1D3F63" strokeWidth="1.8"
+      <circle cx="43.5" cy="42" r="1.9" fill={COULEURS.ink} />
+      <circle cx="56.5" cy="42" r="1.9" fill={COULEURS.ink} />
+      <path d="M 44 50 Q 50 54 56 50" fill="none" stroke={COULEURS.ink} strokeWidth="1.8"
         strokeLinecap="round" />
     </svg>
   )

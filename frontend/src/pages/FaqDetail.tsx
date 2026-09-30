@@ -101,7 +101,7 @@ export default function FaqDetail() {
       )}
       <p className="text-gray-700 whitespace-pre-line leading-relaxed text-lg">{fiche.answer}</p>
 
-      <div className="mt-8 rounded-2xl bg-cream border border-black/5 p-5">
+      <div className="mt-8 rounded-2xl bg-cream border border-bord p-5">
         <p className="text-sm text-gray-700">
           Cette réponse est générale. Pour savoir ce qu'elle donne <strong>chez vous</strong>,
           posez la question à Helios avec les données de votre logement.

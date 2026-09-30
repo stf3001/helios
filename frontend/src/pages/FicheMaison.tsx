@@ -4,6 +4,7 @@ import CompletenessBar from '../components/fiche/CompletenessBar'
 import HouseDocuments from '../components/fiche/HouseDocuments'
 import type { Draft, FieldSpec, FieldValue } from '../components/fiche/types'
 import { useAuth } from '../context/AuthContext'
+import MarqueHelios from '../components/MarqueHelios'
 
 const ANNEE_OPTIONS = [
   { value: 'avant_1948', label: 'Avant 1948' }, { value: '1948_1974', label: '1948 – 1974' },
@@ -204,14 +205,14 @@ export default function FicheMaison() {
 
   return (
     <section className="max-w-[900px] mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2">Ma fiche maison</h1>
+      <h1 className="font-display text-3xl mb-2">Ma fiche maison</h1>
       <p className="text-gray-600 mb-8">
         Bonjour {user?.prenom || ''} — renseignez votre logement bloc par bloc, à votre rythme. Rien n'est obligatoire
         à part le code postal.
       </p>
 
       {user && !user.email_verified && (
-        <div className="border-l-4 border-sun bg-sun/10 rounded-r-2xl p-4 text-sm text-gray-700 mb-8">
+        <div className="border-l-2 border-primary bg-white border-y border-r border-bord rounded-r-2xl p-4 text-sm text-gray-600 mb-8">
           Pensez à vérifier votre email pour sécuriser votre compte — un lien vous a été envoyé.
         </div>
       )}
@@ -221,7 +222,7 @@ export default function FicheMaison() {
       {!house ? (
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 max-w-lg">
           <div className="flex items-center gap-3 mb-1">
-            <img src="/brand/helios-thumbsup.png" alt="" className="h-10 w-10 object-contain" />
+            <MarqueHelios taille={28} className="text-primary shrink-0" />
             <h2 className="font-display font-semibold text-lg text-ink">3 questions suffisent pour commencer</h2>
           </div>
           <p className="text-sm text-gray-600 mb-5">

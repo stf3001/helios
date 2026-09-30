@@ -10,59 +10,26 @@
  * et la doctrine se lit ensuite. Un visiteur ne doit jamais traverser une page
  * d'explications pour atteindre le champ de saisie — c'est ce pour quoi il est venu.
  *
- * LE PERSONNAGE PORTE LE BANDEAU. Helios est en grand dans sa pose `hero`, et SON REGARD
- * SUIT LE POINTEUR : c'est ce qui fait la différence entre une illustration et quelqu'un.
+ * LE BANDEAU DIT QUI IL EST, EN TEXTE. La mascotte casquée a été retirée le 30/09/2026 :
+ * ce qui distingue Helios n'est pas un personnage dessiné mais ce qu'il s'engage à faire,
+ * et c'est cela que le bandeau met en avant.
  *
  * Les amorces sont de VRAIES questions : elles remplissent le champ juste en dessous,
  * l'utilisateur relit et envoie. Une fausse conversation qui se taperait toute seule
  * ferait illusion deux secondes et mentirait sur ce que l'outil sait faire.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Ban, Check, MessageCircle, ShieldQuestion, Sparkles } from 'lucide-react'
 
 import AvatarExpert from '../components/AvatarExpert'
 import ChatWidget from '../components/chat/ChatWidget'
-import HeliosAvatar, { type HeliosPose, type HeliosState } from '../components/HeliosAvatar'
+import MarqueHelios from '../components/MarqueHelios'
 import HierarchieColibri from '../components/HierarchieColibri'
 import MaisonDemain from '../components/MaisonDemain'
 import RendezVousTel from '../components/RendezVousTel'
 import { useTitle } from '../hooks/useTitle'
-
-/**
- * Un Helios qui joue son geste QUAND ON ARRIVE SUR LUI, et pas au chargement de la page.
- *
- * Sans cela, le haussement d'épaules de « quand il ne sait pas » se jouait en haut de
- * page, pendant qu'on lisait le bandeau, et il était fini depuis longtemps quand le
- * lecteur arrivait enfin devant. Un geste que personne ne voit n'existe pas.
- *
- * L'observateur n'est pas débranché après le premier passage : on redescend, il rejoue.
- */
-function HeliosAuPassage({
-  etat, hauteur, pose,
-}: { etat: HeliosState; hauteur: number; pose?: HeliosPose }) {
-  const boite = useRef<HTMLDivElement>(null)
-  const [passages, setPassages] = useState(0)
-
-  useEffect(() => {
-    const el = boite.current
-    if (!el) return
-    const observateur = new IntersectionObserver(
-      ([entree]) => { if (entree.isIntersecting) setPassages((n) => n + 1) },
-      { threshold: 0.6 },
-    )
-    observateur.observe(el)
-    return () => observateur.disconnect()
-  }, [])
-
-  return (
-    <div ref={boite}>
-      <HeliosAvatar state={passages ? etat : 'repos'} replay={passages}
-        height={hauteur} restPose={pose} />
-    </div>
-  )
-}
 
 /**
  * L'ÉQUIPE — CONTENU PROVISOIRE, À REMPLACER AVANT TOUTE MISE EN LIGNE.
@@ -134,37 +101,24 @@ export default function HeliosIA() {
   return (
     <>
       {/* ---------------- LE BANDEAU : qui il est, et lui ---------------- */}
-      <section className="hero-sunrise relative overflow-hidden">
-        {/* Halo solaire derrière le personnage — décoratif, donc invisible aux lecteurs
-            d'écran. Le même souffle que le soleil du simulateur. */}
-        <div aria-hidden="true"
-          className="pointer-events-none absolute -right-24 top-0 h-[36rem] w-[36rem] rounded-full
-            bg-sun/25 blur-3xl md:right-0" />
-
-        <div className="relative mx-auto grid max-w-[1100px] items-center gap-8 px-4 py-12
-          md:grid-cols-[1.15fr_auto]">
-          <div>
-            <h1 className="font-display text-4xl font-bold text-white md:text-5xl">
-              Qui est Helios ?
-            </h1>
-            <div className="mt-4 space-y-1.5 text-lg text-white/95">
-              <p>
-                Une intelligence artificielle qui ne s’intéresse qu’à une seule chose :
-                <strong className="font-semibold"> votre logement</strong>.
-              </p>
-              <p>Chauffage, isolation, solaire, facture, devis — posez votre question.</p>
-              <p>S’il ne sait pas, il vous le dira. S’il sait, il vous aidera à choisir.</p>
-            </div>
-            <p className="mt-4 text-sm text-white/80">
-              Sa particularité n’est pas sa technologie, mais sa constitution : des règles
-              et des valeurs — transparence, humilité, honnêteté, excellence.
+      <section className="border-b border-bord">
+        <div className="mx-auto max-w-[900px] px-4 py-14 text-center md:py-16">
+          <MarqueHelios taille={40} className="mx-auto mb-6 text-primary" />
+          <h1 className="font-display text-4xl leading-[1.08] text-ink md:text-5xl lg:text-[56px]">
+            Qui est <em className="italic text-primary">Helios</em> ?
+          </h1>
+          <div className="mx-auto mt-6 max-w-[620px] space-y-2 text-lg text-gray-600">
+            <p>
+              Une intelligence artificielle qui ne s’intéresse qu’à une seule chose :
+              <strong className="font-semibold text-ink"> votre logement</strong>.
             </p>
+            <p>Chauffage, isolation, solaire, facture, devis — posez votre question.</p>
+            <p>S’il ne sait pas, il vous le dira. S’il sait, il vous aidera à choisir.</p>
           </div>
-
-          {/* Le personnage, en grand. Ses yeux suivent le pointeur : c'est tout l'effet. */}
-          <div className="hidden justify-self-center md:block">
-            <HeliosAvatar state="repos" restPose="hero" height={300} />
-          </div>
+          <p className="mx-auto mt-5 max-w-[620px] text-sm text-gray-500">
+            Sa particularité n’est pas sa technologie, mais sa constitution : des règles
+            et des valeurs — transparence, humilité, honnêteté, excellence.
+          </p>
         </div>
       </section>
 
@@ -202,10 +156,13 @@ export default function HeliosIA() {
       {/* ---------------- QUAND IL NE SAIT PAS ---------------- */}
       <section className="bg-cream py-12">
         <div className="mx-auto grid max-w-[1100px] items-center gap-8 px-4 md:grid-cols-[auto_1fr]">
-          {/* La pose « je ne sais pas » n'est pas un aveu de faiblesse ici : c'est
-              l'argument. On la montre donc, et elle se joue quand on arrive dessus. */}
+          {/* « Je ne sais pas » n'est pas un aveu de faiblesse ici : c'est l'argument.
+              La phrase est donc citée, en grand, plutôt qu'illustrée. */}
           <div className="hidden justify-self-center md:block">
-            <HeliosAuPassage etat="nesaitpas" hauteur={190} pose="salute" />
+            <p className="flex h-44 w-64 items-center justify-center rounded-2xl border border-bord
+              bg-white px-6 text-center font-display text-3xl leading-snug text-ink">
+              « Je ne sais&nbsp;<em className="italic text-primary">pas.</em> »
+            </p>
           </div>
           <div>
             <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">

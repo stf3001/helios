@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
-  Home, MessageSquare, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, ArrowRight, Sprout,
+  Home, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, Sprout,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
-import HeliosAvatar from '../components/HeliosAvatar'
+import BlocHelios from '../components/chat/BlocHelios'
+import MarqueHelios from '../components/MarqueHelios'
 
 const NIVEAU_LABEL: Record<string, string> = {
   conseils_generaux: 'Conseils généraux',
@@ -32,6 +33,11 @@ const AUTRES_TUILES = [
 export default function Espace() {
   useTitle('Mon espace')
   const { user, authFetch } = useAuth()
+  /* Arrivee depuis « Demander l'avis d'Helios » (un document de la fiche) :
+     `?ask=<question>` pre-remplit le champ de la conversation. C'est l'ancienne
+     adresse `/espace/helios?ask=` qui aboutit ici depuis la fusion des deux pages. */
+  const [searchParams] = useSearchParams()
+  const askPrefill = searchParams.get('ask') ?? undefined
   const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
   const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -54,7 +60,7 @@ export default function Espace() {
   return (
     <section className="max-w-[900px] mx-auto px-4 py-12">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Bonjour {user?.prenom || ''} 👋</h1>
+        <h1 className="font-display text-3xl">Bonjour {user?.prenom || ''}</h1>
         <Link to="/espace/compte" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary">
           <Settings className="w-4 h-4" /> Mon compte
         </Link>
@@ -97,9 +103,9 @@ export default function Espace() {
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  {/* Premier contact avec un espace vide : Helios accueille au lieu
-                      de laisser une vignette figée devant une page à remplir. */}
-                  <HeliosAvatar state="salutation" height={56} showBadges={false} />
+                  {/* Premier contact avec un espace vide : la marque tient la place
+                      d'un interlocuteur devant une page encore à remplir. */}
+                  <MarqueHelios taille={34} className="text-primary shrink-0" />
                   <div>
                     <p className="font-semibold text-ink">Bienvenue ! Commençons par votre logement.</p>
                     <p className="text-sm text-gray-600">3 questions suffisent — Helios s'occupe du reste.</p>
@@ -112,29 +118,18 @@ export default function Espace() {
             )}
           </div>
 
-          {/* Parler à Helios — proéminent, avec le contexte de la fiche */}
-          <Link to="/espace/helios"
-            className="group flex items-center justify-between gap-4 bg-ink text-white rounded-2xl p-6 mb-8 hover:opacity-95 transition">
-            <div className="flex items-center gap-4">
-              <img src="/brand/helios-thumbsup.png" alt="" className="h-12 w-12 object-contain shrink-0" />
-              <div>
-                <div className="font-display font-semibold text-lg">Une question ? Parlez à Helios</div>
-                <div className="text-sm text-white/70">
-                  Il connaît déjà votre fiche et vos simulations — pas besoin de tout réexpliquer.
-                </div>
-              </div>
-            </div>
-            <span className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl shrink-0 group-hover:gap-2.5 transition-all">
-              <MessageSquare className="w-4 h-4" /> Discuter <ArrowRight className="w-4 h-4" />
-            </span>
-          </Link>
+          {/* LA CONVERSATION, AU CENTRE DE L'ESPACE. Jusqu'au 30/09/2026 il n'y avait
+              ici qu'une banniere renvoyant vers une page « Mon Helios » : poser une
+              question demandait de quitter l'espace. Le widget est desormais sur place,
+              et l'historique tient dans son menu deroulant. */}
+          <BlocHelios askPrefill={askPrefill} />
 
           {/* Mes simulateurs */}
-          <h2 className="font-semibold text-lg mb-3">Mes simulateurs</h2>
+          <h2 className="font-display text-2xl mb-4">Mes simulateurs</h2>
           <div className="grid sm:grid-cols-3 gap-4 mb-8">
             {SIMULATEURS.map((t) => (
               <Link key={t.to} to={t.to}
-                className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+                className="border border-gray-200 rounded-2xl p-5 hover:border-primary transition-colors">
                 <t.icon className="w-6 h-6 text-primary mb-2" />
                 <div className="font-semibold">{t.title}</div>
                 <div className="text-sm text-gray-500">{t.desc}</div>
@@ -148,23 +143,23 @@ export default function Espace() {
           </div>
 
           {/* Mes documents — accès direct, sans changer de page */}
-          <h2 className="font-semibold text-lg mb-3">Mes documents</h2>
+          <h2 className="font-display text-2xl mb-4">Mes documents</h2>
           <div className="mb-8">
             <HouseDocuments />
           </div>
 
           {/* Autres tuiles d'accès */}
-          <h2 className="font-semibold text-lg mb-3">Le reste de mon espace</h2>
+          <h2 className="font-display text-2xl mb-4">Le reste de mon espace</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link to="/mon-espace"
-              className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+              className="border border-gray-200 rounded-2xl p-5 hover:border-primary transition-colors">
               <Home className="w-6 h-6 text-primary mb-2" />
               <div className="font-semibold">Ma fiche maison</div>
               <div className="text-sm text-gray-500">Compléter mon logement</div>
             </Link>
             {AUTRES_TUILES.map((t) => (
               <Link key={t.to} to={t.to}
-                className="border border-gray-200 rounded-2xl p-5 hover:border-primary hover:shadow-sm transition">
+                className="border border-gray-200 rounded-2xl p-5 hover:border-primary transition-colors">
                 <t.icon className="w-6 h-6 text-primary mb-2" />
                 <div className="font-semibold">{t.title}</div>
                 <div className="text-sm text-gray-500">{t.desc}</div>

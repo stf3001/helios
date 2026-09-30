@@ -6,6 +6,7 @@
  */
 
 import { MOIS_COURTS } from '../../lib/simulateur'
+import { COULEURS } from '../../data/couleurs'
 
 export function Vide({ message }: { message: string }) {
   return (
@@ -25,19 +26,19 @@ export function Anneau({
   return (
     <svg viewBox="0 0 140 140" className={classe} role="img"
       aria-label={`Autonomie : ${borne} %`}>
-      <circle cx="70" cy="70" r={rayon} fill="none" stroke="#E5E0DA" strokeWidth="14" />
-      <circle cx="70" cy="70" r={rayon} fill="none" stroke="#B85A08" strokeWidth="14"
+      <circle cx="70" cy="70" r={rayon} fill="none" stroke={COULEURS.bord} strokeWidth="14" />
+      <circle cx="70" cy="70" r={rayon} fill="none" stroke={COULEURS.accent} strokeWidth="14"
         strokeLinecap="round" transform="rotate(-90 70 70)"
         strokeDasharray={`${(borne / 100) * circonference} ${circonference}`} />
       {borneVirtuelle > 0 && (
-        <circle cx="70" cy="70" r={rayon} fill="none" stroke="#2E86C1" strokeWidth="14"
+        <circle cx="70" cy="70" r={rayon} fill="none" stroke={COULEURS.bleu} strokeWidth="14"
           strokeLinecap="round" transform="rotate(-90 70 70)"
           strokeDasharray={`${(borneVirtuelle / 100) * circonference} ${circonference}`} />
       )}
-      <text x="70" y="66" textAnchor="middle" fontSize="28" fontWeight="700" fill="#1D3F63">
+      <text x="70" y="66" textAnchor="middle" fontSize="28" fontWeight="700" fill={COULEURS.ink}>
         {Math.round(borne)}%
       </text>
-      <text x="70" y="88" textAnchor="middle" fontSize="12" fill="#1F2937">autonomie</text>
+      <text x="70" y="88" textAnchor="middle" fontSize="12" fill={COULEURS.texte2}>autonomie</text>
     </svg>
   )
 }
@@ -59,7 +60,7 @@ export function BarresMensuelles({ series, unite = 'kWh' }: { series: SerieBarre
         role="img" aria-label={`Répartition mois par mois, en ${unite}`}>
         {[0.25, 0.5, 0.75].map((f) => (
           <line key={f} x1="0" x2="100" y1={40 - f * 36} y2={40 - f * 36}
-            stroke="#E5E0DA" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+            stroke={COULEURS.bord} strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
         ))}
         {series.map((serie, is) =>
           serie.valeurs.map((valeur, im) => {
@@ -108,11 +109,11 @@ export function CourbeJournee({
         role="img" aria-label="Journée moyenne, heure par heure">
         {[0.5, 1].map((f) => (
           <line key={f} x1="0" x2="100" y1={40 - f * 36} y2={40 - f * 36}
-            stroke="#E5E0DA" strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
+            stroke={COULEURS.bord} strokeWidth="0.3" vectorEffect="non-scaling-stroke" />
         ))}
         {heureActive !== undefined && (
           <line x1={(heureActive / 23) * 100} x2={(heureActive / 23) * 100} y1="2" y2="40"
-            stroke="#1D3F63" strokeWidth="0.6" strokeDasharray="1.5 1.5"
+            stroke={COULEURS.ink} strokeWidth="0.6" strokeDasharray="1.5 1.5"
             vectorEffect="non-scaling-stroke" />
         )}
         {series.map((s) => (
@@ -152,11 +153,11 @@ export function Courbe25Ans({ tresorerie }: { tresorerie: { annee: number; cumul
     <figure>
       <svg viewBox="0 0 100 48" className="w-full" preserveAspectRatio="none"
         role="img" aria-label="Trésorerie cumulée sur 25 ans">
-        <line x1="0" x2="100" y1={y(0)} y2={y(0)} stroke="#1D3F63" strokeWidth="0.5"
+        <line x1="0" x2="100" y1={y(0)} y2={y(0)} stroke={COULEURS.ink} strokeWidth="0.5"
           vectorEffect="non-scaling-stroke" />
-        <polyline points={`0,${y(min)} ${points} 100,${y(min)}`} fill="#B85A08" fillOpacity="0.10"
+        <polyline points={`0,${y(min)} ${points} 100,${y(min)}`} fill={COULEURS.accent} fillOpacity="0.10"
           stroke="none" />
-        <polyline points={points} fill="none" stroke="#B85A08" strokeWidth="1.8"
+        <polyline points={points} fill="none" stroke={COULEURS.accent} strokeWidth="1.8"
           strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       </svg>
       <div className="mt-1 flex justify-between px-1 text-xs text-dark/60" aria-hidden="true">

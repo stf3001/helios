@@ -82,7 +82,7 @@ export default function PotentielHydrique() {
         </div>
         <div className="sm:col-span-2">
           <button type="submit" disabled={loading || !ville}
-            className="rounded-xl bg-sky text-white font-semibold px-6 py-2.5 hover:opacity-90 disabled:opacity-50">
+            className="rounded-xl bg-primary text-white font-semibold px-6 py-2.5 hover:bg-terra transition-colors disabled:opacity-50">
             {loading ? 'Calcul…' : 'Estimer ma production d\'eau'}
           </button>
         </div>

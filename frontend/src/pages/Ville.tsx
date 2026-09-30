@@ -67,7 +67,7 @@ export default function Ville() {
       </section>
 
       <section className="max-w-[900px] mx-auto px-4 pb-12">
-        <div className="rounded-2xl bg-cream border border-black/5 p-6">
+        <div className="rounded-2xl bg-cream border border-bord p-6">
           <div className="flex items-center gap-2 text-ink font-semibold mb-2">
             <MapPin className="w-4 h-4 text-primary" /> Le contexte local
           </div>

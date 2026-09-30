@@ -82,7 +82,7 @@ export default function Guide5Questions({ config, majConfig, onTerminer }: Props
                   className="w-full rounded-lg border border-ink/20 px-3 py-2 text-ink
                     focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
                 <button type="button" onClick={lancerRecherche} disabled={texte.trim().length < 3}
-                  className="shrink-0 rounded-lg bg-ink px-4 py-2 font-semibold text-white disabled:opacity-40">
+                  className="shrink-0 rounded-lg bg-ink px-4 py-2 font-semibold text-sable disabled:opacity-40">
                   {recherche ? '…' : 'Chercher'}
                 </button>
               </div>

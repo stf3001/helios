@@ -150,13 +150,13 @@ export default function Terre() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/simulateur-solaire"
-              className="inline-flex items-center gap-2 rounded-xl bg-leaf px-6 py-3
-                font-semibold text-white hover:opacity-90">
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3
+                font-semibold text-white transition-colors hover:bg-terra">
               Calculer mon potager <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/helios"
-              className="inline-flex items-center gap-2 rounded-xl border border-leaf px-6 py-3
-                font-semibold text-leaf hover:bg-leaf/5">
+              className="inline-flex items-center gap-2 rounded-xl border border-ink/25 px-6 py-3
+                font-semibold text-ink transition-colors hover:border-ink hover:bg-ink hover:text-sable">
               <MessageSquare className="h-4 w-4" /> Poser mes questions à Helios
             </Link>
           </div>

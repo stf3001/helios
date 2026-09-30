@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 /** Champ de saisie du hero : « essayer le produit avant de scroller ». Le placeholder fait
  * défiler de vraies questions (démontre l'étendue d'Helios), et l'envoi amène l'utilisateur
@@ -18,6 +18,7 @@ export default function HeroSearch() {
   const [value, setValue] = useState('')
   const [idx, setIdx] = useState(0)
   const focused = useRef(false)
+  const idChamp = useId()
 
   // Rotation du placeholder — figée dès que l'utilisateur interagit (focus ou saisie).
   useEffect(() => {
@@ -35,23 +36,26 @@ export default function HeroSearch() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-7 max-w-xl">
-      <div className="flex items-stretch gap-2 rounded-2xl bg-white p-1.5 shadow-lg shadow-black/5">
+    <form onSubmit={onSubmit} className="w-full">
+      {/* Le placeholder tourne : il ne peut pas tenir lieu d'etiquette. Celle-ci
+          est donc ecrite, et seulement masquee a l'oeil. */}
+      <label htmlFor={idChamp} className="sr-only">Posez votre première question à Helios</label>
+      <div className="flex items-center gap-2 rounded-2xl bg-white border border-bord p-2 shadow-question">
+        <Sparkles className="ml-2 w-[18px] h-[18px] shrink-0 text-primary" aria-hidden="true" />
         <input
+          id={idChamp}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => { focused.current = true }}
           onBlur={() => { focused.current = false }}
           placeholder={EXEMPLES[idx]}
-          aria-label="Posez votre première question à Helios"
-          className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-ink placeholder:text-gray-400 focus:outline-none"
+          className="flex-1 min-w-0 bg-transparent py-2 text-ink placeholder:text-gray-400 placeholder:truncate focus:outline-none"
         />
         <button
           type="submit"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary text-white font-semibold px-4 sm:px-5 py-2.5 hover:opacity-90 shrink-0"
+          className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 shrink-0 hover:bg-terra transition-colors"
         >
-          <span className="hidden sm:inline">Demander</span>
-          <ArrowRight className="w-5 h-5" />
+          Demander
         </button>
       </div>
     </form>

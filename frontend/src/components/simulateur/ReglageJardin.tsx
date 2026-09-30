@@ -50,7 +50,7 @@ function Curseur({
       </div>
       <input id={id} type="range" min={min} max={max} step={pas} value={valeur}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1.5 w-full accent-[#B85A08]" />
+        className="mt-1.5 w-full accent-primary" />
     </div>
   )
 }

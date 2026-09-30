@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Activity, BookOpen, Flag, Gauge, HeartPulse, LogOut, MessagesSquare, ShieldCheck, Users2, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import MarqueHelios from '../MarqueHelios'
 
 /** Coquille du back-office — identité visuelle DISTINCTE du site public :
  * fond sombre, typographie système compacte, densité d'information élevée.
@@ -34,7 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
         <div className="max-w-[1400px] mx-auto px-4 h-14 flex items-center gap-6">
           <Link to="/admin" className="flex items-center gap-2 shrink-0">
-            <img src="/brand/logo-mark.png" alt="" className="h-6 w-auto opacity-90" />
+            <MarqueHelios taille={20} className="text-slate-400" />
             <span className="font-semibold tracking-tight text-white">
               HELIOS <span className="text-slate-500 font-normal">back-office</span>
             </span>

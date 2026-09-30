@@ -3,13 +3,62 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   LES JETONS DE LA MARQUE — l'unique endroit ou la palette se change.
+   `tailwind.config.js` ne fait que pointer ici. Les couleurs sont ecrites en
+   CANAUX (« 245 239 228 ») et non en hexadecimal : c'est ce qui permet a
+   Tailwind de composer `bg-primary/10` ou `text-dark/80`, tres presents dans le
+   site, a partir de la meme variable.
+   =========================================================================== */
+:root {
+  --h-sable: 245 239 228;        /* #F5EFE4 — fond de page, ivoire chaud */
+  --h-sable-2: 237 227 209;      /* #EDE3D1 — bandeaux, badges, sections en retrait */
+  --h-bord: 226 216 198;         /* #E2D8C6 — la bordure 1px des surfaces blanches */
+  --h-ink: 27 42 47;             /* #1B2A2F — encre bleu-vert : texte et cartes sombres */
+  --h-texte-2: 74 90 95;         /* #4A5A5F — texte secondaire */
+  --h-accent: 168 66 15;         /* #A8420F — terracotta (6,0:1 sous du blanc) */
+  --h-accent-fonce: 143 58 13;   /* #8F3A0D — le meme au survol */
+  --h-or: 242 180 90;            /* #F2B45A — reserve a l'icone de la carte sombre */
+  --h-bleu: 47 111 143;          /* #2F6F8F — icones vent et eau */
+  --h-vert: 47 122 91;           /* #2F7A5B — icones terre, pastille « en ligne » */
+}
+
 @layer base {
   body {
-    @apply text-dark antialiased bg-white font-sans;
+    @apply bg-sable text-dark font-sans antialiased;
   }
-  h1, h2, h3 {
+  h1, h2, h3, h4 {
     @apply font-display text-ink;
   }
+}
+
+/* Instrument Serif n'existe QU'EN 400. Le site ecrit `font-bold` et
+   `font-semibold` sur une centaine de titres : sans cette regle, le navigateur
+   fabriquerait un faux gras en epaississant les contours, et un serif editorial
+   en gros corps s'en trouve salement empate. Le `!important` est le seul moyen
+   de gagner sur `.font-bold` partout a la fois sans reecrire ces titres un par
+   un — c'est le meme arbitrage que la regle des champs plus bas. */
+h1, h2, h3, h4,
+.font-display {
+  font-weight: 400 !important;
+  font-synthesis-weight: none;
+}
+/* Un serif de titraille a besoin d'etre resserre : aux grandes tailles
+   l'interlignage par defaut et l'approche normale font flotter le titre. */
+h1, h2, h3, .font-display {
+  letter-spacing: -0.015em;
+}
+
+/* Focus visible : un anneau terracotta, visible sur ivoire comme sur blanc.
+   Pose globalement pour que chaque bouton, lien et champ du site en herite,
+   y compris ceux qui n'ont pas de classe de focus ecrite a la main. */
+:focus-visible {
+  outline: 2px solid rgb(var(--h-accent));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+::selection {
+  background: rgb(var(--h-accent) / 0.16);
 }
 
 @layer utilities {
@@ -17,51 +66,28 @@
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
-/* Dégradé « lever de soleil » du hero — tons chauds de la marque (sun/terra/primary) qui
-   glissent très lentement. CSS pur, aucun JS. Le point le plus foncé (primary #B85A08, contraste
-   AA vérifié avec du texte blanc) reste dominant côté texte ; le jaune n'apparaît qu'en accent
-   diffus. Animation désactivée si l'utilisateur préfère moins de mouvement (accessibilité). */
-.hero-sunrise {
-  background-color: #B85A08;
-  background-image: linear-gradient(120deg, #B85A08 0%, #C05621 38%, #A64D07 62%, #B85A08 100%);
-  background-size: 200% 200%;
-  animation: sunrise-shift 18s ease-in-out infinite;
+/* De nombreux champs du site utilisent text-sm (14px, spécificité de classe > sélecteur de
+   type — d'où le !important, seul moyen fiable de gagner sur toutes les classes Tailwind
+   existantes sans éditer ~15 fichiers un par un). Sous 16px, iOS Safari zoome automatiquement
+   au focus d'un champ — expérience dégradée sur mobile. */
+input, select, textarea {
+  font-size: 16px !important;
 }
-@keyframes sunrise-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+
+/* --- Marque Helios : le soleil au trait ----------------------------------- */
+/* Le halo respire tres lentement quand Helios travaille (etat « reflexion » du
+   chat). C'est le seul mouvement qui reste du personnage precedent : un signe
+   de vie, pas une animation qui reclame l'attention. */
+@keyframes helios-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
 }
+.helios-pulse { animation: helios-pulse 2.4s ease-in-out infinite; transform-origin: center; }
+@keyframes helios-tourne { to { transform: rotate(360deg); } }
+.helios-tourne { animation: helios-tourne 26s linear infinite; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) {
-  .hero-sunrise { animation: none; }
+  .helios-pulse, .helios-tourne { animation: none; }
 }
-
-/* ---------------------------------------------------------------------------
-   Avatar animé Helios (composant HeliosAvatar).
-   Le mouvement est porté par des keyframes CSS (aucune dépendance d'animation) :
-   deux couches superposées — le « socle » vivant (respiration + balancement, en
-   boucle) et l'animation d'état (jouée une seule fois). Les variantes A/B d'une
-   même animation existent pour pouvoir la REJOUER quand l'état est redemandé :
-   changer de nom d'animation force le navigateur à repartir de zéro, ce qu'un
-   simple re-render ne fait pas.
-   --------------------------------------------------------------------------- */
-@keyframes hBreathe { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.012) translateY(-1.5px); } }
-@keyframes hSway    { 0%, 100% { transform: rotate(-0.5deg); } 50% { transform: rotate(0.5deg); } }
-@keyframes hBlink   { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
-
-@keyframes hNodA  { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-7px) rotate(1.2deg); } 55% { transform: translateY(2px) rotate(-0.6deg); } 100% { transform: translateY(0) rotate(0); } }
-@keyframes hNodB  { 0% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-7px) rotate(1.2deg); } 55% { transform: translateY(2px) rotate(-0.6deg); } 100% { transform: translateY(0) rotate(0); } }
-@keyframes hWaveA { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(2.6deg); } 45% { transform: rotate(-1.8deg); } 70% { transform: rotate(2deg); } }
-@keyframes hWaveB { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(2.6deg); } 45% { transform: rotate(-1.8deg); } 70% { transform: rotate(2deg); } }
-@keyframes hShrugA { 0% { transform: translateY(0) rotate(0); } 30%, 70% { transform: translateY(-5px) rotate(-2.2deg); } 100% { transform: translateY(0) rotate(0); } }
-@keyframes hShrugB { 0% { transform: translateY(0) rotate(0); } 30%, 70% { transform: translateY(-5px) rotate(-2.2deg); } 100% { transform: translateY(0) rotate(0); } }
-@keyframes hHopA  { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(0.97); } 45% { transform: translateY(-14px) scaleY(1.02); } 75% { transform: translateY(0) scaleY(0.99); } }
-@keyframes hHopB  { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(2px) scaleY(0.97); } 45% { transform: translateY(-14px) scaleY(1.02); } 75% { transform: translateY(0) scaleY(0.99); } }
-@keyframes hSlumpA { 0% { transform: translateY(0) rotate(0); } 35%, 80% { transform: translateY(5px) rotate(1.6deg); } 100% { transform: translateY(0) rotate(0); } }
-@keyframes hSlumpB { 0% { transform: translateY(0) rotate(0); } 35%, 80% { transform: translateY(5px) rotate(1.6deg); } 100% { transform: translateY(0) rotate(0); } }
-
-@keyframes hPop  { 0% { opacity: 0; transform: translateY(8px) scale(0.7); } 60% { opacity: 1; transform: translateY(-2px) scale(1.06); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes hGlow { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
-@keyframes hDots { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
 /* Les eoliennes verticales de la scene. Une pale helicoidale vue de cote s'affine quand
    elle passe de profil et s'elargit quand elle revient de face : ecraser le rotor
@@ -77,30 +103,6 @@
 .scene-eolienne { animation: eolienne-tourne 4.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .scene-eolienne { animation: none; }
-}
-
-/* Le regard suit le pointeur. Le décalage lui-même est posé en JS, image par image ;
-   ce qui vient d'ici, c'est la douceur — sans elle les yeux sautent d'un point à
-   l'autre au lieu de glisser, et le personnage a l'air nerveux. Un quart de seconde :
-   assez pour que le regard traîne un peu derrière la souris, comme un vrai. */
-.helios-regard { transition: transform 0.28s ease-out; }
-
-/* Accessibilité : l'avatar redevient une illustration fixe si l'utilisateur
-   demande moins de mouvement. Les expressions (yeux, bouche) restent, elles ne
-   bougent pas — seul le mouvement du corps disparaît. Le regard se fige aussi :
-   le composant cesse de le calculer, et la transition est coupée ici, une
-   transition n'étant pas une animation. */
-@media (prefers-reduced-motion: reduce) {
-  .helios-avatar, .helios-avatar * { animation: none !important; }
-  .helios-regard { transition: none; }
-}
-
-/* De nombreux champs du site utilisent text-sm (14px, spécificité de classe > sélecteur de
-   type — d'où le !important, seul moyen fiable de gagner sur toutes les classes Tailwind
-   existantes sans éditer ~15 fichiers un par un). Sous 16px, iOS Safari zoome automatiquement
-   au focus d'un champ — expérience dégradée sur mobile. */
-input, select, textarea {
-  font-size: 16px !important;
 }
 
 /* --- Simulateur : flux d'energie de la scene ------------------------------- */

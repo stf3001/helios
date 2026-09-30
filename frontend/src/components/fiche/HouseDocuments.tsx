@@ -96,7 +96,7 @@ export default function HouseDocuments() {
       const question =
         `J'ai déposé le document « ${doc.filename} » dans mon espace, peux-tu me donner ton avis dessus ?\n\n` +
         `--- Contenu du document ---\n${extrait}`
-      navigate(`/espace/helios?ask=${encodeURIComponent(question)}`)
+      navigate(`/espace?ask=${encodeURIComponent(question)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {

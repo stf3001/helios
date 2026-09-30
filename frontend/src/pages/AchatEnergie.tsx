@@ -252,7 +252,7 @@ export default function AchatEnergie() {
       </section>
 
       {/* Le courtage, et qui le paie. C'est le coeur honnête de la page. */}
-      <section className="bg-ink py-12 text-white">
+      <section className="bg-ink py-12 text-sable">
         <div className="mx-auto max-w-[1100px] px-4">
           <div className="flex items-start gap-3">
             <Handshake className="mt-1 h-6 w-6 shrink-0 text-sun" />
@@ -260,28 +260,28 @@ export default function AchatEnergie() {
               <h2 className="font-display text-2xl font-bold md:text-3xl">
                 Le courtage : utile, et payé par quelqu’un
               </h2>
-              <p className="mt-3 max-w-[820px] text-lg text-white/85">
+              <p className="mt-3 max-w-[820px] text-lg text-sable/80">
                 Un courtier compare les offres du marché à votre place, négocie, et vous
                 présente les contrats qui collent à votre profil. C’est un vrai travail, et
                 il fait gagner du temps. Avant de signer, il faut savoir comment il est
                 rémunéré.
               </p>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl bg-white/10 p-5">
+                <div className="rounded-2xl bg-sable/10 p-5">
                   <p className="font-display text-lg font-bold">Qui paie le courtier</p>
-                  <p className="mt-2 text-white/85">
+                  <p className="mt-2 text-sable/80">
                     Dans la grande majorité des cas, pas vous : le fournisseur retenu, sous
                     forme d’une commission incluse dans le prix du kWh. Ce n’est pas
                     illégitime, mais cela veut dire que sa rémunération dépend de l’offre
                     qu’il vous fait signer.
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white/10 p-5">
+                <div className="rounded-2xl bg-sable/10 p-5">
                   <div className="flex items-center gap-2">
                     <ShieldAlert className="h-5 w-5 shrink-0 text-sun" />
                     <p className="font-display text-lg font-bold">Ce que la loi n’impose pas</p>
                   </div>
-                  <p className="mt-2 text-white/85">
+                  <p className="mt-2 text-sable/80">
                     Le courtage en énergie est le seul courtage où aucune immatriculation
                     ORIAS n’est exigée, et où la transparence sur la rémunération n’est pas
                     une obligation légale. Un courtier sérieux vous remet donc de lui-même
@@ -290,10 +290,10 @@ export default function AchatEnergie() {
                   </p>
                 </div>
               </div>
-              <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-white/10 p-5">
+              <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-sable/10 p-5">
                 <BadgeCheck className="h-6 w-6 shrink-0 text-sun" />
-                <p className="min-w-[16rem] flex-1 text-white/90">
-                  <strong className="text-white">Notre règle, et elle nous coûte de
+                <p className="min-w-[16rem] flex-1 text-sable/85">
+                  <strong className="text-sable">Notre règle, et elle nous coûte de
                   l’argent :</strong> si l’économie estimée est inférieure à 5 %, nous vous
                   conseillons de ne rien changer. Un gain marginal ne justifie pas un
                   nouvel engagement. HELIOS ne vous facture jamais rien et ne touche aucune

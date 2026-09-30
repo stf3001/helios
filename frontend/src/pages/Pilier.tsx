@@ -40,7 +40,7 @@ export default function Pilier() {
       </section>
 
       <section className="max-w-[900px] mx-auto px-4 pb-12">
-        <div className="rounded-2xl bg-cream border border-black/5 p-6 flex flex-wrap gap-3">
+        <div className="rounded-2xl bg-cream border border-bord p-6 flex flex-wrap gap-3">
           {pilier.liens.map((l) => (
             <Link
               key={l.to}

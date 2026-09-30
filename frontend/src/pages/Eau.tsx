@@ -99,11 +99,11 @@ export default function Eau() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/simulateur-solaire"
-              className="rounded-xl bg-sky text-white font-semibold px-6 py-3 hover:opacity-90">
+              className="rounded-xl bg-primary text-white font-semibold px-6 py-3 hover:bg-terra transition-colors">
               Équiper ma maison
             </Link>
             <Link to="/helios"
-              className="inline-flex items-center gap-2 rounded-xl border border-sky text-sky font-semibold px-6 py-3 hover:bg-sky/5">
+              className="inline-flex items-center gap-2 rounded-xl border border-ink/25 text-ink font-semibold px-6 py-3 hover:bg-ink hover:text-sable hover:border-ink transition-colors">
               <MessageSquare className="w-4 h-4" /> Poser mes questions à Helios
             </Link>
           </div>

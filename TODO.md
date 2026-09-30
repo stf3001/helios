@@ -156,6 +156,24 @@ qu'il est là, tout ce qui lit cette table se trompe de saison.
 (`npm run dev` dans `frontend/`, port 5173). Il part désormais avec le projet, et
 Git ne le signale plus comme en attente.
 
+### [ ] 16. Les images de marque sont restées à l'ancienne charte
+
+La refonte visuelle du 30/09/2026 (direction « carnet de maison ») a changé le
+site entier, mais **pas les fichiers PNG** : ils sont produits par un outil
+graphique, pas par le code.
+
+- `frontend/public/favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`,
+  `icon-512.png`, `icon-maskable-512.png` — l'ancien logo. Le favicon SVG, lui,
+  est refait (`public/favicon.svg`) et passe en premier ; les PNG ne servent plus
+  qu'aux navigateurs anciens et à l'écran d'accueil d'un téléphone.
+- `frontend/public/og-image.png` — l'aperçu partagé sur les réseaux et dans les
+  messageries. C'est celui qui se voit le plus : il porte encore le fond orange.
+- `frontend/public/brand/logo-mark.png`, `logo-full.png`, `logo-house-sun.png` —
+  plus référencés nulle part depuis la refonte. À supprimer ou à refaire.
+
+La marque au trait existe en composant (`frontend/src/components/MarqueHelios.tsx`)
+et en SVG (`public/favicon.svg`) : elle peut servir de base à l'export.
+
 ---
 
 ## Le piège à ne pas réintroduire

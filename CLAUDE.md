@@ -36,6 +36,58 @@ sans qu'il ait eu la réponse.
 
 ## État (18/07/2026) — J1→J8 + J10 + trous produit (reste : J9 déploiement)
 
+> **REFONTE VISUELLE « CARNET DE MAISON » (30/09/2026) — REMPLACE LA CHARTE DU 19/07.**
+> L'entrée du 19/07 ci-dessous est conservée comme archive datée : sa palette (orange
+> dominant `#B85A08`, fonds crème `#FDF8F3`), ses typographies (Fraunces + Nunito) et sa
+> mascotte casquée **n'existent plus**. Direction éditoriale, chaleureuse, fond ivoire.
+> - **UN SEUL ENDROIT POUR LA PALETTE** : `frontend/src/index.css`, sous `:root`, en CANAUX
+>   RVB (`--h-accent: 168 66 15`). `tailwind.config.js` ne fait que pointer dessus via
+>   `rgb(var(--h-accent) / <alpha-value>)` — ce detour garde les modificateurs d'opacite
+>   (`bg-primary/10`, `text-dark/80`) utilises partout. **Ne pas reecrire de couleur en dur
+>   dans un composant.** Les noms de jetons Tailwind n'ont PAS change (`primary`, `ink`,
+>   `cream`, `sun`, `sky`, `leaf`, `terra`) : c'est ce qui a permis de basculer 60 fichiers
+>   sans les toucher. Nouveaux : `sable` (fond de page) et `bord` (la bordure 1px).
+>   L'echelle `gray` de Tailwind est redefinie en neutres chauds, pour la meme raison.
+> - **Exception assumee** : `frontend/src/data/couleurs.ts` recopie une poignee de valeurs en
+>   hexadecimal pour les SVG (simulateur, portraits) — `var()` n'est pas resolu de facon
+>   fiable dans un attribut de presentation SVG. **Ce fichier et `index.css` se tiennent a
+>   jour ENSEMBLE.**
+> - **Typographies** : Instrument Serif (titres) + Plus Jakarta Sans (texte), auto-hebergees
+>   dans `public/fonts` (RGPD, comme avant — jamais de `<link>` vers Google). Fraunces et
+>   Nunito supprimees. **Instrument Serif n'existe qu'en 400** : une regle dans `index.css`
+>   neutralise `font-bold`/`font-semibold` sur les titres (sinon faux gras). Ne pas la retirer.
+> - **L'or `#F2B45A` est reserve aux fonds sombres** (carte encre, pied de page) : sur ivoire
+>   il disparait. Le bleu et le vert habillent le SUJET (icone, fond teinte) ; **une ACTION
+>   porte toujours le terracotta**, quelle que soit la page.
+> - **Une seule ombre dans tout le site** : `shadow-question` (definie dans le theme), pour la
+>   barre de question et ce qui flotte reellement au-dessus du contenu. Les cartes se
+>   detachent par leur bordure.
+> - **Mascotte supprimee** : `HeliosAvatar.tsx` et les 8 PNG (`brand/poses/*`, `helios-*.png`)
+>   sont retires. La marque est desormais `components/MarqueHelios.tsx` (soleil au trait,
+>   suit `currentColor`) + `public/favicon.svg`. Dans la conversation, elle remplace la
+>   mascotte avec une ligne d'etat (`PresenceHelios` dans `ChatWidget.tsx`) : **le type
+>   `HeliosState` et tous les appels `showAvatar()` sont inchanges** — la logique du chat n'a
+>   pas bouge.
+> - **« Mon Helios » A FUSIONNE AVEC « Mon espace » (30/09/2026, demande de Stephane).**
+>   `pages/EspaceHelios.tsx` est supprimee : elle ne servait qu'a loger le widget a cote
+>   d'une colonne d'historique, et obligeait a QUITTER l'espace pour poser une question.
+>   La conversation vit maintenant DANS `/espace`, juste sous le resume de la fiche —
+>   `components/chat/BlocHelios.tsx` porte le widget + le menu deroulant « Mes
+>   conversations » (liste relue a chaque ouverture, donc jamais perimee) + « Nouvelle ».
+>   `/espace/helios` **redirige en conservant sa requete** (`VersEspace` dans `App.tsx`) :
+>   le parcours « Demander l'avis d'Helios » sur un document passe par `?ask=<question>`,
+>   un `<Navigate>` simple l'aurait perdu. Le lien « Mon Helios » est retire de l'en-tete.
+> - **Reste a faire, inscrit au point 16 de `TODO.md`** : les PNG de marque (favicon PNG,
+>   apple-touch-icon, icones PWA et surtout `og-image.png`) portent encore l'ancienne charte.
+> - **Le back-office `/admin` n'a PAS ete refondu** (coquille sombre `slate`, pile systeme,
+>   conformement a son propre commentaire) — seul son logo a ete remplace. Ses titres heritent
+>   du serif via la regle de base, comme ils heritaient de Fraunces auparavant.
+> - **Verifie en conditions reelles** (API + Postgres + Ollama en marche, compte de demo) :
+>   accueil, 14 pages publiques, espace connecte (fiche 90 %, pre-audits, energie), chat avec
+>   le cycle d'etat complet (« Il cherche… » → « Il a repondu »), simulateur avec un vrai
+>   calcul Marseille — les couleurs SVG lues dans le DOM vivant sont exactement la nouvelle
+>   palette. `tsc -b` et `npm run build` passent.
+
 > **Refonte visuelle & PWA (19/07/2026)** — ton chaleureux « esprit colibri », orange dominant + accents bleu marine (`ink`)/vert (`leaf`) du logo, fonds crème.
 > - **Marque** : logo H + avatar mascotte Helios dans `frontend/public/brand/` (traités depuis les concepts de l'utilisateur via Pillow) ; icônes d'app 192/512/maskable/apple-touch + favicon dans `public/`.
 > - **Typo auto-hébergée** (RGPD, pas de Google CDN) : Fraunces (titres, `font-display`) + Nunito (corps) — woff2 dans `public/fonts/`, `@font-face` dans `src/fonts.css`. Tokens Tailwind : `ink sky leaf cream` + animations `slide-up`/`fade-in`.
