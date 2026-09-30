@@ -150,10 +150,11 @@ exactement le climat de Strasbourg, et **tous culminent en avril**. C'est un
 défaut de la donnée d'origine du projet hydrolia, pas de son import ici. Tant
 qu'il est là, tout ce qui lit cette table se trompe de saison.
 
-### [ ] 15. `.claude/launch.json` n'est pas versionné
+### [x] 15. `.claude/launch.json` n'est pas versionné
 
-Fichier de confort pour lancer l'aperçu. À committer ou à mettre dans
-`.gitignore`, mais pas à laisser en suspens.
+**Fait le 30/09/2026 : committé.** Dix lignes qui disent comment lancer l'aperçu
+(`npm run dev` dans `frontend/`, port 5173). Il part désormais avec le projet, et
+Git ne le signale plus comme en attente.
 
 ---
 
