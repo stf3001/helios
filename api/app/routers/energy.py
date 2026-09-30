@@ -10,7 +10,7 @@ Garde-fous constitution (doc 09 §2) appliqués dans le code :
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,6 +21,7 @@ from app.models.house import House
 from app.models.user import User
 from app.schemas.energy import CourtageRequest, StudyDecision, StudyRequest
 from app.services import courtage_client, energy_advisor, sobry_client
+from app.services.regions import departement_du_code_postal
 
 router = APIRouter(prefix="/energy", tags=["energy"])
 
@@ -119,11 +120,26 @@ async def request_courtage(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Le consentement explicite est requis pour lancer l'étude.")
     house = await _own_house(db, user.id)
 
-    # Partenaire courtier : un partenaire actif dont les métiers incluent "courtage" (à nommer plus tard)
+    # Le courtier : un partenaire actif dont les métiers incluent "courtage" ET qui couvre
+    # le département de ce foyer. Le filtre de zone n'est pas une précaution théorique —
+    # la base porte encore des partenaires créés pendant les tests d'API, dont un courtier
+    # sans aucune zone, et la requête d'origine (sans zone, sans tri) pouvait le choisir.
+    # Un ordre explicite rend le choix reproductible : deux demandes identiques doivent
+    # partir chez le même courtier.
     from app.models.partner import Partner
-    courtier = await db.scalar(
-        select(Partner).where(Partner.statut == "actif", Partner.metiers.any("courtage"))
+
+    departement = departement_du_code_postal(house.code_postal or "")
+    requete = select(Partner).where(
+        Partner.statut == "actif",
+        Partner.metiers.any("courtage"),
+        # Un courtier sans aucune zone ne couvre personne : il ne doit jamais sortir,
+        # meme quand le code postal du foyer est inconnu et que le filtre ci-dessous
+        # ne s'applique pas. C'est exactement le cas du courtier de test reste en base.
+        func.coalesce(func.array_length(Partner.zones, 1), 0) > 0,
     )
+    if departement is not None:
+        requete = requete.where(Partner.zones.any(departement))
+    courtier = await db.scalar(requete.order_by(Partner.created_at, Partner.raison_sociale))
 
     infos = payload.model_dump(exclude={"consent"})
     estimation = courtage_client.estimation(house, infos)

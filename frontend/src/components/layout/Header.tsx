@@ -10,6 +10,7 @@ const links = [
   { to: '/le-vent', label: 'Le vent' },
   { to: '/eau', label: 'L’eau' },
   { to: '/la-terre', label: 'La terre' },
+  { to: '/achat-energie', label: 'L’achat d’énergie' },
   { to: '/faq', label: 'FAQ' },
 ]
 

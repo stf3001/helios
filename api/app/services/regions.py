@@ -30,9 +30,11 @@ REGIONS: dict[str, tuple[str, tuple[str, ...]]] = {
     "pac": ("Provence-Alpes-Cote d'Azur", ("04", "05", "06", "13", "83", "84")),
 }
 
-#: Les metiers que l'annuaire distingue. `eau`, `eolien` et `inertie` sont servis par un
-#: seul acteur national chacun : ils couvrent toutes les zones.
-METIERS = ("solaire", "pac", "isolation", "eau", "eolien", "inertie")
+#: Les metiers que l'annuaire distingue. `eau`, `eolien`, `inertie` et `courtage` sont
+#: servis par un seul acteur national chacun : ils couvrent toutes les zones.
+#: `courtage` n'est pas un metier du batiment — c'est la renegociation du contrat
+#: d'electricite, donc un service qui ne depend d'aucun deplacement.
+METIERS = ("solaire", "pac", "isolation", "eau", "eolien", "inertie", "courtage")
 
 TOUS_DEPARTEMENTS: tuple[str, ...] = tuple(
     d for _, departements in REGIONS.values() for d in departements

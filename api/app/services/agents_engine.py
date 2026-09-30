@@ -75,6 +75,11 @@ SOURCES: list[SourceSpec] = [
     # d'entretien) sont ceux de services/jardin.py : les deux doivent rester d'accord,
     # sinon le chat contredira le calculateur sur la meme page.
     SourceSpec(name="potager", kind="faq_markdown", location="helios/kb/potager.md"),
+    # L'achat d'energie (30/09/2026), en meme temps que la page du meme nom. Les options
+    # du tarif reglemente, la reforme des heures creuses, le courtage et sa commission.
+    # Les prix y sont DATES (grille du 01/08/2026) : une grille change, une explication
+    # non — c'est pour cela que les fiches expliquent d'abord et chiffrent ensuite.
+    SourceSpec(name="achat_energie", kind="faq_markdown", location="helios/kb/achat_energie.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

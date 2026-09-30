@@ -96,10 +96,13 @@ PARTENAIRES: dict[str, tuple[tuple[str, ...], tuple[str, ...], bool]] = {
     "AD Solar": (DEPTS_PACA, ("solaire", "pac"), True),
     # Partout ailleurs.
     "Ensol": (DEPTS_HORS_PACA, ("solaire", "pac"), True),
-    # Trois acteurs nationaux : ils vendent en ligne, donc toutes zones.
+    # Quatre acteurs nationaux : ils vendent en ligne ou a distance, donc toutes zones.
     "Hydrolia": (TOUS_DEPARTEMENTS, ("eau",), False),
     "Eolia": (TOUS_DEPARTEMENTS, ("eolien",), False),
     "Energiesto": (TOUS_DEPARTEMENTS, ("inertie",), False),
+    # Le courtage ne demande aucun deplacement : un contrat se renegocie sur dossier.
+    # NOM PROVISOIRE, choisi par Stephane en attendant de signer un vrai courtier.
+    "France Courtage": (TOUS_DEPARTEMENTS, ("courtage",), False),
     **{
         nom: (REGIONS[region][1], ("isolation",), True)
         for region, nom in ISOLATION_PROVISOIRE.items()
