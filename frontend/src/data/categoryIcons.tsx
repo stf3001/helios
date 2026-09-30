@@ -36,6 +36,7 @@ const MAP: Record<string, CatIcon> = {
   autoconso: { Icon: BatteryCharging, color: 'text-primary' },
   stockage: { Icon: Battery, color: 'text-primary' },
   ventilation: { Icon: Wind, color: 'text-sky' },
+  eolien: { Icon: Wind, color: 'text-sky' },
   menuiseries: { Icon: DoorClosed, color: 'text-terra' },
   reglementation: { Icon: Scale, color: 'text-ink' },
   confort: { Icon: Smile, color: 'text-leaf' },
@@ -62,4 +63,33 @@ function normalizeCat(cat: string): string {
 export function getCategoryIcon(cat: string | null | undefined): CatIcon {
   if (!cat) return FALLBACK
   return MAP[normalizeCat(cat)] ?? FALLBACK
+}
+
+/** Libelle affichable d'une categorie.
+ *
+ * La regle automatique (souligne -> espace, premiere lettre en capitale) suffit
+ * pour « isolation » ou « chauffage », mais elle rend « Dpe », « Ecs », « Ve » et
+ * « Photovoltaique ». Ces cas-la sont ecrits a la main ; les autres restent
+ * derives, pour qu'une nouvelle categorie s'affiche correctement sans toucher
+ * ce fichier. */
+const LIBELLES: Record<string, string> = {
+  achat_energie: "Achat d'énergie",
+  autoconso: 'Autoconsommation',
+  copropriete: 'Copropriété',
+  dpe: 'DPE',
+  ecs: 'Eau chaude',
+  energie: 'Énergie',
+  eolien: 'Éolien',
+  mobilite: 'Mobilité',
+  photovoltaique: 'Photovoltaïque',
+  reglementation: 'Réglementation',
+  sobriete: 'Sobriété',
+  ve: 'Véhicule électrique',
+}
+
+export function libelleCategorie(cat: string): string {
+  const cle = normalizeCat(cat)
+  if (LIBELLES[cle]) return LIBELLES[cle]
+  const mots = cat.replace(/_/g, ' ')
+  return mots.charAt(0).toUpperCase() + mots.slice(1)
 }
