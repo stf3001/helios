@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Activity, AlertTriangle, ArrowRight, BatteryCharging, Check, CircleHelp, ClipboardList,
-  House, Info, Save, Sun, Users, type LucideIcon,
+  House, Info, PanelLeftClose, PanelLeftOpen, Save, Sun, Users, type LucideIcon,
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
@@ -129,6 +129,8 @@ export default function SimulateurSolaire() {
   const [resultat, setResultat] = useState<Resultat | null>(null)
   const [options, setOptions] = useState<Options | null>(null)
   const [onglet, setOnglet] = useState<Onglet>('maison')
+  /** Panneau de réglages replié sur son rail d'icônes, pour donner la largeur à la scène. */
+  const [reglagesReplies, setReglagesReplies] = useState(false)
   const [emplacementOuvert, setEmplacementOuvert] = useState<string | null>(null)
   const [saison, setSaison] = useState<Saison>('ete')
   const [heure, setHeure] = useState(13)
@@ -443,8 +445,13 @@ export default function SimulateurSolaire() {
             quatre saisons, elles, restent sur deux rangées : les mettre sur une seule
             demande 312 px de rangée contre 181 auparavant, soit 130 px pris sur la scène —
             un mauvais échange pour un repli qui se lit très bien. */}
-        <div className="grid items-start gap-3 xl:grid-cols-[22rem_minmax(0,1fr)_15rem]
-          2xl:gap-4 2xl:grid-cols-[24rem_minmax(0,1fr)_17rem]">
+        {/* Replié, le panneau ne laisse que son rail : la colonne tombe à sa largeur
+            (4,75 rem) et les ~17 rem libérés passent à la scène. Le repli ne vaut qu'à
+            partir de xl — en dessous, les réglages sont déjà empilés sous la scène et
+            les onglets vivent dans la barre du bas. */}
+        <div className={`grid items-start gap-3 2xl:gap-4 ${reglagesReplies
+          ? 'xl:grid-cols-[4.75rem_minmax(0,1fr)_15rem] 2xl:grid-cols-[4.75rem_minmax(0,1fr)_17rem]'
+          : 'xl:grid-cols-[22rem_minmax(0,1fr)_15rem] 2xl:grid-cols-[24rem_minmax(0,1fr)_17rem]'}`}>
 
           {/* ---------- LES RÉGLAGES, flottants à gauche ---------- */}
           <aside ref={panneauReglages}
@@ -456,19 +463,39 @@ export default function SimulateurSolaire() {
               <div role="tablist" aria-orientation="vertical" aria-label="Sections du simulateur"
                 className="hidden shrink-0 flex-col gap-1 border-r border-ink/10 p-1.5 xl:flex">
                 {ONGLETS.map(({ id, label, Icone }) => (
-                  <button key={id} role="tab" type="button" aria-selected={onglet === id}
-                    aria-controls="panneau-reglages" onClick={() => setOnglet(id)}
+                  <button key={id} role="tab" type="button"
+                    aria-selected={!reglagesReplies && onglet === id}
+                    aria-controls="panneau-reglages"
+                    /* Replié, le rail sert de raccourci : choisir un onglet le déplie,
+                       sinon le clic n'aurait aucun effet visible. */
+                    onClick={() => { setOnglet(id); setReglagesReplies(false) }}
                     className={`flex w-[3.75rem] flex-col items-center gap-1 rounded-xl px-1 py-2
                       text-[10px] font-semibold leading-none transition
-                      ${onglet === id ? 'bg-primary text-white shadow' : 'text-ink hover:bg-white'}`}>
+                      ${!reglagesReplies && onglet === id
+                        ? 'bg-primary text-white shadow' : 'text-ink hover:bg-white'}`}>
                     <Icone size={20} strokeWidth={onglet === id ? 2.4 : 2} aria-hidden="true" />
                     <span className="w-full truncate text-center">{label}</span>
                   </button>
                 ))}
+
+                <button type="button" onClick={() => setReglagesReplies((r) => !r)}
+                  aria-expanded={!reglagesReplies} aria-controls="panneau-reglages"
+                  title={reglagesReplies ? 'Déplier les réglages' : 'Replier les réglages'}
+                  className="mt-1 flex w-[3.75rem] flex-col items-center gap-1 rounded-xl border-t
+                    border-ink/10 px-1 pb-2 pt-3 text-[10px] font-semibold leading-none text-ink
+                    transition hover:bg-white hover:text-primary">
+                  {reglagesReplies
+                    ? <PanelLeftOpen size={20} strokeWidth={2} aria-hidden="true" />
+                    : <PanelLeftClose size={20} strokeWidth={2} aria-hidden="true" />}
+                  <span className="w-full truncate text-center">
+                    {reglagesReplies ? 'Déplier' : 'Replier'}
+                  </span>
+                </button>
               </div>
 
               <div id="panneau-reglages" role="tabpanel" aria-label={ongletActif?.label}
-                className="min-w-0 flex-1 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:p-2">
+                className={`min-w-0 flex-1 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:p-2
+                  ${reglagesReplies ? 'xl:hidden' : ''}`}>
                 {/* Le titre rend le rail lisible : une icône allumée ne dit pas son nom. */}
                 <h2 className="hidden px-2 py-1 font-display text-lg font-bold text-ink xl:block">
                   {ongletActif?.label}
