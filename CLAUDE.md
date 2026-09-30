@@ -11,6 +11,29 @@ docs 00 (trame) à 10 (stack + plan de dev en 10 jalons), FAQ 109 entrées (05),
 - Secrets uniquement en .env (jamais commités). Anonymiser toute donnée envoyée à une API LLM externe.
 - KB et prompts versionnés dans git (kb/, prompts/) = source de vérité, réingérés vers pgvector.
 
+## `TODO.md` — la liste de ce qui reste, à relire à chaque session
+
+**Une liste est tenue dans `TODO.md`, à la racine.** Établie le 30/09/2026, classée
+par risque pour l'entreprise et non par intérêt technique. Elle dit, pour chaque point,
+ce que c'est, pourquoi ça compte et où c'est dans le code.
+
+**Consigne de travail :**
+
+1. **La lire au début d'une session**, avant de proposer quoi que ce soit. Ce qui y
+   figure passe avant une nouvelle idée.
+2. **Cocher un point uniquement après l'avoir vérifié dans le code**, jamais parce
+   qu'on croit l'avoir fait. Un point coché est une affirmation.
+3. **Y ajouter ce qu'on découvre en passant**, plutôt que de le laisser dans un
+   message de commit que personne ne relira.
+4. **Le rappeler à Stéphane** quand une tâche touche un point de la liste, et
+   surtout pour les quatre premiers : ils sont bloquants avant une mise en ligne
+   (aucun e-mail ne part, les rendez-vous n'arrivent nulle part, 91 partenaires
+   inventés que le chat nomme, quatre experts inventés).
+
+Les points « à confirmer » attendent une réponse de Stéphane ou d'un fournisseur :
+**ne pas les trancher à sa place**, et ne pas retirer un `A CONFIRMER` de `config.py`
+sans qu'il ait eu la réponse.
+
 ## État (18/07/2026) — J1→J8 + J10 + trous produit (reste : J9 déploiement)
 
 > **Refonte visuelle & PWA (19/07/2026)** — ton chaleureux « esprit colibri », orange dominant + accents bleu marine (`ink`)/vert (`leaf`) du logo, fonds crème.
