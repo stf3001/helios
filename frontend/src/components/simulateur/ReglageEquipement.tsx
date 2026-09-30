@@ -99,6 +99,19 @@ interface Props {
   majConfig: (maj: (c: Config) => Config) => void
 }
 
+/**
+ * La gamme éolienne saute de 0 à 3 kWc : entre les deux, rien ne se vend. Le pas
+ * de 1 traverse donc 1 et 2, qu'il faut rabattre — vers 3 si l'on monte, vers 0
+ * si l'on descend.
+ *
+ * Trouvé le 30/09/2026 : ces deux valeurs remontaient à 3 dans tous les cas, donc
+ * « − » depuis 3 revenait à 3. Une éolienne posée ne pouvait plus être retirée.
+ */
+function puissanceEolienne(voulue: number, actuelle: number): number {
+  if (voulue <= 0 || voulue >= 3) return voulue
+  return voulue > actuelle ? 3 : 0
+}
+
 export default function ReglageEquipement({ id, config, resultat, majConfig }: Props) {
   const majMaison = (maj: Partial<Config['maison']>) =>
     majConfig((c) => ({ ...c, maison: { ...c.maison, ...maj } }))
@@ -220,7 +233,7 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
       return (
         <>
           <Nombre label="Puissance" valeur={config.eolien.kwc} min={0} max={9} pas={1} suffixe="kWc"
-            onChange={(v) => majEolien({ kwc: v === 1 || v === 2 ? 3 : v })}
+            onChange={(v) => majEolien({ kwc: puissanceEolienne(v, config.eolien.kwc) })}
             aide="0 pour aucune éolienne, sinon de 3 à 9 kWc — c’est la puissance TOTALE." />
           {config.eolien.kwc > 0 && (
             <p className="text-sm text-dark/70">
