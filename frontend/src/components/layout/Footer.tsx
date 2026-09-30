@@ -5,7 +5,7 @@ const ressources = [
   { to: '/qui-sommes-nous', label: 'Qui sommes-nous' },
   { to: '/vision', label: 'Notre vision' },
   { to: '/colibri', label: "L'esprit colibri" },
-  { to: '/comment-ca-marche', label: 'Qui est Helios' },
+  { to: '/helios', label: 'Qui est Helios' },
   { to: '/engagements', label: 'Nos engagements' },
   { to: '/eau', label: "L'eau atmosphérique" },
   { to: '/la-terre', label: 'Cultiver sa terre' },

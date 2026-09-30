@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Vision from './pages/Vision'
 import Colibri from './pages/Colibri'
-import CommentCaMarche from './pages/CommentCaMarche'
 import HeliosIA from './pages/HeliosIA'
 import Faq from './pages/Faq'
 import FaqDetail from './pages/FaqDetail'
@@ -82,7 +81,10 @@ function SitePublic() {
           <Route path="/vision" element={<Vision />} />
           <Route path="/colibri" element={<Colibri />} />
           <Route path="/qui-sommes-nous" element={<QuiSommesNous />} />
-          <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
+          {/* « Qui est Helios ? » a fusionné avec « Helios (IA) » le 30/09/2026 : les deux
+              disaient la même chose à deux endroits du menu. L'ancienne adresse redirige
+              plutôt que de disparaître — elle est dans des liens et référencée. */}
+          <Route path="/comment-ca-marche" element={<Navigate to="/helios" replace />} />
           <Route path="/engagements" element={<Engagements />} />
           <Route path="/helios" element={<HeliosIA />} />
           <Route path="/glossaire" element={<Glossaire />} />

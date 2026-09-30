@@ -66,7 +66,7 @@ référencé dans la région. On les réactive à la signature.
 
 ### [ ] 4. Les quatre experts sont des personnes inventées
 
-`frontend/src/components/AvatarExpert.tsx` et les fiches qui l'accompagnent :
+`frontend/src/pages/HeliosIA.tsx` (constante `EQUIPE`) et `AvatarExpert.tsx` :
 nom, âge, secteur, parcours, années de conseil en ENR. Les avatars sont des
 dessins, ça se voit ; **les biographies, non**. Un visiteur réserve un appel
 « avec Camille, 8 ans d'expérience ».

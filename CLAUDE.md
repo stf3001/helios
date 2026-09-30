@@ -372,7 +372,7 @@ sans qu'il ait eu la réponse.
 >   Échap/clic/croix, blocage du scroll de fond) — nécessaire car les légendes de l'infographie sont
 >   illisibles à la taille réduite d'un mobile. Aucune dépendance (juste `useState`/`useEffect` +
 >   icônes lucide). `loading="lazy"`, `width/height` explicites (anti-CLS), `alt` descriptif.
-> - Placée en tête de `/comment-ca-marche` (juste après le Hero), avec titre + intro + **légende
+> - Placée dans `/helios` (ex-`/comment-ca-marche`, fusionnée le 30/09/2026), avec titre + intro + **légende
 >   honnête (constitution)** : précise que c'est la vision d'ensemble, distingue ce qui est
 >   accessible aujourd'hui (solaire/stockage/pilotage/eau via partenaires) de ce qui viendra
 >   (éolien domestique), et rappelle qu'Helios ne propose jamais un équipement inutile au foyer.

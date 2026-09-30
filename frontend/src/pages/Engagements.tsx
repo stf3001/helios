@@ -75,7 +75,7 @@ export default function Engagements() {
         <div className="mt-10 border-l-4 border-primary bg-gray-50 rounded-r-2xl p-6 text-gray-700 text-sm">
           Ces règles sont écrites dans la « constitution » d'Helios, versionnée et appliquée dans le code de la
           plateforme. Gérer mes données : <Link to="/espace/compte" className="text-primary underline">mon compte</Link> ·
-          Comprendre notre modèle : <Link to="/comment-ca-marche" className="text-primary underline">comment ça marche</Link>.
+          Comprendre notre modèle : <Link to="/helios" className="text-primary underline">qui est Helios</Link>.
         </div>
       </section>
     </>

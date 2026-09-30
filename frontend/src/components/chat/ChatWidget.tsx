@@ -133,6 +133,16 @@ export default function ChatWidget({
   const [simplified, setSimplified] = useState(false)
   const conversationId = useRef<string | null>(initialConversationId)
 
+  /* Une amorce cliquée APRÈS l'affichage doit arriver dans le champ. `useState` ne sert
+     qu'au premier rendu : sans cet effet, cliquer « Ai-je intérêt à passer au solaire ? »
+     sur la page d'Helios ne remplissait rien, puisque la valeur initiale était déjà
+     consommée. On ne renvoie toujours rien tout seul — l'utilisateur relit et envoie. */
+  const premierRendu = useRef(true)
+  useEffect(() => {
+    if (premierRendu.current) { premierRendu.current = false; return }
+    if (initialInput) setInput(initialInput)
+  }, [initialInput])
+
   /** État de l'avatar. `n` sert à rejouer l'animation quand deux réponses
    *  d'affilée tombent dans le même état (deux « il a trouvé » de suite). */
   const [avatar, setAvatar] = useState<{ state: HeliosState; n: number }>({ state: 'salutation', n: 0 })
