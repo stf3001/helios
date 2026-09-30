@@ -125,11 +125,12 @@ export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
 
       <Bloc titre="Votre logement">
         <Champ label="Surface habitable" valeur={m.surface_m2} suffixe="m²"
+          min={10} max={2000}
           onChange={(v) => majMaison({ surface_m2: v ?? 100 })} />
         <Nombre label="Occupants" valeur={m.nb_occupants} min={1} max={20}
           onChange={(v) => majMaison({ nb_occupants: v })} />
         <Champ label="Consommation annuelle d’électricité" valeur={m.conso_connue_kwh_an}
-          suffixe="kWh" placeholder="je ne sais pas"
+          suffixe="kWh" placeholder="je ne sais pas" min={100} max={100000}
           aide={resultat?.consommation.estimee
             ? `Laissée vide : nous l’estimons à ${kwh(resultat.consommation.annuel_kwh)} par an. C’est une estimation.`
             : 'Reprise de votre facture : la courbe est recalée dessus.'}
@@ -184,6 +185,7 @@ export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
           onChange={(v) => majMaison({ raccordement: v })}
           aide="En monophasé, on ne peut injecter que 6 kVA : au-delà, l’énergie est perdue." />
         <Champ label="Puissance souscrite" valeur={m.puissance_souscrite_kva} suffixe="kVA"
+          min={3} max={36}
           onChange={(v) => majMaison({ puissance_souscrite_kva: v ?? 9 })}
           aide="Indiquée sur votre facture. Elle fixe le prix du kWh et l’abonnement." />
         <Bascule label="Je veux tenir en cas de coupure" actif={m.besoin_secours}
@@ -209,7 +211,7 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
           onChange={(v) => majPanneaux({ nb_panneaux: v })}
           aide={resultat ? `${resultat.production.kwc_toit} kWc en toiture` : undefined} />
         <Champ label="Surface de toit exploitable" valeur={p.surface_toit_m2} suffixe="m²"
-          placeholder="je ne sais pas"
+          placeholder="je ne sais pas" min={0} max={2000}
           onChange={(v) => majPanneaux({ surface_toit_m2: v })} />
         {maxToit !== null && maxToit > 0 && (
           <button type="button" onClick={() => majPanneaux({ nb_panneaux: Math.min(maxToit, 40) })}

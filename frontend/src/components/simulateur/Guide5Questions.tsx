@@ -113,11 +113,12 @@ export default function Guide5Questions({ config, majConfig, onTerminer }: Props
           {etape === 1 && (
             <>
               <Champ label="Surface habitable" valeur={m.surface_m2} suffixe="m²"
+                min={10} max={2000}
                 onChange={(v) => majMaison({ surface_m2: v ?? 100 })} />
               <Nombre label="Occupants" valeur={m.nb_occupants} min={1} max={20}
                 onChange={(v) => majMaison({ nb_occupants: v })} />
               <Champ label="Consommation annuelle d’électricité" valeur={m.conso_connue_kwh_an}
-                suffixe="kWh" placeholder="je ne sais pas"
+                suffixe="kWh" placeholder="je ne sais pas" min={100} max={100000}
                 aide="Sur votre facture. Si vous ne l’avez pas, nous l’estimerons — et nous vous le dirons."
                 onChange={(v) => majMaison({ conso_connue_kwh_an: v })} />
               <Bascule label="C’est une résidence secondaire" actif={m.residence_secondaire}

@@ -262,6 +262,81 @@ export class ErreurSimulateur extends Error {
   }
 }
 
+/**
+ * Le nom lisible d'un champ refusé par l'API, à partir du chemin qu'elle renvoie
+ * (`["body", "maison", "piscine", "pompe_kw"]`). Les libellés sont ceux des
+ * étiquettes à l'écran : un message doit désigner le champ que l'utilisateur voit.
+ */
+const NOMS_DE_CHAMPS: Record<string, string> = {
+  'maison.surface_m2': 'Surface habitable',
+  'maison.nb_occupants': 'Occupants',
+  'maison.conso_connue_kwh_an': 'Consommation annuelle d’électricité',
+  'maison.puissance_souscrite_kva': 'Puissance souscrite',
+  'maison.piscine.volume_m3': 'Volume du bassin',
+  'maison.piscine.pompe_kw': 'Puissance de la pompe',
+  'maison.clim.nb_pieces': 'Pièces climatisées',
+  'maison.voiture.km_an': 'Kilomètres par an',
+  'maison.mois_occupation': 'Mois d’occupation',
+  'panneaux.nb_panneaux': 'Panneaux sur le toit',
+  'panneaux.nb_panneaux_carport': 'Panneaux sur le carport',
+  'panneaux.inclinaison': 'Inclinaison',
+  'panneaux.surface_toit_m2': 'Surface de toit exploitable',
+  'eolien.kwc': 'Puissance de l’éolienne',
+  'eolien.facteur_anemometre': 'Mesure de l’anémomètre',
+  'eau.modele': 'Modèle de machine à eau',
+  'stockage.nb_packs': 'Batterie physique',
+  'stockage.palier_virtuel_kwh': 'Palier de batterie virtuelle',
+  'hausse_prix_pct_an': 'Hausse du prix de l’électricité',
+  adresse: 'Adresse',
+}
+
+/** Une borne telle qu'on l'écrit en français : virgule décimale, pas de point. */
+function borne(v: unknown): string {
+  return typeof v === 'number' ? v.toLocaleString('fr-FR') : String(v)
+}
+
+/** Ce que le champ attend, dit en français à partir du type d'erreur de Pydantic. */
+function attendu(erreur: { type?: string; ctx?: Record<string, unknown> }): string {
+  const ctx = erreur.ctx ?? {}
+  switch (erreur.type) {
+    case 'greater_than_equal': return `doit valoir au moins ${borne(ctx.ge)}`
+    case 'greater_than': return `doit être supérieur à ${borne(ctx.gt)}`
+    case 'less_than_equal': return `ne peut pas dépasser ${borne(ctx.le)}`
+    case 'less_than': return `doit être inférieur à ${borne(ctx.lt)}`
+    case 'int_from_float': return 'doit être un nombre entier, sans virgule'
+    case 'int_parsing':
+    case 'float_parsing': return 'n’est pas un nombre'
+    case 'string_too_long': return `est trop long (${ctx.max_length} caractères au plus)`
+    case 'literal_error': return 'a une valeur que nous ne reconnaissons pas'
+    case 'missing': return 'est obligatoire'
+    default: return 'n’est pas accepté'
+  }
+}
+
+/**
+ * Le message à afficher quand l'API refuse la configuration.
+ *
+ * Deux formes de réponse, et la seconde restait muette jusqu'au 30/09/2026 :
+ * nos refus métier renvoient `detail` en texte, mais une erreur de validation
+ * renvoie une LISTE. L'écran ne lisait que le texte, affichait « Le calcul n'a
+ * pas abouti » sans dire lequel des quinze champs posait problème, et
+ * l'utilisateur n'avait aucun moyen de s'en sortir.
+ */
+function messageDErreur(corps: unknown): string | null {
+  if (typeof corps !== 'object' || corps === null) return null
+  const detail = (corps as { detail?: unknown }).detail
+  if (typeof detail === 'string') return detail
+  if (!Array.isArray(detail) || detail.length === 0) return null
+
+  const phrases = detail.slice(0, 2).map((e) => {
+    const loc = Array.isArray(e?.loc) ? e.loc.filter((p: unknown) => p !== 'body') : []
+    const nom = NOMS_DE_CHAMPS[loc.join('.')] ?? loc.join(' → ')
+    return nom ? `« ${nom} » ${attendu(e)}` : attendu(e)
+  })
+  const reste = detail.length - phrases.length
+  return `${phrases.join(', et ')}${reste > 0 ? `, et ${reste} autre(s) réglage(s)` : ''}.`
+}
+
 async function poster<T>(chemin: string, config: Config, signal?: AbortSignal): Promise<T> {
   const reponse = await fetch(`/api${chemin}`, {
     method: 'POST',
@@ -272,8 +347,7 @@ async function poster<T>(chemin: string, config: Config, signal?: AbortSignal): 
   if (!reponse.ok) {
     let detail = 'Le calcul n’a pas abouti.'
     try {
-      const corps = await reponse.json()
-      if (typeof corps.detail === 'string') detail = corps.detail
+      detail = messageDErreur(await reponse.json()) ?? detail
     } catch {
       /* réponse non JSON : on garde le message générique */
     }

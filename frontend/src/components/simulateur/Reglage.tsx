@@ -128,20 +128,49 @@ export function Bascule({
   )
 }
 
+/**
+ * Un champ libre où l'on tape un nombre.
+ *
+ * `min` / `max` / `decimal` reprennent les bornes du schéma de l'API. Elles sont
+ * appliquées À LA SORTIE DU CHAMP, jamais à la frappe : ramener la valeur dans
+ * les bornes à chaque touche rendrait « 12000 » impossible à écrire, puisque le
+ * « 1 » seul serait aussitôt remonté au minimum.
+ *
+ * Sans ces bornes (avant le 30/09/2026), un zéro laissé dans « Puissance de la
+ * pompe » partait tel quel, l'API le refusait, et l'écran affichait « Le calcul
+ * n'a pas abouti » sans dire lequel des champs remplis était en cause.
+ */
 export function Champ({
   label, valeur, onChange, suffixe, placeholder, aide, type = 'number',
+  min, max, decimal = false,
 }: {
   label: string; valeur: number | null; onChange: (v: number | null) => void
   suffixe?: string; placeholder?: string; aide?: string; type?: string
+  min?: number; max?: number; decimal?: boolean
 }) {
   const id = `champ-${label.replace(/\s+/g, '-').toLowerCase()}`
+
+  /** À la sortie du champ : on arrondit et on ramène dans les bornes. */
+  function ranger(brut: number | null): number | null {
+    if (brut === null || Number.isNaN(brut)) return null
+    let v = decimal ? Math.round(brut * 10) / 10 : Math.round(brut)
+    if (min !== undefined) v = Math.max(min, v)
+    if (max !== undefined) v = Math.min(max, v)
+    return v
+  }
+
   return (
     <div>
       <label htmlFor={id} className="block font-semibold text-ink">{label}</label>
       <div className="mt-1 flex items-center gap-2">
-        <input id={id} type={type} inputMode="numeric" placeholder={placeholder}
+        <input id={id} type={type} inputMode={decimal ? 'decimal' : 'numeric'}
+          placeholder={placeholder} min={min} max={max} step={decimal ? 0.1 : 1}
           value={valeur ?? ''}
           onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+          onBlur={(e) => {
+            const range = ranger(e.target.value === '' ? null : Number(e.target.value))
+            if (range !== valeur) onChange(range)
+          }}
           className="w-full rounded-lg border border-ink/20 px-3 py-2 text-ink
             focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
         {suffixe && <span className="shrink-0 text-dark/70">{suffixe}</span>}

@@ -90,6 +90,31 @@ function valeurAdmise<T extends string>(
   return admises.find((o) => o.value.toLowerCase() === nettoye)?.value ?? defaut
 }
 
+/**
+ * Le même garde-fou pour les nombres de la fiche Maison, et pour la même raison :
+ * un nombre hors des bornes de l'API fait échouer le calcul dès l'ouverture, alors
+ * que l'utilisateur n'a touché à rien et n'a donc aucun champ à corriger.
+ *
+ * Une fiche peut porter une consommation à 50 kWh ou une puissance en texte
+ * (`"9 kVA"` donne NaN) : dans les deux cas on retombe sur le défaut du simulateur,
+ * visible et modifiable, plutôt que d'envoyer une valeur que le serveur refusera.
+ */
+function nombreAdmis(brut: unknown, min: number, max: number, defaut: number): number {
+  const n = typeof brut === 'string' ? Number(brut) : brut
+  if (typeof n !== 'number' || !Number.isFinite(n)) return defaut
+  const entier = Math.round(n)
+  return entier >= min && entier <= max ? entier : defaut
+}
+
+/** Idem pour un nombre facultatif : hors bornes, on préfère le vide au refus. */
+function nombreAdmisOuVide(brut: unknown, min: number, max: number): number | null {
+  if (brut === null || brut === undefined) return null
+  const n = typeof brut === 'string' ? Number(brut) : brut
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null
+  const entier = Math.round(n)
+  return entier >= min && entier <= max ? entier : null
+}
+
 const ANTI_REBOND_MS = 200
 const INACTIVITE_OPTIONS_MS = 2000
 
@@ -165,22 +190,22 @@ export default function SimulateurSolaire() {
           adresse: c.adresse ?? fiche.code_postal ?? null,
           maison: {
             ...c.maison,
-            surface_m2: fiche.surface_habitable ?? c.maison.surface_m2,
-            nb_occupants: fiche.nb_occupants ?? c.maison.nb_occupants,
+            surface_m2: nombreAdmis(fiche.surface_habitable, 10, 2000, c.maison.surface_m2),
+            nb_occupants: nombreAdmis(fiche.nb_occupants, 1, 20, c.maison.nb_occupants),
             chauffage: valeurAdmise(fiche.chauffage_principal, CHAUFFAGES, c.maison.chauffage),
             ecs: valeurAdmise(fiche.ecs, ECS_OPTIONS, c.maison.ecs),
-            conso_connue_kwh_an: fiche.conso_elec_kwh_an ?? c.maison.conso_connue_kwh_an,
-            puissance_souscrite_kva: fiche.puissance_souscrite
-              ? Number(fiche.puissance_souscrite) : c.maison.puissance_souscrite_kva,
+            conso_connue_kwh_an: nombreAdmisOuVide(fiche.conso_elec_kwh_an, 100, 100000),
+            puissance_souscrite_kva: nombreAdmis(
+              fiche.puissance_souscrite, 3, 36, c.maison.puissance_souscrite_kva),
             residence_secondaire: fiche.residence_principale === false,
             clim: { ...c.maison.clim, present: fiche.clim ?? c.maison.clim.present },
           },
           panneaux: {
             ...c.panneaux,
             orientation: valeurAdmise(fiche.orientation_toiture, ORIENTATIONS, c.panneaux.orientation),
-            inclinaison: fiche.pente ?? c.panneaux.inclinaison,
+            inclinaison: nombreAdmis(fiche.pente, 0, 90, c.panneaux.inclinaison),
             ombrage: valeurAdmise(fiche.ombrage, OMBRAGES, c.panneaux.ombrage),
-            surface_toit_m2: fiche.surface_toit_exploitable ?? c.panneaux.surface_toit_m2,
+            surface_toit_m2: nombreAdmisOuVide(fiche.surface_toit_exploitable, 0, 2000),
           },
         }))
       })

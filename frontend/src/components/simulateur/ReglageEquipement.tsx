@@ -135,7 +135,8 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
           <Choix label="Ombrage" valeur={panneaux.ombrage} options={OMBRAGES}
             onChange={(v) => majPanneaux({ ombrage: v })} />
           <Champ label="Surface de toit exploitable" valeur={panneaux.surface_toit_m2} suffixe="m²"
-            placeholder="je ne sais pas" onChange={(v) => majPanneaux({ surface_toit_m2: v })} />
+            placeholder="je ne sais pas" min={0} max={2000}
+            onChange={(v) => majPanneaux({ surface_toit_m2: v })} />
         </>
       )
 
@@ -397,9 +398,10 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
               <DejaLa deja={maison.piscine.deja_installe}
                 onChange={(v) => majMaison({ piscine: { ...maison.piscine, deja_installe: v } })} />
               <Champ label="Volume du bassin" valeur={maison.piscine.volume_m3} suffixe="m³"
+                min={1} max={300}
                 onChange={(v) => majMaison({ piscine: { ...maison.piscine, volume_m3: v ?? 40 } })} />
               <Champ label="Puissance de la pompe (si connue)" valeur={maison.piscine.pompe_kw}
-                suffixe="kW" placeholder="je ne sais pas"
+                suffixe="kW" placeholder="je ne sais pas" min={0.1} max={10} decimal
                 onChange={(v) => majMaison({ piscine: { ...maison.piscine, pompe_kw: v } })} />
             </>
           )}
@@ -416,6 +418,7 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
               <DejaLa deja={maison.voiture.deja_installe}
                 onChange={(v) => majMaison({ voiture: { ...maison.voiture, deja_installe: v } })} />
               <Champ label="Kilomètres par an" valeur={maison.voiture.km_an} suffixe="km"
+                min={0} max={100000}
                 onChange={(v) => majMaison({ voiture: { ...maison.voiture, km_an: v ?? 12000 } })} />
               <Choix label="Recharge" valeur={maison.voiture.recharge}
                 options={[{ value: 'soir', label: 'Le soir' }, { value: 'nuit', label: 'La nuit' }]}
@@ -441,6 +444,7 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
             onChange={(v) => majMaison({ raccordement: v })}
             aide="En monophasé, on ne peut injecter que 6 kVA. Au-delà, l’énergie produite est perdue." />
           <Champ label="Puissance souscrite" valeur={maison.puissance_souscrite_kva} suffixe="kVA"
+            min={3} max={36}
             onChange={(v) => majMaison({ puissance_souscrite_kva: v ?? 9 })}
             aide="Sur votre facture. Elle fixe le prix du kWh et le montant de l’abonnement." />
         </>
