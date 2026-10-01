@@ -16,12 +16,24 @@ Ecs = Literal["ballon_elec", "thermodynamique", "gaz", "solaire", "instantane"]
 Regulation = Literal["aucune", "thermostat", "programmable", "connecte"]
 PuissanceSouscrite = Literal["3", "6", "9", "12", "15", "18", "24", "30", "36"]
 OptionTarifaire = Literal["base", "HPHC", "tempo"]
+TarifBloque = Literal["oui", "non", "inconnu"]
 Objectif = Literal[
     "reduire_facture", "confort_hiver", "confort_ete", "autonomie", "ecologie", "valoriser_bien", "vendre_louer"
 ]
 Budget = Literal["<5k", "5-15k", "15-30k", "30k+", "ne_sait_pas"]
 Horizon = Literal["<6mois", "6-24mois", "reflexion"]
 Ombrage = Literal["aucun", "partiel", "important"]
+
+
+class PlageHoraire(BaseModel):
+    """Une plage d'heures creuses, telle qu'elle est écrite sur la facture.
+
+    Deux heures et non une durée : une plage peut passer minuit (23:01 → 07:01), et c'est
+    le cas courant de la plage de nuit. Le foyer en déclare une ou deux, jamais plus.
+    """
+
+    debut: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    fin: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 class HouseCreate(BaseModel):
@@ -67,6 +79,10 @@ class HouseUpdate(BaseModel):
     conso_autre_energie_qte: int | None = Field(default=None, ge=0)
     puissance_souscrite: PuissanceSouscrite | None = None
     option_tarifaire: OptionTarifaire | None = None
+    heures_creuses: list[PlageHoraire] | None = Field(default=None, max_length=2)
+    fournisseur_actuel: str | None = Field(default=None, max_length=80)
+    tarif_bloque: TarifBloque | None = None
+    tarif_bloque_mois_restants: int | None = Field(default=None, ge=1, le=48)
 
     objectifs: list[Objectif] | None = None
     budget_envisage: Budget | None = None

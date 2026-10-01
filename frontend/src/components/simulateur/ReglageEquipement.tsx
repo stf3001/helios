@@ -11,19 +11,40 @@ import {
 } from '../../lib/simulateur'
 import { Bascule, Champ, Choix, DejaLa, Nombre } from './Reglage'
 
-export const EQUIPEMENTS: { id: string; label: string }[] = [
-  { id: 'panneaux', label: 'Panneaux sur le toit' },
+/**
+ * Les emplacements, DANS L'ORDRE DE LA RANGÉE DE VIGNETTES sous la scène.
+ *
+ * `horsMoteur` marque ceux qui ne pèsent sur aucun calcul : leur état ne vit pas dans
+ * `Config` mais à côté, dans la page, parce que le schéma de l'API est en `extra="forbid"`
+ * et refuserait un champ qu'il ne connaît pas. C'est `SimulateurSolaire.tsx` qui dit s'ils
+ * sont installés, pas `estInstalle()`.
+ *
+ * `court` EST LE LIBELLÉ DE LA RANGÉE DE VIGNETTES, et il n'existe que pour elle. Les quinze
+ * vignettes doivent tenir sur DEUX rangées : à trois, la dernière passe sous le pli et on ne
+ * la voit pas sans faire défiler la page. Avec les libellés entiers, la rangée mesure
+ * ~1 790 px, soit trois lignes dès que la scène descend sous 900 px de large — ce qui arrive
+ * dès qu'on déplie les réglages.
+ *
+ * Le libellé ENTIER reste la vérité partout ailleurs : titre de la feuille de réglage et
+ * étiquette d'accessibilité de la vignette. Un lecteur d'écran entend donc toujours
+ * « Stockage par inertie », jamais « Inertie ».
+ */
+export const EQUIPEMENTS: { id: string; label: string; court?: string; horsMoteur?: true }[] = [
+  { id: 'panneaux', label: 'Panneaux sur le toit', court: 'Panneaux' },
   { id: 'carport', label: 'Carport' },
   { id: 'eolienne', label: 'Éolienne' },
   { id: 'eau', label: 'Machine à eau' },
-  { id: 'batterie', label: 'Batterie physique' },
-  { id: 'inertie', label: 'Stockage par inertie' },
-  { id: 'batterie_virtuelle', label: 'Batterie virtuelle' },
+  { id: 'batterie', label: 'Batterie physique', court: 'Batterie' },
+  { id: 'inertie', label: 'Stockage par inertie', court: 'Inertie' },
+  { id: 'batterie_virtuelle', label: 'Batterie virtuelle', court: 'Batt. virtuelle' },
   { id: 'ballon', label: 'Eau chaude' },
   { id: 'clim', label: 'Climatisation' },
   { id: 'piscine', label: 'Piscine' },
-  { id: 'voiture', label: 'Voiture électrique' },
-  { id: 'reseau', label: 'Raccordement au réseau' },
+  { id: 'voiture', label: 'Voiture électrique', court: 'Voiture' },
+  { id: 'puits_canadien', label: 'Puits canadien', horsMoteur: true },
+  { id: 'jardin', label: 'Jardin', horsMoteur: true },
+  { id: 'reseau', label: 'Raccordement au réseau', court: 'Raccordement' },
+  { id: 'energie', label: 'Achat d’énergie', court: 'Achat', horsMoteur: true },
 ]
 
 export function titreDe(id: string): string {
@@ -445,23 +466,9 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
         </>
       )
 
-    case 'reseau':
-      return (
-        <>
-          <Choix label="Raccordement" valeur={maison.raccordement}
-            options={[
-              { value: 'monophase', label: 'Monophasé' },
-              { value: 'triphase', label: 'Triphasé' },
-              { value: 'inconnu', label: 'Je ne sais pas' },
-            ]}
-            onChange={(v) => majMaison({ raccordement: v })}
-            aide="En monophasé, on ne peut injecter que 6 kVA. Au-delà, l’énergie produite est perdue." />
-          <Champ label="Puissance souscrite" valeur={maison.puissance_souscrite_kva} suffixe="kVA"
-            min={3} max={36}
-            onChange={(v) => majMaison({ puissance_souscrite_kva: v ?? 9 })}
-            aide="Sur votre facture. Elle fixe le prix du kWh et le montant de l’abonnement." />
-        </>
-      )
+    /* Le raccordement n'a plus de feuille ici : sa vignette ouvre directement
+       Maison > « Votre raccordement », où ses champs ont rejoint l'option tarifaire et les
+       heures creuses. Voir `onEmplacement` dans `SimulateurSolaire.tsx`. */
 
     default:
       return <p className="text-dark/70">Rien à régler ici.</p>

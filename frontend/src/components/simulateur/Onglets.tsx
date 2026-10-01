@@ -15,6 +15,11 @@ import {
   PRESENCES, SAISONS,
   type Config, type Objectif, type Option, type Options, type Resultat, type Saison,
 } from '../../lib/simulateur'
+import {
+  dureeMinutes, OPTIONS_TARIFAIRES, PUISSANCES_KVA, verifierHeuresCreuses,
+  type Contrat, type Plage,
+} from '../../lib/contrat'
+import { FOURNISSEURS } from '../../data/fournisseurs'
 import { Anneau, BarresMensuelles, Courbe25Ans, CourbeJournee, Repartition, Vide } from './Graphiques'
 import { Bascule, Champ, Choix, DejaLa, Nombre } from './Reglage'
 import { COULEURS } from '../../data/couleurs'
@@ -38,10 +43,17 @@ interface OngletProps {
  * à la scène, qui est ce qu'on veut mettre en avant.
  */
 function Bloc({
-  titre, children, aide, ouvert = false,
-}: { titre: string; children: React.ReactNode; aide?: string; ouvert?: boolean }) {
+  titre, children, aide, ouvert = false, refDetails,
+}: {
+  titre: string; children: React.ReactNode; aide?: string; ouvert?: boolean
+  /* Pour les blocs qu'un raccourci doit pouvoir ouvrir de l'extérieur — aujourd'hui le seul
+     « Votre raccordement », déplié par la vignette sous la scène. On agit sur le `<details>`
+     lui-même plutôt que de le passer en composant contrôlé : l'ouverture au clic, au clavier
+     et par la recherche dans la page continue de marcher sans qu'on ait à la recoder. */
+  refDetails?: React.Ref<HTMLDetailsElement>
+}) {
   return (
-    <details open={ouvert} className="group rounded-xl border border-ink/10 bg-white">
+    <details ref={refDetails} open={ouvert} className="group rounded-xl border border-ink/10 bg-white">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl
         px-4 py-3 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
         <h3 className="font-display text-lg font-bold text-ink">{titre}</h3>
@@ -113,10 +125,62 @@ function ChampAdresse({ config, majConfig }: { config: Config; majConfig: MajCon
   )
 }
 
-export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
+/** Une plage d'heures creuses : deux champs d'heure, et de quoi l'effacer. */
+function ChampPlage({
+  numero, plage, onChange,
+}: { numero: number; plage: Plage; onChange: (p: Plage) => void }) {
+  const classe = `rounded-lg border border-ink/20 px-2 py-1.5 text-ink
+    focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30`
+  const vide = plage.debut === '' && plage.fin === ''
+  const duree = dureeMinutes(plage)
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-semibold text-ink">Plage {numero}</span>
+        {!vide && (
+          <button type="button" onClick={() => onChange({ debut: '', fin: '' })}
+            className="text-sm text-dark/60 underline hover:text-primary">
+            effacer
+          </button>
+        )}
+      </div>
+      <div className="mt-1 flex items-center gap-2">
+        <input type="time" aria-label={`Début de la plage ${numero}`} value={plage.debut}
+          onChange={(e) => onChange({ ...plage, debut: e.target.value })} className={classe} />
+        <span aria-hidden="true" className="text-dark/60">→</span>
+        <input type="time" aria-label={`Fin de la plage ${numero}`} value={plage.fin}
+          onChange={(e) => onChange({ ...plage, fin: e.target.value })} className={classe} />
+      </div>
+      {duree !== null && duree > 0 && (
+        <p className="mt-1 text-sm text-dark/60">
+          {Math.floor(duree / 60)} h{duree % 60 ? ` ${String(duree % 60).padStart(2, '0')}` : ''}
+          {plage.fin < plage.debut ? ', en passant minuit' : ''}
+        </p>
+      )}
+    </div>
+  )
+}
+
+interface MaisonProps extends OngletProps {
+  contrat: Contrat
+  majContrat: (maj: Partial<Contrat>) => void
+  /** Référence posée sur « Votre raccordement », pour que la vignette puisse l'ouvrir. */
+  refRaccordement?: React.Ref<HTMLDetailsElement>
+}
+
+export function OngletMaison({
+  config, resultat, majConfig, contrat, majContrat, refRaccordement,
+}: MaisonProps) {
   const m = config.maison
   const majMaison = (maj: Partial<Config['maison']>) =>
     majConfig((c) => ({ ...c, maison: { ...c.maison, ...maj } }))
+  const verdict = verifierHeuresCreuses(contrat.heures_creuses)
+
+  const majPlage = (i: 0 | 1, p: Plage) => {
+    const plages: [Plage, Plage] = [...contrat.heures_creuses]
+    plages[i] = p
+    majContrat({ heures_creuses: plages })
+  }
 
   return (
     <div className="space-y-4">
@@ -176,8 +240,11 @@ export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
           onChange={(v) => majMaison({ ecs: v })} />
       </Bloc>
 
-      <Bloc titre="Votre raccordement">
-        <Choix label="Type de raccordement" valeur={m.raccordement}
+      {/* Le bloc qu'ouvre la vignette « Raccordement au réseau » sous la scène. Le premier
+          champ y reçoit le focus : arriver sur un bloc déplié sans savoir où regarder
+          reviendrait à n'avoir rien ouvert. */}
+      <Bloc titre="Votre raccordement" refDetails={refRaccordement}>
+        <Choix label="Type de compteur" valeur={m.raccordement}
           options={[
             { value: 'monophase', label: 'Monophasé' },
             { value: 'triphase', label: 'Triphasé' },
@@ -185,14 +252,111 @@ export function OngletMaison({ config, resultat, majConfig }: OngletProps) {
           ]}
           onChange={(v) => majMaison({ raccordement: v })}
           aide="En monophasé, on ne peut injecter que 6 kVA : au-delà, l’énergie est perdue." />
-        <Champ label="Puissance souscrite" valeur={m.puissance_souscrite_kva} suffixe="kVA"
-          min={3} max={36}
-          onChange={(v) => majMaison({ puissance_souscrite_kva: v ?? 9 })}
+        <Choix label="Puissance souscrite" valeur={String(m.puissance_souscrite_kva)}
+          options={PUISSANCES_KVA.map((p) => ({ value: String(p), label: `${p} kVA` }))}
+          onChange={(v) => majMaison({ puissance_souscrite_kva: Number(v) })}
           aide="Indiquée sur votre facture. Elle fixe le prix du kWh et l’abonnement." />
+        <Choix label="Option tarifaire" valeur={contrat.option_tarifaire}
+          options={OPTIONS_TARIFAIRES}
+          onChange={(v) => majContrat({ option_tarifaire: v })}
+          aide="Elle ne change aucun chiffre ici : nous la gardons pour l’étude de votre contrat." />
+
+        {contrat.option_tarifaire === 'HPHC' && (
+          <div className="space-y-3 rounded-lg border border-ink/10 bg-cream p-3">
+            <p className="font-semibold text-ink">Vos heures creuses</p>
+            <p className="-mt-2 text-sm text-dark/70">
+              Telles qu’elles sont écrites sur votre facture. Une seule plage suffit si vous
+              n’en avez qu’une.
+            </p>
+            <ChampPlage numero={1} plage={contrat.heures_creuses[0]}
+              onChange={(p) => majPlage(0, p)} />
+            <ChampPlage numero={2} plage={contrat.heures_creuses[1]}
+              onChange={(p) => majPlage(1, p)} />
+            {verdict.erreur && (
+              <p role="alert" className="text-sm font-semibold text-terra">{verdict.erreur}</p>
+            )}
+            {verdict.rappel && <p className="text-sm text-dark/70">{verdict.rappel}</p>}
+          </div>
+        )}
+
         <Bascule label="Je veux tenir en cas de coupure" actif={m.besoin_secours}
           onChange={(v) => majMaison({ besoin_secours: v })}
           aide="Seule une batterie physique le permet. Nous vous le dirons franchement, sans arranger sa rentabilité." />
       </Bloc>
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------------- Énergie */
+
+/**
+ * Chez qui le foyer achète son électricité, et depuis quand.
+ *
+ * AUCUN CHIFFRE DU PANNEAU DE DROITE NE BOUGE ICI, et c'est voulu : on recueille de quoi
+ * juger plus tard si une offre de courtage vaut le coup, pas de quoi recalculer une
+ * production. Les valeurs vivent hors de `Config` (voir `lib/contrat.ts`).
+ *
+ * Charte (doc 01) : aucun de ces fournisseurs n'est partenaire, aucun n'est poussé. Et
+ * rien ne part nulle part tant que le visiteur n'a pas de compte — l'écran le dit.
+ */
+export function OngletEnergie({
+  contrat, majContrat, connecte,
+}: { contrat: Contrat; majContrat: (maj: Partial<Contrat>) => void; connecte: boolean }) {
+  return (
+    <div className="space-y-4">
+      <Bloc titre="Votre fournisseur" ouvert>
+        <Choix label="Fournisseur actuel" valeur={contrat.fournisseur ?? ''}
+          options={[{ value: '', label: 'Choisissez…' }, ...FOURNISSEURS]}
+          onChange={(v) => majContrat({ fournisseur: v === '' ? null : v })} />
+        {contrat.fournisseur === 'autre' && (
+          <div>
+            <label htmlFor="fournisseur-autre" className="block font-semibold text-ink">
+              Lequel ?
+            </label>
+            <input id="fournisseur-autre" type="text" value={contrat.fournisseur_autre}
+              onChange={(e) => majContrat({ fournisseur_autre: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2 text-ink
+                focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+        )}
+
+        <Choix label="Tarif bloqué ?" valeur={contrat.tarif_bloque ?? ''}
+          options={[
+            { value: '', label: 'Choisissez…' },
+            { value: 'oui', label: 'Oui' },
+            { value: 'non', label: 'Non' },
+            { value: 'inconnu', label: 'Je ne sais pas' },
+          ]}
+          onChange={(v) => majContrat({
+            tarif_bloque: v === '' ? null : (v as NonNullable<Contrat['tarif_bloque']>),
+            tarif_bloque_mois: v === 'oui' ? contrat.tarif_bloque_mois : null,
+          })}
+          aide="Un prix du kWh garanti pendant une durée, écrit sur votre contrat." />
+
+        {contrat.tarif_bloque === 'oui' && (
+          <Champ label="Encore combien de mois ?" valeur={contrat.tarif_bloque_mois}
+            suffixe="mois" placeholder="je ne sais pas" min={1} max={48}
+            onChange={(v) => majContrat({ tarif_bloque_mois: v })} />
+        )}
+      </Bloc>
+
+      <section className="rounded-xl border border-sky/40 bg-sky/10 p-4">
+        <p className="text-dark/80">
+          Helios peut examiner si une offre de courtage est intéressante pour votre foyer.
+          Dans votre espace client, déposez votre dernière facture d’électricité (PDF) :
+          Helios l’analysera et vous dira s’il existe mieux.
+        </p>
+        <Link to="/espace/energie"
+          className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2
+            font-semibold text-white hover:bg-primary/90">
+          Mon espace
+        </Link>
+        <p className="mt-2 text-sm text-dark/60">
+          {connecte
+            ? 'Ces réponses rejoignent votre fiche Maison. Rien n’est transmis à un fournisseur sans votre accord.'
+            : 'Sans compte, ces réponses restent sur votre appareil : rien n’est enregistré, rien n’est transmis.'}
+        </p>
+      </section>
     </div>
   )
 }

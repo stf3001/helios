@@ -139,11 +139,11 @@ export default function Bandeau({ indicateurs, calculEnCours, variante = 'bandea
     )
   }
 
-  /* `xl:hidden` est porté par l'élément collé lui-même : un conteneur intermédiaire de la
+  /* `md:hidden` est porté par l'élément collé lui-même : un conteneur intermédiaire de la
      hauteur du bandeau empêcherait `sticky` de fonctionner. `top-16`, c'est la hauteur de
      l'en-tête du site, qui est collé lui aussi. */
   return (
-    <div className="sticky top-16 z-20 border-b border-ink/10 bg-cream/95 backdrop-blur xl:hidden">
+    <div className="sticky top-16 z-20 border-b border-ink/10 bg-cream/95 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 sm:gap-4">
         <Anneau pct={i?.autonomie_pct ?? 0} partVirtuelle={i?.autonomie_part_virtuelle_pct ?? 0}
           classe="h-14 w-14 shrink-0 sm:h-16 sm:w-16" />

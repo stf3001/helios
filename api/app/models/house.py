@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import ARRAY, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -59,6 +59,15 @@ class House(Base):
     puissance_souscrite: Mapped[str | None] = mapped_column(String(10))
     option_tarifaire: Mapped[str | None] = mapped_column(String(10))  # base|HPHC|tempo
     pdl: Mapped[str | None] = mapped_column(String(14))
+    # Le contrat, recueilli par le simulateur (migration 0021). Hors score de complétude :
+    # ce sont des réponses utiles à une étude de courtage, pas au diagnostic du logement.
+    # heures_creuses : liste de 0 à 2 plages [{"debut": "13:00", "fin": "15:00"}, ...].
+    # Une plage peut passer minuit (23:01 → 07:01), c'est pour ça que ce sont deux heures
+    # et non une durée.
+    heures_creuses: Mapped[list | None] = mapped_column(JSONB)
+    fournisseur_actuel: Mapped[str | None] = mapped_column(String(80))
+    tarif_bloque: Mapped[str | None] = mapped_column(String(10))  # oui|non|inconnu
+    tarif_bloque_mois_restants: Mapped[int | None] = mapped_column(Integer)
 
     # Bloc Projet & désidératas (15%)
     objectifs: Mapped[list[str] | None] = mapped_column(ARRAY(String))

@@ -10,14 +10,28 @@
  * derrière un rail d'icônes, les indicateurs se posent en carte en haut à droite, et
  * « Et ensuite ? » passe en pleine largeur sous l'ensemble.
  *
- * Le pivot est à `xl` (1280 px) et non à `lg` : en dessous, une troisième colonne ne tient
- * pas sans ramener la scène à 400 px de large, ce qui est exactement ce qu'on cherche à
- * éviter. Sous ce seuil, les indicateurs redeviennent un bandeau en haut, les onglets une
- * barre en bas, et la scène prend toute la largeur — elle y est plus grande encore.
+ * LE PIVOT EST DESCENDU DE `xl` (1280 px) À `md` (768 px) LE 01/10/2026. Il avait été posé
+ * à 1280 parce qu'en dessous, trois colonnes dépliées ramenaient la scène à 400 px de large.
+ * Résultat : toute fenêtre plus étroite que 1280 — c'est-à-dire la plupart des portables —
+ * retombait sur la mise en page de téléphone, onglets en barre du bas et indicateurs en
+ * bandeau. Sur un ordinateur, ce n'est pas ce qu'on veut montrer.
  *
- * Les deux cartes flottantes ont leur gouttière RÉSERVÉE dans la grille : elles ont l'air
- * posées sur la scène, mais elles n'en cachent rien. Un panneau par-dessus l'illustration
- * masquerait la voiture et le garage, qui sont deux emplacements d'équipement cliquables.
+ * CE QUI REND LA CHOSE POSSIBLE : sous `xl`, la colonne de gauche ne contient plus que le
+ * RAIL d'icônes (4,75 rem), et le panneau de réglages s'ouvre en CALQUE par-dessus la scène
+ * plutôt que de lui prendre une colonne. La scène garde donc sa largeur quoi qu'il arrive.
+ * À partir de `xl`, rien ne change : le panneau reprend sa gouttière réservée, parce que
+ * la place existe et qu'un panneau posé à côté vaut mieux qu'un panneau posé dessus.
+ *
+ * L'objection d'origine — « un panneau par-dessus l'illustration masquerait la voiture et le
+ * garage, qui sont des emplacements cliquables » — tient toujours, et c'est pour cela que
+ * sous `xl` les réglages DÉMARRENT REPLIÉS (voir `reglagesReplies`) : le calque n'apparaît
+ * que si on le demande, et se referme d'un clic.
+ *
+ * Sous 768 px, rien ne change non plus : indicateurs en bandeau, onglets en barre du bas,
+ * scène en pleine largeur.
+ *
+ * La carte des indicateurs, elle, garde sa gouttière réservée à toutes les tailles : elle
+ * est à droite, là où l'illustration n'a que du ciel et du potager.
  *
  * AUCUN chiffre n'est écrit ici : tout vient de `/api/simulateur/*`.
  */
@@ -26,7 +40,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Activity, AlertTriangle, ArrowRight, BatteryCharging, Check, CircleHelp, ClipboardList,
-  House, Info, PanelLeftClose, PanelLeftOpen, Save, Sun, Users, type LucideIcon,
+  House, Info, PanelLeftClose, PanelLeftOpen, Plug, Save, Sun, Users, type LucideIcon,
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
@@ -36,11 +50,17 @@ import SceneMaison, { type EmplacementScene, type FluxScene } from '../component
 import ReglageEquipement, {
   EQUIPEMENTS, estInstalle, resumeDe, titreDe,
 } from '../components/simulateur/ReglageEquipement'
-import { Feuille } from '../components/simulateur/Reglage'
+import { Bascule, Feuille } from '../components/simulateur/Reglage'
 import ReglageJardin from '../components/simulateur/ReglageJardin'
 import {
-  OngletAide, OngletEtude, OngletJournee, OngletMaison, OngletPanneaux, OngletStockage,
+  OngletAide, OngletEnergie, OngletEtude, OngletJournee, OngletMaison, OngletPanneaux,
+  OngletStockage,
 } from '../components/simulateur/Onglets'
+import {
+  CONTRAT_INITIAL, OPTIONS_TARIFAIRES, versFicheMaison, type Contrat, type OptionTarifaire,
+  type Plage,
+} from '../lib/contrat'
+import { fournisseurDepuisLibelle, libelleFournisseur } from '../data/fournisseurs'
 import {
   calculerJardin, JARDIN_INITIAL, type JardinConfig, type JardinResultat,
 } from '../lib/jardin'
@@ -52,7 +72,7 @@ import {
   type Config, type Option, type Options, type Resultat, type Saison,
 } from '../lib/simulateur'
 
-type Onglet = 'maison' | 'panneaux' | 'stockage' | 'journee' | 'etude' | 'aide'
+type Onglet = 'maison' | 'energie' | 'panneaux' | 'stockage' | 'journee' | 'etude' | 'aide'
 
 /**
  * Chaque onglet porte une icône : c'est elle qu'on voit dans le rail de gauche et dans la
@@ -61,6 +81,7 @@ type Onglet = 'maison' | 'panneaux' | 'stockage' | 'journee' | 'etude' | 'aide'
  */
 const ONGLETS: { id: Onglet; label: string; Icone: LucideIcon }[] = [
   { id: 'maison', label: 'Maison', Icone: House },
+  { id: 'energie', label: 'Énergie', Icone: Plug },
   { id: 'panneaux', label: 'Panneaux', Icone: Sun },
   { id: 'stockage', label: 'Stockage', Icone: BatteryCharging },
   { id: 'journee', label: 'En direct', Icone: Activity },
@@ -115,6 +136,21 @@ function nombreAdmisOuVide(brut: unknown, min: number, max: number): number | nu
   return entier >= min && entier <= max ? entier : null
 }
 
+/**
+ * Les heures creuses telles que la fiche Maison les garde : une liste de 0, 1 ou 2 plages.
+ * L'écran, lui, en montre toujours deux — la seconde peut rester vide. Une forme
+ * inattendue est ignorée plutôt que devinée : la fiche peut avoir été remplie ailleurs.
+ */
+function plagesDeLaFiche(brut: unknown): [Plage, Plage] | null {
+  if (!Array.isArray(brut)) return null
+  const lues = brut
+    .filter((p): p is { debut: string; fin: string } =>
+      typeof p?.debut === 'string' && typeof p?.fin === 'string')
+    .slice(0, 2)
+  if (lues.length === 0) return null
+  return [lues[0], lues[1] ?? { debut: '', fin: '' }]
+}
+
 const ANTI_REBOND_MS = 200
 const INACTIVITE_OPTIONS_MS = 2000
 
@@ -129,8 +165,17 @@ export default function SimulateurSolaire() {
   const [resultat, setResultat] = useState<Resultat | null>(null)
   const [options, setOptions] = useState<Options | null>(null)
   const [onglet, setOnglet] = useState<Onglet>('maison')
-  /** Panneau de réglages replié sur son rail d'icônes, pour donner la largeur à la scène. */
-  const [reglagesReplies, setReglagesReplies] = useState(false)
+  /**
+   * Panneau de réglages replié sur son rail d'icônes, pour donner la largeur à la scène.
+   *
+   * Entre 1024 et 1280 px, il DÉMARRE replié : à cette largeur, les trois colonnes dépliées
+   * laissent moins de 600 px à la scène, et c'est elle qu'on vient voir. Au-delà, elles
+   * tiennent toutes et le panneau s'ouvre comme avant.
+   *
+   * Lu une seule fois, à l'ouverture : c'est un point de départ, pas une règle qui reprendrait
+   * la main sur l'utilisateur à chaque changement de taille de fenêtre.
+   */
+  const [reglagesReplies, setReglagesReplies] = useState(() => window.innerWidth < 1280)
   const [emplacementOuvert, setEmplacementOuvert] = useState<string | null>(null)
   const [saison, setSaison] = useState<Saison>('ete')
   const [heure, setHeure] = useState(13)
@@ -156,8 +201,22 @@ export default function SimulateurSolaire() {
   const [jardinResultat, setJardinResultat] = useState<JardinResultat | null>(null)
   const [jardinErreur, setJardinErreur] = useState<string | null>(null)
 
+  /* --- Le contrat d'électricité, et le puits canadien ---
+     Même raison que le jardin, en plus impérieuse : le schéma de l'API est en
+     `extra="forbid"`, donc un champ de plus dans `config` ferait échouer CHAQUE calcul en
+     422 et laisserait l'écran plein de tirets. Ces deux-là vivent donc à côté, ne partent
+     jamais au moteur et n'entrent pas dans l'URL de partage. Ils ne changent aucun chiffre
+     du panneau de droite : c'est du recueil, pas du calcul. */
+  const [contrat, setContrat] = useState<Contrat>(CONTRAT_INITIAL)
+  const [puitsCanadien, setPuitsCanadien] = useState(false)
+
+  const majContrat = useCallback(
+    (maj: Partial<Contrat>) => setContrat((c) => ({ ...c, ...maj })), [])
+
   /* Pour amener les réglages sous les yeux quand on choisit un onglet dans la barre du bas. */
   const panneauReglages = useRef<HTMLDivElement>(null)
+  /* Le bloc « Votre raccordement », que la vignette sous la scène doit pouvoir déplier. */
+  const blocRaccordement = useRef<HTMLDetailsElement>(null)
 
   /* Le calque d'accueil bloque le défilement de la page derrière lui, et Échap le ferme —
      ce qui revient à choisir « tout régler moi-même », le choix qui n'engage à rien. */
@@ -187,6 +246,19 @@ export default function SimulateurSolaire() {
       .then((r) => (r.ok ? r.json() : null))
       .then((fiche) => {
         if (!fiche) return
+        /* Le contrat vient de la fiche quand elle le porte, et garde ses défauts sinon —
+           les colonnes sont récentes, une fiche ancienne n'a rien à y mettre. */
+        const fournisseur = fournisseurDepuisLibelle(fiche.fournisseur_actuel)
+        setContrat((c) => ({
+          ...c,
+          option_tarifaire: OPTIONS_TARIFAIRES
+            .find((o) => o.value === fiche.option_tarifaire)?.value ?? c.option_tarifaire,
+          heures_creuses: plagesDeLaFiche(fiche.heures_creuses) ?? c.heures_creuses,
+          fournisseur: fournisseur?.code ?? c.fournisseur,
+          fournisseur_autre: fournisseur?.autre ?? c.fournisseur_autre,
+          tarif_bloque: fiche.tarif_bloque ?? c.tarif_bloque,
+          tarif_bloque_mois: fiche.tarif_bloque_mois_restants ?? c.tarif_bloque_mois,
+        }))
         setConfig((c) => ({
           ...c,
           adresse: c.adresse ?? fiche.code_postal ?? null,
@@ -273,26 +345,86 @@ export default function SimulateurSolaire() {
     setJardinConfig((c) => (c.code_postal === code ? c : { ...c, code_postal: code }))
   }, [config.adresse])
 
-  /* --- Ce que la scène doit montrer --- */
+  /* --- Ce que la scène doit montrer ---
+     L'ordre est celui d'`EQUIPEMENTS`. Les emplacements marqués `horsMoteur` ne passent pas
+     par `estInstalle()` : leur état vit ici, à côté de la configuration. */
   const equipements: EmplacementScene[] = useMemo(
-    () => [
-      ...EQUIPEMENTS.map((e) => ({
-        id: e.id,
-        label: e.label,
-        installe: estInstalle(e.id, config),
-        resume: resumeDe(e.id, config, resultat),
-      })),
-      {
-        id: 'jardin',
-        label: 'Jardin',
-        installe: jardinOuvert,
-        resume: jardinResultat
-          ? `${jardinResultat.surface_totale_m2} m² · ${jardinResultat.couverture_pct} % de vos légumes`
-          : null,
-      },
-    ],
-    [config, resultat, jardinOuvert, jardinResultat],
+    () => EQUIPEMENTS.map((e) => {
+      const commun = { id: e.id, label: e.label, court: e.court }
+      switch (e.id) {
+        case 'jardin':
+          return {
+            ...commun,
+            installe: jardinOuvert,
+            resume: jardinResultat
+              ? `${jardinResultat.surface_totale_m2} m² · ${jardinResultat.couverture_pct} % de vos légumes`
+              : null,
+          }
+        case 'puits_canadien':
+          return { ...commun, installe: puitsCanadien, resume: puitsCanadien ? 'Prévu' : null }
+        case 'energie':
+          return {
+            ...commun,
+            installe: contrat.fournisseur !== null,
+            resume: libelleFournisseur(contrat.fournisseur, contrat.fournisseur_autre),
+          }
+        case 'reseau': {
+          /* L'option tarifaire complète le résumé : elle ne vient pas du moteur, donc
+             `resumeDe()` ne peut pas la connaître. */
+          const option = OPTIONS_TARIFAIRES.find((o) => o.value === contrat.option_tarifaire)
+          const base = resumeDe(e.id, config, resultat)
+          return {
+            ...commun,
+            installe: true,
+            resume: base && option ? `${base} · ${option.label}` : base,
+          }
+        }
+        default:
+          return {
+            ...commun,
+            installe: estInstalle(e.id, config),
+            resume: resumeDe(e.id, config, resultat),
+          }
+      }
+    }),
+    [config, resultat, jardinOuvert, jardinResultat, puitsCanadien, contrat],
   )
+
+  /**
+   * Ce qui se passe quand on clique un repère sur l'image ou sa vignette en dessous.
+   *
+   * Deux emplacements ne sont pas des équipements et n'ouvrent donc pas de feuille de
+   * réglage : le raccordement et l'achat d'énergie emmènent vers le menu de gauche, là où
+   * leurs champs vivent vraiment. Les autres ouvrent leur feuille, comme avant.
+   */
+  const onEmplacement = useCallback((id: string) => {
+    if (id === 'reseau' || id === 'energie') {
+      setReglagesReplies(false)
+      setOnglet(id === 'reseau' ? 'maison' : 'energie')
+      /* Après le rendu, et pas avant : sur un panneau replié ou un autre onglet, le bloc
+         n'existe pas encore dans le document au moment du clic. */
+      requestAnimationFrame(() => {
+        /* Sur petit écran les réglages vivent SOUS la scène : il faut descendre la page
+           jusqu'à eux. Dès `md` ils sont à gauche, déjà sous les yeux, et faire défiler la
+           page n'aurait qu'un effet : chasser l'en-tête du site hors de l'écran. */
+        if (window.innerWidth < 768) {
+          panneauReglages.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        if (id !== 'reseau') return
+        const bloc = blocRaccordement.current
+        if (!bloc) return
+        bloc.open = true
+        /* Le panneau a son propre ascenseur : sans ce `block: 'nearest'`, le bloc s'ouvre
+           tout en bas de la liste des réglages et reste invisible, alors qu'on vient
+           justement de cliquer pour le voir. */
+        bloc.scrollIntoView({ block: 'nearest' })
+        bloc.querySelector<HTMLElement>('select, input')?.focus({ preventScroll: true })
+      })
+      return
+    }
+    if (id === 'jardin') setJardinOuvert(true)
+    setEmplacementOuvert(id)
+  }, [])
 
   const flux: FluxScene = useMemo(() => {
     const point = resultat?.journees[saison]?.[heure]
@@ -342,8 +474,33 @@ export default function SimulateurSolaire() {
     }))
   }
 
+  /**
+   * Le contrat rejoint la FICHE MAISON, pas l'étude.
+   *
+   * L'étude part dans `SimulateurIn`, qui est en `extra="forbid"` : y glisser ces champs
+   * ferait échouer l'enregistrement en entier. La fiche, elle, porte déjà l'option
+   * tarifaire ; les heures creuses, le fournisseur et le tarif bloqué l'ont rejointe
+   * (migration 0021). C'est aussi le bon endroit : ces réponses servent l'espace client et
+   * une éventuelle étude de courtage, pas un calcul de production.
+   *
+   * Au pire, ça échoue en silence : l'étude, elle, doit s'enregistrer quand même.
+   */
+  const enregistrerContrat = async () => {
+    try {
+      await authFetch('/api/houses/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          versFicheMaison(contrat, libelleFournisseur(contrat.fournisseur, contrat.fournisseur_autre))),
+      })
+    } catch {
+      /* la fiche est facultative : on ne fait pas échouer l'enregistrement de l'étude */
+    }
+  }
+
   const enregistrerEtude = async () => {
     setMessageEtude(null)
+    void enregistrerContrat()
     try {
       const reponse = await authFetch('/api/simulateur/etudes', {
         method: 'POST',
@@ -370,7 +527,11 @@ export default function SimulateurSolaire() {
   const contenuOnglet = (
     <>
       {onglet === 'maison' && (
-        <OngletMaison config={config} resultat={resultat} majConfig={majConfig} />
+        <OngletMaison config={config} resultat={resultat} majConfig={majConfig}
+          contrat={contrat} majContrat={majContrat} refRaccordement={blocRaccordement} />
+      )}
+      {onglet === 'energie' && (
+        <OngletEnergie contrat={contrat} majContrat={majContrat} connecte={user !== null} />
       )}
       {onglet === 'panneaux' && (
         localise
@@ -403,7 +564,7 @@ export default function SimulateurSolaire() {
         <Guide5Questions config={config} majConfig={majConfig} onTerminer={() => setGuide(false)} />
       )}
 
-      <div className="mx-auto max-w-[110rem] px-3 pb-4 pt-3 sm:px-4 xl:pb-10">
+      <div className="mx-auto max-w-[110rem] px-3 pb-4 pt-3 sm:px-4 md:pb-10">
         {!localise && (
           <div className="mb-3 rounded-lg border border-primary/30 bg-white px-3 py-2">
             <p className="flex items-center gap-2 text-sm text-ink">
@@ -425,14 +586,19 @@ export default function SimulateurSolaire() {
           </div>
         )}
 
+        {/* Les alertes du moteur restent AU-DESSUS de la scène — c'est là qu'on les lit, et
+            la charte ne permet pas de ranger plus bas un avertissement qui change la lecture
+            des chiffres (« le calcul suppose du monophasé »). Elles sont en revanche
+            resserrées sur grand écran : à `p-4`, une seule alerte prenait 40 px de plus que
+            nécessaire, pris directement sur la hauteur de l'illustration. */}
         {resultat?.alertes.map((alerte) => (
           <div key={alerte.texte}
-            className={`mb-3 rounded-xl border p-4 text-ink ${alerte.niveau === 'attention'
+            className={`mb-2 rounded-xl border p-3 text-sm text-ink md:py-2 ${alerte.niveau === 'attention'
               ? 'border-terra/40 bg-terra/10' : 'border-sky/40 bg-sky/10'}`}>
-            <p className="flex items-start gap-3">
+            <p className="flex items-start gap-2.5">
               {alerte.niveau === 'attention'
-                ? <AlertTriangle size={20} className="mt-0.5 shrink-0 text-terra" />
-                : <Info size={20} className="mt-0.5 shrink-0 text-sky" />}
+                ? <AlertTriangle size={17} className="mt-0.5 shrink-0 text-terra" />
+                : <Info size={17} className="mt-0.5 shrink-0 text-sky" />}
               <span>{alerte.texte}</span>
             </p>
           </div>
@@ -445,23 +611,34 @@ export default function SimulateurSolaire() {
             quatre saisons, elles, restent sur deux rangées : les mettre sur une seule
             demande 312 px de rangée contre 181 auparavant, soit 130 px pris sur la scène —
             un mauvais échange pour un repli qui se lit très bien. */}
-        {/* Replié, le panneau ne laisse que son rail : la colonne tombe à sa largeur
-            (4,75 rem) et les ~17 rem libérés passent à la scène. Le repli ne vaut qu'à
-            partir de xl — en dessous, les réglages sont déjà empilés sous la scène et
-            les onglets vivent dans la barre du bas. */}
-        <div className={`grid items-start gap-3 2xl:gap-4 ${reglagesReplies
-          ? 'xl:grid-cols-[4.75rem_minmax(0,1fr)_11rem] 2xl:grid-cols-[4.75rem_minmax(0,1fr)_12rem]'
-          : 'xl:grid-cols-[22rem_minmax(0,1fr)_11rem] 2xl:grid-cols-[24rem_minmax(0,1fr)_12rem]'}`}>
+        {/* Replié, il ne reste que le rail. À partir de `xl`, cela rend ~17 rem à la scène,
+            puisque le panneau y occupe une vraie colonne. En dessous, la colonne vaut déjà
+            4,75 rem quoi qu'il arrive — le panneau s'ouvre en calque par-dessus la scène —
+            et le repli ne fait que découvrir l'illustration. Sous `md`, les réglages
+            s'empilent sous la scène et les onglets vivent dans la barre du bas. */}
+        <div className={`grid items-start gap-3 2xl:gap-4 md:grid-cols-[4.75rem_minmax(0,1fr)_11rem]
+          ${reglagesReplies
+            ? '2xl:grid-cols-[4.75rem_minmax(0,1fr)_12rem]'
+            : 'xl:grid-cols-[22rem_minmax(0,1fr)_11rem] 2xl:grid-cols-[24rem_minmax(0,1fr)_12rem]'}`}>
 
           {/* ---------- LES RÉGLAGES, flottants à gauche ---------- */}
           <aside ref={panneauReglages}
-            className="order-2 min-w-0 scroll-mt-36 xl:sticky xl:top-20 xl:order-1 xl:self-start
-              xl:scroll-mt-0 xl:overflow-hidden xl:rounded-2xl xl:border xl:border-ink/10
-              xl:bg-cream/80 xl:shadow-question xl:backdrop-blur">
-            <div className="xl:flex">
-              {/* Le rail : les onglets en icônes, à demeure le long du panneau. */}
+            /* `md:z-20` N'EST PAS DÉCORATIF : dans une grille, l'ordre de peinture suit
+               l'ordre MODIFIÉ PAR `order`, et les réglages portent `md:order-1` contre
+               `md:order-2` pour la scène. Sans profondeur explicite, l'illustration se
+               peint donc PAR-DESSUS le calque des réglages, qui disparaît à moitié. Resté
+               sous le `z-50` de l'en-tête du site et sous le `z-40` du calque d'accueil. */
+            className="relative order-2 min-w-0 scroll-mt-36 md:sticky md:top-20 md:z-20
+              md:order-1 md:self-start md:scroll-mt-0 xl:overflow-hidden xl:rounded-2xl
+              xl:border xl:border-ink/10 xl:bg-cream/80 xl:shadow-question xl:backdrop-blur">
+            <div className="md:flex">
+              {/* Le rail : les onglets en icônes, à demeure le long du panneau.
+                  Sous `xl` il porte sa propre bordure, puisqu'il n'est plus dans la même
+                  boîte que le panneau. */}
               <div role="tablist" aria-orientation="vertical" aria-label="Sections du simulateur"
-                className="hidden shrink-0 flex-col gap-1 border-r border-ink/10 p-1.5 xl:flex">
+                className="hidden shrink-0 flex-col gap-1 rounded-2xl border border-ink/10
+                  bg-cream/80 p-1.5 shadow-question backdrop-blur md:flex xl:rounded-none
+                  xl:border-0 xl:border-r xl:bg-transparent xl:shadow-none xl:backdrop-blur-none">
                 {ONGLETS.map(({ id, label, Icone }) => (
                   <button key={id} role="tab" type="button"
                     aria-selected={!reglagesReplies && onglet === id}
@@ -494,10 +671,15 @@ export default function SimulateurSolaire() {
               </div>
 
               <div id="panneau-reglages" role="tabpanel" aria-label={ongletActif?.label}
-                className={`min-w-0 flex-1 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:p-2
-                  ${reglagesReplies ? 'xl:hidden' : ''}`}>
+                className={`min-w-0 flex-1
+                  md:absolute md:left-[5.25rem] md:top-0 md:z-30 md:w-[22rem]
+                  md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto md:rounded-2xl md:border
+                  md:border-ink/10 md:bg-cream/95 md:p-2 md:shadow-question md:backdrop-blur
+                  xl:static xl:z-auto xl:w-auto xl:max-h-[calc(100vh-7rem)] xl:rounded-none
+                  xl:border-0 xl:bg-transparent xl:shadow-none
+                  ${reglagesReplies ? 'md:hidden' : ''}`}>
                 {/* Le titre rend le rail lisible : une icône allumée ne dit pas son nom. */}
-                <h2 className="hidden px-2 py-1 font-display text-lg font-bold text-ink xl:block">
+                <h2 className="hidden px-2 py-1 font-display text-lg font-bold text-ink md:block">
                   {ongletActif?.label}
                 </h2>
                 {contenuOnglet}
@@ -505,20 +687,31 @@ export default function SimulateurSolaire() {
             </div>
           </aside>
 
-          {/* ---------- LA SCÈNE, au centre et en grand ---------- */}
-          <div className="order-1 min-w-0 xl:order-2">
+          {/* ---------- LA SCÈNE, au centre et en grand ----------
+              La scène et sa rangée de vignettes doivent tenir sous l'en-tête SANS que la
+              page défile. L'illustration étant en 21:9, c'est presque toujours la largeur
+              de la colonne qui commande — mais sur un écran bas (1280 × 720, ou un zoom
+              navigateur à 125 %), c'est la hauteur. D'où une largeur maximale DÉDUITE DE LA
+              HAUTEUR DISPONIBLE : la scène rétrécit alors et reste centrée, au lieu de
+              pousser les vignettes hors de l'écran.
+
+              Les 13rem retranchés : l'en-tête du site (5rem, le même décalage que le
+              `md:top-20` des deux cartes flottantes), les marges de la page, et la place
+              des deux rangées de vignettes.
+
+              En dessous de `md`, aucune contrainte : sur un téléphone le défilement est
+              normal, et brider la largeur ne ferait que rapetisser l'image. */}
+          <div className="order-1 min-w-0 md:order-2">
             {premierChargement && localise ? (
-              <div className="animate-pulse">
-                <div className="aspect-[1105/638] w-full rounded-xl bg-white/70" />
+              <div className="mx-auto w-full animate-pulse md:max-w-[calc((100dvh-13rem)*1584/672)]">
+                <div className="aspect-[1584/672] w-full rounded-xl bg-white/70" />
                 <div className="mx-auto mt-3 h-4 w-2/3 rounded bg-white/70" />
               </div>
             ) : (
-              <SceneMaison equipements={equipements} eolienne={config.eolien.kwc > 0}
-                heure={heure} saison={saison} flux={flux}
-                onEmplacement={(id) => {
-                  if (id === 'jardin') setJardinOuvert(true)
-                  setEmplacementOuvert(id)
-                }} />
+              <div className="mx-auto w-full md:max-w-[calc((100dvh-13rem)*1584/672)]">
+                <SceneMaison equipements={equipements} eolienne={config.eolien.kwc > 0}
+                  heure={heure} saison={saison} flux={flux} onEmplacement={onEmplacement} />
+              </div>
             )}
 
             {options?.prochaine_etape && (
@@ -541,7 +734,7 @@ export default function SimulateurSolaire() {
           </div>
 
           {/* ---------- LES INDICATEURS, en carte en haut à droite ---------- */}
-          <div className="order-3 hidden xl:sticky xl:top-20 xl:block xl:self-start">
+          <div className="order-3 hidden md:sticky md:top-20 md:block md:self-start">
             <Bandeau indicateurs={resultat?.indicateurs ?? null} calculEnCours={calculEnCours}
               variante="carte" />
           </div>
@@ -639,7 +832,7 @@ export default function SimulateurSolaire() {
           le pied de page appartenant à la mise en page du site. */}
       <nav role="tablist" aria-label="Sections du simulateur"
         className="sticky bottom-0 z-20 border-t border-ink/10 bg-cream/95
-          pb-[env(safe-area-inset-bottom)] backdrop-blur xl:hidden">
+          pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-2xl">
           {ONGLETS.map(({ id, label, Icone }) => (
             <button key={id} role="tab" type="button" aria-selected={onglet === id}
@@ -710,6 +903,30 @@ export default function SimulateurSolaire() {
         {emplacementOuvert === 'jardin' ? (
           <ReglageJardin config={jardinConfig} resultat={jardinResultat}
             majConfig={(maj) => setJardinConfig(maj)} erreur={jardinErreur} />
+        ) : emplacementOuvert === 'puits_canadien' ? (
+          /* Un puits canadien tempère l'air neuf avant qu'il n'entre : frais l'été, préchauffé
+             l'hiver. Il ne produit pas d'électricité et n'entre dans aucun bilan du moteur
+             horaire — l'écran le DIT, plutôt que de laisser croire à un effet sur les
+             chiffres de droite. Lui en inventer un demanderait d'abord une entrée au moteur. */
+          <div className="space-y-3">
+            <p className="text-dark/80">
+              Un conduit enterré fait passer l’air neuf par le sol avant qu’il n’entre dans la
+              maison : rafraîchi l’été, préchauffé l’hiver, sans rien consommer de plus que
+              le ventilateur de la ventilation.
+            </p>
+            <Bascule label="J’ai (ou je veux) un puits canadien" actif={puitsCanadien}
+              onChange={setPuitsCanadien} />
+            <p className="text-sm text-dark/60">
+              Il apparaît dans votre maison, mais ne change aucun chiffre de cette page : son
+              effet porte sur le confort et sur le chauffage, que ce simulateur ne modélise
+              pas. Nous préférons le dire plutôt que d’afficher un gain inventé.
+            </p>
+            <Link to="/la-terre?sujet=puits-canadien"
+              className="inline-flex items-center gap-1.5 font-semibold text-primary
+                hover:gap-2.5 transition-all">
+              Comment ça marche <ArrowRight size={16} />
+            </Link>
+          </div>
         ) : emplacementOuvert && (
           <ReglageEquipement id={emplacementOuvert} config={config} resultat={resultat}
             majConfig={majConfig} />
