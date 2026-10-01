@@ -174,6 +174,75 @@ graphique, pas par le code.
 La marque au trait existe en composant (`frontend/src/components/MarqueHelios.tsx`)
 et en SVG (`public/favicon.svg`) : elle peut servir de base à l'export.
 
+### [ ] 17. « hphc » s'écrit en deux orthographes dans le site
+
+`frontend/src/pages/EspaceEnergie.tsx:317` propose `value="hphc"` en minuscules
+dans le formulaire de courtage, alors que la fiche Maison et le simulateur
+écrivent **`HPHC`** en capitales (`OptionTarifaire` dans
+`api/app/schemas/house.py`). Les deux écrans ne parlent donc pas de la même
+chose, et une valeur saisie dans l'un ne se relit pas dans l'autre.
+
+Repéré le 01/10/2026 en ajoutant l'option tarifaire au simulateur, qui a été
+alignée sur la fiche. Celui de l'espace énergie ne l'est pas : il part dans
+`POST /api/energy/courtage`, pas dans la fiche, donc rien n'est cassé
+aujourd'hui — mais les deux finiront par se croiser.
+
+### [ ] 18. Le puits canadien n'entre dans aucun calcul
+
+Ajouté à la scène le 01/10/2026 : on peut le poser, il s'affiche, et l'écran
+dit franchement qu'il ne change aucun chiffre. C'est honnête, mais c'est un
+emplacement qui ne sert qu'à l'image.
+
+Lui donner un effet demande une entrée au moteur (`simu_conso`), donc un champ
+de plus dans `SimulateurIn` — qui est en `extra="forbid"`. Ce n'est pas une
+ligne de code : c'est un modèle thermique de plus, et des hypothèses à assumer
+dans `config.py` comme toutes les autres.
+
+### [ ] 19. Le puits canadien ne dit pas ce qu'il fait gagner
+
+La page « La terre » a gagné une partie puits canadien le 01/10/2026
+(`frontend/src/pages/Terre.tsx`, sections 4 à 7 de `la-terre` dans
+`src/data/piliers.json`). Elle explique le principe, donne les températures
+d'entrée et de sortie, et **s'arrête là** : aucun euro, aucun pourcentage sur la
+facture. C'est une décision de Stéphane, pas un oubli — le gain dépend du climat,
+du sol, de la ventilation et de ce qu'on chauffe, et nous n'avons pas de quoi le
+calculer honnêtement.
+
+**Ce qu'il faudra pour un calculateur**, le jour venu : la température de sol de
+la commune (profondeur 2 m), le débit de ventilation réglementaire du logement,
+la longueur et le diamètre enterrés, et le système de chauffage ou de
+climatisation que le puits soulage. Les deux premières données existent déjà à
+moitié dans le moteur (`simu_conso` connaît le logement, `pvgis` connaît le
+lieu) ; la température de sol, non.
+
+**À confirmer par Stéphane** avant de publier un chiffre : le coût d'une
+installation. Le rapport de recherche donne 5 000 à 11 000 € TTC pour une maison,
+mais en annonçant lui-même que la valeur est estimée. Elle n'est **pas** sur la
+page, volontairement.
+
+Deux textes à relire quand le calculateur arrivera, parce qu'ils promettent qu'il
+viendra : la section 7 de `piliers.json` et le bloc « parler-vrai » de la page.
+
+### [ ] 20. Le chat ne se souvient pas de la question précédente pour chercher
+
+Trouvé le 01/10/2026 en testant les fiches du puits canadien sur des formulations
+réelles. `api/app/routers/chat.py:161` vectorise **le seul message courant**
+(`ollama_client.embed(payload.content)`) : l'historique de la conversation n'entre
+pas dans la recherche.
+
+Conséquence mesurée : « est-ce que ça marche dans le nord de la France ? », posée
+juste après une question sur le puits canadien, tombe à **0,485** — sous le seuil
+de 0,50 — parce que la question seule ne nomme aucun sujet. Helios répond alors en
+mode prudent, sans citer de source, alors que la fiche existe et répond.
+
+Ce n'est pas propre au puits canadien : toute question de relance en souffre, et
+c'est la façon normale de parler à quelqu'un.
+
+**Piste** : concaténer la dernière question de l'utilisateur au message courant
+avant de vectoriser, ou faire reformuler la question par le modèle local. À
+mesurer avant de le poser — un contexte trop long dilue l'embedding, et le gain
+n'est pas acquis.
+
 ---
 
 ## Le piège à ne pas réintroduire

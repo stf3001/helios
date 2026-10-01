@@ -223,12 +223,13 @@
     "slug": "la-terre",
     "pageDediee": true,
     "titre": "Cultiver sa terre",
-    "sousTitre": "Le potager, l'intérieur et l'hydroponie : ce qu'on peut vraiment produire chez soi, et ce que ça demande.",
-    "metaTitre": "Potager : quelle surface, combien de temps",
-    "metaDesc": "Combien de m² et combien d'heures pour cultiver ses légumes : les ordres de grandeur réels, en extérieur, en intérieur et en hydroponie, sans promesse d'autonomie.",
-    "intro": "Après l'énergie, l'eau et le vent, la terre. Un potager ne nourrit pas un foyer — il lui donne ses légumes, ce qui est déjà beaucoup. La question honnête n'est donc pas « peut-on être autonome », mais « qu'est-ce qu'une heure par jour me rapporte vraiment ». C'est la seule façon de commencer un jardin sans l'abandonner au mois de juin, quand le travail arrive d'un coup.",
+    "sousTitre": "Deux choses que la terre donne : des légumes, et — gratuitement — de la fraîcheur l'été, de la douceur l'hiver.",
+    "metaTitre": "La terre : potager et puits canadien",
+    "metaDesc": "Ce qu'un potager rend vraiment en m² et en heures, et comment un puits canadien rafraîchit l'air neuf l'été et le préchauffe l'hiver, sans rien consommer de plus.",
+    "intro": "La terre nourrit, et elle tempère. Deux usages sans rapport l'un avec l'autre, le même sol sous vos pieds : d'un côté ce qu'un potager rend vraiment contre le temps qu'on y passe, de l'autre la fraîcheur et la chaleur qu'on va chercher à deux mètres de profondeur, sans rien dépenser.",
     "cats": [
-      "jardin"
+      "jardin",
+      "puits_canadien"
     ],
     "sections": [
       {
@@ -246,6 +247,22 @@
       {
         "titre": "L'hydroponie consomme de l'électricité, et c'est le vrai sujet",
         "contenu": "Cultiver hors-sol sous lampes donne des résultats réguliers et une croissance rapide, indépendante des saisons. Mais l'éclairage tourne de douze à seize heures par jour, et cette consommation est ce qui décide de l'intérêt de l'opération. C'est exactement le raisonnement que nous tenons sur l'eau atmosphérique : couplée à une production solaire, l'hydroponie transforme un surplus qui partait au réseau pour un centime en salades. Seule, sur du courant acheté, elle revient cher au kilo."
+      },
+      {
+        "titre": "Le puits canadien : la terre tempère toute seule",
+        "contenu": "À deux mètres sous la pelouse, la température ne bouge presque pas de l'année : entre 10 et 15 °C en France métropolitaine, qu'il gèle dehors ou qu'il fasse quarante. Un puits canadien n'est rien d'autre qu'un tuyau enterré à cette profondeur, par lequel entre l'air neuf de la maison. L'air y prend la température du sol avant d'arriver chez vous. Pas de compresseur, pas de fluide, pas de recharge : le seul appareil qui consomme est le ventilateur de votre ventilation, qui tournerait de toute façon."
+      },
+      {
+        "titre": "L'été, il soulage la climatisation",
+        "contenu": "Un jour de canicule, l'air entre à 35 °C et ressort du tuyau à 20 ou 25. Une étude d'EnvirobatBDM sur neuf bâtiments de la région PACA relève jusqu'à 10 °C de moins que dehors sur les installations les mieux posées, et 4 °C en moyenne. Ce n'est pas une climatisation et ça ne la remplace pas : une clim va chercher la température que vous lui demandez, un puits canadien se contente de celle du sol. Mais il lui enlève une bonne part du travail, aux heures où elle coûte le plus cher."
+      },
+      {
+        "titre": "L'hiver, il soulage le chauffage",
+        "contenu": "Le même tuyau fait le trajet inverse : un air extérieur à −5 °C ressort entre 5 et 10 °C, selon la longueur enterrée. Il ne montera jamais au-dessus de la température du sol — c'est la limite du procédé, et elle est physique, pas commerciale. Mais votre chauffage n'a plus à réchauffer l'air neuf depuis le gel, seulement depuis la cave. Le gain est plus discret qu'en été — une ventilation double flux récupère déjà une partie de cette chaleur — et il ne coûte rien de plus."
+      },
+      {
+        "titre": "Ce qu'il demande, et ce que nous ne chiffrons pas encore",
+        "contenu": "Trente à cinquante mètres de tuyau enterrés entre 1,80 m et 2,50 m, avec une pente continue pour que l'eau de condensation s'évacue, un siphon à purger et un filtre à changer une fois par an. C'est une tranchée : simple à faire pendant que la maison se construit, nettement plus cher à rattraper après coup. Ce que nous ne faisons pas encore, c'est vous dire ce que ça change sur votre facture. Le gain dépend de votre climat, de votre sol, de votre ventilation et de ce que vous chauffez : nous préférons ne rien avancer plutôt qu'avancer un chiffre que nous ne saurions pas défendre. Un calculateur viendra."
       }
     ],
     "liens": [

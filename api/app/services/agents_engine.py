@@ -80,6 +80,11 @@ SOURCES: list[SourceSpec] = [
     # Les prix y sont DATES (grille du 01/08/2026) : une grille change, une explication
     # non — c'est pour cela que les fiches expliquent d'abord et chiffrent ensuite.
     SourceSpec(name="achat_energie", kind="faq_markdown", location="helios/kb/achat_energie.md"),
+    # Le puits canadien (01/10/2026), en meme temps que la partie du meme nom sur la page
+    # « La terre ». AUCUNE FICHE NE CHIFFRE UNE ECONOMIE DE FACTURE, et c'est delibere :
+    # le gain depend du climat, du sol, de la ventilation et de ce qu'on chauffe. Les fiches
+    # donnent des TEMPERATURES, qui se mesurent. Point 19 de TODO.md pour le calculateur.
+    SourceSpec(name="puits_canadien", kind="faq_markdown", location="helios/kb/puits_canadien.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

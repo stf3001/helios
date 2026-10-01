@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BatteryCharging, Battery, Building2, Car, Compass, Cpu, DoorClosed, Droplet,
   Droplets, FileBarChart, Flame, HandCoins, HardHat, Key, Layers, Leaf, Scale, ShieldAlert,
-  Smile, Sparkles, Sprout, Sun, Wind, Zap,
+  Smile, Sparkles, Sprout, Sun, Thermometer, Wind, Zap,
 } from 'lucide-react'
 
 /** Icône + couleur de marque par catégorie — fiches de connaissance (libellés capitalisés
@@ -42,6 +42,7 @@ const MAP: Record<string, CatIcon> = {
   confort: { Icon: Smile, color: 'text-leaf' },
   sobriete: { Icon: Leaf, color: 'text-leaf' },
   jardin: { Icon: Sprout, color: 'text-leaf' },
+  puits_canadien: { Icon: Thermometer, color: 'text-sky' },
   vision: { Icon: Compass, color: 'text-ink' },
   helios: { Icon: Sparkles, color: 'text-primary' },
   vigilance: { Icon: ShieldAlert, color: 'text-terra' },
@@ -82,6 +83,7 @@ const LIBELLES: Record<string, string> = {
   eolien: 'Éolien',
   mobilite: 'Mobilité',
   photovoltaique: 'Photovoltaïque',
+  puits_canadien: 'Puits canadien',
   reglementation: 'Réglementation',
   sobriete: 'Sobriété',
   ve: 'Véhicule électrique',

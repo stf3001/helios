@@ -46,10 +46,29 @@ export default function FichesLiees({
 
   return (
     <section className="max-w-[900px] mx-auto px-4 pb-16">
-      <h2 className="text-2xl font-bold mb-1">{titre}</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        {fiches.length} réponses détaillées, tirées de la base de connaissances d'Helios.
-      </p>
+      {/* REPLIÉ PAR DÉFAUT. Déroulées d'un coup, vingt-six questions font un mur en bas de
+          page que personne ne parcourt, et qui repousse tout le reste hors de l'écran —
+          c'est le même constat que sur la FAQ, qui a cessé d'empiler ses 357 fiches.
+
+          `<details>` natif plutôt qu'un état React : le clavier, le lecteur d'écran et la
+          recherche dans la page marchent sans qu'on ait à les recoder. Et comme le contenu
+          reste dans le document même replié, le maillage interne vers les fiches — la raison
+          d'être de ce composant — n'y perd rien. */}
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4
+          rounded-xl border border-gray-200 px-4 py-3 transition hover:border-primary
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+          <span>
+            <h2 className="text-xl font-bold">{titre}</h2>
+            <p className="text-sm text-gray-500">
+              {fiches.length} réponses détaillées, tirées de la base de connaissances d'Helios.
+            </p>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform
+            group-open:rotate-90" />
+        </summary>
+
+        <div className="pt-5">
       <ul className="grid gap-2 sm:grid-cols-2">
         {fiches.map((f) => {
           const { Icon, color } = getCategoryIcon(f.cat)
@@ -66,12 +85,14 @@ export default function FichesLiees({
           )
         })}
       </ul>
-      <Link
-        to="/faq"
-        className="inline-flex items-center gap-1.5 text-primary font-semibold mt-5 hover:gap-2.5 transition-all"
-      >
-        Voir toutes les questions <ArrowRight className="w-4 h-4" />
-      </Link>
+          <Link
+            to="/faq"
+            className="inline-flex items-center gap-1.5 text-primary font-semibold mt-5 hover:gap-2.5 transition-all"
+          >
+            Voir toutes les questions <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </details>
     </section>
   )
 }
