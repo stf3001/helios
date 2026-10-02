@@ -41,14 +41,36 @@ def best_score(results: list[dict]) -> float:
 # importee en tete, est declaree une seule fois a cote de SOURCES (services/agents_engine).
 
 
-def instant_answer(results: list[dict]) -> str | None:
+#: Seuil de la reponse instantanee quand la question a ete ENRICHIE (relance courte, dont on
+#: a devine le sujet d'apres le tour precedent). Plus haut que le seuil normal (0,66), et
+#: c'est la seule precaution que demande l'enrichissement.
+#:
+#: Pourquoi : servir une fiche telle quelle, sans modele, est l'action la plus engageante du
+#: chat — il n'y a personne pour rattraper une erreur de recherche. Or sur une relance, le
+#: sujet n'est pas celui que le visiteur a ecrit, c'est celui qu'on a suppose. Mesure du
+#: 01/10/2026 : « et mes panneaux solaires ? », posee apres une question sur le puits
+#: canadien, remontait la fiche du PUITS a 0,661 — juste au-dessus du seuil normal. Helios
+#: aurait servi une reponse sur le puits canadien a quelqu'un qui parlait de panneaux.
+#:
+#: A 0,70, ce cas repasse au modele (qui voit les huit meilleures fiches et peut corriger),
+#: tandis que les bonnes relances mesurees — cout 0,739, permis 0,708, hiver 0,731,
+#: batterie 0,709, entretien 0,786 — gardent leur reponse instantanee.
+RELANCE_INSTANT_MIN = 0.70
+
+
+def instant_answer(results: list[dict], relance: bool = False) -> str | None:
     """Réponse instantanée sans LLM (doc 07 §5) : si la meilleure fiche Q/R matche
     quasi exactement la question, on sert sa réponse telle quelle — latence nulle,
-    zéro risque d'hallucination. Sinon None → parcours LLM normal."""
+    zéro risque d'hallucination. Sinon None → parcours LLM normal.
+
+    `relance` : la question a été enrichie du tour précédent pour la recherche. Le sujet
+    étant alors supposé et non écrit, on exige davantage de certitude (`RELANCE_INSTANT_MIN`).
+    """
     if not results:
         return None
     best = results[0]
-    if best["score"] < settings.rag_instant_answer_threshold:
+    seuil = RELANCE_INSTANT_MIN if relance else settings.rag_instant_answer_threshold
+    if best["score"] < seuil:
         return None
     if best["document"].source not in _QR_SOURCES:
         return None
@@ -91,6 +113,88 @@ def build_partenaires_context(par_metier: dict[str, list[str]], departement: str
         f"ANNUAIRE DES PARTENAIRES couvrant le département {departement} de ce visiteur :\n"
         f"{lignes}\n{regle}"
     )
+
+
+#: Nombre d'echanges (question + reponse) relus dans le prompt.
+#:
+#: Trois, et pas davantage. Ce qu'on cherche a reparer, c'est la relance — « et pour une
+#: maison de 1970 ? », « tu m'as dit 6 kWc », « oui vas-y » — qui se joue sur un ou deux
+#: tours. Au-dela, on allonge le prompt sans rien gagner, et le modele LOCAL (3B) suit deja
+#: mal un prompt de 16 Ko : le journal du projet garde la trace d'un essai de juillet 2026 ou
+#: il confondait la fiche du foyer avec un cas pratique fictif. La borne est donc un
+#: garde-fou, pas un reglage a monter « pour voir ».
+HISTORIQUE_ECHANGES = 3
+
+#: Troncature d'une reponse d'Helios relue. On garde CE QU'IL A DIT, pas la facon dont il
+#: l'a dit : les reponses font souvent 1 500 caracteres, dont l'essentiel tient dans les 400
+#: premiers. Les questions du visiteur, elles, sont gardees entieres — elles sont courtes,
+#: deja bornees a 2 000 caracteres par le schema, et ce sont elles qui portent le contexte.
+HISTORIQUE_REPONSE_MAX = 400
+
+#: En deca de cette longueur, une question est presque toujours une RELANCE : « et dans le
+#: nord ? », « combien ca coute ? », « pourquoi ? ». Elle ne nomme pas son sujet, donc le
+#: vecteur de la recherche n'a rien a quoi se raccrocher et la bonne fiche passe sous le
+#: seuil. Mesure du 01/10/2026 : « est-ce que ca marche dans le nord de la France », posee
+#: apres une question sur le puits canadien, tombait a 0,485 pour un seuil a 0,50.
+#:
+#: Une longueur, et rien de plus savant : une question longue porte son sujet toute seule.
+#: Le seuil se verifie par la mesure, une detection grammaticale ne se verifierait pas.
+RELANCE_MAX_CARACTERES = 45
+
+
+def build_historique_context(precedents: list) -> str | None:
+    """Les derniers tours de la conversation, en un bloc de texte.
+
+    POURQUOI UN BLOC DE TEXTE ET PAS UN VRAI TABLEAU DE MESSAGES : il y a deux chemins de
+    generation, l'API Claude et le modele local Ollama, et Ollama n'expose pas de notion de
+    conversation (`generate`, pas `chat`). Un seul bloc marche sur les deux, et laisse
+    intacte la mise en cache du prefixe `system` cote Anthropic, qui est delicate.
+
+    `precedents` est dans l'ordre chronologique, SANS le message courant.
+    """
+    if not precedents:
+        return None
+
+    lignes = []
+    for m in precedents:
+        if m.role == "user":
+            lignes.append(f"Visiteur : {m.content}")
+        else:
+            texte = m.content.strip()
+            if len(texte) > HISTORIQUE_REPONSE_MAX:
+                texte = texte[:HISTORIQUE_REPONSE_MAX].rstrip() + " […]"
+            lignes.append(f"Toi (Helios) : {texte}")
+
+    return (
+        "CONVERSATION EN COURS — ce qui a deja ete dit, du plus ancien au plus recent.\n"
+        + "\n".join(lignes)
+        + "\nLe visiteur peut s'y referer sans le repeter (« et pour une maison de 1970 ? », "
+        "« tu m'as dit… », « oui vas-y »). Ne lui redemande pas ce qu'il vient de te donner, "
+        "et ne recommence pas une reponse deja faite — enchaine."
+    )
+
+
+def question_pour_recherche(question: str, precedents: list) -> str:
+    """La question telle qu'on la VECTORISE, qui n'est pas toujours celle qu'on affiche.
+
+    Une relance courte ne nomme pas son sujet : on lui recolle la question precedente du
+    visiteur avant de chercher. « et ca marche dans le nord ? » devient « un puits canadien
+    marche-t-il partout en France ? et ca marche dans le nord ? », et la recherche retrouve
+    de quoi on parle.
+
+    DEUX questions precedentes, pas une. Trouve en testant une vraie conversation le
+    02/10/2026 : « c'est quoi un puits canadien », puis « et ca marche dans le nord ? », puis
+    « combien ca coute ? ». Avec une seule, le troisieme tour se faisait recoller le
+    deuxieme — qui etait lui-meme une relance et ne nommait pas le sujet. Le puits canadien
+    disparaissait de la recherche des le troisieme tour. Deux questions l'ancrent.
+
+    Ce qui est renvoye ne sert QU'A la recherche. La question affichee, enregistree en base
+    et posee au modele reste celle que le visiteur a ecrite.
+    """
+    if len(question.strip()) >= RELANCE_MAX_CARACTERES:
+        return question
+    precedentes = [m.content for m in precedents if m.role == "user"][-2:]
+    return " ".join([*precedentes, question]) if precedentes else question
 
 
 def build_citations(results: list[dict]) -> list[dict]:
@@ -236,6 +340,7 @@ def build_user_content(
     water_context: dict | None = None,
     simulation_context: dict | None = None,
     partenaires_context: str | None = None,
+    historique_context: str | None = None,
 ) -> str:
     """Tout ce qui est variable d'une question à l'autre (sources RAG, fiche foyer, études,
     question) — sans la constitution, envoyée séparément en `system` côté API (mise en cache,
@@ -301,6 +406,11 @@ def build_user_content(
     # Pose juste avant la question, comme tout ce qui concerne CE visiteur.
     annuaire_block = f"---\n{partenaires_context}\n\n" if partenaires_context else ""
 
+    # EN DERNIER, juste au-dessus de la question : c'est la place qui compte le plus pour un
+    # modèle local, et l'historique est ce qui donne son sens à une relance. Plus haut, il
+    # serait noyé entre la constitution et les sources.
+    historique_block = f"---\n{historique_context}\n\n" if historique_context else ""
+
     # Ordre volontaire : les modèles locaux (3B) suivent bien mieux ce qui est proche de la question
     # que ce qui est enterré tôt dans un long prompt (constitution + sources) — le profil du foyer et
     # ses études réelles sont donc placés juste avant la question, jamais avant.
@@ -311,6 +421,7 @@ def build_user_content(
         "---\n"
         f"{mode_block}{studies_block}\n\n"
         f"{annuaire_block}"
+        f"{historique_block}"
         "---\n"
         f"{question_label} : {question}\n"
         "Réponse d'Helios :"

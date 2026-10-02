@@ -223,25 +223,51 @@ page, volontairement.
 Deux textes à relire quand le calculateur arrivera, parce qu'ils promettent qu'il
 viendra : la section 7 de `piliers.json` et le bloc « parler-vrai » de la page.
 
-### [ ] 20. Le chat ne se souvient pas de la question précédente pour chercher
+### [x] 20. Helios n'avait aucune mémoire de la conversation — fait le 02/10/2026
 
-Trouvé le 01/10/2026 en testant les fiches du puits canadien sur des formulations
-réelles. `api/app/routers/chat.py:161` vectorise **le seul message courant**
-(`ollama_client.embed(payload.content)`) : l'historique de la conversation n'entre
-pas dans la recherche.
+Le point disait « la recherche ne voit que le dernier message ». En ouvrant le
+code, le défaut était plus large : **Helios ne recevait jamais les tours
+précédents**. Le prompt contenait la constitution, les fiches trouvées, la fiche
+du foyer, ses études — puis la question seule. « Et pour une maison de 1970 ? »
+n'avait aucun sens pour lui ; « tu m'as dit 6 kWc » non plus.
 
-Conséquence mesurée : « est-ce que ça marche dans le nord de la France ? », posée
-juste après une question sur le puits canadien, tombe à **0,485** — sous le seuil
-de 0,50 — parce que la question seule ne nomme aucun sujet. Helios répond alors en
-mode prudent, sans citer de source, alors que la fiche existe et répond.
+L'historique était pourtant écrit en base depuis le premier jour, et le widget
+renvoyait déjà le `conversation_id`. Il n'était simplement jamais relu.
 
-Ce n'est pas propre au puits canadien : toute question de relance en souffre, et
-c'est la façon normale de parler à quelqu'un.
+**Deux pièces, dans `rag.py` et `chat.py`** :
 
-**Piste** : concaténer la dernière question de l'utilisateur au message courant
-avant de vectoriser, ou faire reformuler la question par le modèle local. À
-mesurer avant de le poser — un contexte trop long dilue l'embedding, et le gain
-n'est pas acquis.
+- `build_historique_context()` pose les 3 derniers échanges dans le prompt, juste
+  au-dessus de la question. Bloc de TEXTE et non tableau de messages : Ollama
+  n'a pas de notion de conversation, et un seul bloc sert les deux chemins sans
+  toucher à la mise en cache du préfixe Anthropic.
+- `question_pour_recherche()` recolle les 2 questions précédentes quand le
+  message fait moins de 45 caractères — une relance ne nomme pas son sujet.
+
+**Trois réglages, trois mesures, pas des intuitions** :
+
+- 45 caractères, et non 80 : à 80, « à partir de quelle lettre je ne peux plus
+  louer ? » se faisait diluer par « c'est quoi le DPE » et PERDAIT la bonne fiche
+  qu'elle trouvait seule.
+- 2 questions d'ancrage, et non 1 : au troisième tour, la question précédente est
+  souvent elle-même une relance et ne nomme plus le sujet.
+- `RELANCE_INSTANT_MIN = 0,70` : une relance exige plus de certitude avant qu'une
+  fiche ne soit servie telle quelle, sans modèle. « Et mes panneaux solaires ? »,
+  après une question sur le puits canadien, remontait la fiche du PUITS à 0,661 —
+  juste au-dessus du seuil normal.
+
+**Mesuré sur 15 conversations** : 3 questions passent de sous le seuil à
+au-dessus, 0 l'inverse. Et plusieurs réponses confiantes mais fausses sont
+corrigées — « combien ça coûte ? » après le puits canadien partait sur
+« PAC air-eau : prix », « et l'hiver ? » sur « que peut-on récolter en hiver ».
+
+**Vérifié de bout en bout** par une vraie conversation de quatre tours : au
+dernier, « récapitule ce que tu viens de me dire » produit un vrai résumé des
+trois précédents. Avant, Helios ne pouvait qu'inventer.
+
+**Reste ouvert** : le modèle LOCAL (`llama3.2:3b`) reste faible sur un prompt
+long, historique compris — il suit, mais il reformule mal. Ce n'est pas une
+régression de ce lot, c'est la limite déjà connue du 3B. Si elle devient gênante,
+l'historique peut être réservé au chemin API en une ligne.
 
 ---
 

@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -53,7 +53,8 @@ async def send_message(
         db.add(conversation)
         await db.flush()
 
-    db.add(Message(conversation_id=conversation.id, role="user", content=payload.content))
+    message_courant = Message(conversation_id=conversation.id, role="user", content=payload.content)
+    db.add(message_courant)
     await db.commit()
 
     house_context = None
@@ -158,7 +159,41 @@ async def send_message(
 
         return StreamingResponse(stream_civilite(), media_type="application/x-ndjson")
 
-    query_embedding = await ollama_client.embed(payload.content)
+    # ---- L'HISTORIQUE DE LA CONVERSATION ----
+    # Il était écrit en base depuis le premier jour, et jamais relu : Helios recevait la
+    # constitution, les fiches trouvées, la fiche du foyer et ses études — puis la question
+    # SEULE. Dans une conversation, il ne se souvenait donc de rien. « Et pour une maison de
+    # 1970 ? » n'avait aucun sens pour lui, « tu m'as dit 6 kWc » non plus.
+    #
+    # On relit les derniers tours APRÈS le court-circuit des civilités : un « merci » ne
+    # mérite pas une requête de plus. Les réponses de politesse d'Helios sont écartées de
+    # l'historique — elles n'apportent rien et prennent de la place.
+    #
+    # `model_used` est NULL sur les messages du visiteur, et en SQL `NULL != 'civilite'`
+    # vaut NULL, donc faux : sans le `is_(None)`, le filtre écarterait TOUTES les questions.
+    precedents = list(
+        await db.scalars(
+            select(Message)
+            .where(
+                Message.conversation_id == conversation.id,
+                Message.id != message_courant.id,
+                or_(Message.model_used.is_(None), Message.model_used != "civilite"),
+            )
+            .order_by(Message.created_at.desc())
+            .limit(rag.HISTORIQUE_ECHANGES * 2)
+        )
+    )
+    precedents.reverse()
+    historique_context = rag.build_historique_context(precedents)
+
+    # La question VECTORISÉE n'est pas toujours celle qu'on affiche : une relance courte se
+    # voit recoller la question précédente, sans quoi la recherche n'a aucun sujet auquel se
+    # raccrocher. Ce qui est enregistré, affiché et posé au modèle reste le texte du visiteur.
+    recherche = rag.question_pour_recherche(payload.content, precedents)
+    #: Vrai quand le sujet de la recherche a ete SUPPOSE d'apres le tour precedent, et non
+    #: ecrit par le visiteur. Rend la reponse instantanee plus exigeante — voir plus bas.
+    relance = recherche != payload.content
+    query_embedding = await ollama_client.embed(recherche)
     results = await rag.search_chunks(db, query_embedding)
     citations = rag.build_citations(results)
     # Meilleur score de similarité : tracé sur la réponse pour le back-office. Sous le seuil
@@ -170,7 +205,7 @@ async def send_message(
     # Réponse instantanée (doc 07 §5) : fiche Q/R quasi identique → on la sert sans LLM.
     # `force_llm` (bouton « développer » du widget) désactive le court-circuit.
     if not payload.force_llm:
-        instant = rag.instant_answer(results)
+        instant = rag.instant_answer(results, relance=relance)
         if instant is not None:
             instant_citations = citations[:1]
 
@@ -232,6 +267,7 @@ async def send_message(
         water_context,
         simulation_context=simulation_context,
         partenaires_context=partenaires_context,
+        historique_context=historique_context,
     )
 
     route, simplified, token_stream = await router_llm.generate_route(
