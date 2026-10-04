@@ -5,6 +5,6 @@ export function useTitle(title?: string) {
   useEffect(() => {
     document.title = title
       ? `${title} — HELIOS`
-      : 'HELIOS — Enfin, un logement que vous comprenez'
+      : 'HELIOS — La maison a enfin son expert'
   }, [title])
 }

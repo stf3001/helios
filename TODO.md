@@ -269,6 +269,77 @@ long, historique compris — il suit, mais il reformule mal. Ce n'est pas une
 régression de ce lot, c'est la limite déjà connue du 3B. Si elle devient gênante,
 l'historique peut être réservé au chemin API en une ligne.
 
+
+### [ ] 21. La photo du héros est en 1536 px de large
+
+Héros d'accueil refondu le 02/10/2026 (`frontend/src/pages/Home.tsx`,
+`frontend/src/components/CarteMaison.tsx`, photo `frontend/public/maison-hero.webp`).
+
+La photo fournie par Stéphane fait **1536 × 1024** (397 Ko). Plein cadre sur un
+écran 1920 elle est agrandie 1,25 fois ; sur un écran à forte densité, davantage —
+ça se verra sur les feuilles d'olivier et les arêtes de tuiles. Une version en
+2560 ou 3072 de large se déposerait au même chemin **sans toucher à la mise en
+page** : tout passe par la constante `PHOTO` en tête de `Home.tsx`.
+
+**CE QU'IL NE FAUT PAS DÉFAIRE EN CHANGEANT L'IMAGE.** Le voile ivoire du héros
+décroît du bord gauche jusqu'à 80 % **sans aucun palier d'opacité constante** :
+c'est ce qui le fait lire comme une brume et non comme une découpe. Deux versions
+antérieures ont été refusées pour la même raison en miroir — un voile opaque
+jusqu'à 55 %, puis une photo bornée à un bloc de 58 % — parce que toutes deux
+produisaient DEUX zones au lieu d'une image, avec une couture verticale d'autant
+plus visible que l'écran est large.
+
+Ses six arrêts ne sont pas un réglage esthétique : ils sont **mesurés**. Un script
+de contrôle échantillonne les pixels réels de la photo sous chaque bloc de texte,
+les composite avec l'alpha exact du dégradé à cette abscisse et calcule le contraste
+WCAG. Relevé du 02/10/2026, sur le pixel le plus sombre de chaque bloc :
+
+| largeur | titre (encre) | italique (terracotta) | sous-titre (encre 80 %) |
+|---|---|---|---|
+| 1024 | 9,06 | 4,70 | 5,77 |
+| 1280 | 9,31 | 3,95 | 5,88 |
+| 1440 | 8,77 | 3,78 | 5,77 |
+| 1920 | 8,73 | 3,62 | 5,88 |
+
+Seuils : 3:1 pour les deux premiers (grand texte), 4,5:1 pour le troisième.
+**Le cas critique est l'italique terracotta** : il demande un fond de luminance
+0,73 pour tenir 4,5:1, ce qu'aucune photo ne donne — il ne passe que parce qu'il
+est en grand corps. Toute photo plus sombre, ou tout élargissement de la colonne
+de texte, doit être revérifié par ce relevé.
+
+Deux conséquences à ne pas « simplifier » :
+- Le sous-titre est en `text-ink/80` et non en `text-gray-600`. Le gris secondaire
+  du site demande un fond de luminance 0,61 : il est calibré pour l'ivoire plein,
+  pas pour un flanc de colline vu à travers une brume.
+- Le dégradé se termine sur `rgb(var(--h-sable) / 0)` et **jamais** sur
+  `transparent`. En CSS `transparent` vaut `rgba(0,0,0,0)` : interpolé en sRGB il
+  tire le dégradé vers le noir et salit tout le raccord.
+
+Enfin, `object-[center_30%]` remonte le cadre pour garder la toiture solaire
+entière — seul élément de l'image qui porte le propos ; la piscine, elle, sort du
+cadre, ce qui ne se regrette pas (voir la réserve ci-dessous).
+
+**Réserve de fond, posée et écartée par Stéphane le 02/10/2026** : la photo montre
+une villa avec piscine, alors que la promesse est d'économiser 450 € par an. Le
+risque est de ciblage, pas d'esthétique. Décision prise en connaissance de cause,
+ne pas y revenir sans qu'il le redemande.
+
+### [ ] 22. Un menu « soleil » à part entière
+
+Demandé par Stéphane le 02/10/2026. Aujourd'hui le solaire n'a pas d'entrée de
+menu à lui : il est logé dans « La maison de demain » (`/simulateur-solaire`),
+à côté du vent, de l'eau et de la terre, alors que c'est le sujet central du site
+et le seul dont le simulateur est complet.
+
+Les trois autres entrées (`Le vent`, `L'eau`, `La terre`) **ne bougent pas** :
+décision de Stéphane du 02/10/2026, prise en connaissance de la critique (ces
+intitulés ne disent pas ce qu'il y a derrière). Le menu soleil s'ajoutera à côté.
+
+À trancher quand le point sera ouvert : ce que contient cette entrée par rapport à
+`/simulateur-solaire` et à `Ville.tsx`, qui parle déjà d'installations en kWc, et
+si l'en-tête supporte une huitième entrée — il en porte déjà sept et passe en
+`text-[13px]` sous 1280 px pour les faire tenir (`components/layout/Header.tsx`).
+
 ---
 
 ## Le piège à ne pas réintroduire

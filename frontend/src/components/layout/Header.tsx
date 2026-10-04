@@ -29,6 +29,15 @@ function Logo({ onClick }: { onClick?: () => void }) {
 const boutonPlein =
   'inline-flex items-center justify-center rounded-xl bg-ink text-sable text-sm font-semibold px-4 py-2 hover:bg-ink/90 transition-colors'
 
+/** « Connexion » et « Mon espace » cote a cote donnaient DEUX portes pour la meme
+ *  chose, et le seul bouton a fort contraste du site etait offert a quelqu'un qui
+ *  a deja un compte. La destination etait pourtant deja la bonne : deconnecte, ce
+ *  bouton mene a l'inscription, pas a la connexion. Seule l'etiquette mentait.
+ *  Elle dit maintenant ce que le clic fait — « Creer mon espace » pour un
+ *  visiteur, « Mon espace » pour quelqu'un qui revient — et « Connexion » redevient
+ *  ce qu'elle doit etre : un lien discret pour celui qui sait deja ou il va. */
+const ETIQUETTE_ESPACE = (connecte: boolean) => (connecte ? 'Mon espace' : 'Créer mon espace')
+
 export default function Header() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -62,13 +71,13 @@ export default function Header() {
         <div className="hidden lg:flex items-center gap-4 shrink-0">
           {user ? (
             <>
-              <Link to="/espace" className={boutonPlein}>Mon espace</Link>
+              <Link to="/espace" className={boutonPlein}>{ETIQUETTE_ESPACE(true)}</Link>
               <button onClick={doLogout} className="text-sm text-gray-500 hover:text-ink">Déconnexion</button>
             </>
           ) : (
             <>
               <Link to="/connexion" className="text-sm text-gray-600 hover:text-ink">Connexion</Link>
-              <Link to="/inscription" className={boutonPlein}>Mon espace</Link>
+              <Link to="/inscription" className={boutonPlein}>{ETIQUETTE_ESPACE(false)}</Link>
             </>
           )}
         </div>
@@ -100,13 +109,13 @@ export default function Header() {
             <div className="h-px bg-bord my-2" />
             {user ? (
               <>
-                <Link to="/espace" onClick={close} className={boutonPlein + ' mt-1'}>Mon espace</Link>
+                <Link to="/espace" onClick={close} className={boutonPlein + ' mt-1'}>{ETIQUETTE_ESPACE(true)}</Link>
                 <button onClick={doLogout} className="py-2.5 mt-1 text-[15px] text-gray-500 text-left">Déconnexion</button>
               </>
             ) : (
               <>
                 <Link to="/connexion" onClick={close} className="py-2.5 text-[15px] text-gray-600">Connexion</Link>
-                <Link to="/inscription" onClick={close} className={boutonPlein + ' mt-1'}>Mon espace</Link>
+                <Link to="/inscription" onClick={close} className={boutonPlein + ' mt-1'}>{ETIQUETTE_ESPACE(false)}</Link>
               </>
             )}
           </nav>
