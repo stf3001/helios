@@ -260,14 +260,6 @@ R: La légende du colibri qui, face à l'incendie, porte ses gouttes d'eau : « 
 `cat: chantier | tags: devis, comparaison`
 R: Comparer à périmètre égal : marque et modèle du matériel, performances (R, COP, Uw…), surface traitée, préparation et finitions incluses, garanties, délais. Un devis doit détailler fourniture et main-d'œuvre séparément. Le moins cher n'est pas toujours comparable : demander 3 devis minimum et exiger les fiches techniques.
 
-### Q: Quelles mentions obligatoires sur un devis de rénovation ?
-`cat: chantier | tags: devis, mentions`
-R: Identité et SIRET de l'entreprise, assurance décennale avec coordonnées de l'assureur, détail des prestations et quantités, prix HT/TTC avec taux de TVA, durée de validité, mention de la qualification RGE si les aides en dépendent. Sans décennale vérifiable, ne pas signer.
-
-### Q: Quel acompte est raisonnable avant travaux ?
-`cat: chantier | tags: acompte, paiement`
-R: Usage courant : 10 à 30 % à la commande, jamais plus de 50 % avant le début effectif du chantier, solde à la réception. Se méfier des demandes d'acompte élevées, surtout si l'entreprise a été rencontrée par démarchage. Attendre l'accord écrit des aides (MaPrimeRénov') avant de signer si le plan de financement en dépend.
-
 ### Q: Que faire en cas de malfaçon ?
 `cat: chantier | tags: litige, garanties`
 R: Réception avec réserves écrites, courrier recommandé à l'entreprise, puis : garantie de parfait achèvement (1 an), biennale (2 ans, équipements), décennale (10 ans, gros ouvrage). En cas de blocage : conciliateur de justice (gratuit), association de consommateurs, ou assurance protection juridique. Conserver tous les écrits.

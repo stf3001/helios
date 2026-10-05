@@ -85,6 +85,14 @@ SOURCES: list[SourceSpec] = [
     # le gain depend du climat, du sol, de la ventilation et de ce qu'on chauffe. Les fiches
     # donnent des TEMPERATURES, qui se mesurent. Point 19 de TODO.md pour le calculateur.
     SourceSpec(name="puits_canadien", kind="faq_markdown", location="helios/kb/puits_canadien.md"),
+    # Fin de vie et carbone du solaire (05/10/2026), en meme temps que la page « Le soleil ».
+    # La base n'en disait rien alors que la page les traite : le chat ne pouvait pas suivre.
+    # La fiche sur le gain climatique reel en France est volontairement decevante — c'est la
+    # verite mesuree (reseau francais a 19,6 g CO2/kWh), et personne d'autre ne l'ecrira.
+    SourceSpec(name="recyclage_carbone", kind="faq_markdown", location="helios/kb/recyclage_carbone.md"),
+    # Verifier l'entreprise qui pose (05/10/2026), meme lot. Complete sans les redire la fiche
+    # « Quelles questions poser a un installateur » (terrain) et la verification RGE (vigilance).
+    SourceSpec(name="choisir_installateur", kind="faq_markdown", location="helios/kb/choisir_installateur.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
