@@ -30,6 +30,7 @@ import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
 import Terre from './pages/Terre'
+import Soleil from './pages/Soleil'
 import QuiSommesNous from './pages/QuiSommesNous'
 import Pilier from './pages/Pilier'
 import Ville from './pages/Ville'
@@ -108,6 +109,12 @@ function SitePublic() {
           <Route path="/le-vent" element={<Vent />} />
           <Route path="/la-terre" element={<Terre />} />
           <Route path="/achat-energie" element={<AchatEnergie />} />
+          {/* « Le soleil » garde l'adresse `/solaire`, qui existe depuis la campagne de
+              référencement : elle est dans le plan de site et quarante-cinq fiches de la FAQ
+              pointent dessus. Ouvrir une seconde adresse aurait fabriqué deux pages sur le
+              même sujet. `/le-soleil` redirige, par symétrie avec les autres éléments. */}
+          <Route path="/solaire" element={<Soleil />} />
+          <Route path="/le-soleil" element={<Navigate to="/solaire" replace />} />
           {/* Pages chapeau : routes dérivées de data/piliers.json. Celles marquées
               `pageDediee` ont déjà leur propre page (ex. /eau) et sont donc exclues. */}
           <Route path="/solaire/:slug" element={<Ville />} />

@@ -72,11 +72,11 @@
   },
   {
     "slug": "solaire",
-    "titre": "Le solaire et le stockage",
-    "sousTitre": "Produire son électricité, la consommer soi-même, et savoir si le stockage en vaut la peine.",
-    "metaTitre": "Panneaux solaires et stockage : le guide 2026",
-    "metaDesc": "Rentabilité réelle du photovoltaïque après la réforme de juin 2026, batterie physique ou virtuelle, dimensionnement : les réponses sans discours commercial.",
-    "intro": "La réforme de juin 2026 a changé l'équation du solaire résidentiel : le rachat du surplus est tombé à 1,1 centime le kWh, et la prime à l'autoconsommation a disparu. Conséquence directe : vendre son surplus n'est plus une stratégie. Ce qui fait la rentabilité aujourd'hui, c'est la part de votre production que vous consommez vous-même.",
+    "titre": "Le soleil",
+    "sousTitre": "Le matériel, la pose, les garanties, le dossier administratif et l’entreprise qui installe : ce qu’il faut vérifier avant de signer.",
+    "metaTitre": "Panneaux solaires 2026 : matériel, pose, garanties",
+    "metaDesc": "Matériel, pose, garanties, dossier administratif, choix de l’installateur, stockage, recyclage : le photovoltaïque résidentiel sans discours commercial.",
+    "intro": "Le solaire résidentiel a changé d’équation en juin 2026 : le rachat du surplus est tombé à 1,1 centime le kWh et la prime à l’autoconsommation a disparu. Ce qui fait la valeur d’une installation aujourd’hui, c’est la part de votre production que vous consommez vous-même — et la qualité de ce qui est posé sur votre toit. Cette page passe en revue ce que personne ne détaille avant de vous faire signer : le matériel, la pose, les garanties réelles, les trois dossiers administratifs, l’entreprise qui intervient, le stockage, et ce que vaut vraiment une installation côté climat.",
     "cats": [
       "photovoltaique",
       "stockage",
@@ -84,28 +84,45 @@
     ],
     "sections": [
       {
-        "titre": "Dimensionner selon sa consommation, pas selon sa toiture",
-        "contenu": "L'erreur la plus fréquente est de couvrir le toit. Puisque le surplus ne vaut presque plus rien, une installation surdimensionnée produit beaucoup d'électricité qui part au réseau pour un centime. Le bon réflexe : viser une production proche de ce que vous pouvez réellement consommer sur place, quitte à installer moins de panneaux."
+        "titre": "Les six conditions d’un projet réussi",
+        "contenu": "Une consommation mesurée heure par heure, et non estimée depuis une facture annuelle. Une production calée sur cette consommation, puisque le surplus ne vaut plus rien. Des usages que vous pouvez déplacer vers les heures de production. Une toiture et un tableau électrique en état avant la pose, pas après. Les trois dossiers administratifs portés par l’installateur. Et une entreprise dont vous pouvez vérifier l’assurance, les qualifications et l’ancienneté."
       },
       {
-        "titre": "Le pilotage avant la batterie",
-        "contenu": "Décaler le ballon d'eau chaude, le lave-linge ou la recharge du véhicule sur les heures de production fait gagner des points d'autoconsommation pour quelques centaines d'euros. Une batterie coûte plusieurs milliers. Dans l'ordre : on pilote d'abord, on stocke ensuite — et seulement si les chiffres de votre foyer le justifient."
+        "titre": "Le matériel : la pose compte plus que la marque",
+        "contenu": "Un module courant fait 400 à 500 Wc pour un rendement de 20 à 23 %, se dégrade de 0,3 à 0,5 % par an et se garantit 25 ans. Les écarts entre marques sérieuses sont invisibles sur une facture. Ce qui se décide vraiment : des micro-onduleurs en cas d’ombrage ou de pans multiples, un onduleur central sur une toiture uniforme — en budgétant son remplacement vers 10 à 15 ans ; des fixations choisies pour votre couverture ; et un pilotage du ballon d’eau chaude, qui reste l’euro le mieux dépensé d’un projet solaire. Dans le prix d’une installation posée, la moitié n’est pas du matériel : main-d’œuvre et démarches pèsent 30 à 40 %."
       },
       {
-        "titre": "Batterie physique ou virtuelle : ça dépend vraiment de vous",
-        "contenu": "La batterie physique permet de garder du courant en cas de coupure réseau et ne dépend d'aucun opérateur. La virtuelle ne demande aucun matériel ni entretien, mais suppose de passer chez un fournisseur alternatif. L'écart économique dépend de votre courbe de consommation. Helios compare les deux à consommation réelle égale et vous montre les deux résultats — le choix vous appartient."
+        "titre": "La pose et les trois dossiers administratifs",
+        "contenu": "Visite technique, calepinage, déclaration préalable en mairie, demande de raccordement Enedis, chantier, puis attestation Consuel et mise en service : comptez un ordre de grandeur de deux à quatre mois, dominé par les délais administratifs et non par le chantier, qui dure un à trois jours. Ces trois dossiers sont à la charge de l’installateur. Poser sans déclarer n’est jamais une bonne idée, et la décharge qu’on vous fait signer ne vous protège ni face à la mairie, ni face à votre assureur, ni à la revente."
+      },
+      {
+        "titre": "Les garanties, et celle qui compte vraiment",
+        "contenu": "Cinq garanties se superposent : produit du panneau (25 ans), rendement (85 à 90 % de la puissance après 25 à 30 ans), onduleur (8 à 12 ans en central, 20 à 25 en micro), batterie (10 ans et une capacité restante, souvent 70 %), et les garanties de l’installateur — parfait achèvement, biennale, et surtout décennale. Deux vérifications changent tout : savoir si une garantie couvre la pièce seule ou aussi la main-d’œuvre et le déplacement, et exiger l’attestation de décennale à jour en vérifiant qu’elle mentionne explicitement l’activité photovoltaïque."
+      },
+      {
+        "titre": "Vérifier l’entreprise qui va poser",
+        "contenu": "Dix minutes suffisent. L’attestation d’assurance décennale, à jour et couvrant le photovoltaïque. Les qualifications RGE QualiPV et Qualifelec, vérifiées par leur numéro dans l’annuaire officiel de france-renov.gouv.fr et non sur le logo du devis. L’ancienneté et les comptes de la société, publics et gratuits : une garantie de dix ans ne vaut que si l’entreprise vit dix ans. Le nom de ceux qui monteront réellement sur le toit, sous-traitance incluse. Des avis lus pour leur étalement dans le temps et les réponses aux critiques, plus que pour leur moyenne. Et des signaux qui doivent faire arrêter net : démarchage non sollicité — interdit en rénovation énergétique depuis la loi du 30 juin 2025 —, signature le jour même, travaux « à 1 euro », acompte important avant l’accord de la mairie."
+      },
+      {
+        "titre": "Le stockage : piloter d’abord, stocker ensuite",
+        "contenu": "Une batterie physique vous appartient, donne du courant pendant une coupure, et coûte de l’ordre de 0,31 à 0,40 € par kWh restitué sur sa vie — donc plus que les 0,20 € auxquels vous achetez l’électricité : c’est un produit de confort et de résilience, pas un placement. Une batterie virtuelle ne demande aucun matériel et revient aujourd’hui bien moins cher au kWh rendu, mais impose un fournisseur précis, ne secourt rien en cas de coupure et ne permet pas de reporter l’été sur l’hiver. L’écart réel entre les deux dépend de votre courbe de consommation : Helios les compare à consommation égale et vous laisse décider. Le volant d’inertie en béton et le sodium-ion ouvrent une voie sans métaux critiques, encore jeune."
+      },
+      {
+        "titre": "Recyclage et bilan carbone : la réponse honnête",
+        "contenu": "Les panneaux en fin de vie sont repris gratuitement par la filière française Soren — l’éco-participation est déjà payée dans le prix du module — avec un taux de valorisation annoncé de 94 %, dont environ 84 % de recyclage matière. Côté carbone, une installation émet de l’ordre de 25 g de CO₂ par kWh pour un module européen, environ 44 g pour un module chinois, et rembourse l’énergie de sa fabrication en un à trois ans. Mais l’électricité française est déjà très peu carbonée — 19,6 g par kWh en moyenne sur 2025 : en France, le gain climatique d’une installation résidentielle est donc faible, et l’argument solide est économique. Pour le climat, la sobriété et l’isolation font davantage, pour moins cher."
       }
     ],
     "liens": [
       {
         "to": "/simulateur-solaire",
-        "label": "Estimer ma production solaire"
+        "label": "Chiffrer mon projet solaire"
       },
       {
         "to": "/helios",
-        "label": "Poser ma question à Helios"
+        "label": "Faire relire mon devis par Helios"
       }
-    ]
+    ],
+    "pageDediee": true
   },
   {
     "slug": "isolation",

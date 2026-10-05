@@ -70,7 +70,7 @@ const FORMES = [
 ]
 
 export default function AchatEnergie() {
-  useTitle('L’achat d’énergie — abonnements, tarifs et courtage | HELIOS')
+  useTitle('L’achat d’énergie — abonnements, tarifs et courtage')
   const { user } = useAuth()
 
   return (

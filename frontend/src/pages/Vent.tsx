@@ -60,7 +60,7 @@ const AVANT = [
 ]
 
 export default function Vent() {
-  useTitle('Le vent — l’éolien domestique | HELIOS')
+  useTitle('Le vent — l’éolien domestique')
   return (
     <>
       <Hero

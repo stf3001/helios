@@ -341,7 +341,7 @@ function PuitsCanadien() {
 /* ------------------------------------------------------------------ La page */
 
 export default function Terre() {
-  useTitle('La terre — potager et puits canadien | HELIOS')
+  useTitle('La terre — potager et puits canadien')
 
   /* Le sujet vit dans l'URL : un lien peut viser directement le puits canadien, et un
      retour en arrière ramène là où on était. `replace` pour ne pas empiler une entrée
