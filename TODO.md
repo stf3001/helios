@@ -81,16 +81,16 @@ nommées.
 Ils portent tous un `A CONFIRMER` dans `api/app/core/config.py` — ce qui protège
 le développeur, pas le client qui lit un prix à l'écran.
 
-### [ ] 5. La hauteur de mesure du vent ERA5
+### [ ] 5. Vérifier les données de vent et le calculateur éolien
 
-`api/app/services/eolien.py`. Les profils ERA5 repris du projet eolia donnent un
-facteur de charge de **26 % à Brest**, ce qui est haut pour de l'éolien
-domestique. Si ces vitesses sont mesurées plus haut que le mât réel (1,8 m au
-sommet pour rester en simple déclaration), **la production annoncée est
-surévaluée**.
+`api/app/services/eolien.py`. Les données de vent sont jugées fiables par
+Stéphane (sources Météo-France, précisé le 04/10/2026) : il ne s'agit pas de les
+remettre en cause, mais **simplement de vérifier** que les données chargées et
+le calcul du simulateur donnent bien la production attendue (contrôle sur
+quelques villes, dont Brest, où le facteur de charge actuel ressort à 26 %).
 
-C'est le pire endroit du simulateur où se tromper : un client décide sur ce
-chiffre. **À demander à EOLIA.**
+Rappel : la production annoncée sera de toute façon confirmée chez le client par
+le prêt d'anémomètre d'EOLIA.
 
 ### [ ] 6. La TVA du stockage par inertie
 
@@ -127,11 +127,64 @@ placeholders `[À rédiger]`. Choix assumé le 19/07/2026 (« structure seulemen
 `frontend/src/data/glossaire.ts` : les montants d'aides sont marqués
 `[à vérifier]`. Un montant d'aide faux engage HELIOS.
 
-### [ ] 12. Deux trous connus de la base de connaissances
+### [x] 12. Deux trous connus de la base de connaissances — comblés
 
-Relevés sur le terrain, toujours ouverts : **la fin de la revente totale** et
-**l'ajout de puissance sur une installation existante**. Helios n'a rien à
-répondre sur ces deux sujets, qui reviennent pourtant souvent.
+Relevés sur le terrain : **la fin de la revente totale** et **l'ajout de
+puissance sur une installation existante**. Les deux sont désormais traités, et
+c'est vérifié dans la base servie par `/api/faq` le 05/10/2026, pas seulement
+dans `kb/` : six fiches répondent (« Mon contrat de vente totale arrive à son
+terme », « Faut-il résilier un contrat de vente totale qui arrive à échéance »,
+« Ajouter des panneaux plus tard, combien ça coûte », « Puis-je ajouter des
+panneaux à une installation déjà sous contrat de rachat », « Puis-je regrouper
+deux installations derrière un seul compteur », « Autoconsommation totale, avec
+vente de surplus, ou vente totale »). Source : `kb/fin_contrat_rachat.md` et
+`kb/dimensionnement_pv.md`.
+
+### [x] 23. Ce que la page « Le soleil » disait et qu'Helios ne savait pas dire — fait le 05/10/2026
+
+Trouvé en écrivant la page, en contrôlant chaque affirmation contre `/api/faq` :
+deux sujets de la page n'avaient aucune fiche derrière eux. **13 fiches écrites,
+ingérées et vérifiées en conditions réelles.**
+
+- `kb/recyclage_carbone.md` (**7 fiches**) : fin de vie et filière Soren
+  (éco-participation déjà payée, 94 % de valorisation dont ~84 % de recyclage
+  matière, 13 760 t collectées en 2025), bilan carbone (25 g pour un module
+  européen, 44 g pour un module chinois, retour énergétique 1 à 3 ans),
+  onduleur et structures, batteries, panneaux d'occasion. **La fiche qui
+  justifie le lot** : « Poser des panneaux en France fait-il vraiment baisser
+  mes émissions de CO₂ ? » — le réseau français était à 19,6 g de CO₂ par kWh
+  en 2025, donc le gain climatique d'un toit solaire va de faible à nul ici.
+  La fiche le dit, pose les deux nuances qui jouent en sens inverse, et renvoie
+  vers l'isolation. Aucun installateur n'écrira cela à notre place.
+- `kb/choisir_installateur.md` (**6 fiches**) : vérifier l'existence et la
+  solidité d'une société (SIREN, annuaire-entreprises.data.gouv.fr, comptes
+  publiés), lire une attestation de décennale — **et le point mal connu,
+  vérifié : la garantie est attachée au chantier, pas à la survie de
+  l'entreprise ; liquidée cinq ans après, c'est l'assureur qui répond, à
+  condition de pouvoir le nommer, donc on conserve l'attestation dix ans** —,
+  lire des avis en ligne, la sous-traitance, les mentions obligatoires d'un
+  devis, les acomptes.
+
+**Deux quasi-doublons trouvés et fusionnés au passage.** Le contrôle par
+voisinage vectoriel (chaque nouvelle fiche confrontée à sa plus proche voisine
+en base) a sorti deux paires au-dessus de 0,72 : « Quel acompte est raisonnable
+avant travaux ? » (0,776) et « Quelles mentions obligatoires sur un devis de
+rénovation ? » (0,728), toutes deux dans `faq_maison`. Leurs apports concrets
+— 10 à 30 % à la commande, jamais plus de la moitié avant le début effectif,
+accord écrit des aides avant signature, mention RGE quand les aides en
+dépendent — ont été reversés dans les nouvelles fiches, et les anciennes
+retirées de `kb/faq_maison.md` (108 → 106). `_elaguer` les a bien supprimées de
+la base au ré-crawl (« 2 retirés »). **Ce contrôle est à refaire à chaque lot de
+fiches** : deux fiches qui se disputent la même question font répondre Helios
+différemment selon celle qui remonte.
+
+**Vérifié réellement** : base à 388 fiches publiques (375 + 13, moins les 2
+doublons), `/api/faq` les sert, et trois questions posées au vrai chat
+retrouvent les bonnes fiches — réponse instantanée sans LLM sur « le solaire
+baisse-t-il vraiment mes émissions » et « que deviennent les panneaux en fin de
+vie », et pour une question plus large sur l'entreprise, les deux nouvelles
+fiches remontent dans les sources données au modèle. Pré-rendu : 388 pages de
+fiches, plan de site à 420 URL.
 
 ---
 
@@ -324,27 +377,63 @@ une villa avec piscine, alors que la promesse est d'économiser 450 € par an. 
 risque est de ciblage, pas d'esthétique. Décision prise en connaissance de cause,
 ne pas y revenir sans qu'il le redemande.
 
-### [ ] 22. Un menu « soleil » à part entière
+### [x] 22. Un menu « soleil » à part entière — fait le 05/10/2026
 
-Demandé par Stéphane le 02/10/2026. Aujourd'hui le solaire n'a pas d'entrée de
-menu à lui : il est logé dans « La maison de demain » (`/simulateur-solaire`),
-à côté du vent, de l'eau et de la terre, alors que c'est le sujet central du site
-et le seul dont le simulateur est complet.
+Demandé par Stéphane le 02/10/2026, réalisé le 05/10. « Le soleil » est la
+troisième entrée du menu, juste avant « Le vent ». Les trois autres éléments
+n'ont pas bougé, comme décidé.
 
-Les trois autres entrées (`Le vent`, `L'eau`, `La terre`) **ne bougent pas** :
-décision de Stéphane du 02/10/2026, prise en connaissance de la critique (ces
-intitulés ne disent pas ce qu'il y a derrière). Le menu soleil s'ajoutera à côté.
+**Ce qui a été tranché, et pourquoi :**
 
-À trancher quand le point sera ouvert : ce que contient cette entrée par rapport à
-`/simulateur-solaire` et à `Ville.tsx`, qui parle déjà d'installations en kWc, et
-si l'en-tête supporte une huitième entrée — il en porte déjà sept et passe en
-`text-[13px]` sous 1280 px pour les faire tenir (`components/layout/Header.tsx`).
+- **Adresse `/solaire`, pas `/le-soleil`.** `/solaire` existait déjà comme page
+  chapeau générique issue de la campagne de référencement : elle est au plan de
+  site, et 99 fiches de la FAQ pointent dessus par leur ligne « Sujet : ». Créer
+  une seconde adresse aurait fabriqué deux pages sur le même sujet — ce que les
+  moteurs sanctionnent — et coupé la nouvelle page de tous ses liens entrants.
+  `/le-soleil` existe quand même, en redirection, par symétrie avec `/le-vent`.
+- **Pas de simulateur**, comme sur « Le vent », « L'eau » et « La terre » : le
+  chiffrage reste dans « La maison de demain », et la page y renvoie.
+- **Cinq onglets** (matériel, pose et dossier, garanties et installateur,
+  stockage, marché et empreinte), chacun avec de petites vignettes et des
+  `<details>` natifs pour le détail ; six conditions d'un projet réussi en tête
+  pour qui n'ouvrira aucun onglet. L'onglet vit dans l'URL (`?sujet=`), un lien
+  peut donc viser directement les garanties.
+- **La huitième entrée d'en-tête tient.** Mesuré dans le navigateur à 1024 px,
+  la largeur exacte du point de bascule : `scrollWidth` = `clientWidth` = 1009,
+  aucun débordement. Vérifié aussi à 1280 px et en mobile (menu burger).
+
+Fichiers : `frontend/src/pages/Soleil.tsx` (mise en page),
+`frontend/src/data/soleil.ts` (le texte), entrée `solaire` de
+`frontend/src/data/piliers.json` passée en `pageDediee` et réécrite (c'est elle
+que lit le pré-rendu SEO), `App.tsx`, `components/layout/Header.tsx`.
+
+**Ce qui reste** : les deux sujets de la page qui n'ont pas de fiche dans la
+base de connaissances — voir le point 23.
 
 ---
 
 ## Le piège à ne pas réintroduire
 
-Trouvé deux fois en deux jours, sous deux formes :
+**Un uvicorn mort peut continuer à servir l'ancien code** (trouvé le
+05/10/2026, après une heure perdue). Deux sources venaient d'être déclarées
+dans `agents_engine.SOURCES`, la base contenait bien les 13 nouvelles fiches,
+le module importé en ligne de commande les voyait — et `/api/faq` continuait
+de servir l'ancienne liste, y compris après avoir tué le processus et l'avoir
+relancé. Cause : le rechargement automatique d'uvicorn (`--reload`) lance un
+processus enfant par `multiprocessing`, et cet enfant **survit à la mort de son
+parent en gardant le port 8000 ouvert**. Trois sockets étaient en écoute sur
+127.0.0.1:8000, dont deux appartenant à des processus disparus ; c'est l'orphelin
+qui répondait. Le symptôme est trompeur : tout indique que le changement n'a pas
+été pris, alors que c'est le serveur qui n'est pas celui qu'on croit.
+
+Le réflexe : `Get-NetTCPConnection -LocalPort 8000 -State Listen` liste les
+propriétaires ; tuer **tous** les processus python dont la ligne de commande
+contient `uvicorn` ou `spawn_main`, vérifier que le port est libre, puis
+relancer. Un bon contrôle d'identité du serveur : poser une requête et regarder
+si elle apparaît dans SON journal — si elle n'y est pas, ce n'est pas lui qui
+répond.
+
+Et deux formes plus anciennes, trouvées en deux jours :
 
 **Une valeur refusée par l'API doit toujours dire laquelle, et où.** Le
 29/09/2026, une fiche Maison portant `orientation_toiture: "SUD"` faisait
