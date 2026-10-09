@@ -5,6 +5,7 @@ import HouseDocuments from '../components/fiche/HouseDocuments'
 import type { Draft, FieldSpec, FieldValue } from '../components/fiche/types'
 import { useAuth } from '../context/AuthContext'
 import MarqueHelios from '../components/MarqueHelios'
+import { Home, Layers, Flame, Gauge, Target, Sun } from 'lucide-react'
 
 const ANNEE_OPTIONS = [
   { value: 'avant_1948', label: 'Avant 1948' }, { value: '1948_1974', label: '1948 – 1974' },
@@ -270,13 +271,18 @@ export default function FicheMaison() {
       ) : (
         <>
           <CompletenessBar score={house.completeness_score as number} niveau={house.niveau as string} />
-          <div className="space-y-6">
-            <BlockCard title="Identité du logement" weightLabel="20 % du score" pct={(house.block_scores as Record<string, number>)?.identite} fields={IDENTITE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard title="Enveloppe" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.enveloppe} fields={ENVELOPPE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard title="Systèmes" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.systemes} fields={SYSTEMES_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard title="Toiture / potentiel solaire" weightLabel="bonus — utilisé au simulateur" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+          {/* Les six blocs sont REPLIÉS : voir le commentaire de `BlockCard`. L'écart passe
+              de `space-y-6` à `space-y-2` — des blocs fermés forment une liste, et une liste
+              aérée au même pas que des cartes ouvertes se lit mal. */}
+          <div className="space-y-2">
+            <BlockCard icone={<Home className="h-4 w-4 text-primary" />} title="Identité du logement" weightLabel="20 % du score" pct={(house.block_scores as Record<string, number>)?.identite} fields={IDENTITE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Layers className="h-4 w-4 text-primary" />} title="Enveloppe" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.enveloppe} fields={ENVELOPPE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Flame className="h-4 w-4 text-primary" />} title="Systèmes" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.systemes} fields={SYSTEMES_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Gauge className="h-4 w-4 text-primary" />} title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Target className="h-4 w-4 text-primary" />} title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Sun className="h-4 w-4 text-primary" />} title="Toiture / potentiel solaire" weightLabel="bonus" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+          </div>
+          <div className="mt-8">
             <HouseDocuments />
           </div>
         </>

@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, Pause, Play } from 'lucide-react'
+import Depliant from '../Depliant'
 
 import {
   ans, chercherAdresses, CHAUFFAGES, ECS_OPTIONS, euros, kwh, OMBRAGES, ORIENTATIONS,
@@ -32,41 +33,6 @@ interface OngletProps {
   majConfig: MajConfig
 }
 
-/**
- * Un bloc de réglages, repliable.
- *
- * `<details>` natif plutôt qu'un état React : le clavier, le lecteur d'écran et la recherche
- * dans la page fonctionnent sans qu'on ait à les recoder, et l'ouverture reste fluide.
- *
- * Replié par défaut, SAUF le premier bloc de chaque onglet (`ouvert`) : arriver sur une
- * colonne entièrement fermée ne donne rien à faire. Ce qui est gagné en hauteur ici revient
- * à la scène, qui est ce qu'on veut mettre en avant.
- */
-function Bloc({
-  titre, children, aide, ouvert = false, refDetails,
-}: {
-  titre: string; children: React.ReactNode; aide?: string; ouvert?: boolean
-  /* Pour les blocs qu'un raccourci doit pouvoir ouvrir de l'extérieur — aujourd'hui le seul
-     « Votre raccordement », déplié par la vignette sous la scène. On agit sur le `<details>`
-     lui-même plutôt que de le passer en composant contrôlé : l'ouverture au clic, au clavier
-     et par la recherche dans la page continue de marcher sans qu'on ait à la recoder. */
-  refDetails?: React.Ref<HTMLDetailsElement>
-}) {
-  return (
-    <details ref={refDetails} open={ouvert} className="group rounded-xl border border-ink/10 bg-white">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl
-        px-4 py-3 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
-        <h3 className="font-display text-lg font-bold text-ink">{titre}</h3>
-        <ChevronDown size={20}
-          className="shrink-0 text-primary transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="px-4 pb-4">
-        {aide && <p className="-mt-1 mb-3 text-sm text-dark/70">{aide}</p>}
-        <div className="space-y-4">{children}</div>
-      </div>
-    </details>
-  )
-}
 
 function Ligne({ label, valeur }: { label: string; valeur: React.ReactNode }) {
   return (
@@ -184,11 +150,11 @@ export function OngletMaison({
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Où ?" ouvert>
+      <Depliant titre="Où ?" ouvert>
         <ChampAdresse config={config} majConfig={majConfig} />
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Votre logement">
+      <Depliant titre="Votre logement">
         <Champ label="Surface habitable" valeur={m.surface_m2} suffixe="m²"
           min={10} max={2000}
           onChange={(v) => majMaison({ surface_m2: v ?? 100 })} />
@@ -230,20 +196,20 @@ export function OngletMaison({
             </div>
           </div>
         )}
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Chauffage et eau chaude">
+      <Depliant titre="Chauffage et eau chaude">
         <Choix label="Chauffage" valeur={m.chauffage} options={CHAUFFAGES}
           onChange={(v) => majMaison({ chauffage: v })}
           aide="Seul un chauffage électrique pèse sur votre facture d’électricité." />
         <Choix label="Eau chaude" valeur={m.ecs} options={ECS_OPTIONS}
           onChange={(v) => majMaison({ ecs: v })} />
-      </Bloc>
+      </Depliant>
 
       {/* Le bloc qu'ouvre la vignette « Raccordement au réseau » sous la scène. Le premier
           champ y reçoit le focus : arriver sur un bloc déplié sans savoir où regarder
           reviendrait à n'avoir rien ouvert. */}
-      <Bloc titre="Votre raccordement" refDetails={refRaccordement}>
+      <Depliant titre="Votre raccordement" refDetails={refRaccordement}>
         <Choix label="Type de compteur" valeur={m.raccordement}
           options={[
             { value: 'monophase', label: 'Monophasé' },
@@ -282,7 +248,7 @@ export function OngletMaison({
         <Bascule label="Je veux tenir en cas de coupure" actif={m.besoin_secours}
           onChange={(v) => majMaison({ besoin_secours: v })}
           aide="Seule une batterie physique le permet. Nous vous le dirons franchement, sans arranger sa rentabilité." />
-      </Bloc>
+      </Depliant>
     </div>
   )
 }
@@ -304,7 +270,7 @@ export function OngletEnergie({
 }: { contrat: Contrat; majContrat: (maj: Partial<Contrat>) => void; connecte: boolean }) {
   return (
     <div className="space-y-4">
-      <Bloc titre="Votre fournisseur" ouvert>
+      <Depliant titre="Votre fournisseur" ouvert>
         <Choix label="Fournisseur actuel" valeur={contrat.fournisseur ?? ''}
           options={[{ value: '', label: 'Choisissez…' }, ...FOURNISSEURS]}
           onChange={(v) => majContrat({ fournisseur: v === '' ? null : v })} />
@@ -338,7 +304,7 @@ export function OngletEnergie({
             suffixe="mois" placeholder="je ne sais pas" min={1} max={48}
             onChange={(v) => majContrat({ tarif_bloque_mois: v })} />
         )}
-      </Bloc>
+      </Depliant>
 
       <section className="rounded-xl border border-sky/40 bg-sky/10 p-4">
         <p className="text-dark/80">
@@ -371,7 +337,7 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Sur le toit" ouvert>
+      <Depliant titre="Sur le toit" ouvert>
         <Nombre label="Panneaux" valeur={p.nb_panneaux} min={0} max={40}
           onChange={(v) => majPanneaux({ nb_panneaux: v })}
           aide={resultat ? `${resultat.production.kwc_toit} kWc en toiture` : undefined} />
@@ -391,17 +357,17 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
           onChange={(v) => majPanneaux({ inclinaison: v })} />
         <Choix label="Ombrage" valeur={p.ombrage} options={OMBRAGES}
           onChange={(v) => majPanneaux({ ombrage: v })} />
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Carport"
+      <Depliant titre="Carport"
         aide="Une structure couverte de panneaux, plein sud et peu inclinée. Sa structure a un coût à part.">
         <Nombre label="Panneaux sur le carport" valeur={p.nb_panneaux_carport} min={0} max={40}
           onChange={(v) => majPanneaux({ nb_panneaux_carport: v })}
           aide={resultat && resultat.production.kwc_carport > 0
             ? `${resultat.production.kwc_carport} kWc sur le carport` : undefined} />
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Ce que vous produisez">
+      <Depliant titre="Ce que vous produisez">
         {!resultat || resultat.production.annuel_kwh <= 0 ? (
           <Vide message="Ajoutez des panneaux pour voir votre production mois par mois." />
         ) : (
@@ -436,7 +402,7 @@ export function OngletPanneaux({ config, resultat, majConfig }: OngletProps) {
             )}
           </>
         )}
-      </Bloc>
+      </Depliant>
     </div>
   )
 }
@@ -451,7 +417,7 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Pilotage des usages" ouvert
+      <Depliant titre="Pilotage des usages" ouvert
         aide="Décaler le ballon, la filtration et la recharge vers les heures de soleil. Cela ne coûte presque rien.">
         <Bascule label="Piloter mes usages" actif={s.pilotage}
           onChange={(v) => majStockage({ pilotage: v })} />
@@ -462,9 +428,9 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
               : 'Aucun usage piloté pour l’instant.'}
           </p>
         )}
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Batterie physique"
+      <Depliant titre="Batterie physique"
         aide="Attention : ajouter une batterie fait passer TOUT le projet de 5,5 % à 20 % de TVA.">
         <Nombre label="Packs" valeur={s.nb_packs} min={0} max={6}
           onChange={(v) => majStockage({ nb_packs: v })}
@@ -479,9 +445,9 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
             <Ligne label="Restitué à la maison" valeur={kwh(resultat.stockage.batterie_physique.restitue_kwh)} />
           </div>
         )}
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Stockage par inertie"
+      <Depliant titre="Stockage par inertie"
         aide="Une batterie enterrée, sans lithium, garantie 40 ans. Une seule unité — ce n’est pas un pack qu’on empile.">
         <Bascule label="J’enterre un stockage par inertie" actif={s.inertie}
           onChange={(v) => majStockage({ inertie: v })}
@@ -502,9 +468,9 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
             </p>
           </div>
         )}
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Batterie virtuelle"
+      <Depliant titre="Batterie virtuelle"
         aide="Votre surplus est mis de côté chez un fournisseur au lieu d’être vendu. Cela impose de changer de fournisseur d’électricité.">
         {/* Le sur-mesure en premier : c'est celui qu'on conseille, et l'ordre d'une liste
             se lit comme un classement. Noms commerciaux de MyLight — ce sont ceux que
@@ -557,7 +523,7 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
             )}
           </>
         )}
-      </Bloc>
+      </Depliant>
     </div>
   )
 }
@@ -620,7 +586,7 @@ export function OngletJournee({
 
   return (
     <div className="space-y-4">
-      <Bloc titre="La journée en direct" ouvert>
+      <Depliant titre="La journée en direct" ouvert>
         <div className="flex flex-wrap items-center gap-2">
           {SAISONS.map((s) => (
             <button key={s.value} type="button" aria-pressed={saison === s.value}
@@ -655,9 +621,9 @@ export function OngletJournee({
           ))}
           <Bascule label="Enchaîner les saisons" actif={enchainer} onChange={setEnchainer} />
         </div>
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre={`À ${String(heure).padStart(2, '0')} h`}>
+      <Depliant titre={`À ${String(heure).padStart(2, '0')} h`}>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm uppercase tracking-wide text-dark/60">Production</p>
@@ -693,9 +659,9 @@ export function OngletJournee({
             { nom: 'Le réseau', valeur: point.achat, couleur: COULEURS.bleu },
           ]} />
         </div>
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre={`Cumul sur une ${LIBELLE_SAISON[saison]}`}>
+      <Depliant titre={`Cumul sur une ${LIBELLE_SAISON[saison]}`}>
         <CourbeJournee heureActive={heure} series={[
           { nom: 'Production', couleur: COULEURS.or, valeurs: points.map((p) => p.production) },
           { nom: 'Consommation', couleur: COULEURS.bleu, valeurs: points.map((p) => p.consommation) },
@@ -711,7 +677,7 @@ export function OngletJournee({
           Ces chiffres sont ceux d’une seule {LIBELLE_SAISON[saison]} — pas d’un total annuel.
           Le total de l’année est dans l’onglet Étude.
         </p>
-      </Bloc>
+      </Depliant>
     </div>
   )
 }
@@ -789,7 +755,7 @@ export function OngletEtude({
 
   return (
     <div className="space-y-4">
-      <Bloc titre="Trois chemins possibles" ouvert
+      <Depliant titre="Trois chemins possibles" ouvert
         aide="Chacun est chiffré à sa taille la plus rentable. La recommandation est celle qui rapporte le plus net sur 25 ans.">
         {chargementOptions && !options && <Vide message="Calcul des options en cours…" />}
         {!chargementOptions && !options && <Vide message="Renseignez votre adresse pour voir les options." />}
@@ -801,10 +767,10 @@ export function OngletEtude({
             ))}
           </div>
         )}
-      </Bloc>
+      </Depliant>
 
       {resultat && (
-        <Bloc titre="Votre configuration actuelle">
+        <Depliant titre="Votre configuration actuelle">
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <Ligne label="Investissement" valeur={euros(resultat.investissement.total_eur)} />
@@ -832,11 +798,11 @@ export function OngletEtude({
               <Ligne label="Temps de retour" valeur={ans(resultat.economie.temps_retour_ans)} />
             </div>
           </div>
-        </Bloc>
+        </Depliant>
       )}
 
       {resultat && (
-        <Bloc titre="Votre trésorerie, année après année"
+        <Depliant titre="Votre trésorerie, année après année"
           aide="Ce que le projet vous a coûté, puis rapporté, cumulé depuis le premier jour.">
           <Courbe25Ans tresorerie={resultat.economie.tresorerie} />
           <Choix label="Hausse du prix de l’électricité"
@@ -848,13 +814,13 @@ export function OngletEtude({
             ]}
             onChange={(v) => majConfig((c) => ({ ...c, hausse_prix_pct_an: Number(v) }))}
             aide="Personne ne connaît l’avenir du prix de l’électricité. Essayez les trois." />
-        </Bloc>
+        </Depliant>
       )}
 
       {options && (
-        <Bloc titre="Vos objectifs">
+        <Depliant titre="Vos objectifs">
           <Objectifs objectifs={options.objectifs} />
-        </Bloc>
+        </Depliant>
       )}
 
       {resultat && (
@@ -898,7 +864,7 @@ export function OngletEtude({
 export function OngletAide() {
   return (
     <div className="space-y-4">
-      <Bloc titre="Comment ça marche" ouvert>
+      <Depliant titre="Comment ça marche" ouvert>
         <ol className="list-decimal space-y-3 pl-5 text-dark/85">
           <li>
             Nous récupérons <strong>l’ensoleillement réel de votre commune</strong> auprès de
@@ -917,9 +883,9 @@ export function OngletAide() {
             Nous en déduisons votre facture, vos économies et votre temps de retour, sur 25 ans.
           </li>
         </ol>
-      </Bloc>
+      </Depliant>
 
-      <Bloc titre="Ce que ce simulateur ne fait pas">
+      <Depliant titre="Ce que ce simulateur ne fait pas">
         <ul className="list-disc space-y-2 pl-5 text-dark/85">
           <li>Il ne lit pas votre vraie courbe Linky : il la reconstitue.</li>
           <li>Il ne regarde pas votre toiture réelle ni les règles d’urbanisme de votre commune.</li>
@@ -930,7 +896,7 @@ export function OngletAide() {
           Un mot ne vous parle pas ? Le <Link to="/glossaire" className="font-semibold text-primary underline">
           glossaire</Link> les explique tous.
         </p>
-      </Bloc>
+      </Depliant>
     </div>
   )
 }

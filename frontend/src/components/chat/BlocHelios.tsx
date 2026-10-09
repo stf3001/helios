@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, History, Plus } from 'lucide-react'
 import ChatWidget from './ChatWidget'
+import Depliant from '../Depliant'
+import MarqueHelios from '../MarqueHelios'
 import { useAuth } from '../../context/AuthContext'
 
 /**
@@ -101,86 +103,90 @@ export default function BlocHelios({ askPrefill }: { askPrefill?: string }) {
   }
 
   return (
-    <section aria-labelledby="titre-helios" className="mb-10">
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
-        <div>
-          <h2 id="titre-helios" className="font-display text-2xl text-ink">Parler à Helios</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Il connaît déjà votre fiche et vos simulations — pas besoin de tout réexpliquer.
-          </p>
-        </div>
+    /* PLIABLE, comme le reste de l'espace (demande de Stephane, 06/10/2026), mais
+       OUVERT A L'ARRIVEE : la conversation est ce pour quoi on vient ici, la replier
+       d'office reviendrait a remettre un clic entre le client et Helios — ce que la
+       fusion du 30/09 avait justement supprime.
 
-        <div className="flex items-center gap-2 shrink-0">
-          {selectionnee && (
-            <button
-              type="button"
-              onClick={nouvelleConversation}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-bord bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-gray-300 transition-colors"
+       Les commandes (« Mes conversations », « Nouvelle ») sont DANS le panneau et non
+       dans l'en-tete : un bouton pose dans un `<summary>` replie le bloc quand on le
+       clique, et le rattraper demanderait d'intercepter l'evenement a chaque fois. */
+    <Depliant
+      titre="Parler à Helios"
+      icone={<MarqueHelios taille={18} className="text-primary" />}
+      aide="Il connaît déjà votre fiche et vos simulations — pas besoin de tout réexpliquer."
+      ouvert
+    >
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {selectionnee && (
+          <button
+            type="button"
+            onClick={nouvelleConversation}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-bord bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-gray-300 transition-colors"
+          >
+            <Plus className="w-4 h-4" aria-hidden="true" /> Nouvelle
+          </button>
+        )}
+
+        <div className="relative" ref={menu}>
+          <button
+            type="button"
+            onClick={() => setOuvert((v) => !v)}
+            aria-expanded={ouvert}
+            aria-controls="liste-conversations"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-bord bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-gray-300 transition-colors"
+          >
+            <History className="w-4 h-4" aria-hidden="true" />
+            Mes conversations
+            <ChevronDown
+              className={'w-4 h-4 transition-transform ' + (ouvert ? 'rotate-180' : '')}
+              aria-hidden="true"
+            />
+          </button>
+
+          {ouvert && (
+            <div
+              id="liste-conversations"
+              /* Ancre A GAUCHE du bouton par defaut : sur un telephone les commandes
+                 passent a la ligne et se rangent a gauche, un panneau aligne a droite
+                 sortait alors de l'ecran. Il ne bascule a droite qu'a partir du moment
+                 ou le bouton est lui-meme a droite du titre. */
+              className="absolute left-0 sm:left-auto sm:right-0 z-30 mt-2 w-[19rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-bord bg-white shadow-question"
             >
-              <Plus className="w-4 h-4" aria-hidden="true" /> Nouvelle
-            </button>
-          )}
-
-          <div className="relative" ref={menu}>
-            <button
-              type="button"
-              onClick={() => setOuvert((v) => !v)}
-              aria-expanded={ouvert}
-              aria-controls="liste-conversations"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-bord bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-gray-300 transition-colors"
-            >
-              <History className="w-4 h-4" aria-hidden="true" />
-              Mes conversations
-              <ChevronDown
-                className={'w-4 h-4 transition-transform ' + (ouvert ? 'rotate-180' : '')}
-                aria-hidden="true"
-              />
-            </button>
-
-            {ouvert && (
-              <div
-                id="liste-conversations"
-                /* Ancre A GAUCHE du bouton par defaut : sur un telephone les commandes
-                   passent a la ligne et se rangent a gauche, un panneau aligne a droite
-                   sortait alors de l'ecran. Il ne bascule a droite qu'a partir du moment
-                   ou le bouton est lui-meme a droite du titre. */
-                className="absolute left-0 sm:left-auto sm:right-0 z-30 mt-2 w-[19rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-bord bg-white shadow-question"
+              <button
+                type="button"
+                onClick={nouvelleConversation}
+                className="flex w-full items-center gap-2 border-b border-bord px-4 py-3 text-sm font-semibold text-primary hover:bg-cream transition-colors"
               >
-                <button
-                  type="button"
-                  onClick={nouvelleConversation}
-                  className="flex w-full items-center gap-2 border-b border-bord px-4 py-3 text-sm font-semibold text-primary hover:bg-cream transition-colors"
-                >
-                  <Plus className="w-4 h-4" aria-hidden="true" /> Nouvelle conversation
-                </button>
+                <Plus className="w-4 h-4" aria-hidden="true" /> Nouvelle conversation
+              </button>
 
-                <div className="max-h-72 overflow-y-auto">
-                  {chargement && <p className="px-4 py-3 text-sm text-gray-500">Chargement…</p>}
-                  {!chargement && conversations.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-gray-500">
-                      Aucune conversation enregistrée pour l'instant.
-                    </p>
-                  )}
-                  {conversations.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => ouvrirConversation(c.id)}
-                      aria-current={c.id === selectionnee}
-                      className={
-                        'block w-full truncate px-4 py-2.5 text-left text-sm transition-colors ' +
-                        (c.id === selectionnee
-                          ? 'bg-primary/5 font-semibold text-primary'
-                          : 'text-gray-600 hover:bg-cream')
-                      }
-                    >
-                      {libelleDate(c.started_at)}
-                    </button>
-                  ))}
-                </div>
+              <div className="max-h-72 overflow-y-auto">
+                {chargement && <p className="px-4 py-3 text-sm text-gray-500">Chargement…</p>}
+                {!chargement && conversations.length === 0 && (
+                  <p className="px-4 py-3 text-sm text-gray-500">
+                    Aucune conversation enregistrée pour l'instant.
+                  </p>
+                )}
+                {conversations.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => ouvrirConversation(c.id)}
+                    aria-current={c.id === selectionnee}
+                    className={
+                      'block w-full truncate px-4 py-2.5 text-left text-sm transition-colors ' +
+                      (c.id === selectionnee
+                        ? 'bg-primary/5 font-semibold text-primary'
+                        : 'text-gray-600 hover:bg-cream')
+                    }
+                  >
+                    {libelleDate(c.started_at)}
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -189,10 +195,11 @@ export default function BlocHelios({ askPrefill }: { askPrefill?: string }) {
       <ChatWidget
         key={selectionnee ?? 'nouvelle'}
         fetchImpl={authFetch}
+        compact
         initialConversationId={selectionnee}
         initialMessages={messages}
         initialInput={!selectionnee ? askPrefill : undefined}
       />
-    </section>
+    </Depliant>
   )
 }

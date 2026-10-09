@@ -142,20 +142,17 @@ function fabriquerMoteur(): MoteurDictee | null {
   return Moteur ? new Moteur() : null
 }
 
-const SUGGESTIONS = [
-  'Par quoi commencer pour isoler ma maison ?',
-  'Ai-je intérêt à passer au solaire ?',
-  'Quelles aides pour changer ma chaudière ?',
-]
-
 export default function ChatWidget({
   fetchImpl = fetch,
   initialConversationId = null,
   initialMessages,
   initialInput,
+  compact = false,
 }: {
   /** Passer `authFetch` du AuthContext pour le mode connecté ; sinon fetch anonyme (mode public). */
   fetchImpl?: (input: string, init?: RequestInit) => Promise<Response>
+  /** Boite plus courte, pour un widget pose au milieu d'autres blocs. */
+  compact?: boolean
   initialConversationId?: string | null
   initialMessages?: ChatMessage[]
   /** Pré-remplit le champ de saisie (ex. question + extrait d'un devis) — l'utilisateur
@@ -341,13 +338,21 @@ export default function ChatWidget({
     }
   }
 
-  const onlyGreeting = messages.length === 1 && messages[0].role === 'helios'
 
   return (
     /* Un seul en-tête, quelle que soit la largeur : la marque, le nom, et ce
        qu'Helios est en train de faire. La colonne latérale n'existait que pour
        loger la mascotte en pied ; sans elle, elle ne portait plus que du vide. */
-    <div className="rounded-2xl border border-bord bg-white max-w-[920px] mx-auto flex flex-col h-[70vh] max-h-[620px] min-h-[440px] overflow-hidden">
+    <div className={'flex flex-col overflow-hidden rounded-xl bg-white '
+      /* La page publique `/helios` n'a que la conversation a montrer : elle garde la
+         grande boite, centree et bordee. Dans « Mon espace » le widget est POSE DANS un
+         depliant, qui porte deja une bordure : lui en remettre une faisait deux cadres
+         imbriques. Sa structure interne (bandeau creme en tete, filet au-dessus du champ)
+         suffit a le tenir. Sa hauteur y est aussi plus courte : fixe, elle laissait un
+         grand vide sous le message d'accueil. */
+      + (compact
+        ? 'h-[44vh] max-h-[440px] min-h-[280px] border border-bord/70'
+        : 'h-[70vh] max-h-[620px] min-h-[440px] max-w-[920px] mx-auto border border-bord rounded-2xl')}>
       <div className="px-4 py-3 border-b border-bord bg-cream">
         <PresenceHelios etat={avatar.state} taille={30} />
       </div>
@@ -419,18 +424,6 @@ export default function ChatWidget({
             </div>
           </div>
         ))}
-
-        {/* Amorces de questions (page blanche → on propose) */}
-        {onlyGreeting && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {SUGGESTIONS.map((s) => (
-              <button key={s} onClick={() => send(s)}
-                className="text-xs text-ink border border-ink/20 rounded-full px-3 py-1.5 hover:bg-ink/5 transition">
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <form onSubmit={onSubmit} className="border-t border-bord p-3 flex gap-2">
