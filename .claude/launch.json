@@ -2,9 +2,28 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "helios-api",
+      "runtimeExecutable": "api/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--app-dir",
+        "api",
+        "--port",
+        "8000"
+      ],
+      "port": 8000
+    },
+    {
       "name": "helios-front",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
       "port": 5173
     },
     {

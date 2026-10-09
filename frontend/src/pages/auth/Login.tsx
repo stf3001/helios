@@ -1,11 +1,16 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import PasswordInput from '../../components/PasswordInput'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  // `AdminRoute` et `ProtectedRoute` memorisent la page demandee avant de rediriger
+  // ici : on y retourne apres connexion. Sans cela, viser /admin deconnecte faisait
+  // atterrir ailleurs, sans explication.
+  const location = useLocation()
+  const destination = (location.state as { from?: string } | null)?.from || '/espace'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -17,7 +22,7 @@ export default function Login() {
     setSubmitting(true)
     try {
       await login(email, password)
-      navigate('/mon-espace')
+      navigate(destination)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connexion impossible')
     } finally {

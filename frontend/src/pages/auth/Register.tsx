@@ -23,7 +23,9 @@ export default function Register() {
     setSubmitting(true)
     try {
       await register(email, password, prenom, consentCgu)
-      navigate('/mon-espace')
+      // L'accueil de l'espace, pas le formulaire : il met en scene les trois questions
+      // de depart au lieu d'ouvrir une fiche vide de quarante champs.
+      navigate('/espace')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Inscription impossible')
     } finally {
