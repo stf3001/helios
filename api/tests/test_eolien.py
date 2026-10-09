@@ -86,3 +86,54 @@ def test_le_tarif_est_interpole_entre_les_deux_bornes():
     # Hors gamme : on borne plutot que d'extrapoler un prix qui n'existe pas.
     assert eolien.cout_ttc_eur(1) == settings.simu_eolien_cout_min_eur
     assert eolien.cout_ttc_eur(50) == settings.simu_eolien_cout_max_eur
+
+
+# --- Le FICHIER DE DONNEES, et non plus le comportement -------------------------
+# Verification du 09/10/2026 (point 5 de TODO.md). Les tests ci-dessus verifient que le
+# moteur se comporte bien ; ceux-ci verrouillent la donnee qu'il lit. Un fichier tronque
+# ou une unite changee ne cassent rien visiblement : ils deplacent simplement tous les
+# chiffres affiches au client, dans le silence.
+
+def test_chaque_station_a_ses_douze_mois_de_vingt_quatre_heures():
+    """288 valeurs par station. Un mois manquant decalerait toute l'annee a partir de lui,
+    puisque `vitesses_horaires_ms` empile les mois dans l'ordre."""
+    profils = eolien._profils()
+    assert len(profils) == 12
+    for code, profil in profils.items():
+        assert sorted(profil) == sorted(str(m) for m in range(1, 13)), code
+        for mois, heures in profil.items():
+            assert len(heures) == 24, f"{code}/{mois}"
+
+
+def test_les_vitesses_sont_bien_lues_en_km_h():
+    """LE TEST QUI COMPTE LE PLUS ICI. Le fichier donne des km/h, `vitesses_horaires_ms`
+    divise par 3,6. Si la source passait un jour en m/s sans qu'on le voie, toutes les
+    vitesses seraient multipliees par 3,6 — et la production, qui suit une courbe
+    quasi cubique, exploserait sans qu'aucun test de comportement ne bronche.
+
+    On borne donc les moyennes annuelles dans ce qu'un vent de surface francais peut
+    valoir : au-dela de 8 m/s de MOYENNE sur l'annee, c'est que l'unite a bouge.
+    """
+    for code in eolien._profils():
+        moyenne = sum(eolien.vitesses_horaires_ms(code)) / eolien.HEURES
+        assert 1.0 <= moyenne <= 8.0, f"{code} : {moyenne:.2f} m/s de moyenne annuelle"
+
+
+def test_le_facteur_de_charge_de_brest_reste_autour_de_26_pourcent():
+    """Le chiffre de reference releve avec Stephane. Brest est la station la plus ventee
+    du jeu ; si ce facteur bouge, c'est la donnee ou la courbe de puissance qui a change.
+    """
+    serie, _ = eolien.production_horaire(6.0, 48.39, -4.49)
+    facteur_de_charge = sum(serie) / (6.0 * eolien.HEURES)
+    assert 0.24 <= facteur_de_charge <= 0.28, f"{facteur_de_charge:.1%}"
+
+
+def test_aucune_station_ne_depasse_le_plafond_physique_de_la_turbine():
+    """La courbe plafonne a 5,05 kW pour une machine dite de 6 kWc : le facteur de charge
+    ne peut donc pas depasser 84 %, quel que soit le vent. Un depassement signalerait une
+    mise a l'echelle appliquee deux fois."""
+    plafond = max(eolien.PUISSANCES_KW) / eolien.NOMINAL_KWC
+    for code in eolien._profils():
+        vitesses = eolien.vitesses_horaires_ms(code)
+        production = sum(eolien.puissance_kw(v, 6.0) for v in vitesses)
+        assert production / (6.0 * eolien.HEURES) <= plafond, code

@@ -60,3 +60,70 @@ def departement_du_code_postal(code_postal: str) -> str | None:
         # plus fin ; on tranche au milieu, faute de table officielle embarquee.
         return "2A" if code < "20200" else "2B"
     return code[:2]
+
+
+class ZoneIllisible(ValueError):
+    """Une zone qu'on ne sait pas rattacher a un departement. Porte la valeur fautive."""
+
+    def __init__(self, valeur: str):
+        self.valeur = valeur
+        super().__init__(valeur)
+
+
+def normaliser_zone(zone: str) -> str:
+    """Ramene une zone saisie a UN numero de departement.
+
+    Le champ `zones` d'un partenaire etait rempli en texte libre, et le formulaire public
+    proposait meme des codes postaux en exemple. Or `routers/chat.py` compare la zone au
+    departement du visiteur par egalite STRICTE : un partenaire ayant declare « 69001 »
+    n'etait jamais propose. On normalise donc A L'ECRITURE, pour que les trois lecteurs
+    (le chat, l'annuaire public, les vignettes du back-office) retombent d'accord sans
+    avoir chacun leur regle.
+
+    Accepte : « 13 », « 13100 », « 2A », « 20000 », et « 1 » (complete en « 01 »).
+    Leve `ZoneIllisible` sur le reste, plutot que de laisser tomber la valeur en silence :
+    une zone qui disparait, c'est un partenaire qui ne couvre plus ce qu'il a declare.
+    """
+    brut = (zone or "").strip().upper().replace(" ", "")
+    if not brut:
+        raise ZoneIllisible(zone)
+
+    # La Corse se saisit aussi par sa lettre, et `departement_du_code_postal` ne la lit pas.
+    if brut in ("2A", "2B"):
+        return brut
+
+    if not brut.isdigit():
+        raise ZoneIllisible(zone)
+
+    # « 1 » pour l'Ain : on complete, sinon la saisie la plus naturelle est refusee.
+    if len(brut) == 1:
+        brut = "0" + brut
+
+    if len(brut) == 2:
+        if brut == "20":          # le 20 n'existe plus : il faut choisir 2A ou 2B.
+            raise ZoneIllisible(zone)
+        return brut if brut in TOUS_DEPARTEMENTS else _refuser(zone)
+
+    if len(brut) == 5:
+        dept = departement_du_code_postal(brut)
+        return dept if dept in TOUS_DEPARTEMENTS else _refuser(zone)
+
+    raise ZoneIllisible(zone)
+
+
+def _refuser(zone: str) -> str:
+    raise ZoneIllisible(zone)
+
+
+def normaliser_zones(zones: list[str]) -> list[str]:
+    """Normalise une liste de zones, sans doublon et dans l'ordre de saisie.
+
+    Deux codes postaux d'un meme departement (« 69001, 69002 ») n'en font qu'un : c'est
+    exactement ce qu'on veut, un partenaire couvre un departement ou ne le couvre pas.
+    """
+    vues: list[str] = []
+    for zone in zones or []:
+        dept = normaliser_zone(zone)
+        if dept not in vues:
+            vues.append(dept)
+    return vues

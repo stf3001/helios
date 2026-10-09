@@ -99,3 +99,49 @@ def test_chaque_region_a_son_partenaire_isolation():
     from scripts.seed_partenaires import ISOLATION_PROVISOIRE, RACINES_REGIONALES
     assert set(ISOLATION_PROVISOIRE) == set(regions.REGIONS)
     assert set(RACINES_REGIONALES) == set(regions.REGIONS)
+
+
+# --- Normalisation des zones d'un partenaire -------------------------------------
+# Le champ etait rempli en texte libre alors que `routers/chat.py` compare la zone au
+# departement du visiteur par EGALITE STRICTE : un partenaire ayant declare « 69001 »
+# n'etait jamais propose. Ces tests tiennent la regle qui les remet d'accord.
+
+@pytest.mark.parametrize(("saisie", "attendu"), [
+    ("13", "13"),            # deja un departement
+    ("13100", "13"),         # code postal
+    ("69001", "69"),         # celui qui cassait le chat
+    ("1", "01"),             # saisie naturelle pour l'Ain
+    ("01", "01"),
+    ("75020", "75"),         # un arrondissement reste dans son departement
+    ("2A", "2A"),            # la Corse par sa lettre
+    ("2a", "2A"),            # ... en minuscules
+    (" 38 ", "38"),          # espaces parasites
+    ("20000", "2A"),         # Ajaccio
+    ("20200", "2B"),         # Bastia — le cas que l'ancien prefixe a deux caracteres ratait
+])
+def test_une_zone_se_ramene_a_son_departement(saisie, attendu):
+    assert regions.normaliser_zone(saisie) == attendu
+
+
+@pytest.mark.parametrize("saisie", ["Lyon", "", "   ", "99", "20", "123", "6900A"])
+def test_une_zone_illisible_est_refusee_en_nommant_la_valeur(saisie):
+    """Refuser plutot que laisser tomber : une zone qui disparait, c'est un partenaire
+    qui ne couvre plus ce qu'il a declare, et il ne l'apprendrait qu'en n'ayant jamais
+    de client. « 20 » est refuse a dessein : ce departement n'existe plus."""
+    with pytest.raises(regions.ZoneIllisible) as leve:
+        regions.normaliser_zone(saisie)
+    assert leve.value.valeur == saisie
+
+
+def test_deux_codes_postaux_du_meme_departement_n_en_font_qu_un():
+    """C'est l'exemple que proposait le formulaire public. Un partenaire couvre un
+    departement ou ne le couvre pas ; trois arrondissements lyonnais, c'est le Rhone."""
+    assert regions.normaliser_zones(["69001", "69002", "38000"]) == ["69", "38"]
+
+
+def test_toute_zone_normalisee_est_un_departement_connu():
+    """Le garde-fou qui relie les deux moities du fichier : ce que la normalisation
+    accepte doit exister dans la table des regions, sinon le partenaire est range nulle
+    part dans les vignettes du back-office."""
+    for dept in regions.TOUS_DEPARTEMENTS:
+        assert regions.normaliser_zone(dept) == dept

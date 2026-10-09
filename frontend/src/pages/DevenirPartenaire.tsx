@@ -90,9 +90,19 @@ export default function DevenirPartenaire() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Zones couvertes (codes postaux, séparés par des virgules)</label>
-              <input value={zones} onChange={(e) => setZones(e.target.value)} placeholder="69001, 69002, 38000"
+              {/* On demande des DÉPARTEMENTS, parce que c'est la maille à laquelle Helios
+                  cherche un partenaire pour un visiteur. Un code postal reste accepté et
+                  ramené à son département à l'enregistrement (`regions.normaliser_zones`),
+                  mais l'exemple ne doit plus en proposer : il invitait à saisir ce que le
+                  chat ne savait pas relire. */}
+              <label className="block text-sm font-medium mb-1">
+                Départements couverts, séparés par des virgules
+              </label>
+              <input value={zones} onChange={(e) => setZones(e.target.value)} placeholder="69, 38, 2A"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <p className="mt-1 text-xs text-dark/60">
+                Un code postal fonctionne aussi — il sera ramené à son département.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Métiers</label>

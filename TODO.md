@@ -95,16 +95,44 @@ nommées.
 Ils portent tous un `A CONFIRMER` dans `api/app/core/config.py` — ce qui protège
 le développeur, pas le client qui lit un prix à l'écran.
 
-### [ ] 5. Vérifier les données de vent et le calculateur éolien
+### [x] 5. Données de vent et calculateur éolien — vérifiés le 09/10/2026
 
-`api/app/services/eolien.py`. Les données de vent sont jugées fiables par
-Stéphane (sources Météo-France, précisé le 04/10/2026) : il ne s'agit pas de les
-remettre en cause, mais **simplement de vérifier** que les données chargées et
-le calcul du simulateur donnent bien la production attendue (contrôle sur
-quelques villes, dont Brest, où le facteur de charge actuel ressort à 26 %).
+**Le pipeline est juste.** Les 12 stations ont bien leurs 12 mois × 24 heures, sans
+trou ; les données sont bien en km/h et bien divisées par 3,6 (lues en m/s, Brest
+serait à 23-27 m/s de moyenne en janvier, une tempête permanente) ; la station la plus
+proche est correctement choisie et sa distance affichée ; **Brest ressort bien à 26,0 %
+de facteur de charge**, le chiffre relevé avec Stéphane. Le plafond de 5,05 kW pour une
+machine dite de 6 kWc est normal (puissance nominale ≠ puissance crête) et borne le
+facteur de charge à 84 %.
 
-Rappel : la production annoncée sera de toute façon confirmée chez le client par
-le prêt d'anémomètre d'EOLIA.
+**MAIS LE PROFIL LISSE SOUS-ESTIME LA PRODUCTION, ET PAS DE FAÇON UNIFORME.** Le profil
+est une moyenne mensuelle × horaire — 288 valeurs répétées sur l'année — donc toute la
+variabilité d'un jour à l'autre est effacée : le vent maximal de l'année ressort à
+8,3 m/s à Brest, là où une vraie série horaire monte à 20. Or la courbe de puissance est
+quasi cubique entre 2 et 9 m/s : lisser le vent fait perdre les heures fortes, qui pèsent
+bien plus que ce que les heures faibles rendent.
+
+Mesuré en redistribuant chaque station selon une Weibull k=2 de même moyenne (la loi
+standard en éolien) : la production réelle serait **+10 % à Brest, +32 à +55 % sur la
+plupart des stations, +99 % à Grenoble**. Le biais est donc d'autant plus fort que le site
+est peu venté — il **exagère l'avantage des sites ventés** : le rapport Brest / Lyon passe
+de 7,4× (profil lissé) à 5,2× (vent réaliste).
+
+**Rien n'a été changé au moteur**, et c'est délibéré : c'est la méthode d'EOLIA, reprise
+telle quelle, et le biais va dans le sens de la prudence — le simulateur promet moins
+qu'il n'y aura, ce qui est la bonne direction pour la constitution. **Mais c'est une
+question à poser à EOLIA** : leur calculateur applique-t-il déjà un coefficient pour
+rattraper ce lissage, ou leurs chiffres commerciaux sont-ils eux aussi conservateurs ?
+Tant que la réponse n'est pas là, ne pas « corriger » le moteur à l'aveugle.
+
+**Quatre tests ajoutés** (`api/tests/test_eolien.py`) qui verrouillent la DONNÉE et non
+plus seulement le comportement : intégrité des 288 valeurs par station, bornes physiques
+des moyennes annuelles (1 à 8 m/s — le garde-fou qui attraperait un passage en m/s, qui
+multiplierait la production sans qu'aucun test de comportement ne bronche), facteur de
+charge de Brest entre 24 et 28 %, et plafond physique de la turbine.
+
+Rappel : la production annoncée sera de toute façon confirmée chez le client par le prêt
+d'anémomètre d'EOLIA, et `production_horaire` accepte déjà le coefficient de recalage.
 
 ### [x] 6. La TVA du stockage par inertie — tranchée à 5,5 % le 06/10/2026
 
@@ -544,7 +572,7 @@ mais si la photo change, ou si la colonne de texte s'élargit, il faudra mesurer
 
 ---
 
-### [ ] 25. Le champ `zones` d'un partenaire n'a aucun format imposé
+### [x] 25. Le champ `zones` d'un partenaire — normalisé le 09/10/2026
 
 Trouvé le 08/10/2026 en rangeant `/admin/partenaires` par région. `partners.zones`
 est un tableau de chaînes rempli par un champ de saisie LIBRE
@@ -567,13 +595,44 @@ cohabitent déjà en base.
   applique la règle de `departement_du_code_postal` (Corse comprise) pour ranger les
   partenaires en vignettes.
 
-**Ce qu'il faudrait faire** : normaliser à l'ÉCRITURE, dans `POST /partners/apply`,
-avec `regions.departement_du_code_postal` — une zone enregistrée serait alors toujours
-un numéro de département, et les trois lecteurs retomberaient d'accord sans rien
-changer d'autre. Prévoir la reprise des lignes déjà en base.
+**C'ÉTAIT PIRE QUE « LATENT ».** Le champ du formulaire public portait en exemple
+`69001, 69002, 38000` : il **demandait** des codes postaux. Avec l'égalité stricte de
+`chat.py`, **aucune vraie candidature n'aurait jamais été proposée par Helios** — pas un
+risque éventuel, une certitude dès le premier partenaire réel.
 
-Sans risque tant que l'annuaire n'est rempli que par le seed. Devient réel le jour où
-une vraie candidature arrive par le formulaire public.
+**Normalisé à l'écriture**, comme prévu : `regions.normaliser_zone` / `normaliser_zones`
+ramènent toute saisie à un numéro de département — « 13 », « 13100 », « 2A », « 20000 »,
+et « 1 » complété en « 01 ». Deux codes postaux du même département n'en font qu'un : un
+partenaire couvre un département ou ne le couvre pas.
+
+**Une zone illisible est REFUSÉE en nommant la valeur fautive** (400), plutôt que laissée
+tomber en silence — une zone qui disparaît, c'est un partenaire qui ne couvre plus ce
+qu'il a déclaré, et il ne l'apprendrait qu'en ne recevant jamais de client. C'est la règle
+déjà écrite plus bas dans ce fichier : une valeur refusée doit toujours dire laquelle.
+« 20 » est refusé à dessein, ce département n'existe plus.
+
+**Le trou corse de l'annuaire est bouché au passage** : le filtre public utilisait
+`z.startswith(zone[:2])`, donc « 20200 » donnait « 20 » et ne retrouvait jamais « 2B ».
+Il applique maintenant la même règle que l'écriture. Vérifié : Bastia et Ajaccio
+remontent 4 partenaires actifs chacun, contre 0 avant.
+
+**Reprise faite** : `api/scripts/normaliser_zones_partenaires.py` (simulation par défaut,
+`--appliquer` pour écrire ; les zones illisibles sont signalées et LAISSÉES en place, on
+n'efface pas en masse un champ qui décide qui est nommé au client). Passé sur la base :
+101 partenaires lus, 1 corrigé — « Solaris Renov », `['69001','69002','69003']` → `['69']`.
+
+Le formulaire public demande désormais des **départements** (`69, 38, 2A`) tout en
+acceptant encore un code postal, et le dit.
+
+**Vérifié de bout en bout** contre l'API relancée : candidature avec codes postaux → 201,
+enregistrée `['69','38']`, et Helios la proposerait bien au département 69 (c'était `False`
+avant). 15 tests ajoutés dans `api/tests/test_regions.py`.
+
+**Trouvé en passant, PAS corrigé** : le formulaire public n'accepte que les métiers
+`pv, pac, isolation, menuiseries, vmc, regulation`, alors que le seed écrit `solaire` et
+que `chat.py` groupe par métier. Un vrai candidat arriverait donc sous `pv` quand les
+partenaires existants sont en `solaire` — même famille de défaut que les zones, sur le
+même chemin. À traiter séparément.
 
 ## Le piège à ne pas réintroduire
 
