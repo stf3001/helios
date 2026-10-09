@@ -343,8 +343,8 @@ export default function ReglageEquipement({ id, config, resultat, majConfig }: P
             <li>· Démarches d’urbanisme simples — une déclaration suffit.</li>
           </ul>
           <p className="text-sm text-dark/60">
-            {resultat ? `${resultat.stockage.inertie.cout_ttc_eur.toLocaleString('fr-FR')} € TTC` : '8 500 € TTC'},
-            pose comprise, TVA 20 % incluse.
+            {resultat ? `${resultat.stockage.inertie.cout_ttc_eur.toLocaleString('fr-FR')} € TTC` : '7 473 € TTC'},
+            pose comprise, TVA 5,5 % incluse.
           </p>
         </>
       )

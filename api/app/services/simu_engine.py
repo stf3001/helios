@@ -211,6 +211,16 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
     )
 
 
+def _inertie_ttc() -> float:
+    """Prix pose du stockage par inertie, TVA comprise.
+
+    Son taux lui est propre (5,5 % depuis le 06/10/2026) et n'est PAS celui que
+    `investissement()` applique au reste du projet : ajouter de l'inertie fait toujours
+    basculer le photovoltaique a 20 %, hypothese prudente non tranchee (cf. `config.py`).
+    """
+    return settings.simu_inertie_cout_ht_eur * (1 + settings.simu_inertie_tva_pct / 100)
+
+
 def _kwc_total(config: Configuration) -> float:
     return (config.panneaux.nb_panneaux + config.panneaux.nb_panneaux_carport) * settings.simu_panneau_wc / 1000
 
@@ -246,8 +256,7 @@ def investissement(config: Configuration) -> dict:
     )
     batterie_ttc = batterie_ht * (1 + taux_plein / 100)
 
-    # Le stockage par inertie est donne TTC, TVA 20 % comprise : on le prend tel quel.
-    inertie_ttc = settings.simu_inertie_cout_ttc_eur if config.stockage.inertie else 0.0
+    inertie_ttc = _inertie_ttc() if config.stockage.inertie else 0.0
 
     # L'eolienne est chiffree TTC par EOLIA, TVA 20 % comprise. Elle ne change PAS le
     # taux du photovoltaique : ce sont deux installations distinctes, et la condition
@@ -628,7 +637,7 @@ def calculer(config: Configuration, profil: ProfilConso, prod_h: list[float],
                 "capacite_kwh": settings.simu_inertie_capacite_kwh if config.stockage.inertie else 0.0,
                 "puissance_kw": settings.simu_inertie_puissance_kw if config.stockage.inertie else 0.0,
                 "garantie_ans": settings.simu_inertie_garantie_ans,
-                "cout_ttc_eur": settings.simu_inertie_cout_ttc_eur,
+                "cout_ttc_eur": round(_inertie_ttc()),
             },
             "batterie_virtuelle": bilan_virtuel,
             # En marche continue la machine tourne a plein : litres et kWh sont ceux du

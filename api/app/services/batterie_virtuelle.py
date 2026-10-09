@@ -92,7 +92,7 @@ def offres() -> dict[str, Offre]:
             code="mysmartbattery",
             label="MyLight — Stockage sur-mesure",
             fournisseur_impose="mylight150",
-            activation_eur=settings.simu_msb_activation_eur,
+            activation_eur=settings.mylight_activation_eur,
             materiel_eur=settings.simu_msb_materiel_eur,
             paliers_kwh=settings.simu_msb_paliers,
             # Zéro, et ce n'est plus une hypothèse : la grille officielle du 28/09/2026 ne

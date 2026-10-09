@@ -120,7 +120,11 @@ class Settings(BaseSettings):
     # Ce que l'offre est : rien à installer chez soi, un abonnement proportionnel à la
     # puissance posée, et le TRANSPORT de l'énergie restituée qui reste dû au kWh. Nécessite
     # de souscrire l'électricité chez mylight150 — contrainte réelle, jamais masquée.
-    mylight_activation_eur: float = 179.0               # À CONFIRMER : absent de la grille publique
+    # Frais d'activation du compte MyLight, commun aux DEUX offres de stockage virtuel
+    # (« sur-mesure » et « illimite ») : 279 EUR, confirme par Stephane le 06/10/2026.
+    # Un seul reglage, volontairement : deux valeurs ont coexiste ici (179 et 279) sans
+    # qu'on sache laquelle etait la bonne, et c'est exactement ce qu'il ne faut pas.
+    mylight_activation_eur: float = 279.0
     mylight_abonnement_eur_par_kwc_mois: float = 1.20   # TTC, par kWc installé
     # Le kWh restitué se paie en trois morceaux. Le total annoncé par la grille (0,10862) est
     # exactement leur somme — `test_batterie_virtuelle.py` le vérifie, pour qu'une correction
@@ -159,7 +163,11 @@ class Settings(BaseSettings):
     simu_panneaux_max: int = 40                     # borne haute du simulateur
     simu_carport_pente_deg: int = 5                 # carport : faible inclinaison, plein sud
     simu_carport_cout_par_panneau_eur: int = 250    # structure seule, hors panneau (a calibrer)
-    simu_carport_tva_pct: float = 20.0              # carport a 20 % par defaut (A CONFIRMER)
+    # 20 % sur la STRUCTURE, tranche par Stephane le 06/10/2026. La partie solaire du
+    # carport, elle, est a 5,5 % — et elle l'est deja : ses panneaux entrent dans le kWc
+    # total (`_kwc_total`) et sont factures sur la ligne photovoltaique, au taux du
+    # projet. Cette ligne-ci ne porte donc que l'acier et la pose, d'ou le taux plein.
+    simu_carport_tva_pct: float = 20.0
 
     # --- Prix de l'electricite (TRV option Base au 1er aout 2026, verifie) ---
     # Le prix du kWh depend de la puissance souscrite : 0,2001 jusqu'a 6 kVA, 0,1985 des 9 kVA.
@@ -238,15 +246,24 @@ class Settings(BaseSettings):
     # La garantie de 40 ans depasse la duree de l'etude : contrairement au lithium, aucun
     # remplacement n'est compte sur les 25 ans. C'est la difference economique qui compte.
     #
-    # A CONFIRMER, deux points qui changent le resultat :
-    #   - le rendement aller-retour, suppose egal a celui du lithium faute de donnee ;
-    #   - le traitement fiscal : l'outil suppose qu'un stockage par inertie est une
-    #     batterie au sens de la TVA, et fait donc basculer le projet a 20 % comme le
-    #     lithium. Si l'administration en decide autrement, c'est ici qu'il faut revenir.
+    # A CONFIRMER, le rendement aller-retour, suppose egal a celui du lithium faute de
+    # donnee constructeur. Il commande directement l'autonomie annoncee.
+    #
+    # DEUX QUESTIONS FISCALES DISTINCTES, NE PAS LES CONFONDRE :
+    #   1. le taux qui porte le stockage lui-meme : 5,5 %, tranche par Stephane le
+    #      06/10/2026 (il etait suppose a 20 % depuis l'origine) ;
+    #   2. le taux qui porte LE RESTE du projet quand on ajoute de l'inertie : l'outil
+    #      suppose toujours qu'une inertie est une batterie au sens de la condition des
+    #      5,5 % et bascule donc le photovoltaique a 20 % (`investissement()`). Cette
+    #      seconde question n'est PAS tranchee, et elle pese bien plus lourd que la
+    #      premiere : sur un projet de 6 kWc elle deplace plusieurs milliers d'euros.
     simu_inertie_capacite_kwh: float = 10.0
     simu_inertie_puissance_kw: float = 6.0
-    simu_inertie_cout_ttc_eur: int = 8500
-    simu_inertie_tva_pct: float = 20.0
+    # Le devis Energiesto connu est un prix TTC de 8 500 EUR, TVA 20 % comprise. On garde
+    # le HT qu'il contient (8500 / 1,20) et c'est le moteur qui pose le taux : le jour ou
+    # la question 2 se tranche, il n'y a qu'un nombre a bouger, pas une regle de trois.
+    simu_inertie_cout_ht_eur: int = 7083
+    simu_inertie_tva_pct: float = 5.5
     simu_inertie_garantie_ans: int = 40
 
     # --- Recherche de la meilleure taille ---
@@ -287,7 +304,7 @@ class Settings(BaseSettings):
     # Ce que l'offre est : on LOUE UN VOLUME annuel. L'abonnement est tout compris et le
     # transport n'est PAS facture en plus, contrairement au stockage illimite. C'est ce qui
     # en fait le bon choix dans la quasi-totalite des cas (cf. batterie_virtuelle.py).
-    simu_msb_activation_eur: float = 279.0   # A CONFIRMER : absent de la grille publique
+    # (l'activation est commune aux deux offres : voir `mylight_activation_eur`)
     # Le coffret MyLight a poser chez le client, ordre de grandeur donne par Stephane le
     # 28/09/2026. C'est la seule des deux offres qui demande du materiel : le stockage
     # illimite n'en pose aucun, il ne coute que ses frais d'activation.

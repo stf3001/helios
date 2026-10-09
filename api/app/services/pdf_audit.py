@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 
 from fpdf import FPDF
+from PIL import Image
 
 from app.core.config import settings
 
@@ -53,7 +54,12 @@ class _AuditPDF(FPDF):
         if _LOGO_PATH.exists():
             logo_h = 14
             self.image(str(_LOGO_PATH), x=self.l_margin, y=7, h=logo_h)
-            text_x = self.l_margin + logo_h * (1920 / 1113) + 4
+            # La marque est carree depuis la refonte (`frontend/scripts/brand_assets.py`) :
+            # on lit le rapport du fichier plutot que de le reecrire en dur, sinon le
+            # titre se decale le jour ou le dessin change de format.
+            with Image.open(_LOGO_PATH) as mark:
+                ratio = mark.width / mark.height
+            text_x = self.l_margin + logo_h * ratio + 4
         else:
             text_x = self.l_margin
 

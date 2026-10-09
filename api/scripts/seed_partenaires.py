@@ -5,11 +5,17 @@ present plutot que de le dupliquer. La raison sociale sert de cle.
 
     .venv\Scripts\python.exe -m scripts.seed_partenaires
 
-ATTENTION — LES PARTENAIRES ISOLATION SONT DES NOMS PROVISOIRES. Stephane a demande de
-remplir la colonne avec des noms quelconques en attendant les vrais. Ces treize
-entreprises N'EXISTENT PAS. Elles doivent etre remplacees avant toute mise en relation
-reelle : envoyer un client chez une societe inventee serait pire que de ne rien proposer.
-Elles sont regroupees ci-dessous pour qu'on les trouve d'un coup d'oeil.
+ATTENTION — LA PLUPART DE CES RAISONS SOCIALES SONT PROVISOIRES. Stephane a demande de
+remplir l'annuaire avec des noms quelconques en attendant les vrais. Ces entreprises
+N'EXISTENT PAS : les treize isolations, les soixante-dix-huit renforts et le courtier.
+Seules cinq sont reelles (AD Solar, Ensol, Hydrolia, Eolia, Energiesto).
+
+C'est pourquoi le seed ne les active PAS : elles entrent en `en_attente`, statut que
+l'annuaire public filtre et que `routers/chat.py` ne donne pas au modele. Helios ne nomme
+donc que les vraies, et dit franchement qu'il n'a pas encore de partenaire dans la region
+— ce qui vaut mieux qu'envoyer un client chez une societe inventee, ou que de faire
+decouvrir a une vraie societe homonyme qu'elle est « partenaire HELIOS ». On les repasse
+en `actif` une par une, a la signature.
 """
 
 import asyncio
@@ -110,6 +116,11 @@ PARTENAIRES: dict[str, tuple[tuple[str, ...], tuple[str, ...], bool]] = {
     **_renforts(),
 }
 
+#: Les cinq entreprises reelles. Tout le reste de `PARTENAIRES` est provisoire et reste
+#: `en_attente` jusqu'a signature. Liste en dur et non deduite : une raison sociale qui
+#: n'y figure pas est inventee par defaut, ce qui est le sens prudent de l'erreur.
+REELS: frozenset[str] = frozenset({"AD Solar", "Ensol", "Hydrolia", "Eolia", "Energiesto"})
+
 
 async def semer() -> None:
     async with async_session() as db:
@@ -123,11 +134,28 @@ async def semer() -> None:
             partenaire.zones = list(zones)
             partenaire.metiers = list(metiers)
             partenaire.rge = rge
-            partenaire.statut = "actif"
+            partenaire.statut = "actif" if raison_sociale in REELS else "en_attente"
         await db.commit()
 
-        total = len(list(await db.scalars(select(Partner).where(Partner.statut == "actif"))))
-        print(f"{len(PARTENAIRES)} partenaires semes, {total} actifs dans l'annuaire.")
+        actifs = list(await db.scalars(select(Partner).where(Partner.statut == "actif")))
+        provisoires = len(PARTENAIRES) - len(REELS)
+        print(
+            f"{len(PARTENAIRES)} partenaires semes ({provisoires} provisoires laisses "
+            f"en attente), {len(actifs)} actifs dans l'annuaire."
+        )
+
+        # Le seed ne connait que SES lignes. Des partenaires actifs peuvent venir d'ailleurs :
+        # un ancien seed, une candidature validee, un test. Le 06/10/2026 il en restait quatre,
+        # tous inventes (« Armor Solaire » et « Armor Thermique » d'un nommage abandonne,
+        # « Solaris Renov » et « Courtage Energie Pro » des tests du jalon 8) — et le chat les
+        # nommait. On ne les desactive PAS d'office, pour ne pas defaire une activation faite
+        # a la main depuis /admin ; on les affiche, pour qu'ils ne repassent pas inapercus.
+        inconnus = sorted(p.raison_sociale for p in actifs if p.raison_sociale not in REELS)
+        if inconnus:
+            print(
+                f"ATTENTION : {len(inconnus)} partenaire(s) actif(s) hors de ce script — "
+                f"verifier qu'ils existent vraiment : {', '.join(inconnus)}"
+            )
 
 
 if __name__ == "__main__":

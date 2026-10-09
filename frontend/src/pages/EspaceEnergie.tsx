@@ -314,7 +314,7 @@ export default function EspaceEnergie() {
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                       <option value="">— indifférent —</option>
                       <option value="base">Base</option>
-                      <option value="hphc">Heures pleines / creuses</option>
+                      <option value="HPHC">Heures pleines / creuses</option>
                       <option value="tempo">Tempo</option>
                     </select>
                   </div>

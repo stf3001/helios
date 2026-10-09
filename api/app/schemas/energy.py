@@ -19,6 +19,9 @@ class CourtageRequest(BaseModel):
     offre_actuelle: str | None = Field(default=None, max_length=100)
     conso_annuelle_kwh: int | None = Field(default=None, ge=0, le=100000)
     puissance_kva: int | None = Field(default=None, ge=3, le=36)
-    option_tarifaire: Literal["base", "hphc", "tempo"] | None = None
+    option_tarifaire: Literal["base", "HPHC", "tempo"] | None = None
+    # Meme orthographe que la fiche Maison (`schemas/house.py`) : `courtage_client`
+    # retombe sur `house.option_tarifaire` quand le champ est vide, les deux valeurs
+    # finissent donc dans le meme dictionnaire. Deux casses = deux options differentes.
     montant_facture_annuelle_eur: int | None = Field(default=None, ge=0)
     pdl: str | None = Field(default=None, min_length=14, max_length=14, pattern=r"^\d{14}$")
