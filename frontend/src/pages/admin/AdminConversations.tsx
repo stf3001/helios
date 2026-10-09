@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, ArrowLeft, MessageSquare, User2 } from 'lucide-react'
-import { useAdminData } from '../../components/admin/AdminLayout'
+import { AlertTriangle, ArrowLeft, MessageSquare, TriangleAlert, User2, UserCircle2, Users2 } from 'lucide-react'
+import Depliant from '../../components/Depliant'
+import { Attente, Erreur, TitrePage, useAdminData } from '../../components/admin/AdminLayout'
 import { useAuth } from '../../context/AuthContext'
 import { useTitle } from '../../hooks/useTitle'
 
@@ -37,83 +38,119 @@ interface Detail {
 }
 
 const VOIE: Record<string, { label: string; classe: string }> = {
-  kb: { label: 'instantané', classe: 'bg-emerald-950 text-emerald-300' },
-  local: { label: 'local', classe: 'bg-sky-950 text-sky-300' },
-  api: { label: 'API', classe: 'bg-amber-950 text-amber-300' },
+  kb: { label: 'instantané', classe: 'border-leaf/40 bg-leaf/10 text-leaf' },
+  local: { label: 'local', classe: 'border-sky/40 bg-sky/10 text-sky' },
+  api: { label: 'API', classe: 'border-terra/40 bg-terra/10 text-terra' },
 }
 
 export default function AdminConversations() {
   useTitle('Back-office — Conversations')
-  const [mode, setMode] = useState<string>('')
   const [ouverte, setOuverte] = useState<string | null>(null)
   const { data, error } = useAdminData<{ total: number; conversations: Ligne[] }>(
-    `/api/admin/conversations?limit=60${mode ? `&mode=${mode}` : ''}`,
+    '/api/admin/conversations?limit=60',
   )
 
   if (ouverte) return <DetailConversation id={ouverte} onRetour={() => setOuverte(null)} />
 
+  /* Les trois filtres « Toutes / Public / Connecté » ont été remplacés par trois blocs
+     repliables (demande de Stéphane, 08/10/2026). Ils disent la même chose, mais sans
+     cacher les deux autres populations — et surtout ils sortent EN TÊTE les échanges où
+     Helios n'a rien trouvé de pertinent, qui sont les seuls à appeler un travail. Les
+     groupes sont exclusifs : une conversation sans réponse n'est pas répétée plus bas. */
+  const toutes = data?.conversations ?? []
+  const sansReponse = toutes.filter((c) => c.sans_reponse)
+  const reste = toutes.filter((c) => !c.sans_reponse)
+  const groupes = [
+    {
+      cle: 'sans_reponse',
+      titre: 'À regarder en priorité',
+      aide: "Helios n'a trouvé aucune source au-dessus du seuil de pertinence : la base de connaissances a un trou, ou la question était hors de son champ.",
+      Icone: TriangleAlert,
+      couleur: 'text-terra',
+      lignes: sansReponse,
+      ouvert: sansReponse.length > 0,
+    },
+    {
+      cle: 'connecte',
+      titre: 'Foyers connectés',
+      aide: 'Échanges où Helios disposait de la fiche maison et des études du foyer.',
+      Icone: UserCircle2,
+      couleur: 'text-primary',
+      lignes: reste.filter((c) => c.mode === 'connecte'),
+      ouvert: sansReponse.length === 0,
+    },
+    {
+      cle: 'public',
+      titre: 'Visiteurs anonymes',
+      aide: 'Échanges publics, sans compte : Helios ne répond que sur la base de connaissances.',
+      Icone: Users2,
+      couleur: 'text-sky',
+      lignes: reste.filter((c) => c.mode !== 'connecte'),
+      ouvert: false,
+    },
+  ]
+
   return (
     <>
-      <h1 className="text-xl font-semibold text-white">Conversations</h1>
-      <p className="text-sm text-slate-500 mt-1">
-        Échanges réels avec Helios. L'identité du foyer est affichée — accès complet assumé.
-      </p>
+      <TitrePage titre="Conversations">
+        Échanges réels avec Helios. L'identité du foyer est affichée — accès complet assumé, et
+        chaque consultation nominative est tracée dans le journal des accès.
+      </TitrePage>
 
-      <div className="mt-5 flex gap-2">
-        {[
-          { v: '', l: 'Toutes' },
-          { v: 'public', l: 'Public' },
-          { v: 'connecte', l: 'Connecté' },
-        ].map((f) => (
-          <button
-            key={f.v}
-            onClick={() => setMode(f.v)}
-            className={
-              'rounded-lg px-3 py-1.5 text-sm ' +
-              (mode === f.v ? 'bg-slate-700 text-white' : 'border border-slate-800 text-slate-400 hover:bg-slate-800')
-            }
-          >
-            {f.l}
-          </button>
-        ))}
-      </div>
-
-      {error && <p className="mt-4 text-rose-400">{error}</p>}
-      {!data && !error && <p className="mt-4 text-slate-500">Chargement…</p>}
+      {error && <Erreur>{error}</Erreur>}
+      {!data && !error && <Attente />}
 
       {data && (
         <>
-          <p className="mt-4 text-xs text-slate-500">{data.total} conversation(s) au total</p>
-          <div className="mt-3 space-y-2">
-            {data.conversations.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setOuverte(c.id)}
-                className="w-full text-left rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700"
+          <p className="mt-4 text-xs text-dark/55">
+            {data.total} conversation(s) au total · {toutes.length} affichée(s)
+          </p>
+          <div className="mt-3 space-y-3">
+            {groupes.map((g) => (
+              <Depliant
+                key={g.cle}
+                titre={g.titre}
+                aide={g.aide}
+                ouvert={g.ouvert}
+                icone={<g.Icone className={'h-5 w-5 shrink-0 ' + g.couleur} />}
+                resume={<span className="tabular-nums">{g.lignes.length}</span>}
               >
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className={'rounded px-1.5 py-0.5 text-xs ' + (c.mode === 'connecte' ? 'bg-slate-800 text-slate-200' : 'bg-slate-800/60 text-slate-400')}>
-                    {c.mode}
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <User2 className="w-3.5 h-3.5 text-slate-500" />
-                    {c.email ?? <span className="text-slate-500">visiteur anonyme</span>}
-                  </span>
-                  <span className="flex items-center gap-1 text-slate-500 text-xs">
-                    <MessageSquare className="w-3.5 h-3.5" /> {c.nb_messages}
-                  </span>
-                  {c.sans_reponse && (
-                    <span className="flex items-center gap-1 rounded bg-amber-950 px-1.5 py-0.5 text-xs text-amber-300">
-                      <AlertTriangle className="w-3 h-3" /> sans réponse pertinente
-                    </span>
-                  )}
-                  <span className="ml-auto text-xs tabular-nums text-slate-600">
-                    {new Date(c.dernier_message ?? c.started_at).toLocaleString('fr-FR')}
-                  </span>
-                </div>
-              </button>
+                {g.lignes.length === 0 ? (
+                  <p className="text-sm text-dark/70">Aucune conversation dans ce groupe.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {g.lignes.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setOuverte(c.id)}
+                        className="w-full rounded-xl border border-bord bg-cream/50 p-3 text-left transition hover:border-primary/40 hover:bg-cream"
+                      >
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="rounded-full border border-bord bg-white px-2 py-0.5 text-xs text-dark/70">
+                            {c.mode}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-ink">
+                            <User2 className="h-3.5 w-3.5 text-dark/45" />
+                            {c.email ?? <span className="text-dark/55">visiteur anonyme</span>}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-dark/55">
+                            <MessageSquare className="h-3.5 w-3.5" /> {c.nb_messages}
+                          </span>
+                          {c.sans_reponse && (
+                            <span className="flex items-center gap-1 rounded-full border border-terra/40 bg-terra/10 px-2 py-0.5 text-xs text-terra">
+                              <AlertTriangle className="h-3 w-3" /> sans réponse pertinente
+                            </span>
+                          )}
+                          <span className="ml-auto text-xs tabular-nums text-dark/45">
+                            {new Date(c.dernier_message ?? c.started_at).toLocaleString('fr-FR')}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </Depliant>
             ))}
-            {data.conversations.length === 0 && <p className="text-sm text-slate-500">Aucune conversation.</p>}
           </div>
         </>
       )}
@@ -139,21 +176,21 @@ function DetailConversation({ id, onRetour }: { id: string; onRetour: () => void
 
   return (
     <>
-      <button onClick={onRetour} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white">
-        <ArrowLeft className="w-4 h-4" /> Toutes les conversations
+      <button onClick={onRetour} className="flex items-center gap-1.5 text-sm text-primary hover:text-terra">
+        <ArrowLeft className="h-4 w-4" /> Toutes les conversations
       </button>
 
-      {error && <p className="mt-4 text-rose-400">{error}</p>}
-      {!detail && !error && <p className="mt-4 text-slate-500">Chargement…</p>}
+      {error && <Erreur>{error}</Erreur>}
+      {!detail && !error && <Attente />}
 
       {detail && (
         <>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <h1 className="text-lg font-semibold text-white">
+            <h1 className="font-display text-2xl text-ink">
               {detail.foyer ? `${detail.foyer.prenom ?? ''} ${detail.foyer.email}`.trim() : 'Visiteur anonyme'}
             </h1>
-            <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300">{detail.mode}</span>
-            <span className="text-xs text-slate-500">{new Date(detail.started_at).toLocaleString('fr-FR')}</span>
+            <span className="rounded-full border border-bord bg-white px-2 py-0.5 text-xs text-dark/70">{detail.mode}</span>
+            <span className="text-xs text-dark/55">{new Date(detail.started_at).toLocaleString('fr-FR')}</span>
           </div>
 
           <div className="mt-5 space-y-3">
@@ -165,35 +202,34 @@ function DetailConversation({ id, onRetour }: { id: string; onRetour: () => void
                 <div
                   key={i}
                   className={
-                    'rounded-xl border p-4 ' +
-                    (estHelios ? 'border-slate-800 bg-slate-900' : 'border-slate-800/60 bg-slate-900/40')
+                    'rounded-2xl border border-bord p-4 ' + (estHelios ? 'bg-white' : 'bg-cream/60')
                   }
                 >
-                  <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
-                    <span className={estHelios ? 'font-medium text-primary' : 'font-medium text-slate-400'}>
+                  <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className={estHelios ? 'font-semibold text-primary' : 'font-semibold text-dark/70'}>
                       {estHelios ? 'Helios' : 'Foyer'}
                     </span>
-                    {voie && <span className={'rounded px-1.5 py-0.5 ' + voie.classe}>{voie.label}</span>}
+                    {voie && <span className={'rounded-full border px-2 py-0.5 ' + voie.classe}>{voie.label}</span>}
                     {m.rag_score != null && (
-                      <span className={scoreFaible ? 'text-amber-400' : 'text-slate-500'}>
+                      <span className={scoreFaible ? 'text-terra' : 'text-dark/55'}>
                         score {m.rag_score}
                         {scoreFaible && ' · sous le seuil'}
                       </span>
                     )}
-                    {m.cout_eur != null && <span className="text-slate-500">{m.cout_eur.toFixed(4)} €</span>}
-                    {m.constitution_version && <span className="text-slate-600">constitution {m.constitution_version}</span>}
-                    <span className="ml-auto text-slate-600">{new Date(m.created_at).toLocaleTimeString('fr-FR')}</span>
+                    {m.cout_eur != null && <span className="text-dark/55">{m.cout_eur.toFixed(4)} €</span>}
+                    {m.constitution_version && <span className="text-dark/45">constitution {m.constitution_version}</span>}
+                    <span className="ml-auto text-dark/45">{new Date(m.created_at).toLocaleTimeString('fr-FR')}</span>
                   </div>
 
-                  <p className="whitespace-pre-line text-sm text-slate-200">{m.content}</p>
+                  <p className="whitespace-pre-line text-sm text-dark">{m.content}</p>
 
                   {m.citations && m.citations.length > 0 && (
-                    <div className="mt-3 border-t border-slate-800 pt-2">
-                      <div className="text-xs text-slate-500 mb-1">Sources mobilisées</div>
+                    <div className="mt-3 border-t border-bord pt-2">
+                      <div className="mb-1 text-xs text-dark/55">Sources mobilisées</div>
                       <div className="flex flex-wrap gap-1.5">
                         {m.citations.map((c, j) => (
-                          <span key={j} className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
-                            {c.titre.slice(0, 60)} <span className="text-slate-600">{c.score}</span>
+                          <span key={j} className="rounded-full bg-cream px-2 py-0.5 text-xs text-dark/70">
+                            {c.titre.slice(0, 60)} <span className="text-dark/45">{c.score}</span>
                           </span>
                         ))}
                       </div>

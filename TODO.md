@@ -46,7 +46,7 @@ qui reçoit les réservations, et sur quelles heures. Les plages inscrites dans
 sont **inventées** — le commentaire du code le dit. Un créneau proposé engage
 quelqu'un à décrocher.
 
-### [ ] 3. Helios cite 91 entreprises qui n'existent pas
+### [x] 3. Helios citait 96 entreprises qui n'existent pas — fait le 06/10/2026
 
 `api/scripts/seed_partenaires.py` contient 96 partenaires, dont **5 réels** :
 AD Solar (PACA), Ensol (ailleurs), Hydrolia, Eolia, Energiesto. Les 91 autres
@@ -60,9 +60,23 @@ société homonyme qui se découvre « partenaire HELIOS ». Le second n'est pas
 théorique — la génération aléatoire a produit une collision **à l'intérieur de
 sa propre liste** (« Armor Isolation »), d'où le garde-fou à la fin du script.
 
-**Correctif d'une ligne** : passer les 91 en `statut = "en_attente"`. Helios ne
-nomme plus que les vrais et dit franchement qu'il n'a pas encore de partenaire
-référencé dans la région. On les réactive à la signature.
+**Fait, et il y en avait quatre de plus que prévu.** Le seed pose désormais
+`statut = "actif"` pour les seules cinq entreprises réelles (`REELS` dans le script) et
+laisse les 92 autres en `en_attente` — statut que l'annuaire public
+(`routers/partners.py:29`) et le chat (`routers/chat.py:250`) filtrent déjà tous les deux.
+
+**Quatre partenaires actifs échappaient au seed**, parce qu'ils ne figurent dans aucune
+de ses listes : « Armor Solaire » et « Armor Thermique », restes d'un nommage abandonné
+(remplacé depuis par Iroise/Brocéliande), puis « Solaris Renov » et « Courtage Energie
+Pro », partenaires de test du jalon 8. Tous inventés, tous nommés par Helios. Basculés à
+la main, un par un.
+
+Le script **ne les désactive pas d'office** — ce serait défaire une activation faite
+depuis `/admin` — mais il **affiche désormais tout partenaire actif qu'il ne connaît
+pas**, pour que le trou ne se reforme pas en silence.
+
+**Vérifié en base le 06/10/2026** : 5 actifs (AD Solar, Energiesto, Ensol, Eolia,
+Hydrolia), 92 en attente. Le seed relancé est idempotent et ne réactive rien.
 
 ### [ ] 4. Les quatre experts sont des personnes inventées
 
@@ -92,26 +106,54 @@ quelques villes, dont Brest, où le facteur de charge actuel ressort à 26 %).
 Rappel : la production annoncée sera de toute façon confirmée chez le client par
 le prêt d'anémomètre d'EOLIA.
 
-### [ ] 6. La TVA du stockage par inertie
+### [x] 6. La TVA du stockage par inertie — tranchée à 5,5 % le 06/10/2026
 
-`simu_inertie_tva_pct = 20.0`. Supposée identique à celle d'une batterie. Si
-l'inertie relève des 5,5 %, le prix affiché est faux de 14,5 points.
+Stéphane a tranché : **5,5 %**. Le réglage `simu_inertie_tva_pct` était en plus **mort** —
+le moteur prenait `simu_inertie_cout_ttc_eur = 8500` tel quel et ne lisait jamais le taux.
+Changer le seul taux n'aurait donc rien changé à l'écran.
+
+Corrigé en posant le HT que contenait ce devis (8 500 / 1,20 = **7 083 €**, nouveau
+`simu_inertie_cout_ht_eur`) et en laissant le moteur appliquer le taux (`_inertie_ttc()`
+dans `simu_engine.py`, utilisé aux deux endroits qui affichaient le prix). **Prix affiché :
+8 500 € → 7 473 € TTC.** Le repli en dur de `ReglageEquipement.tsx` a suivi.
+
+**IL RESTE UNE SECONDE QUESTION, NON TRANCHÉE, QUI PÈSE PLUS LOURD.** Ce qui précède ne
+concerne que le taux porté par le stockage lui-même. Le moteur continue de supposer
+qu'ajouter de l'inertie fait basculer **tout le photovoltaïque** à 20 %, comme le ferait
+une batterie lithium (`investissement()`, et le test
+`test_l_inertie_fait_basculer_la_tva_comme_une_batterie` qui l'encode). Sur un projet de
+6 kWc, cette hypothèse déplace plusieurs milliers d'euros — bien plus que les 1 027 € que
+vient de rendre la première. Les deux sont logiquement liées : si l'inertie est à 5,5 %,
+il est douteux qu'elle disqualifie le reste. **Laissé à l'hypothèse prudente** (prix
+affiché plus élevé) en attendant la réponse.
 
 ### [ ] 7. Le rendement aller-retour de l'inertie
 
 Supposé égal au lithium, faute de donnée constructeur. Il commande directement
-l'autonomie annoncée. **À demander à Energiesto.**
+l'autonomie annoncée. **À demander à Energiesto** — en même temps que la question
+fiscale restée ouverte au point 6.
 
-### [ ] 8. Les frais d'activation de la batterie virtuelle
+### [x] 8. Les frais d'activation de la batterie virtuelle — 279 €, le 06/10/2026
 
-Deux valeurs coexistent et je ne sais plus d'où elles viennent :
-`mylight_activation_eur = 179` et `simu_msb_activation_eur = 279`. Les deux
-portent « absent de la grille publique ». Vérifier s'il s'agit de deux choses
-différentes, ou d'une seule mal recopiée.
+C'étaient bien **deux réglages pour une seule chose** : ils alimentaient les deux offres
+MyLight de `batterie_virtuelle.offres()` (« sur-mesure » à 279 €, « illimité » à 179 €),
+alors que l'activation est celle du compte, commune aux deux.
 
-### [ ] 9. La TVA du carport
+Stéphane a tranché : **279 €**. `simu_msb_activation_eur` est supprimé, les deux offres
+lisent `mylight_activation_eur = 279`. **Un seul réglage** — c'est le fait d'en avoir eu
+deux qui avait fabriqué le doute.
 
-`simu_carport_tva_pct = 20.0`, « par défaut ». À trancher.
+### [x] 9. La TVA du carport — tranchée le 06/10/2026
+
+Règle de Stéphane : **5,5 % sur la partie solaire, 20 % sur la structure.** Vérifié dans
+le code : **c'est déjà exactement ce que fait le moteur**, et ce n'était écrit nulle part.
+Les panneaux du carport entrent dans le kWc total (`_kwc_total`) et sont donc facturés sur
+la ligne photovoltaïque, au taux du projet ; la ligne carport ne porte que l'acier et la
+pose (`simu_carport_cout_par_panneau_eur`, « structure seule, hors panneau »), d'où le
+taux plein.
+
+Aucun calcul à changer : le `A CONFIRMER` est remplacé par la règle et son explication,
+pour que personne ne « corrige » la ligne à 5,5 % en croyant bien faire.
 
 ---
 
@@ -209,25 +251,34 @@ qu'il est là, tout ce qui lit cette table se trompe de saison.
 (`npm run dev` dans `frontend/`, port 5173). Il part désormais avec le projet, et
 Git ne le signale plus comme en attente.
 
-### [ ] 16. Les images de marque sont restées à l'ancienne charte
+### [x] 16. Les images de marque sont passées à la charte — fait le 06/10/2026
 
-La refonte visuelle du 30/09/2026 (direction « carnet de maison ») a changé le
-site entier, mais **pas les fichiers PNG** : ils sont produits par un outil
-graphique, pas par le code.
+La refonte du 30/09/2026 avait changé le site entier mais **pas les fichiers PNG**. Ils
+sont désormais **produits par le code** (`frontend/scripts/brand_assets.py`, à relancer
+quand la charte bouge) : le même soleil au trait que `MarqueHelios.tsx` et
+`public/favicon.svg`, en terracotta `--h-accent` sur l'ivoire `--h-sable`, tracé en
+sur-échantillonnage ×4 pour que les bords soient lissés.
 
-- `frontend/public/favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`,
-  `icon-512.png`, `icon-maskable-512.png` — l'ancien logo. Le favicon SVG, lui,
-  est refait (`public/favicon.svg`) et passe en premier ; les PNG ne servent plus
-  qu'aux navigateurs anciens et à l'écran d'accueil d'un téléphone.
-- `frontend/public/og-image.png` — l'aperçu partagé sur les réseaux et dans les
-  messageries. C'est celui qui se voit le plus : il porte encore le fond orange.
-- `frontend/public/brand/logo-mark.png`, `logo-full.png`, `logo-house-sun.png` —
-  plus référencés nulle part depuis la refonte. À supprimer ou à refaire.
+Les sept fichiers refaits : `favicon-32.png` (transparent, trait épaissi comme le SVG),
+`apple-touch-icon.png` (fond opaque, iOS n'en pose aucun), `icon-192`, `icon-512`,
+`icon-maskable-512` (dessin réduit à 45 % du côté pour tenir dans la zone sûre d'Android),
+`brand/logo-mark.png` et `og-image.png` (ivoire, « Helios » en Instrument Serif,
+l'accroche du site en italique terracotta).
 
-La marque au trait existe en composant (`frontend/src/components/MarqueHelios.tsx`)
-et en SVG (`public/favicon.svg`) : elle peut servir de base à l'export.
+**`logo-mark.png` n'était pas orphelin, contrairement à ce que disait ce point** :
+`api/app/services/pdf_audit.py` le met en tête de chaque PDF de pré-audit. Il a donc été
+refait, et non supprimé. Au passage, le PDF calculait la position de son titre avec le
+rapport `1920/1113` **écrit en dur** ; la marque étant carrée désormais, il lit le rapport
+du fichier. Vérifié sur un vrai PDF rendu.
 
-### [ ] 17. « hphc » s'écrit en deux orthographes dans le site
+`logo-full.png` et `logo-house-sun.png`, eux, n'étaient référencés nulle part (vérifié sur
+tout le dépôt) : supprimés.
+
+**Reste, hors de ce point** : la palette du PDF de pré-audit (`pdf_audit.py`, constantes
+`ORANGE` / `INK` / `CREAM`) est encore celle de l'ancienne charte. Trois lignes, mais c'est
+un document client — à faire volontairement, pas en passant.
+
+### [x] 17. « hphc » s'écrivait en deux orthographes — fait le 06/10/2026
 
 `frontend/src/pages/EspaceEnergie.tsx:317` propose `value="hphc"` en minuscules
 dans le formulaire de courtage, alors que la fiche Maison et le simulateur
@@ -235,10 +286,18 @@ dans le formulaire de courtage, alors que la fiche Maison et le simulateur
 `api/app/schemas/house.py`). Les deux écrans ne parlent donc pas de la même
 chose, et une valeur saisie dans l'un ne se relit pas dans l'autre.
 
-Repéré le 01/10/2026 en ajoutant l'option tarifaire au simulateur, qui a été
-alignée sur la fiche. Celui de l'espace énergie ne l'est pas : il part dans
-`POST /api/energy/courtage`, pas dans la fiche, donc rien n'est cassé
-aujourd'hui — mais les deux finiront par se croiser.
+Repéré le 01/10/2026 en ajoutant l'option tarifaire au simulateur, qui a été alignée
+sur la fiche.
+
+**Ils se croisaient déjà**, contrairement à ce qui était écrit ici : `courtage_client.py:29`
+retombe sur `house.option_tarifaire` — donc `HPHC`, en capitales — quand le champ du
+formulaire est laissé vide. Les deux orthographes finissaient dans le même dictionnaire,
+selon que l'utilisateur remplissait le champ ou non.
+
+Aligné sur la fiche Maison, qui est la référence : `<option value="HPHC">` dans
+`EspaceEnergie.tsx`, et le `Literal` de `schemas/energy.py` qui l'accompagne.
+`energy_advisor.py:92` n'a pas bougé : il compare après `.lower()`, insensible à la casse
+volontairement.
 
 ### [ ] 18. Le puits canadien n'entre dans aucun calcul
 
@@ -412,7 +471,142 @@ base de connaissances — voir le point 23.
 
 ---
 
+### [x] 24. L'espace client était froid et trop long — refait le 06/10/2026
+
+Trois reproches de Stéphane, tous fondés, tous mesurés avant et après.
+
+**On atterrissait sur le formulaire.** `Login.tsx` envoyait sur `/mon-espace`, c'est-à-dire
+46 champs, au lieu de l'accueil de l'espace. Corrigé : `/espace`. Et la page de connexion
+honore maintenant le `state.from` que `AdminRoute` et `ProtectedRoute` lui passaient déjà
+sans que personne ne le lise — viser `/admin` déconnecté ramène sur `/admin`, plus ailleurs.
+`Register.tsx` va lui aussi sur `/espace`, qui met en scène les trois questions de départ
+plutôt que d'ouvrir une fiche vide.
+
+**La fiche dépliait ses six blocs d'un coup.** Ils sont repliés, chacun portant son
+avancement réel (« ✓ complet », « 9 / 11 », « 1 / 5 ») et une icône. Le résumé est ce qui
+rend le pliage utile : fermé, un bloc dit déjà où il en est, donc on ouvre celui qu'on veut
+remplir au lieu de les ouvrir tous pour chercher. **Mesuré : 6 244 px → 2 274 px, soit
+6,6 écrans de défilement en moins.**
+
+**L'accueil de l'espace était froid et long.** Photo « carnet de maison » en en-tête (la
+même que l'accueil du site, donc on reste chez soi en se connectant), résumé de fiche
+ramené d'un pavé à une ligne, tuiles resserrées sur deux lignes au lieu de trois, et les
+trois rangées pliées sous le même motif. **Mesuré : 981 px gagnés, 1,6 écran.**
+
+**Le bloc de conversation, repris dans la foulée** (« cette section est moche ») : les
+trois amorces de questions sont supprimées (`SUGGESTIONS` dans `ChatWidget.tsx`), la boîte
+passe de 70 vh à 44 vh via une prop `compact` — la page publique `/helios` garde la grande,
+elle n'a que la conversation à montrer —, et le bloc devient lui aussi un dépliant.
+
+**Il est OUVERT à l'arrivée**, volontairement : la conversation est ce pour quoi on vient
+dans l'espace, la replier d'office remettrait un clic entre le client et Helios, ce que la
+fusion du 30/09 avait justement supprimé. À changer en retirant `ouvert` si Stéphane préfère.
+
+Deux détails qui ne s'inventent pas : les commandes (« Mes conversations », « Nouvelle »)
+sont DANS le panneau et non dans l'en-tête, parce qu'un bouton posé dans un `<summary>`
+replie le bloc quand on le clique ; et en mode compact le widget perd sa bordure pleine au
+profit d'un filet plus clair, sans quoi son cadre et celui du dépliant faisaient **deux
+boîtes imbriquées** — précisément ce qui donnait l'impression de « moche ».
+
+**Puis le rail d'onglets a remplacé l'empilement** (« regarde le menu dépliant gauche, je
+le trouve super sympa »). « Mon espace » reprend le rail du simulateur : colonne d'icônes à
+gauche à partir de `md`, bande horizontale en dessous, cinq sections — Helios, Ma maison,
+Simuler, Papiers, Le reste. **Mesuré : 2 173 px → 1 265 px**, la page tient à l'écran.
+
+Trois choses qui ne se voient pas et qu'il ne faut pas défaire :
+
+- **La conversation reste MONTÉE quand on change d'onglet**, simplement cachée. La démonter
+  perdrait les messages à l'écran, l'identifiant de conversation et la question en cours de
+  frappe dès qu'on va regarder ses documents. Vérifié : un texte saisi est toujours là au
+  retour.
+- **Le rail ne porte que ce qui vit sur cette page.** Pré-audits, énergie, partenaires et
+  pro sont de vraies pages ; en faire des onglets donnerait un `tablist` dont la moitié des
+  onglets quittent la page, ce qui ment au clavier comme au lecteur d'écran. Ils sont
+  regroupés dans l'onglet « Le reste ».
+- **`components/RailOnglets.tsx` n'est PAS le rail du simulateur, et c'est délibéré.**
+  Celui de `SimulateurSolaire.tsx` est soudé à sa grille de trois colonnes : bouton
+  « Replier », panneau qui s'ouvre en calque flottant sous `xl`, bordures qui changent selon
+  qu'il partage ou non la boîte du panneau. Le partager aurait demandé une demi-douzaine de
+  props pour piloter tout ça de l'extérieur — plus coûteux que trente lignes dupliquées.
+  Ce qui EST partagé, c'est le dessin du bouton, parce que c'est lui qu'on voit.
+
+**Un seul dépliant pour tout le site** : `components/Depliant.tsx`. Il vivait dans
+`components/simulateur/Onglets.tsx` (c'est le motif de « La maison de demain », que
+Stéphane a demandé de reprendre) ; il en a été sorti plutôt que recopié — trois copies
+auraient divergé au premier ajustement, et ça se verrait sur toutes les pages à la fois.
+`<details>` natif : clavier, lecteur d'écran et recherche dans la page marchent sans
+qu'on les recode. **Ne pas le passer en composant contrôlé.**
+
+**Reste ouvert** : le voile de l'en-tête photo n'a PAS été soumis au relevé de contraste
+WCAG qu'on applique au héros de l'accueil (point 21). Le texte est posé sur la partie
+pleinement ivoire du dégradé, donc le cas critique de l'accueil ne se présente pas ici —
+mais si la photo change, ou si la colonne de texte s'élargit, il faudra mesurer.
+
+---
+
+### [ ] 25. Le champ `zones` d'un partenaire n'a aucun format imposé
+
+Trouvé le 08/10/2026 en rangeant `/admin/partenaires` par région. `partners.zones`
+est un tableau de chaînes rempli par un champ de saisie LIBRE
+(`frontend/src/pages/DevenirPartenaire.tsx` : `zones.split(',')`). Rien ne dit si on
+y met un numéro de département (« 13 ») ou un code postal (« 13100 »). Le seed écrit
+des départements, un partenaire de test écrivait des codes postaux — les deux
+cohabitent déjà en base.
+
+**Trois endroits le lisent, de trois façons différentes :**
+
+- `api/app/routers/chat.py:252` — `departement not in partenaire.zones`, égalité
+  stricte. Un partenaire qui a déclaré des codes postaux n'est JAMAIS proposé par
+  Helios. C'est le chemin qui compte : c'est celui qui décide qui est nommé au client.
+- `api/app/routers/partners.py:35` — `z.startswith(zone[:2])`, préfixe à deux
+  caractères. Tolérant aux deux formes, **sauf en Corse** : une saisie « 20000 »
+  donne « 20 », et « 2A » ne commence pas par « 20 ». Vérifié : 20000 et 20200 ne
+  retrouvent aucun des partenaires corses du seed. Ce paramètre `zone` n'est appelé
+  par aucun écran aujourd'hui — le défaut est donc latent, pas visible.
+- `frontend/src/data/regions.ts` — `departementDeLaZone()`, écrit ce jour-là, qui
+  applique la règle de `departement_du_code_postal` (Corse comprise) pour ranger les
+  partenaires en vignettes.
+
+**Ce qu'il faudrait faire** : normaliser à l'ÉCRITURE, dans `POST /partners/apply`,
+avec `regions.departement_du_code_postal` — une zone enregistrée serait alors toujours
+un numéro de département, et les trois lecteurs retomberaient d'accord sans rien
+changer d'autre. Prévoir la reprise des lignes déjà en base.
+
+Sans risque tant que l'annuaire n'est rempli que par le seed. Devient réel le jour où
+une vraie candidature arrive par le formulaire public.
+
 ## Le piège à ne pas réintroduire
+
+**Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
+temps** (trouvé le 06/10/2026, après que Stéphane a signalé qu'il « galérait » à entrer
+dans l'espace client et le back-office). Le symptôme : on se connecte, ça marche, puis
+on ouvre `/admin` ou on recharge la page — et on retombe sur l'écran de connexion. Une
+fois sur deux. Les identifiants sont bons, la session existe, le serveur répond.
+
+La cause tient en deux pièces qui, séparément, sont justes :
+
+- `routers/auth.py` révoque le jeton dès qu'il sert (« un refresh token ne sert qu'une
+  fois ») — c'est la rotation, et c'est voulu ;
+- `AuthContext.authFetch` relançait un rafraîchissement à **chaque** 401 reçu, sans
+  savoir qu'un autre était déjà parti.
+
+Deux appels concurrents se détruisent donc l'un l'autre : le premier consomme le jeton,
+le second présente un jeton déjà révoqué, reçoit 401, et son `setUser(null)` **efface la
+session que le premier venait de rétablir**. Celui qui répond en dernier gagne. D'où le
+pile ou face.
+
+Le back-office le déclenchait le plus souvent parce que son tableau de bord interroge
+plusieurs endpoints en parallèle. Et le `StrictMode` de `main.tsx` double tout en
+développement : **11 appels de rafraîchissement mesurés pour UN seul chargement de page**,
+dont deux 401.
+
+Correctif : `tryRefresh()` garde la promesse en cours dans un `useRef` et tout le monde
+attend la même. **Mesuré après : 1 appel par chargement, sur quatre pages d'affilée, zéro
+rebond.** Ne pas remplacer par un drapeau booléen — les appelants ont besoin du jeton, pas
+seulement de savoir qu'un appel est parti. Et ne pas « régler » le problème en retirant le
+`StrictMode` : il ne faisait que rendre visible une course qui existe aussi en production,
+dès que deux requêtes expirent ensemble.
+
 
 **Un uvicorn mort peut continuer à servir l'ancien code** (trouvé le
 05/10/2026, après une heure perdue). Deux sources venaient d'être déclarées

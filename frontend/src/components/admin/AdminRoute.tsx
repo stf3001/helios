@@ -23,7 +23,7 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
   }, [user])
 
   if (loading || (user && autorise === null)) {
-    return <div className="min-h-screen bg-slate-950 text-slate-500 flex items-center justify-center">Vérification…</div>
+    return <div className="flex min-h-screen items-center justify-center bg-sable text-dark/60">Vérification…</div>
   }
 
   if (!user) {
@@ -33,15 +33,15 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
 
   if (!autorise) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center bg-sable px-4 text-dark">
         <div className="max-w-sm text-center">
-          <ShieldAlert className="w-10 h-10 mx-auto text-rose-400" />
-          <h1 className="mt-4 text-lg font-semibold text-white">Accès réservé</h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <ShieldAlert className="mx-auto h-10 w-10 text-primary" />
+          <h1 className="mt-4 font-display text-2xl text-ink">Accès réservé</h1>
+          <p className="mt-2 text-sm text-dark/70">
             Ce compte n'a pas les droits d'administration. Si c'est une erreur, l'accès se donne
             en base de données — aucune page ne permet de se l'attribuer soi-même.
           </p>
-          <Link to="/" className="mt-5 inline-block rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800">
+          <Link to="/" className="mt-5 inline-block rounded-xl border border-bord bg-white px-4 py-2 text-sm text-ink hover:bg-cream">
             Retour au site
           </Link>
         </div>

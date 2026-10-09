@@ -26,9 +26,10 @@ ce que c'est, pourquoi ça compte et où c'est dans le code.
 3. **Y ajouter ce qu'on découvre en passant**, plutôt que de le laisser dans un
    message de commit que personne ne relira.
 4. **Le rappeler à Stéphane** quand une tâche touche un point de la liste, et
-   surtout pour les quatre premiers : ils sont bloquants avant une mise en ligne
-   (aucun e-mail ne part, les rendez-vous n'arrivent nulle part, 91 partenaires
-   inventés que le chat nomme, quatre experts inventés).
+   surtout pour les trois premiers encore ouverts : ils sont bloquants avant une mise
+   en ligne (aucun e-mail ne part, les rendez-vous n'arrivent nulle part, quatre
+   experts inventés). Le quatrième — les partenaires inventés que le chat nommait —
+   est réglé depuis le 06/10/2026.
 
 Les points « à confirmer » attendent une réponse de Stéphane ou d'un fournisseur :
 **ne pas les trancher à sa place**, et ne pas retirer un `A CONFIRMER` de `config.py`
@@ -79,9 +80,11 @@ sans qu'il ait eu la réponse.
 >   un `<Navigate>` simple l'aurait perdu. Le lien « Mon Helios » est retire de l'en-tete.
 > - **Reste a faire, inscrit au point 16 de `TODO.md`** : les PNG de marque (favicon PNG,
 >   apple-touch-icon, icones PWA et surtout `og-image.png`) portent encore l'ancienne charte.
-> - **Le back-office `/admin` n'a PAS ete refondu** (coquille sombre `slate`, pile systeme,
->   conformement a son propre commentaire) — seul son logo a ete remplace. Ses titres heritent
->   du serif via la regle de base, comme ils heritaient de Fraunces auparavant.
+> - ~~**Le back-office `/admin` n'a PAS ete refondu** (coquille sombre `slate`, pile systeme,
+>   conformement a son propre commentaire) — seul son logo a ete remplace.~~ **CADUC le
+>   08/10/2026** : le back-office est passe a la charte claire, voir l'entree du 08/10 en bas
+>   de fichier. Ses titres heritent du serif via la regle de base, comme ils heritaient de
+>   Fraunces auparavant.
 > - **Verifie en conditions reelles** (API + Postgres + Ollama en marche, compte de demo) :
 >   accueil, 14 pages publiques, espace connecte (fiche 90 %, pre-audits, energie), chat avec
 >   le cycle d'etat complet (« Il cherche… » → « Il a repondu »), simulateur avec un vrai
@@ -863,3 +866,67 @@ https://github.com/stf3001/helios.git
 - Toutes les hypothèses sont dans `config.py` sous `simu_*`, chacune avec son statut, et remontent à l'écran dans « Hypothèses et méthode ».
 - `/api/simulateur/calcul` et `/options` sont publics : rien n'est enregistré pour un anonyme, et seule la commune sort dans l'URL de partage.
 - `/api/solar/*` et `/api/autoconso/*` sont remplacés dans le parcours mais restent en place.
+
+## Back-office : la charte claire et les blocs repliables (08/10/2026)
+
+Demande de Stéphane, en six points. Le fond : « globalement, utiliser la mise en forme de
+Helios, j'aimerais du clair ».
+
+- **La coquille sombre est abandonnée.** `components/admin/AdminLayout.tsx` passe à l'ivoire
+  du site : mêmes jetons Tailwind (`sable`, `bord`, `ink`, `primary`, `cream`), mêmes
+  typographies (Instrument Serif pour les titres, Plus Jakarta Sans pour le texte), zéro
+  couleur en dur. **L'argument de 2026 — « qu'on sache qu'on n'est plus côté client » —
+  n'a pas disparu** : il est porté par le bandeau d'en-tête encre, la densité plus forte
+  et l'absence totale d'en-tête/pied de page publics, pas par une seconde charte à tenir.
+  L'échelle `slate`, `rose`, `emerald` et `amber` a entièrement disparu des huit pages
+  (vérifié par recherche). Les accents suivent désormais la règle du site : le terracotta
+  pour une ACTION, le vert pour ce qui va, le terracotta sombre (`terra`) pour ce qui
+  demande attention.
+- **Marque et « Tableau de bord » fusionnés.** Deux boutons voisins menaient tous les deux
+  à `/admin`. Le bloc de marque porte maintenant l'état actif de la route et sert d'entrée :
+  la barre tombe de 8 à 7 entrées.
+- **L'en-tête ne déborde plus.** Il débordait déjà avant (la capture de Stéphane montre
+  « Serv… » coupé au bord droit) : la barre inline est devenue `flex-1 min-w-0
+  overflow-x-auto`, donc elle se réduit au lieu de pousser la page, et elle ne s'affiche
+  en ligne qu'à partir de `xl` (en dessous, la seconde ligne défilante prend le relais).
+  Mesuré : zéro débordement horizontal sur les 8 pages, à 375, 1265, 1400 et 1600 px.
+- **Les blocs repliables sont ceux du site** — `components/Depliant.tsx`, repris tel quel
+  plutôt que redessiné pour l'admin. C'est ce qui rend la bascule cohérente sans ajouter
+  un composant de plus. Le `resume` (ce qui s'affiche replié) porte systématiquement le
+  chiffre qui dit s'il faut ouvrir.
+  - `/admin/agents` : un bloc par agent, le plus récent ouvert, le nombre d'erreurs en
+    rouge dans le résumé. **Les noms sont ceux écrits en base par `agents_engine._log` —
+    « crawler » et « veille », pas « crawl »** (qui est le nom de la commande ; premier
+    essai raté là-dessus).
+  - `/admin/connaissances` : les quatre sections. « Questions restées sans réponse » s'ouvre
+    d'office quand il y en a — c'est la seule qui appelle un travail d'écriture.
+  - `/admin/foyers` : « Comptes » (ouvert, recherche dedans) et « Journal des accès ».
+  - `/admin/conversations` : les trois filtres `Toutes / Public / Connecté` sont remplacés
+    par trois blocs EXCLUSIFS, « À regarder en priorité » (celles où aucune source n'a passé
+    le seuil) en tête et ouverte. Mesuré sur les données réelles : 4 + 15 + 30 = 49, le total
+    annoncé par l'API.
+- **`/admin/partenaires` : une vignette par région.** `grouperParRegion()` range les
+  partenaires à partir de leur champ `zones`, via `frontend/src/data/regions.ts` — **copie
+  fidèle de `api/app/services/regions.py`, les deux se tiennent à jour ENSEMBLE**. Deux cas
+  sortent de la grille : les acteurs nationaux (eau, éolien, inertie, courtage couvrent les
+  13 régions ; les répéter 13 fois noierait les autres) ont leur vignette « Toute la France »,
+  et les partenaires sans zone déclarée la leur, pour ne pas disparaître. Un partenaire
+  multirégional sans être national — Ensol couvre tout sauf PACA — apparaît bien dans
+  chacune de ses régions : c'est la vérité de sa couverture. Le résumé dit « 1 actif(s) sur
+  8 », c'est-à-dire le seul chiffre qui compte : combien d'entreprises réelles couvrent ce
+  territoire.
+  - **Piège trouvé en testant** : `zones` est saisi en texte libre sur `/devenir-partenaire`,
+    donc il peut contenir des codes postaux à cinq chiffres et pas seulement des numéros de
+    département — un partenaire de test tombait alors dans « Zone non renseignée » alors
+    qu'il déclarait trois zones. `departementDeLaZone()` applique la règle de
+    `departement_du_code_postal` côté API, Corse comprise. Après correction il remonte en
+    Auvergne-Rhône-Alpes, et « Zone non renseignée » tombe de 2 à 1 (le seul vrai cas).
+- **Vérifié en conditions réelles** (API + Postgres + Ollama en marche, compte admin, 101
+  partenaires et 49 conversations en base) : les 8 pages chargées, blocs ouverts/fermés,
+  vignette PACA dépliée (AD Solar actif en tête puis les 7 provisoires), détail d'une
+  conversation, console sans erreur après rechargement, et `tsc -b` + `npm run build`
+  (420 URL au plan de site, inchangé). Les captures d'écran, longtemps en échec sur ce
+  poste, ont fini par passer : rendu relu à l'œil sur le tableau de bord et les partenaires.
+- **Non fait, volontairement** : le tableau de bord n'est PAS replié. C'est la page qu'on
+  lit d'un coup d'œil ; y mettre des blocs fermés obligerait à cliquer pour voir l'état du
+  système, ce qui est exactement le contraire de ce qu'on lui demande.
