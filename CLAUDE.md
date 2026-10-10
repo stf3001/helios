@@ -977,3 +977,26 @@ autre chose que le fabricant.
 - Côté EOLIA uniquement, corrigé en même temps parce que les deux erreurs se
   neutralisaient : leur prix du kWh était resté à 0,26 € (TRV : 0,2001 €), recopié à la
   main dans cinq fichiers. Ici le prix venait déjà de `config.py`, rien à changer.
+
+## Trois projets sur le même poste (10/10/2026)
+
+Stéphane ouvre HELIOS, HYDROLIA et EOLIA **en même temps**. Chacun a ses ports et son
+script de démarrage à la racine (`demarrer-helios.bat`, `demarrer-hydrolia.bat`,
+`demarrer-eolia.bat` — même structure tous les trois) :
+
+| | front | API | Postgres |
+|---|---|---|---|
+| **HELIOS** | **5173** | **8000** (FastAPI) | **5432** |
+| HYDROLIA | 5175 | 3000 | 5433 |
+| EOLIA | 5174 | 3001 | 5434 |
+
+- `frontend/vite.config.ts` est en `strictPort` : sans cela Vite glisse sur le port suivant
+  quand le sien est pris, et Helios prenait alors celui d'Eolia. **Ne pas retirer.**
+- **UN COOKIE IGNORE LE PORT**, et c'est le piège qui a été trouvé en vérifiant : Hydrolia
+  et Eolia posaient tous deux un `refresh_token` sur `localhost`. Se connecter à l'un
+  déconnectait silencieusement l'autre. Helios n'était pas concerné — son cookie est
+  **`helios_refresh`**, sur le path `/api/auth`. **Garder ce préfixe pour tout nouveau
+  cookie** : c'est lui qui nous met à l'abri.
+- Le `localStorage` est isolé par origine (port compris) : aucune collision possible.
+- Rappel du piège local : le service Windows natif `postgresql-x64-17` reprend le port 5432
+  devant le conteneur au redémarrage (`Stop-Service postgresql-x64-17`).
