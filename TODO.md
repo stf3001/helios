@@ -100,7 +100,6 @@ le développeur, pas le client qui lit un prix à l'écran.
 > Le constat du 09/10 est gardé tel quel plus bas, comme archive datée : il explique
 > pourquoi la correction a eu lieu. **Les chiffres qui valent aujourd'hui sont ceux de
 > la section « CORRIGÉ LE 10/10/2026 » en fin de point** (Brest à 28,2 %, pas 26,0 %).
-> Il y reste une case ouverte : la confrontation aux machines réellement posées.
 
 **Le pipeline est juste.** Les 12 stations ont bien leurs 12 mois × 24 heures, sans
 trou ; les données sont bien en km/h et bien divisées par 3,6 (lues en m/s, Brest
@@ -166,9 +165,18 @@ l'arrondi mensuel près) et portent chacun un test de référence sur cette vale
 fichier de vent est identique au bit près dans les deux dépôts : **ils se tiennent à jour
 ENSEMBLE.**
 
-**[ ] Reste à faire, et c'est le point qui vaut le temps** : demander à EOLIA de comparer
-ces chiffres à ce que **produisent réellement les machines déjà posées**. C'est la seule
-validation qui tranche, et eux seuls ont la donnée. Deux ou trois relevés suffiraient.
+**Ce qui ne peut PAS encore valider ces chiffres** : la production de machines réellement
+installées. **Aucune éolienne n'est posée à ce jour** (information de Stéphane, 10/10/2026).
+Inutile donc de demander des relevés à EOLIA, et inutile de réinscrire la question tant que
+la première installation n'a pas tourné une saison.
+
+En attendant, la confrontation au terrain passe par **le prêt d'anémomètre** d'EOLIA, qui
+existe déjà et que le moteur sait exploiter : `production_horaire(..., facteur=...)` recale
+la moyenne de la station sur la mesure réelle du client. C'est le niveau, pas la loi de
+répartition, mais c'est la seule mesure de terrain disponible aujourd'hui — et c'est aussi
+ce qui rend `k=2` moins critique qu'il n'y paraît : il corrige la forme, l'anémomètre corrige
+le niveau. Le contrôle fait à défaut est écrit plus haut : douze stations comparées à de
+vraies séries horaires PVGIS, k=2 à 1 % de la production réelle sur l'ensemble.
 
 ### [x] 6. La TVA du stockage par inertie — tranchée à 5,5 % le 06/10/2026
 

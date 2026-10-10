@@ -971,9 +971,13 @@ autre chose que le fabricant.
   fichier de vent est identique au bit près (`eolia/frontend/src/data/era5_profiles.json`),
   la loi est la même, et chacun porte un test de référence sur Brest — 14 815 kWh ici,
   14 816 là-bas. C'est le même client qui peut lire les deux calculateurs.
-- **Non fait, et c'est le point qui vaut le temps** (inscrit au point 5 de `TODO.md`) :
-  confronter ces chiffres à ce que **produisent réellement les machines déjà posées**.
-  Seul EOLIA a cette donnée, et elle seule tranche la valeur de k.
+- **Ce qui ne peut pas valider ces chiffres, et pourquoi on arrête de le demander** :
+  confronter la production de machines réellement installées. **Aucune éolienne n'est posée
+  à ce jour** (Stéphane, 10/10/2026) — la question est donc sans objet, et ne pas la
+  réinscrire au `TODO.md`. Le recalage terrain disponible aujourd'hui est **le prêt
+  d'anémomètre** : il corrige le NIVEAU du vent (`production_horaire(..., facteur=...)`),
+  là où `k=2` corrige la FORME de sa répartition. Les deux sont complémentaires, ce qui
+  rend k moins critique qu'il n'y paraît.
 - Côté EOLIA uniquement, corrigé en même temps parce que les deux erreurs se
   neutralisaient : leur prix du kWh était resté à 0,26 € (TRV : 0,2001 €), recopié à la
   main dans cinq fichiers. Ici le prix venait déjà de `config.py`, rien à changer.
