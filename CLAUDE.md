@@ -930,3 +930,50 @@ Helios, j'aimerais du clair ».
 - **Non fait, volontairement** : le tableau de bord n'est PAS replié. C'est la page qu'on
   lit d'un coup d'œil ; y mettre des blocs fermés obligerait à cliquer pour voir l'état du
   système, ce qui est exactement le contraire de ce qu'on lui demande.
+
+## L'éolien lit désormais une moyenne comme une moyenne (10/10/2026)
+
+Correction faite **d'abord dans EOLIA, puis portée ici** — c'est leur méthode, leur
+turbine et leurs machines posées ; HELIOS est la copie aval et ne doit jamais annoncer
+autre chose que le fabricant.
+
+- **Le défaut.** `api/data/eolien/profils_vent.json` contient des **moyennes** Météo
+  France (288 valeurs par station), et le coefficient de l'anémomètre recale lui aussi
+  une moyenne. Le moteur lisait la courbe de puissance **à cette vitesse moyenne**. Or la
+  puissance monte à peu près comme le **cube** de la vitesse : un vent de 4 m/s de moyenne
+  produit nettement plus qu'un vent constant à 4 m/s. La production était sous-estimée.
+- **La correction** : `eolien.puissance_attendue_kw()` répartit le vent autour de sa
+  moyenne selon une **loi de Weibull k = 2** (Rayleigh) avant de lire la courbe — le
+  standard du métier quand on ne dispose que de la moyenne. `eolien.puissance_kw()` reste
+  la courbe brute, pour une vitesse **instantanée** : les deux ne se remplacent pas, et le
+  docstring de chacune dit laquelle appeler. La table (501 entrées, `_table_attendue`) est
+  construite DEPUIS la courbe au premier appel : si la courbe change, la table suit.
+- **k = 2 vérifié, pas supposé** : les douze stations comparées à de vraies séries
+  horaires (PVGIS `WS10m`, 2020) ramenées à la même moyenne annuelle. **k = 2 tombe à 1 %
+  de la production réelle** sur l'ensemble ; les k ajustés par station vont de 1,6 à 2,8,
+  médiane juste au-dessus de 2.
+- **À savoir en relisant** : la puissance attendue **n'est pas toujours supérieure** à la
+  courbe — plus en dessous de ~6,8 m/s (courbe raide et bombée), moins au-dessus (elle
+  s'aplatit vers son plateau). D'où +8 % à Brest contre +63 % à Lyon.
+- **Ce que ça déplace** : Brest 6 kWc 13 691 → **14 815 kWh/an**, facteur de charge
+  26,0 → **28,2 %**. Marseille 3 975 → 5 646, Lille 5 728 → 7 736, Lyon 1 857 → 3 025. Le
+  vent entre dans `prod_h` **avant tout arbitrage** (`simu_engine`), donc l'autoconsommation,
+  le dimensionnement batterie, les 25 ans et la recommandation bougent aussi — les deux
+  invariants des tests tiennent toujours (264 tests au vert).
+- **Le vent est enfin déclaré dans « Hypothèses et méthode »** (`simu_engine.hypotheses`).
+  Il n'y figurait pas du tout, alors que l'encadré annonce « un calcul heure par heure » :
+  pour le vent ce sont douze stations et des moyennes, et maintenant l'écran le dit.
+- **Tests** (`api/tests/test_eolien.py`) : le sens de la correction des deux côtés du
+  coude, croissance et plafond jusqu'à 40 m/s, mise à l'échelle linéaire, et le **chiffre
+  de référence de Brest porté de 24-28 % à 26-31 %** — l'ancienne borne encodait le défaut.
+  Le plafond physique est désormais vérifié sur les DEUX chemins de calcul.
+- **LES DEUX DÉPÔTS SE TIENNENT À JOUR ENSEMBLE**, comme `regions.py`/`regions.ts` : le
+  fichier de vent est identique au bit près (`eolia/frontend/src/data/era5_profiles.json`),
+  la loi est la même, et chacun porte un test de référence sur Brest — 14 815 kWh ici,
+  14 816 là-bas. C'est le même client qui peut lire les deux calculateurs.
+- **Non fait, et c'est le point qui vaut le temps** (inscrit au point 5 de `TODO.md`) :
+  confronter ces chiffres à ce que **produisent réellement les machines déjà posées**.
+  Seul EOLIA a cette donnée, et elle seule tranche la valeur de k.
+- Côté EOLIA uniquement, corrigé en même temps parce que les deux erreurs se
+  neutralisaient : leur prix du kWh était resté à 0,26 € (TRV : 0,2001 €), recopié à la
+  main dans cinq fichiers. Ici le prix venait déjà de `config.py`, rien à changer.

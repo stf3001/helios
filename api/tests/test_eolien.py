@@ -79,6 +79,53 @@ def test_la_courbe_de_puissance_respecte_les_seuils_de_la_turbine():
     assert eolien.puissance_kw(20.0, 6) == pytest.approx(eolien.puissance_kw(14.0, 6))
 
 
+# --- La LOI DE REPARTITION du vent (Weibull k=2) --------------------------------
+# Nos profils sont des MOYENNES. Lire la courbe a la vitesse moyenne sous-estime la
+# production, parce que la puissance monte a peu pres comme le cube de la vitesse. Ces
+# tests verrouillent la correction : si quelqu'un rebranche un jour `puissance_kw` sur
+# les moyennes, ils tombent. Memes tests que cote EOLIA : les deux doivent rester
+# d'accord, c'est le meme calcul pour le meme client.
+
+def test_le_facteur_de_forme_est_celui_du_metier():
+    """k=2, verifie contre de vraies series horaires : voir le commentaire du module."""
+    assert eolien.WEIBULL_K == 2.0
+
+
+def test_sous_le_coude_la_repartition_rend_plus_que_la_courbe():
+    """La ou la courbe est raide et bombee, les heures fortes rapportent plus que les
+    heures faibles ne coutent. C'est tout l'objet de la correction."""
+    for moyenne in (2.0, 3.0, 4.0, 5.0):
+        assert eolien.puissance_attendue_kw(moyenne, 6) > eolien.puissance_kw(moyenne, 6)
+
+
+def test_au_dela_du_coude_elle_rend_moins_et_c_est_normal():
+    """La courbe s'aplatit vers son plateau : les heures fortes ne rapportent plus rien
+    de plus, les faibles coutent toujours. Ce n'est pas un bug — c'est pourquoi la
+    correction vaut +8 % a Brest quand elle vaut +56 % sur un site peu vente."""
+    for moyenne in (9.0, 12.0):
+        assert eolien.puissance_attendue_kw(moyenne, 6) < eolien.puissance_kw(moyenne, 6)
+
+
+def test_la_puissance_attendue_est_croissante_et_bornee():
+    plafond = max(eolien.PUISSANCES_KW)
+    precedente = -1.0
+    moyenne = 0.0
+    while moyenne <= 40.0:
+        valeur = eolien.puissance_attendue_kw(moyenne, 6)
+        assert valeur >= precedente, f"baisse a {moyenne} m/s"
+        assert valeur <= plafond, f"au-dessus du plafond a {moyenne} m/s"
+        precedente = valeur
+        moyenne += 0.1
+    assert eolien.puissance_attendue_kw(0, 6) == 0
+
+
+def test_la_repartition_suit_la_puissance_posee_comme_la_courbe():
+    """Meme mise a l'echelle lineaire que `puissance_kw` : pas de regle a part."""
+    assert eolien.puissance_attendue_kw(5.0, 3) == pytest.approx(
+        eolien.puissance_attendue_kw(5.0, 6) / 2)
+    assert eolien.puissance_attendue_kw(5.0, 0) == 0
+
+
 def test_le_tarif_est_interpole_entre_les_deux_bornes():
     assert eolien.cout_ttc_eur(3) == settings.simu_eolien_cout_min_eur
     assert eolien.cout_ttc_eur(9) == settings.simu_eolien_cout_max_eur
@@ -119,21 +166,32 @@ def test_les_vitesses_sont_bien_lues_en_km_h():
         assert 1.0 <= moyenne <= 8.0, f"{code} : {moyenne:.2f} m/s de moyenne annuelle"
 
 
-def test_le_facteur_de_charge_de_brest_reste_autour_de_26_pourcent():
-    """Le chiffre de reference releve avec Stephane. Brest est la station la plus ventee
-    du jeu ; si ce facteur bouge, c'est la donnee ou la courbe de puissance qui a change.
+def test_le_facteur_de_charge_de_brest_reste_autour_de_28_pourcent():
+    """Le chiffre de reference. Brest est la station la plus ventee du jeu ; si ce
+    facteur bouge, c'est la donnee, la courbe de puissance ou la loi de repartition qui
+    a change — et le chiffre annonce au client avec.
+
+    ETAIT 26,0 % AVANT LE 10/10/2026, quand la courbe etait lue a la vitesse moyenne.
+    La loi de Weibull le porte a 28,2 %. Meme fourchette que le test de reference cote
+    EOLIA (14 000 a 15 600 kWh/an pour 6 kWc) : les deux calculateurs doivent rester
+    d'accord, c'est le meme client qui lit les deux.
     """
     serie, _ = eolien.production_horaire(6.0, 48.39, -4.49)
     facteur_de_charge = sum(serie) / (6.0 * eolien.HEURES)
-    assert 0.24 <= facteur_de_charge <= 0.28, f"{facteur_de_charge:.1%}"
+    assert 0.26 <= facteur_de_charge <= 0.31, f"{facteur_de_charge:.1%}"
 
 
 def test_aucune_station_ne_depasse_le_plafond_physique_de_la_turbine():
     """La courbe plafonne a 5,05 kW pour une machine dite de 6 kWc : le facteur de charge
     ne peut donc pas depasser 84 %, quel que soit le vent. Un depassement signalerait une
-    mise a l'echelle appliquee deux fois."""
+    mise a l'echelle appliquee deux fois.
+
+    Teste sur les DEUX chemins : la courbe brute et la loi de repartition. La seconde
+    integre jusqu'a 40 m/s, ou la courbe est extrapolee — c'est la qu'un debordement
+    apparaitrait en premier."""
     plafond = max(eolien.PUISSANCES_KW) / eolien.NOMINAL_KWC
     for code in eolien._profils():
         vitesses = eolien.vitesses_horaires_ms(code)
-        production = sum(eolien.puissance_kw(v, 6.0) for v in vitesses)
-        assert production / (6.0 * eolien.HEURES) <= plafond, code
+        for calcul in (eolien.puissance_kw, eolien.puissance_attendue_kw):
+            production = sum(calcul(v, 6.0) for v in vitesses)
+            assert production / (6.0 * eolien.HEURES) <= plafond, f"{code} / {calcul.__name__}"

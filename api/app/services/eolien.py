@@ -3,7 +3,16 @@
 D'OU VIENNENT LES CHIFFRES : le calculateur d'EOLIA (dossier `eolia`), repris tel quel
 plutot que reinvente. Courbe de puissance mesuree sur le modele nominal de 6 kWc, mise a
 l'echelle lineairement pour les autres puissances — c'est leur methode, on ne la corrige
-pas. Profils de vent ERA5 horaires, donnes en km/h, par departement et par mois.
+pas. Profils de vent Meteo France, donnes en km/h, par departement, par mois et par heure.
+
+CE QUE SONT CES PROFILS, ET CE QUE CA IMPOSE : des MOYENNES (288 valeurs par station,
+repetees sur l'annee). Or la puissance d'une eolienne monte a peu pres comme le CUBE de
+la vitesse : lire la courbe a la vitesse moyenne donne MOINS que ce que la machine
+produit reellement, parce que les heures fortes rapportent plus que les heures faibles ne
+coutent. On repartit donc le vent autour de sa moyenne selon une loi de Weibull k=2
+(Rayleigh) avant de lire la courbe — la methode de reference du metier quand on ne
+dispose que de la moyenne. Voir `puissance_attendue_kw`. Correction portee d'EOLIA le
+10/10/2026, les deux calculateurs se tiennent a jour ENSEMBLE.
 
 LA LIMITE A CONNAITRE : ERA5 ne couvre ici que DOUZE stations. Le simulateur, lui, sert
 partout en France. On prend donc la station la plus proche a vol d'oiseau et on le DIT a
@@ -83,11 +92,15 @@ def vitesses_horaires_ms(code_station: str) -> tuple[float, ...]:
 
 
 def puissance_kw(vitesse_ms: float, kwc: float) -> float:
-    """Puissance instantanee, interpolee sur la courbe puis mise a l'echelle.
+    """Puissance pour une vitesse INSTANTANEE, interpolee sur la courbe puis mise a
+    l'echelle.
 
     La mise a l'echelle est LINEAIRE a partir du modele de 6 kWc : c'est la methode
     d'EOLIA. Au-dela du nominal on extrapole donc une courbe mesuree plus bas — une
     estimation a 9 kWc est moins sure qu'a 3.
+
+    POUR UNE VITESSE MOYENNE, utiliser `puissance_attendue_kw` : nos profils de vent sont
+    des moyennes, et lire la courbe a la moyenne sous-estime la production (cf. en-tete).
     """
     if vitesse_ms <= VITESSES_MS[0]:
         brut = PUISSANCES_KW[0]
@@ -104,6 +117,78 @@ def puissance_kw(vitesse_ms: float, kwc: float) -> float:
     return brut * (kwc / NOMINAL_KWC)
 
 
+#: Facteur de forme de la loi de Weibull. 2 = loi de Rayleigh, la convention du metier
+#: quand on ne dispose que de la vitesse moyenne. Plus k est grand, plus le vent est
+#: regulier autour de sa moyenne, et moins la correction est forte.
+#:
+#: VERIFIE, PAS SUPPOSE (09/10/2026) : les douze stations ont ete comparees a de vraies
+#: series de vent heure par heure (PVGIS, Commission europeenne, 2020) ramenees a la meme
+#: moyenne annuelle. Sur l'ensemble des stations, k=2 tombe a 1 % de la production reelle.
+#: Les k ajustes station par station vont de 1,6 a 2,8, mediane juste au-dessus de 2 :
+#: la convention est la bonne, et un k par station n'apporterait rien de fiable.
+WEIBULL_K = 2.0
+
+_PAS_MS = 0.05          # pas d'integration ET pas de la table des moyennes
+_VITESSE_MAX_MS = 40.0  # au-dela, la densite est nulle
+_MOYENNE_MAX_MS = 25.0  # large, pour encaisser un coefficient d'anemometre
+
+
+def _densite_weibull(v: float, echelle: float, k: float) -> float:
+    return (k / echelle) * (v / echelle) ** (k - 1) * math.exp(-((v / echelle) ** k))
+
+
+@lru_cache(maxsize=4)
+def _table_attendue(k: float) -> tuple[float, ...]:
+    """Table moyenne -> puissance attendue du modele nominal, construite une fois.
+
+    L'integrale est la meme pour toutes les heures qui partagent la meme moyenne, et il y
+    en a 8760 par simulation : la tabuler evite de refaire 8760 fois le meme travail.
+    Construite DEPUIS la courbe de puissance — si la courbe change, la table suit, aucun
+    nombre magique a maintenir.
+    """
+    echantillons = [_PAS_MS / 2 + i * _PAS_MS
+                    for i in range(int(_VITESSE_MAX_MS / _PAS_MS))]
+    puissances = [puissance_kw(v, NOMINAL_KWC) for v in echantillons]
+
+    # Moyenne d'une Weibull d'echelle 1, mesuree sur la grille. C'est Gamma(1 + 1/k), mais
+    # on l'integre plutot que de l'ecrire : pas de fonction speciale, et le resultat est
+    # coherent avec la discretisation utilisee juste apres.
+    moment = sum(v * _densite_weibull(v, 1.0, k) for v in echantillons)
+    masse = sum(_densite_weibull(v, 1.0, k) for v in echantillons)
+    moyenne_unitaire = moment / masse
+
+    table = [0.0]
+    for j in range(1, round(_MOYENNE_MAX_MS / _PAS_MS) + 1):
+        echelle = (j * _PAS_MS) / moyenne_unitaire
+        poids = [_densite_weibull(v, echelle, k) for v in echantillons]
+        table.append(sum(p * w for p, w in zip(puissances, poids)) / sum(poids))
+    return tuple(table)
+
+
+def puissance_attendue_kw(moyenne_ms: float, kwc: float) -> float:
+    """Puissance attendue quand `moyenne_ms` est une MOYENNE, pas une vitesse instantanee.
+
+    C'est la fonction a appeler sur nos profils de vent, et sur une moyenne recalee par
+    l'anemometre.
+
+    ELLE NE REND PAS TOUJOURS PLUS que la courbe lue a la meme vitesse, et c'est normal :
+    plus en dessous de ~6,8 m/s, ou la courbe est raide et bombee (les heures fortes
+    rapportent plus que les faibles ne coutent), et moins au-dessus, ou la courbe
+    s'aplatit vers son plateau. C'est pourquoi la correction vaut +56 % sur un site peu
+    vente et seulement +8 % a Brest.
+    """
+    if moyenne_ms <= 0 or kwc <= 0:
+        return 0.0
+    table = _table_attendue(WEIBULL_K)
+    if moyenne_ms >= _MOYENNE_MAX_MS:
+        brut = table[-1]
+    else:
+        position = moyenne_ms / _PAS_MS
+        i = int(position)
+        brut = table[i] + (position - i) * (table[i + 1] - table[i])
+    return brut * (kwc / NOMINAL_KWC)
+
+
 def production_horaire(kwc: float, lat: float, lon: float,
                        facteur: float = 1.0) -> tuple[list[float], dict]:
     """Les 8760 kWh produits par l'eolienne, et d'ou vient l'estimation.
@@ -116,7 +201,8 @@ def production_horaire(kwc: float, lat: float, lon: float,
         return [0.0] * HEURES, {}
     code, ville, distance = station_la_plus_proche(lat, lon)
     vitesses = vitesses_horaires_ms(code)
-    serie = [puissance_kw(v * facteur, kwc) for v in vitesses]
+    # Ce sont des MOYENNES : puissance ATTENDUE, pas puissance lue a la moyenne.
+    serie = [puissance_attendue_kw(v * facteur, kwc) for v in vitesses]
     return serie, {
         "station": ville,
         "departement_station": code,

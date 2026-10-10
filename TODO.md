@@ -95,7 +95,12 @@ nommées.
 Ils portent tous un `A CONFIRMER` dans `api/app/core/config.py` — ce qui protège
 le développeur, pas le client qui lit un prix à l'écran.
 
-### [x] 5. Données de vent et calculateur éolien — vérifiés le 09/10/2026
+### [x] 5. Données de vent et calculateur éolien — vérifiés le 09/10, corrigés le 10/10/2026
+
+> Le constat du 09/10 est gardé tel quel plus bas, comme archive datée : il explique
+> pourquoi la correction a eu lieu. **Les chiffres qui valent aujourd'hui sont ceux de
+> la section « CORRIGÉ LE 10/10/2026 » en fin de point** (Brest à 28,2 %, pas 26,0 %).
+> Il y reste une case ouverte : la confrontation aux machines réellement posées.
 
 **Le pipeline est juste.** Les 12 stations ont bien leurs 12 mois × 24 heures, sans
 trou ; les données sont bien en km/h et bien divisées par 3,6 (lues en m/s, Brest
@@ -118,21 +123,52 @@ plupart des stations, +99 % à Grenoble**. Le biais est donc d'autant plus fort 
 est peu venté — il **exagère l'avantage des sites ventés** : le rapport Brest / Lyon passe
 de 7,4× (profil lissé) à 5,2× (vent réaliste).
 
-**Rien n'a été changé au moteur**, et c'est délibéré : c'est la méthode d'EOLIA, reprise
-telle quelle, et le biais va dans le sens de la prudence — le simulateur promet moins
-qu'il n'y aura, ce qui est la bonne direction pour la constitution. **Mais c'est une
-question à poser à EOLIA** : leur calculateur applique-t-il déjà un coefficient pour
-rattraper ce lissage, ou leurs chiffres commerciaux sont-ils eux aussi conservateurs ?
-Tant que la réponse n'est pas là, ne pas « corriger » le moteur à l'aveugle.
-
 **Quatre tests ajoutés** (`api/tests/test_eolien.py`) qui verrouillent la DONNÉE et non
 plus seulement le comportement : intégrité des 288 valeurs par station, bornes physiques
 des moyennes annuelles (1 à 8 m/s — le garde-fou qui attraperait un passage en m/s, qui
 multiplierait la production sans qu'aucun test de comportement ne bronche), facteur de
-charge de Brest entre 24 et 28 %, et plafond physique de la turbine.
+charge de Brest, et plafond physique de la turbine.
 
 Rappel : la production annoncée sera de toute façon confirmée chez le client par le prêt
 d'anémomètre d'EOLIA, et `production_horaire` accepte déjà le coefficient de recalage.
+
+#### CORRIGÉ LE 10/10/2026 — d'abord dans EOLIA, puis porté ici
+
+Stéphane a rappelé la nature des données : ce sont volontairement des **moyennes**
+Météo France, recalées par l'anémomètre prêté un mois. Le problème n'était donc pas le
+lissage de la donnée, mais **la façon de la lire** : on ne peut pas poser une moyenne
+sur une courbe quasi cubique et espérer la bonne production. La réponse standard du
+métier quand on ne connaît que la moyenne est de **répartir le vent autour d'elle selon
+une loi de Weibull k = 2** (Rayleigh) avant de lire la courbe.
+
+Contrôlé avant d'écrire : les douze stations comparées à de vraies séries horaires
+(PVGIS, 2020) ramenées à la même moyenne annuelle — **k = 2 tombe à 1 % de la production
+réelle** sur l'ensemble. Les k ajustés station par station vont de 1,6 à 2,8, médiane
+juste au-dessus de 2 : la convention tient, un k par station n'apporterait rien.
+
+- **EOLIA** : `frontend/src/services/powerCurve.ts` (nouveau, la courbe + la loi), branché
+  sur les deux chemins de `calculatorService.ts` (horaire et repli mensuel). Et le prix du
+  kWh corrigé dans la foulée — il était resté à **0,26 €** et était recopié à la main dans
+  cinq fichiers, maintenant lu depuis `ELECTRICITY_PRICE` / `turbineModels.json`.
+- **HELIOS** : `eolien.puissance_attendue_kw()` ; `puissance_kw()` reste la courbe brute,
+  pour une vitesse instantanée. Le prix, lui, venait déjà du TRV ici.
+- **Le vent est enfin déclaré dans « Hypothèses et méthode »** (`simu_engine.hypotheses`) :
+  il n'y figurait pas, alors que l'encadré annonce « un calcul heure par heure ».
+
+**Ce que ça déplace** : Brest 6 kWc passe de 13 691 à **14 815 kWh/an** (+8 %), facteur de
+charge 26,0 → 28,2 %. Les sites peu ventés montent beaucoup plus (Lyon +63 %, Grenoble
++134 %) — mais là, les deux chiffres disaient déjà « n'installez pas ». Côté EOLIA les
+économies affichées **baissent** à Brest (3 560 → 2 965 €/an) : le prix gonflé compensait
+le vent sous-estimé, les deux erreurs se neutralisaient en partie.
+
+**Les deux calculateurs tombent sur le même chiffre** (14 815 ici, 14 816 chez EOLIA, à
+l'arrondi mensuel près) et portent chacun un test de référence sur cette valeur. Le
+fichier de vent est identique au bit près dans les deux dépôts : **ils se tiennent à jour
+ENSEMBLE.**
+
+**[ ] Reste à faire, et c'est le point qui vaut le temps** : demander à EOLIA de comparer
+ces chiffres à ce que **produisent réellement les machines déjà posées**. C'est la seule
+validation qui tranche, et eux seuls ont la donnée. Deux ou trois relevés suffiraient.
 
 ### [x] 6. La TVA du stockage par inertie — tranchée à 5,5 % le 06/10/2026
 

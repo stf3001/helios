@@ -526,6 +526,18 @@ def hypotheses() -> list[dict]:
         {"libelle": "Consommation",
          "valeur": "courbe horaire reconstituée par couches (base, chauffage, eau chaude, "
                    "clim, piscine, véhicule)", "statut": "à calibrer"},
+        # Le vent manquait à cette liste alors que l'encadré annonce « un calcul heure par
+        # heure ». Pour le vent, ce sont douze stations et des moyennes : on le dit.
+        {"libelle": "Vent",
+         "valeur": "moyennes Météo France (12 stations pour la France entière, la plus "
+                   "proche est retenue et sa distance affichée), par mois et par heure",
+         "statut": "estimation, à confirmer par l'anémomètre prêté"},
+        {"libelle": "Production éolienne",
+         "valeur": f"vent réparti autour de sa moyenne selon une loi de Weibull "
+                   f"k={eolien.WEIBULL_K:g} (convention du métier), puis courbe de "
+                   f"puissance de la Tulipe mise à l'échelle linéairement depuis le "
+                   f"modèle de {eolien.NOMINAL_KWC:g} kWc",
+         "statut": "méthode d'EOLIA"},
     ]
 
 
