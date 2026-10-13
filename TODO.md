@@ -709,36 +709,81 @@ est journalisée dans `/admin/agents`. À changer d'un chiffre si Stéphane veut
 Une fiche peut porter sa propre date avec `valide:AAAA-MM-JJ` dans ses métadonnées, qui
 l'emporte sur la cadence de sa source.
 
-### [ ] 27. Le classement de la recherche ignore la date et la fiabilité
+### [ ] 27. Les questions courtes perdent leur réponse instantanée
+
+**Mesuré le 13/10/2026** par le test d'auto-récupération (`api/scripts/test_recall.py`,
+398 fiches interrogées avec leur propre intitulé). La longueur de la question décide du
+score, et donc du passage ou non sous le seuil de 0,66 :
+
+| longueur de la question | score médian de sa propre fiche | sous le seuil |
+|---|---|---|
+| ≤ 5 mots | 0,690 | **20 %** |
+| 6-8 mots | 0,741 | 2 % |
+| 9-12 mots | 0,768 | 2 % |
+| 13 mots et plus | 0,777 | 0 % |
+
+**La cause est structurelle, pas accidentelle.** Un chunk contient la question ET sa
+réponse (`Q: …` puis `R: …`), donc souvent 1 000 caractères. Une question de cinq mots comparée
+à ce bloc donne une similarité diluée — le fichier `config.py` le notait déjà en juillet 2026 à
+propos du seuil (« le chunk Q+R dilue les scores »), mais sans voir que ça pénalise
+SYSTÉMATIQUEMENT les questions courtes, qui sont justement celles que les visiteurs tapent.
+
+**Huit fiches ne passent pas leur propre intitulé** : « Qui est SOBRY ? » (0,588), « Que se
+passe-t-il en cas de tempête ? » (0,594), « Seulement 70 % de rendement… » (0,612),
+« Pourquoi l'eau chaude pèse-t-elle autant… » (0,632), « Comment vérifier moi-même qu'une
+offre est bonne ? » (0,639), « L'esprit colibri, c'est quoi ? » (0,646), « Qui est
+Hydrolia ? » (0,648), « Le DPE, à quoi ça sert… » (0,659).
+
+**Ce n'est pas une panne visible** : la fiche arrive quand même en tête des sources, donc
+le modèle répond juste — simplement en 30 à 150 s au lieu de 2 s. C'est un problème de
+vitesse et de coût, pas d'exactitude.
+
+**Le vrai remède, à décider** : vectoriser la QUESTION à part du couple Q+R, pour qu'une
+question courte soit comparée à une question courte. C'est la technique habituelle, elle
+demande une colonne de plus et une réingestion complète (12 min). Baisser le seuil serait
+l'inverse de ce qu'il faut : il a été calibré par mesure, et le descendre ferait servir des
+fiches hors sujet telles quelles.
+
+Où : `api/app/services/rag.py` (`search_chunks`, `instant_answer`), `agents_engine.crawl_source`.
+
+### [ ] 28. Six fiches se disputent la batterie virtuelle
+
+Même mesure du 13/10. Sur les **7 fiches reléguées** (qui ne se retrouvent pas au rang 1
+avec leur propre question), **5 parlent de batterie virtuelle** — le sujet est traité par
+`faq_maison`, `stockage_contrats` et `terrain` à la fois.
+
+Le cas qui compte : **« Qu'est-ce qu'une batterie virtuelle, concrètement ? » tombe au
+rang 6.** C'est la fiche de DÉFINITION, et elle est enterrée sous cinq fiches de
+comparaison, d'engagement et de disparition d'opérateur. Un visiteur qui demande ce qu'est
+une batterie virtuelle reçoit donc une réponse sur comment la comparer.
+
+C'est la répétition du constat de juillet 2026 (4 fiches reléguées, toutes des
+quasi-doublons, dont deux qui se contredisaient) — à une différence près : ici les fiches
+ne se contredisent pas, elles se font seulement de l'ombre. **Le remède est éditorial**,
+pas technique : décider quelle fiche répond à quelle question et retirer le recouvrement.
+Sujet à enjeu commercial (MyLight est partenaire), donc arbitrage de Stéphane.
+
+Les deux autres reléguées sont saines : la fiche MaPrimeRénov' de `faq_maison` est battue
+d'un cheveu (0,570 contre 0,580) par celle de `baremes_aides`, qui est la plus récente et
+la plus précise — c'est le bon résultat.
+
+### [ ] 29. Le classement ignore la date et la fiabilité — mais ça compte moins qu'il n'y paraît
 
 `rag.search_chunks` trie sur la **seule** distance cosinus. Un arrêté de 2026 et une fiche
-de 2024 se battent à armes égales, et une fiche marquée `pedagogique` (profil fictif) peut
-primer sur une fiche `officiel`.
+de 2024 se battent à armes égales, et une fiche `pedagogique` (profil fictif) peut primer
+sur une fiche `officiel`. Les données existent depuis la migration 0022 (`fiabilite`,
+`date_maj`, `valide_jusqu_au`) ; seul le classement manque.
 
-Les données nécessaires existent depuis la migration 0022 (`fiabilite`, `date_maj`,
-`valide_jusqu_au`) ; ce qui manque est le classement lui-même. **Volontairement pas fait
-dans le même lot** : faire primer le récent et l'officiel change ce qu'Helios *répond*, donc
-ça se vérifie sur de vraies questions avant d'être gardé. Le test d'auto-récupération
-(`scratchpad/test_recall.py`) est l'outil de mesure, il existe déjà.
+**Ce point a été dégradé après mesure, et c'est le résultat qui compte :** le test
+d'auto-récupération montre que le classement ne concerne que **7 fiches sur 398**. Les huit
+cas réellement gênants (point 27) sont tous au rang 1 — un meilleur classement ne les
+aiderait pas. Et dans le seul endroit où ancien et officiel s'affrontent vraiment
+(MaPrimeRénov'), **l'officiel récent gagne déjà**.
+
+À faire si l'occasion se présente, pas comme un chantier. Et à mesurer avec
+`api/scripts/test_recall.py`, qui donne maintenant la référence avant/après.
 
 Où : `api/app/services/rag.py:search_chunks`.
-
-### [ ] 28. « C'est quoi le VOSS » n'a plus de réponse instantanée
-
-Repéré en vérifiant la recherche après le lot du 13/10, et **antérieur à ce lot** : la
-question courte « c'est quoi le VOSS » sort à **0,624**, sous le seuil de 0,66, donc elle
-part au modèle au lieu d'être servie par la fiche. Le journal du 27/07/2026 notait 0,775
-pour la même question.
-
-Ce n'est pas une régression du ré-embarquement : la question longue (« …, le stockage
-solaire en béton ») sort à 0,809, et la question d'isolation de référence retrouve
-exactement son 0,688 d'origine. L'explication la plus probable est la croissance de la
-base — 185 fiches en juillet, **398 aujourd'hui** —, donc plus de voisins proches qui se
-disputent le haut du classement.
-
-À regarder comme un symptôme plutôt qu'un cas isolé : d'autres questions courtes ont pu
-passer sous le seuil sans que personne ne le voie. Le test d'auto-récupération mesure
-exactement ça, et n'a pas été relancé depuis que la base a doublé.
 
 ## Le piège à ne pas réintroduire
 
