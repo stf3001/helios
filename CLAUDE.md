@@ -1130,3 +1130,58 @@ une fonction morte.
   sa réponse instantanée. **J'avais mis ça sur le dos de la croissance de la base — c'était
   faux** : le test d'auto-récupération, relancé le 13/10 sur les 398 fiches, montre que la
   cause est la LONGUEUR de la question, pas le nombre de fiches. Points 27 à 29 de `TODO.md`.
+
+## Une mauvaise fiche pouvait être servie telle quelle (13/10/2026)
+
+Suite du lot précédent. Le plan validé était « mesurer, puis classer par date et
+fiabilité » ; la mesure a envoyé ailleurs, et c'était tout son intérêt.
+
+- **LE TEST D'AUTO-RÉCUPÉRATION REVIENT DANS LE DÉPÔT** : `api/scripts/test_recall.py`.
+  Celui de juillet 2026 vivait dans un `scratchpad/` non versionné et avait disparu — ce
+  qui explique précisément qu'il n'ait jamais été relancé alors que la base passait de 185
+  à 398 fiches. Il écrit son détail en TSV (`api/generated/`, gitignoré) pour qu'on puisse
+  le relire sans refaire 400 embeddings.
+- **La base est saine** : 391/398 au rang 1, zéro introuvable. Proportionnellement mieux
+  qu'en juillet (1,8 % de reléguées contre 2,2 %).
+- **J'AI MAL DIAGNOSTIQUÉ UNE PREMIÈRE FOIS, et c'est inscrit** : j'avais mis la perte de
+  réponse instantanée sur le dos de la croissance de la base. Faux — les huit fiches
+  concernées sont toutes au rang 1, rien ne leur dispute la place. La cause est la LONGUEUR
+  de la question : ≤ 5 mots → score médian 0,690 et **20 % sous le seuil** ; 13 mots et
+  plus → 0,777 et 0 %. Un chunk porte la question ET sa réponse (~1 000 caractères), donc
+  une question de cinq mots donne une similarité diluée.
+- **PUIS LE VRAI DÉFAUT, trouvé en testant les questions RÉELLEMENT posées** (table
+  `messages`, 61 questions de visiteurs) : « faut-il une batterie avec des panneaux »
+  recevait **instantanément, telle quelle et sans modèle pour la rattraper**, la fiche
+  « Mes panneaux fonctionnent-ils pendant une coupure de courant ? ». Pas une lenteur :
+  une mauvaise réponse avec l'assurance d'une fiche validée. La bonne fiche était
+  deuxième, à **0,008** près.
+- **`rag.INSTANT_ECART_MIN = 0.012`** : un score élevé dit « cette fiche ressemble à la
+  question », l'écart dit « et aucune autre ne lui ressemble autant ». Mesuré contre la
+  première fiche d'un AUTRE document — il y a un chunk par fiche aujourd'hui, mais une
+  source web en produit plusieurs, et comparer une fiche à son propre doublon donnerait un
+  écart nul, donc plus aucune réponse instantanée, sans que personne ne comprenne pourquoi.
+- **Calibré, pas choisi** : sur les 373 fiches servies instantanément, l'écart médian est
+  de **0,130** — les bonnes réponses se détachent largement, d'où le faible coût. 0,012
+  **domine 0,010** (même coût, un cas douteux de plus attrapé) ; au-delà le coût monte sans
+  rien gagner. **Relever le seuil de score aurait été le mauvais geste** : le cas fautif est
+  à 0,671 et de bonnes réponses instantanées vivent plus bas (« c'est quoi un puits
+  canadien » à 0,691, posée trois fois par de vrais visiteurs).
+- **La seule fiche qui y perd sa réponse instantanée est un vrai doublon** (« Une batterie
+  virtuelle, concrètement, comment ça marche ? » à 0,705, contre 0,698 pour « Qu'est-ce
+  qu'une batterie virtuelle, concrètement ? »). Le garde-fou refuse de tirer au sort entre
+  deux fiches qui disent la même chose : c'est le comportement voulu, et c'est le
+  recouvrement qu'il faut corriger (point 28 de `TODO.md`), pas ce seuil.
+- **NON FAIT APRÈS MESURE DU TRAFIC RÉEL** : vectoriser la question à part du couple Q+R
+  aurait réglé les 20 % de questions courtes, mais la médiane des questions posées est de
+  **10 mots** et les questions de 5 mots ou moins sont pour l'essentiel des tests de
+  développement. ~3 % du trafic, pour des réponses déjà JUSTES (seulement lentes). Mesurer
+  avant de construire a évité le chantier.
+- **Le classement par date et fiabilité est DÉGRADÉ au point 29** : il ne concerne que 7
+  fiches sur 398, n'aiderait aucun des cas gênants, et là où ancien et officiel
+  s'affrontent vraiment (MaPrimeRénov'), l'officiel récent gagne déjà. C'était la raison
+  de mesurer avant de coder.
+- **Vérifié en conditions réelles** : les trois bonnes réponses instantanées des questions
+  de visiteurs survivent, le cas fautif passe au modèle — qui reçoit alors DEUX fiches
+  répondant vraiment (rangs 4 et 7) au lieu d'une mauvaise servie telle quelle —, et la
+  question de référence retrouve exactement son 0,688. **290 tests au vert**, dont 15
+  nouveaux sur `instant_answer` seul.

@@ -57,11 +57,59 @@ def best_score(results: list[dict]) -> float:
 #: batterie 0,709, entretien 0,786 — gardent leur reponse instantanee.
 RELANCE_INSTANT_MIN = 0.70
 
+#: ECART MINIMUM entre la meilleure fiche et la premiere fiche SUIVANTE pour servir une
+#: reponse telle quelle. Un score eleve ne suffit pas : il faut aussi que QUELQUE CHOSE SE
+#: DETACHE. Quand deux fiches sans rapport se tiennent a 0,008 l'une de l'autre, aucune
+#: n'est « la » reponse, et en servir une sans modele pour la rattraper est un pari.
+#:
+#: Mesure du 13/10/2026, sur les questions REELLEMENT posees par les visiteurs (relevees
+#: dans la table `messages`, mediane 10 mots) :
+#:   « faut-il une batterie avec des panneaux » -> 0,671, 2e a 0,663, ecart +0,008
+#:   Helios servait, instantanement et telle quelle, la fiche « Mes panneaux
+#:   fonctionnent-ils pendant une coupure de courant ? » a quelqu'un qui demandait s'il
+#:   lui fallait une batterie. La bonne fiche existe, elle etait juste derriere.
+#: Deux autres questions reelles au coude a coude (« quelle est la meilleure isolation »
+#: +0,001, « ai-je interet a passer au solaire ? » +0,005) tombaient sous le seuil de score
+#: et partaient deja au modele — elles confirment le motif.
+#:
+#: POURQUOI PAS SIMPLEMENT RELEVER LE SEUIL DE SCORE : le mauvais cas est a 0,671 et de
+#: bonnes reponses instantanees vivent plus bas (« c'est quoi un puits canadien » 0,691,
+#: mesure sur une vraie question posee trois fois). Relever le seuil les tuerait toutes
+#: pour attraper celle-la. L'ecart separe ce que le score ne separe pas.
+#:
+#: CALIBRE SUR LES 398 FICHES (`api/scripts/test_recall.py`, qui ecrit le detail en TSV).
+#: Sur les 373 fiches servies instantanement, l'ecart median est de 0,130 — les bonnes
+#: reponses se detachent largement, c'est ce qui rend ce garde-fou peu couteux :
+#:
+#:   ecart min.   bonnes perdues     cas douteux attrapes
+#:     0,008       1 (0,3 %)          1 / 7
+#:     0,012       1 (0,3 %)          3 / 7     <- retenu
+#:     0,015       2 (0,5 %)          3 / 7
+#:     0,020       4 (1,1 %)          4 / 7
+#:
+#: 0,012 DOMINE 0,010 : meme cout, un cas douteux de plus attrape. Au-dela, le cout monte
+#: sans rien gagner. Les deux cas qui comptaient vraiment sont pris : la batterie servie
+#: pour une coupure de courant (0,008) et la fiche de DEFINITION de la batterie virtuelle,
+#: enterree au rang 6 derriere cinq fiches voisines (0,009).
+#:
+#: ET LA SEULE FICHE QUI Y PERD SA REPONSE INSTANTANEE EST UN VRAI DOUBLON : « Une batterie
+#: virtuelle, concretement, comment ca marche ? » (terrain, 0,705) avec, a 0,698, la fiche
+#: « Qu'est-ce qu'une batterie virtuelle, concretement ? » (faq_maison). Deux fiches qui
+#: disent la meme chose : refuser d'en tirer une au sort est le comportement voulu, et c'est
+#: le recouvrement qu'il faut corriger (point 28 de TODO.md), pas ce seuil.
+INSTANT_ECART_MIN = 0.012
+
 
 def instant_answer(results: list[dict], relance: bool = False) -> str | None:
     """Réponse instantanée sans LLM (doc 07 §5) : si la meilleure fiche Q/R matche
     quasi exactement la question, on sert sa réponse telle quelle — latence nulle,
     zéro risque d'hallucination. Sinon None → parcours LLM normal.
+
+    TROIS conditions, chacune posée après une mesure : un score suffisant, une source qui
+    est bien du Q/R, et un ÉCART suffisant avec la fiche suivante. La dernière est celle
+    qu'on oublie : un score élevé dit « cette fiche ressemble à la question », l'écart dit
+    « et aucune autre ne lui ressemble autant ». Sans lui, Helios tranche à pile ou face
+    entre deux fiches voisines, et sert le résultat sans réserve.
 
     `relance` : la question a été enrichie du tour précédent pour la recherche. Le sujet
     étant alors supposé et non écrit, on exige davantage de certitude (`RELANCE_INSTANT_MIN`).
@@ -74,6 +122,15 @@ def instant_answer(results: list[dict], relance: bool = False) -> str | None:
         return None
     if best["document"].source not in _QR_SOURCES:
         return None
+
+    # L'écart se mesure contre la première fiche d'un AUTRE document. Il y a un chunk par
+    # fiche aujourd'hui, donc le cas ne se présente pas — mais une source web découpe son
+    # texte en plusieurs morceaux, et comparer une fiche à son propre doublon donnerait un
+    # écart nul, donc plus aucune réponse instantanée, sans que personne ne comprenne pourquoi.
+    suivant = next((r for r in results[1:] if r["document"].id != best["document"].id), None)
+    if suivant is not None and (best["score"] - suivant["score"]) < INSTANT_ECART_MIN:
+        return None
+
     content = best["chunk"].content
     marker = "\nR:"
     idx = content.find(marker)

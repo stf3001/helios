@@ -67,6 +67,13 @@ async def mesurer(db, doc: KbDocument, chunk_par_doc: dict) -> dict:
     # ne sert donc jamais sa reponse telle quelle, meme avec un bon score.
     instant = rag.instant_answer(resultats) is not None
 
+    # L'ÉCART entre le 1er et le 2e : quand deux fiches sans rapport se tiennent à moins de
+    # 0,01, aucune n'est « la » réponse, et en servir une telle quelle n'est pas justifié.
+    # Mesuré le 13/10/2026 sur de vraies questions de visiteurs : « faut-il une batterie avec
+    # des panneaux » servait, instantanément et sans modèle pour la rattraper, une fiche sur
+    # les coupures de courant — écart +0,008.
+    second = resultats[1] if len(resultats) > 1 else None
+
     return {
         "titre": doc.titre,
         "source": doc.source,
@@ -74,6 +81,8 @@ async def mesurer(db, doc: KbDocument, chunk_par_doc: dict) -> dict:
         "rang": rang or 0,  # 0 = absente des `PROFONDEUR` premiers
         "score_propre": round(score_propre, 4) if score_propre is not None else "",
         "score_tete": round(tete["score"], 4) if tete else "",
+        "score_2e": round(second["score"], 4) if second else "",
+        "ecart": round(tete["score"] - second["score"], 4) if (tete and second) else "",
         "tete_source": tete["document"].source if tete else "",
         "tete_titre": tete["document"].titre if tete else "",
         "qr": doc.source in SOURCES_QR,

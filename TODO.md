@@ -709,42 +709,61 @@ est journalisée dans `/admin/agents`. À changer d'un chiffre si Stéphane veut
 Une fiche peut porter sa propre date avec `valide:AAAA-MM-JJ` dans ses métadonnées, qui
 l'emporte sur la cadence de sa source.
 
-### [ ] 27. Les questions courtes perdent leur réponse instantanée
+### [x] 27. Une mauvaise fiche pouvait être servie telle quelle — réparé le 13/10/2026
 
-**Mesuré le 13/10/2026** par le test d'auto-récupération (`api/scripts/test_recall.py`,
-398 fiches interrogées avec leur propre intitulé). La longueur de la question décide du
-score, et donc du passage ou non sous le seuil de 0,66 :
+**Trouvé en testant les questions RÉELLEMENT posées** (relevées dans la table `messages`,
+61 questions de visiteurs, médiane 10 mots) :
 
-| longueur de la question | score médian de sa propre fiche | sous le seuil |
+> « faut-il une batterie avec des panneaux » → Helios servait **instantanément, telle
+> quelle et sans modèle pour la rattraper**, la fiche « Mes panneaux fonctionnent-ils
+> pendant une coupure de courant ? »
+
+Ce n'était pas une lenteur : c'etait une mauvaise réponse donnée avec l'assurance d'une
+fiche validée. La bonne fiche existait — « Une batterie avec mes panneaux, bonne idée ? » —
+et elle était deuxième, a **0,008** pres.
+
+**La cause.** `instant_answer` vérifiait le score (« cette fiche ressemble a la question »)
+mais jamais que **rien d'autre ne lui ressemble autant**. Mesure sur les huit questions
+reelles : les trois cas mal servis ont un écart de 0,001 a 0,008 entre le 1er et le 2e ;
+les bons cas, de 0,017 a 0,073.
+
+**Le correctif** : `rag.INSTANT_ECART_MIN = 0.012`, mesuré contre la première fiche d'un
+AUTRE document (un chunk par fiche aujourd'hui, mais une source web en produit plusieurs —
+comparer une fiche à son propre doublon donnerait un écart nul). Calibré sur les 398 fiches :
+l'écart médian des bonnes réponses est de **0,130**, d'où le faible coût. 0,012 **domine
+0,010** — même coût, un cas douteux de plus attrapé.
+
+Relever le seuil de score aurait été le mauvais geste : le cas fautif est a 0,671 et de
+bonnes réponses instantanées vivent plus bas (« c'est quoi un puits canadien » a 0,691,
+posée trois fois par de vrais visiteurs).
+
+**La seule fiche qui y perd sa réponse instantanée est un vrai doublon** : « Une batterie
+virtuelle, concrètement, comment ça marche ? » (0,705) avec, a 0,698, « Qu'est-ce qu'une
+batterie virtuelle, concrètement ? ». Refuser d'en tirer une au sort est le comportement
+voulu ; c'est le recouvrement qu'il faut corriger — point 28.
+
+**Vérifié** : les trois bonnes réponses instantanées survivent, le cas fautif passe au
+modèle, qui reçoit alors DEUX fiches répondant vraiment (rangs 4 et 7). La question de
+référence retrouve exactement son 0,688. 15 tests dédiés, 290 au vert.
+
+**CE QUI RESTE, ET POURQUOI ON NE LE FAIT PAS.** Huit fiches ne passent pas le seuil avec
+leur propre intitulé, toutes à intitulé court (« Qui est SOBRY ? » 0,588, « Qui est
+Hydrolia ? » 0,648). La cause est structurelle : un chunk porte la question ET sa réponse,
+soit ~1 000 caractères, donc une question de cinq mots donne une similarité diluée.
+
+| longueur de la question | score median | sous le seuil |
 |---|---|---|
 | ≤ 5 mots | 0,690 | **20 %** |
 | 6-8 mots | 0,741 | 2 % |
 | 9-12 mots | 0,768 | 2 % |
 | 13 mots et plus | 0,777 | 0 % |
 
-**La cause est structurelle, pas accidentelle.** Un chunk contient la question ET sa
-réponse (`Q: …` puis `R: …`), donc souvent 1 000 caractères. Une question de cinq mots comparée
-à ce bloc donne une similarité diluée — le fichier `config.py` le notait déjà en juillet 2026 à
-propos du seuil (« le chunk Q+R dilue les scores »), mais sans voir que ça pénalise
-SYSTÉMATIQUEMENT les questions courtes, qui sont justement celles que les visiteurs tapent.
-
-**Huit fiches ne passent pas leur propre intitulé** : « Qui est SOBRY ? » (0,588), « Que se
-passe-t-il en cas de tempête ? » (0,594), « Seulement 70 % de rendement… » (0,612),
-« Pourquoi l'eau chaude pèse-t-elle autant… » (0,632), « Comment vérifier moi-même qu'une
-offre est bonne ? » (0,639), « L'esprit colibri, c'est quoi ? » (0,646), « Qui est
-Hydrolia ? » (0,648), « Le DPE, à quoi ça sert… » (0,659).
-
-**Ce n'est pas une panne visible** : la fiche arrive quand même en tête des sources, donc
-le modèle répond juste — simplement en 30 à 150 s au lieu de 2 s. C'est un problème de
-vitesse et de coût, pas d'exactitude.
-
-**Le vrai remède, à décider** : vectoriser la QUESTION à part du couple Q+R, pour qu'une
-question courte soit comparée à une question courte. C'est la technique habituelle, elle
-demande une colonne de plus et une réingestion complète (12 min). Baisser le seuil serait
-l'inverse de ce qu'il faut : il a été calibré par mesure, et le descendre ferait servir des
-fiches hors sujet telles quelles.
-
-Où : `api/app/services/rag.py` (`search_chunks`, `instant_answer`), `agents_engine.crawl_source`.
+Le remède serait de vectoriser la QUESTION à part du couple Q+R (colonne de plus,
+réingestion complète). **Non fait apres mesure du trafic reel** : la médiane des questions
+posées est de 10 mots, les questions de 5 mots ou moins font 15 % du relevé et sont pour
+l'essentiel des tests de développement. Ça représente ~3 % des questions, et ces questions
+reçoivent déjà une réponse JUSTE — seulement en 30-150 s au lieu de 2 s. À rouvrir si le
+trafic réel montre autre chose : `api/scripts/test_recall.py` donne la reference.
 
 ### [ ] 28. Six fiches se disputent la batterie virtuelle
 
