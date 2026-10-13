@@ -29,16 +29,6 @@
     {
       "name": "helios-front-attache",
       "url": "http://localhost:5173"
-    },
-    {
-      "name": "hydrolia-api",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/DELL/Desktop/hydrolia/api"],
-      "port": 3000
-    },
-    {
-      "name": "hydrolia-front-attache",
-      "url": "http://localhost:5175"
     }
   ]
 }
