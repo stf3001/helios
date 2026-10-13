@@ -471,8 +471,8 @@ R: Oui, systématiquement : une PAC déplace la consommation vers l'électricit�
 ## 20. Stockage virtuel & valorisation du surplus
 
 ### Q: Qu'est-ce qu'une batterie virtuelle, concrètement ?
-`cat: stockage | tags: batterie_virtuelle, principe`
-R: Votre surplus solaire est injecté au réseau et crédité sur un compte kWh chez un opérateur (Urban Solar Energy, mylight150…) ; vous « récupérez » ces kWh plus tard, en payant selon l'offre les frais de restitution, taxes et acheminement. Pas de matériel (sauf offres spécifiques), pas d'entretien, pas de perte de capacité. Depuis la chute du rachat à 1,1 c€/kWh (juin 2026), c'est devenu LE mode de valorisation du surplus résidentiel.
+`cat: stockage | tags: batterie_virtuelle, principe, fonctionnement, fournisseur | verif: tarifs, partenaire`
+R: L'image la plus juste, c'est un compte en banque pour vos kilowattheures : ce que vos panneaux produisent en trop à midi est porté à votre crédit, et vous le reprenez le soir. Physiquement, rien n'est stocké chez vous — l'électricité part sur le réseau, et c'est l'opérateur (Urban Solar Energy, mylight150…) qui tient le compte. C'est pour cela qu'il faut le prendre comme fournisseur d'électricité : vous changez de fournisseur, pas de réseau — même compteur Linky, mêmes câbles. Côté avantages : pas de matériel (sauf offres spécifiques), pas d'entretien, pas de perte de capacité. En échange, un kWh repris se paie — frais de restitution, taxes et acheminement —, selon une formule qui varie d'une offre à l'autre (capacité souscrite et forfait mensuel, ou abonnement plus frais à chaque restitution). Regardez donc ce que coûte vraiment un kWh repris, et ce qui arrive quand la réserve est pleine. Depuis la chute du rachat du surplus à 1,1 c€/kWh (juin 2026), c'est devenu LE mode de valorisation du surplus résidentiel.
 
 ### Q: Batterie virtuelle ou vente du surplus : que disent les chiffres ?
 `cat: stockage | tags: batterie_virtuelle, comparatif | verif: grilles operateurs`

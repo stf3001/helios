@@ -1185,3 +1185,51 @@ fiabilité » ; la mesure a envoyé ailleurs, et c'était tout son intérêt.
   répondant vraiment (rangs 4 et 7) au lieu d'une mauvaise servie telle quelle —, et la
   question de référence retrouve exactement son 0,688. **290 tests au vert**, dont 15
   nouveaux sur `instant_answer` seul.
+
+## Le doublon de la batterie virtuelle, et ce qu'un remède éditorial ne peut pas faire (13/10/2026)
+
+Point 28 de `TODO.md`. Moitié faite, moitié démontrée infaisable — les deux comptent.
+
+- **Les deux fiches de définition sont fusionnées.** « Qu'est-ce qu'une batterie virtuelle,
+  concrètement ? » (`faq_maison`) et « Une batterie virtuelle, concrètement, comment ça
+  marche ? » (`terrain`) portaient des intitulés quasi identiques et se cannibalisaient
+  (0,705 contre 0,698). La première absorbe la substance de la seconde, qui est retirée.
+  **Rien n'est perdu** : la survivante gagne l'image du compte en banque, la contrainte de
+  fournisseur (« il faut le prendre comme fournisseur d'électricité », même compteur Linky)
+  et les deux points à vérifier, tout en gardant les opérateurs nommés, les frais et le
+  contexte de la réforme de juin 2026. Base : 398 → 397 fiches.
+- **La contrainte de fournisseur était ce que l'arbitrage de juillet 2026 disait absent de
+  toutes les fiches** (« la virtuelle impose un fournisseur alternatif, ce que beaucoup
+  refusent ») ; elle est maintenant dans la fiche de définition elle-même.
+- **Effet de bord utile** : cette paire était le SEUL coût mesuré du garde-fou d'écart
+  (0,3 %, une fiche). Il ne coûte donc plus rien.
+- **LE CRAWL A PRIS 3,8 s**, contre 717 s avant la migration 0022 : 1 fiche mise à jour,
+  1 retirée, 396 inchangées. C'est le lot de la veille qui paie, dans un geste éditorial
+  ordinaire — et c'est ce qui rend un aller-retour d'écriture sur la base supportable.
+- **MAIS L'ENTERREMENT DE LA DÉFINITION N'EST PAS RÉPARABLE ÉDITORIALEMENT, et c'est mesuré** :
+  avant et après la fusion, sa propre question la laisse **au rang 6, tête 0,692, écart
+  +0,009 — identique au millième**. La cause n'était pas le doublon : **cinq fiches sont
+  également denses sur « batterie virtuelle »** (comparaison avec le physique, économie 2026,
+  comparaison à trois, départ de l'opérateur), et l'embedding ne distingue pas « définis-le »
+  de « compare-le ». Aucune réécriture ne fera gagner la définition contre quatre fiches qui
+  parlent autant du sujet qu'elle.
+- **DEUX ERREURS DE MA PART EN ROUTE, gardées ici parce qu'elles coûtent du temps à
+  quiconque reprendra le sujet** : (1) j'ai attribué le problème à la longueur du chunk,
+  alors que la fiche qui gagne est **la plus longue** des cinq (1 342 caractères) ; (2) j'ai
+  allongé la fiche fusionnée en pensant que ça aiderait — sans effet, ni dans un sens ni
+  dans l'autre. **La longueur du chunk n'explique pas ce classement.**
+- **Pourquoi on peut s'en contenter** : depuis le garde-fou d'écart, ces questions ne
+  reçoivent plus de fiche servie telle quelle (écart +0,003 → modèle), et le modèle **reçoit
+  bien la définition dans ses 8 sources** (rang 7 et rang 3 selon la formulation, vérifié).
+  Le visiteur a une réponse juste. Ce qui était grave est réglé ; ce qui reste est de la
+  finesse de classement.
+- **Laissé à Stéphane, et pas par prudence excessive** : décider qu'une SEULE fiche répond à
+  « physique ou virtuelle ? » (il y en a quatre). C'est son texte, c'est l'arbitrage
+  commercial de juillet, et MyLight est partenaire. À savoir pour cet arbitrage : « Batterie
+  physique ou batterie virtuelle en 2026 ? » conclut que « la batterie virtuelle fait mieux
+  financièrement dans quasi tous les cas » — la formule que l'arbitrage de juillet avait
+  jugée incomplète. Elle reste défendable parce qu'elle précise « financièrement », mais
+  c'est elle qui sera servie si elle sort en tête.
+- Vérifié : 290 tests au vert, parsing des 31 sources inchangé, et le sitemap n'est pas
+  versionné (généré au build) — la page de la fiche retirée disparaîtra au prochain
+  `npm run build`, sans lien mort puisque la fiche survivante garde son intitulé, donc son URL.

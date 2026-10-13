@@ -765,26 +765,46 @@ l'essentiel des tests de développement. Ça représente ~3 % des questions, et 
 reçoivent déjà une réponse JUSTE — seulement en 30-150 s au lieu de 2 s. À rouvrir si le
 trafic réel montre autre chose : `api/scripts/test_recall.py` donne la reference.
 
-### [ ] 28. Six fiches se disputent la batterie virtuelle
+### [ ] 28. La batterie virtuelle : doublon fusionné le 13/10/2026, le reste demande un arbitrage
 
-Même mesure du 13/10. Sur les **7 fiches reléguées** (qui ne se retrouvent pas au rang 1
-avec leur propre question), **5 parlent de batterie virtuelle** — le sujet est traité par
-`faq_maison`, `stockage_contrats` et `terrain` à la fois.
+**Fait le 13/10/2026 : les deux fiches de définition sont fusionnées.** Elles portaient des
+intitulés quasi identiques et se cannibalisaient (0,705 contre 0,698) — « Qu'est-ce qu'une
+batterie virtuelle, concrètement ? » (`faq_maison`) et « Une batterie virtuelle,
+concrètement, comment ça marche ? » (`terrain`). La première absorbe la substance de la
+seconde, qui est retirée ; rien n'est perdu, et la survivante **gagne la contrainte de
+fournisseur** (« il faut le prendre comme fournisseur d'électricité », compteur Linky
+inchangé) — justement ce que l'arbitrage de juillet 2026 notait absent de toutes les fiches.
+Base : 398 → 397 fiches. **Effet de bord utile** : cette paire était le seul coût mesuré du
+garde-fou d'écart (point 27), qui ne coûte donc plus rien.
 
-Le cas qui compte : **« Qu'est-ce qu'une batterie virtuelle, concrètement ? » tombe au
-rang 6.** C'est la fiche de DÉFINITION, et elle est enterrée sous cinq fiches de
-comparaison, d'engagement et de disparition d'opérateur. Un visiteur qui demande ce qu'est
-une batterie virtuelle reçoit donc une réponse sur comment la comparer.
+**MAIS LA FICHE DE DÉFINITION RESTE AU RANG 6, ET CE N'EST PAS RÉPARABLE ÉDITORIALEMENT.**
+Mesuré avant et après la fusion : **identique au millième** (rang 6, tête 0,692, écart
++0,009). La cause n'est pas un doublon, c'est que **cinq fiches sont également denses sur
+« batterie virtuelle »** — la comparaison avec le physique, l'économie 2026, la comparaison
+à trois, le départ de l'opérateur — et que l'embedding ne distingue pas « définis-le » de
+« compare-le ». Aucune réécriture ne fera gagner la définition contre quatre fiches qui
+parlent autant du sujet qu'elle.
 
-C'est la répétition du constat de juillet 2026 (4 fiches reléguées, toutes des
-quasi-doublons, dont deux qui se contredisaient) — à une différence près : ici les fiches
-ne se contredisent pas, elles se font seulement de l'ombre. **Le remède est éditorial**,
-pas technique : décider quelle fiche répond à quelle question et retirer le recouvrement.
-Sujet à enjeu commercial (MyLight est partenaire), donc arbitrage de Stéphane.
+**J'ai eu tort deux fois en route, c'est noté** : j'ai d'abord cru à un effet de longueur
+de chunk, alors que la fiche qui gagne est **la plus longue** des cinq (1 342 caractères) ;
+puis j'ai allongé la fiche fusionnée en pensant que ça aiderait, ce qui n'a rien changé
+dans un sens ni dans l'autre.
 
-Les deux autres reléguées sont saines : la fiche MaPrimeRénov' de `faq_maison` est battue
-d'un cheveu (0,570 contre 0,580) par celle de `baremes_aides`, qui est la plus récente et
-la plus précise — c'est le bon résultat.
+**POURQUOI ON PEUT S'EN CONTENTER.** Depuis le point 27, ces questions ne reçoivent plus
+une fiche servie telle quelle : l'écart est de +0,003, donc elles passent au modèle — qui
+**reçoit bien la définition dans ses 8 sources** (rang 7 pour « qu'est-ce qu'une batterie
+virtuelle », rang 3 pour « c'est quoi une batterie virtuelle », vérifié). Le visiteur a donc
+une réponse juste, écrite par le modèle. Ce qui était grave — une mauvaise fiche servie avec
+l'assurance d'une fiche validée — est réglé ; ce qui reste est une question de finesse.
+
+**Ce qu'il resterait à faire, et qui ne vaut probablement pas son coût** : décider qu'une
+seule fiche répond à « physique ou virtuelle ? » (il y en a quatre : `faq_maison` deux fois,
+`terrain`, `stockage_contrats`) et renvoyer les autres sur leur situation propre. C'est du
+texte, c'est l'arbitrage commercial de juillet, et MyLight est partenaire — **à Stéphane**,
+pas à moi. Note au passage : « Batterie physique ou batterie virtuelle en 2026 ? » conclut
+que « la batterie virtuelle fait mieux financièrement dans quasi tous les cas », ce qui est
+la formule que l'arbitrage de juillet avait jugée incomplète ; elle reste défendable parce
+qu'elle dit « financièrement », mais c'est elle qui sera servie si elle sort en tête.
 
 ### [ ] 29. Le classement ignore la date et la fiabilité — mais ça compte moins qu'il n'y paraît
 
