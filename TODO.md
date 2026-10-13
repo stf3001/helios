@@ -678,6 +678,68 @@ que `chat.py` groupe par métier. Un vrai candidat arriverait donc sous `pv` qua
 partenaires existants sont en `solaire` — même famille de défaut que les zones, sur le
 même chemin. À traiter séparément.
 
+---
+
+### [x] 26. La veille ne pouvait rien détecter — réparé le 13/10/2026
+
+**Le défaut, trouvé en préparant les métadonnées du crawler.** `crawl_source` écrivait
+`date_maj = today` à **chaque** passage, que le contenu ait bougé ou non. Or `run_veille`
+cherche les documents dont `date_maj` dépasse 180 jours. Chaque crawl remettait donc le
+compteur à zéro sur toute la source : **la veille ne pouvait structurellement rien
+signaler**. Le « 0 document périmé » consigné comme un test réussi était la seule réponse
+qu'elle savait donner, et les fiches taguées `verif:date_sensible_*` n'auraient jamais
+remonté.
+
+Réparé par la migration `0022_kb_metadonnees` : `date_maj` est la date du dernier
+changement de **contenu**, `date_crawl` celle du dernier passage. L'empreinte SHA-256 du
+contenu décide laquelle bouge. Au passage, un crawl à vide passe de **717 s à 1,7 s**
+(mesuré sur les 398 fiches) : l'embedding ne tourne plus que sur ce qui a changé.
+
+**Limite à connaître en lisant les premiers relevés** : pour les fiches déjà en base,
+`date_maj` porte la date du crawl du 13/10, pas celle de leur dernier vrai changement —
+cette information n'existe nulle part et ne peut pas être reconstituée. Le compteur part
+donc de maintenant et devient exact à mesure que les fiches évoluent. Même situation que
+`rag_score` à son introduction.
+
+**Les trois sources qui se périment** portent une cadence de re-vérification de 12 mois
+(`SourceSpec.validite_mois`) : `baremes_aides`, `reglementation`, `achat_energie` — soit
+28 fiches avec une fin de validité au 13/10/2027. **C'est un rythme de surveillance, pas
+une affirmation sur la durée de vie d'une aide** : rien n'est retiré de la base, une ligne
+est journalisée dans `/admin/agents`. À changer d'un chiffre si Stéphane veut plus serré.
+Une fiche peut porter sa propre date avec `valide:AAAA-MM-JJ` dans ses métadonnées, qui
+l'emporte sur la cadence de sa source.
+
+### [ ] 27. Le classement de la recherche ignore la date et la fiabilité
+
+`rag.search_chunks` trie sur la **seule** distance cosinus. Un arrêté de 2026 et une fiche
+de 2024 se battent à armes égales, et une fiche marquée `pedagogique` (profil fictif) peut
+primer sur une fiche `officiel`.
+
+Les données nécessaires existent depuis la migration 0022 (`fiabilite`, `date_maj`,
+`valide_jusqu_au`) ; ce qui manque est le classement lui-même. **Volontairement pas fait
+dans le même lot** : faire primer le récent et l'officiel change ce qu'Helios *répond*, donc
+ça se vérifie sur de vraies questions avant d'être gardé. Le test d'auto-récupération
+(`scratchpad/test_recall.py`) est l'outil de mesure, il existe déjà.
+
+Où : `api/app/services/rag.py:search_chunks`.
+
+### [ ] 28. « C'est quoi le VOSS » n'a plus de réponse instantanée
+
+Repéré en vérifiant la recherche après le lot du 13/10, et **antérieur à ce lot** : la
+question courte « c'est quoi le VOSS » sort à **0,624**, sous le seuil de 0,66, donc elle
+part au modèle au lieu d'être servie par la fiche. Le journal du 27/07/2026 notait 0,775
+pour la même question.
+
+Ce n'est pas une régression du ré-embarquement : la question longue (« …, le stockage
+solaire en béton ») sort à 0,809, et la question d'isolation de référence retrouve
+exactement son 0,688 d'origine. L'explication la plus probable est la croissance de la
+base — 185 fiches en juillet, **398 aujourd'hui** —, donc plus de voisins proches qui se
+disputent le haut du classement.
+
+À regarder comme un symptôme plutôt qu'un cas isolé : d'autres questions courtes ont pu
+passer sous le seuil sans que personne ne le voie. Le test d'auto-récupération mesure
+exactement ça, et n'a pas été relancé depuis que la base a doublé.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
@@ -745,65 +807,3 @@ vient de la fiche ; les bornes `min`/`max` de `Champ` filtrent ce qui est tapé 
 
 **Une erreur de validation de FastAPI renvoie `detail` sous forme de LISTE**,
 pas de texte. Un écran qui ne lit que le texte restera muet.
-
----
-
-### [x] 25. La veille ne pouvait rien détecter — réparé le 13/10/2026
-
-**Le défaut, trouvé en préparant les métadonnées du crawler.** `crawl_source` écrivait
-`date_maj = today` à **chaque** passage, que le contenu ait bougé ou non. Or `run_veille`
-cherche les documents dont `date_maj` dépasse 180 jours. Chaque crawl remettait donc le
-compteur à zéro sur toute la source : **la veille ne pouvait structurellement rien
-signaler**. Le « 0 document périmé » consigné comme un test réussi était la seule réponse
-qu'elle savait donner, et les fiches taguées `verif:date_sensible_*` n'auraient jamais
-remonté.
-
-Réparé par la migration `0022_kb_metadonnees` : `date_maj` est la date du dernier
-changement de **contenu**, `date_crawl` celle du dernier passage. L'empreinte SHA-256 du
-contenu décide laquelle bouge. Au passage, un crawl à vide passe de **717 s à 1,7 s**
-(mesuré sur les 398 fiches) : l'embedding ne tourne plus que sur ce qui a changé.
-
-**Limite à connaître en lisant les premiers relevés** : pour les fiches déjà en base,
-`date_maj` porte la date du crawl du 13/10, pas celle de leur dernier vrai changement —
-cette information n'existe nulle part et ne peut pas être reconstituée. Le compteur part
-donc de maintenant et devient exact à mesure que les fiches évoluent. Même situation que
-`rag_score` à son introduction.
-
-**Les trois sources qui se périment** portent une cadence de re-vérification de 12 mois
-(`SourceSpec.validite_mois`) : `baremes_aides`, `reglementation`, `achat_energie` — soit
-28 fiches avec une fin de validité au 13/10/2027. **C'est un rythme de surveillance, pas
-une affirmation sur la durée de vie d'une aide** : rien n'est retiré de la base, une ligne
-est journalisée dans `/admin/agents`. À changer d'un chiffre si Stéphane veut plus serré.
-Une fiche peut porter sa propre date avec `valide:AAAA-MM-JJ` dans ses métadonnées, qui
-l'emporte sur la cadence de sa source.
-
-### [ ] 26. Le classement de la recherche ignore la date et la fiabilité
-
-`rag.search_chunks` trie sur la **seule** distance cosinus. Un arrêté de 2026 et une fiche
-de 2024 se battent à armes égales, et une fiche marquée `pedagogique` (profil fictif) peut
-primer sur une fiche `officiel`.
-
-Les données nécessaires existent depuis la migration 0022 (`fiabilite`, `date_maj`,
-`valide_jusqu_au`) ; ce qui manque est le classement lui-même. **Volontairement pas fait
-dans le même lot** : faire primer le récent et l'officiel change ce qu'Helios *répond*, donc
-ça se vérifie sur de vraies questions avant d'être gardé. Le test d'auto-récupération
-(`scratchpad/test_recall.py`) est l'outil de mesure, il existe déjà.
-
-Où : `api/app/services/rag.py:search_chunks`.
-
-### [ ] 27. « C'est quoi le VOSS » n'a plus de réponse instantanée
-
-Repéré en vérifiant la recherche après le lot du 13/10, et **antérieur à ce lot** : la
-question courte « c'est quoi le VOSS » sort à **0,624**, sous le seuil de 0,66, donc elle
-part au modèle au lieu d'être servie par la fiche. Le journal du 27/07/2026 notait 0,775
-pour la même question.
-
-Ce n'est pas une régression du ré-embarquement : la question longue (« …, le stockage
-solaire en béton ») sort à 0,809, et la question d'isolation de référence retrouve
-exactement son 0,688 d'origine. L'explication la plus probable est la croissance de la
-base — 185 fiches en juillet, **398 aujourd'hui** —, donc plus de voisins proches qui se
-disputent le haut du classement.
-
-À regarder comme un symptôme plutôt qu'un cas isolé : d'autres questions courtes ont pu
-passer sous le seuil sans que personne ne le voie. Le test d'auto-récupération mesure
-exactement ça, et n'a pas été relancé depuis que la base a doublé.

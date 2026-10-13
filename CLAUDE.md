@@ -1119,7 +1119,7 @@ une fonction morte.
   compteur part de maintenant. Même situation que `rag_score` à son introduction.
 - **NON FAIT, DÉLIBÉRÉMENT : le classement.** `search_chunks` trie toujours sur la seule
   distance cosinus — faire primer le récent et l'officiel change ce qu'Helios *répond*, donc
-  ça se mesure sur de vraies questions avant d'être gardé. Point 26 de `TODO.md`.
+  ça se mesure sur de vraies questions avant d'être gardé. Point 27 de `TODO.md`.
 - **Vérifié en conditions réelles** (Postgres + Ollama, 398 fiches) : migration appliquée,
   schéma relu, les deux crawls chronométrés, veille forcée à déclencher sur une fiche
   expirée puis remise en état, journal relu (accents corrects en base — la console Windows
@@ -1129,4 +1129,4 @@ une fonction morte.
 - **Repéré au passage, antérieur à ce lot** : « c'est quoi le VOSS » tombe à 0,624 et perd sa
   réponse instantanée, là où le journal de juillet notait 0,775 — la base a doublé depuis
   (185 → 398 fiches), donc plus de voisins qui se disputent le haut du classement. Le test
-  d'auto-récupération n'a pas été relancé depuis. Point 27 de `TODO.md`.
+  d'auto-récupération n'a pas été relancé depuis. Point 28 de `TODO.md`.
