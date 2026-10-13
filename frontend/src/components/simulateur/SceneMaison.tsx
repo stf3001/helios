@@ -1,5 +1,14 @@
 /**
- * La scène : la maison Helios, ses emplacements d'équipement, et l'énergie qui circule.
+ * La scène : la maison Helios, ses emplacements d'équipement, et ce qui s'y anime.
+ *
+ * LES CINQ ARCS DE FLUX ONT ÉTÉ SUPPRIMÉS LE 12/10/2026 (décision de Stéphane). Ils
+ * reliaient le soleil, la batterie, le réseau et la maison par des courbes dont
+ * l'épaisseur valait les kW et dont le pointillé défilait. Deux reproches : ils
+ * animaient une LIAISON quand c'est une animation par ÉQUIPEMENT qui est attendue, et
+ * ils se posaient par-dessus les circuits déjà dessinés dans l'illustration.
+ * Ce qu'ils disaient est repris, équipement par équipement, par `animations.tsx` : le
+ * poteau qui pulse = on achète, la jauge qui monte = la batterie charge, les rayons =
+ * le toit produit. NE PAS LES RÉINTRODUIRE sans en reparler.
  *
  * DÉCOR = `/maison-demain-v2.webp`, l'illustration 21:9 fournie le 01/10/2026. Elle
  * REMPLACE, pour la scène seulement, l'ancienne `/maison-demain.webp` — qui reste en place
@@ -22,6 +31,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Saison } from '../../lib/simulateur'
 import { COULEURS } from '../../data/couleurs'
+import AnimationsEquipements from './animations'
 import { ANCRE, FENETRES, IMAGE, POSITIONS, RAYON_REPERE, ROTORS } from './reperes'
 
 const DECOR = '/maison-demain-v2.webp'
@@ -56,31 +66,6 @@ interface Props {
 function estNuit(heure: number, saison: Saison): boolean {
   const [lever, coucher] = saison === 'ete' ? [6, 21] : saison === 'hiver' ? [8, 17] : [7, 19]
   return heure < lever || heure >= coucher
-}
-
-/** Épaisseur du trait proportionnelle aux kW, bornée pour rester lisible. */
-function epaisseur(kw: number): number {
-  if (kw <= 0.01) return 0
-  return Math.max(4, Math.min(22, 4 + kw * 3.4))
-}
-
-function Flux({ d, kw, couleur }: { d: string; kw: number; couleur: string }) {
-  const largeur = epaisseur(kw)
-  if (largeur === 0) return null
-  // Plus il passe de kW, plus le flux va vite : la vitesse dit la puissance autant que l'épaisseur.
-  const duree = Math.max(0.6, 2.4 - kw * 0.28)
-  return (
-    <g>
-      {/* Un liseré blanc détache le flux du décor, qui est clair et chargé. */}
-      <path d={d} fill="none" stroke={COULEURS.blanc} strokeWidth={largeur + 6} strokeOpacity={0.55}
-        strokeLinecap="round" />
-      <path d={d} fill="none" stroke={couleur} strokeWidth={largeur} strokeOpacity={0.28}
-        strokeLinecap="round" />
-      <path d={d} fill="none" stroke={couleur} strokeWidth={largeur} strokeLinecap="round"
-        strokeDasharray="14 22" className="scene-flux"
-        style={{ animationDuration: `${duree}s` }} />
-    </g>
-  )
 }
 
 function Repere({
@@ -123,7 +108,7 @@ export default function SceneMaison({ equipements, eolienne, heure, saison, flux
   const installes = equipements.filter((e) => e.installe)
   const numeroDe = new Map(installes.map((e, i) => [e.id, i + 1]))
 
-  const { soleil, maison, batterie, reseau } = ANCRE
+  const { soleil } = ANCRE
 
   /* --- Mode calibrage (`?calibrage=1`) ---
      Un clic sur la scène donne les coordonnées du point DANS LE REPÈRE DE L'IMAGE, par la
@@ -212,19 +197,16 @@ export default function SceneMaison({ equipements, eolienne, heure, saison, flux
               fill="url(#sc-halo-soleil)" />
           )}
 
-          {/* ---------- LES FLUX ----------
-              Le réseau est à GAUCHE depuis la nouvelle illustration : les deux flux qui le
-              concernent longent le bord gauche, par-dessus la pelouse, et non plus la droite. */}
-          <Flux d={`M ${soleil.x + 40} ${soleil.y + 60} Q ${maison.x - 220} ${maison.y - 230} ${maison.x - 30} ${maison.y - 20}`}
-            kw={flux.soleilMaison} couleur={COULEURS.or} />
-          <Flux d={`M ${soleil.x - 10} ${soleil.y + 70} Q ${batterie.x + 30} ${batterie.y - 220} ${batterie.x + 10} ${batterie.y - 50}`}
-            kw={flux.soleilBatterie} couleur={COULEURS.vert} />
-          <Flux d={`M ${soleil.x - 60} ${soleil.y + 30} Q ${reseau.x + 110} ${reseau.y - 110} ${reseau.x + 20} ${reseau.y - 10}`}
-            kw={flux.soleilReseau} couleur={COULEURS.bleu} />
-          <Flux d={`M ${reseau.x + 30} ${reseau.y + 40} Q ${maison.x - 420} ${maison.y + 240} ${maison.x - 110} ${maison.y + 60}`}
-            kw={flux.reseauMaison} couleur={COULEURS.bleu} />
-          <Flux d={`M ${batterie.x + 40} ${batterie.y - 20} Q ${maison.x - 230} ${maison.y + 130} ${maison.x - 60} ${maison.y + 50}`}
-            kw={flux.batterieMaison} couleur={COULEURS.vert} />
+          {/* ---------- UNE ANIMATION PAR ÉQUIPEMENT ----------
+              APRÈS le voile de nuit, et c'est voulu : la maison vit aussi la nuit, et des
+              animations passées dessous seraient éteintes au moment où elles sont les plus
+              parlantes. Les rayons du soleil font exception et ne jouent pas la nuit — ils
+              partiraient d'un soleil qui n'est plus là. */}
+          <AnimationsEquipements
+            poses={new Set(installes.map((e) => e.id))}
+            nuit={nuit}
+            batterieCharge={flux.soleilBatterie}
+            batterieDecharge={flux.batterieMaison} />
 
           {/* ---------- LES REPÈRES ---------- */}
           {equipements.map((e) => (

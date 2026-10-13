@@ -1004,3 +1004,69 @@ script de démarrage à la racine (`demarrer-helios.bat`, `demarrer-hydrolia.bat
 - Le `localStorage` est isolé par origine (port compris) : aucune collision possible.
 - Rappel du piège local : le service Windows natif `postgresql-x64-17` reprend le port 5432
   devant le conteneur au redémarrage (`Stop-Service postgresql-x64-17`).
+
+
+## Une animation par équipement dans la scène (12/10/2026)
+
+Stéphane a filmé la scène avec tout installé : deux animations seulement, et une seule
+qui lui plaisait. « Il n'y en a pas pour chaque item. La seule animation sympa est celle
+des éoliennes verticales. »
+
+- **Les cinq arcs de flux sont supprimés**, pas seulement leur pointillé défilant. Ils
+  animaient une LIAISON là où c'est une animation par ÉQUIPEMENT qui est attendue, et ils
+  se posaient par-dessus les circuits déjà dessinés dans l'illustration. Avec eux
+  disparaissent trois des quatre ancres de `reperes.ts` (`maison`, `batterie`, `reseau`) :
+  **seul `ANCRE.soleil` subsiste**, pour le halo et les rayons. Ne pas les réintroduire
+  sans en reparler.
+- **Les rotors des éoliennes ne bougent pas** : c'est la seule animation que Stéphane
+  gardait, elle reste exactement où elle était (`SceneMaison.tsx` + `.scene-eolienne`).
+- **`components/simulateur/animations.tsx` (nouveau)** porte les treize autres, keyframes
+  dans `index.css` (préfixe `sc-`). Les coordonnées y sont relevées objet par objet, en
+  pixels de l'image source, comme `reperes.ts` — qui ne garde que ce que PLUSIEURS parties
+  de la scène se partagent.
+- **La règle qui tient l'ensemble : une animation ne joue que si l'équipement est
+  installé.** C'est la récompense du clic. Mesuré : 4 éléments animés dans l'état par
+  défaut (eau chaude + climatisation), 8 dès qu'on pose des panneaux, 35 avec tout.
+- **Aucune ne suit la saison** (demande explicite) : la climatisation souffle du bleu en
+  janvier, le puits canadien sort du bleu ET de l'orange ensemble. Seuls les rayons
+  s'éteignent la nuit, parce que le soleil dont ils partent passe sous le voile nocturne.
+- Ce que chacune raconte : rayons du soleil vers le toit puis vers le carport · goutte à
+  goutte dans le potager · gourde qui se remplit sous la machine à eau · jauge qui monte
+  quand la batterie charge et descend quand elle rend (l'heure affichée décide) · éclat qui
+  balaie le flanc du disque d'inertie · énergie qui monte au nuage de la batterie virtuelle
+  et en redescend · onde tiède dans le circuit orange de l'eau chaude · souffle de la
+  climatisation · reflets qui dérivent sur la piscine · témoin de la borne et câble qui
+  s'éclaire · air aspiré dans la bouche du puits et ressorti bleu + orange par la grille du
+  séjour · pulsation du poteau vers la maison, **jamais l'inverse**.
+- **Le repère de la batterie a dû bouger** (`reperes.ts`, 460,368 → 520,402) : le coffret
+  fait 29 px de large quand la pastille en fait 68 — elle le recouvrait entièrement, et
+  avec lui la jauge. Même règle que le puits, le disque, la machine à eau et la voiture,
+  déjà écrite dans ce fichier. Les volutes de la climatisation ont été décalées à droite
+  pour la même raison.
+- **La machine à eau verse dans une fontaine.** Deux essais ont été jetés avant : une
+  gourde posée sur un plateau de bois à pieds (« minable », et le plateau passait devant la
+  machine au lieu de la porter). La règle qui a tout débloqué : **la vasque est DEVANT la
+  machine, pas dessous**. Son bord (ellipse 1070, 500) recouvre les vingt derniers pixels
+  de la machine, qui n'a donc plus de pied dans l'herbe — elle émerge de derrière la
+  vasque, comme la colonne d'une fontaine, et il reste 22 px de chute entre le bec et
+  l'eau. C'est ce qui manquait : la machine touche l'herbe à y = 508, rien ne pouvait
+  couler sous elle. Personne n'a été déplacé, aucune éolienne n'a eu à être sacrifiée
+  (Stéphane l'autorisait). À ne pas élargir : la bouche du puits canadien passe à 3 px du
+  bord gauche de la vasque.
+- **L'air du puits canadien a demandé trois réglages**, parce que Stéphane ne voyait rien
+  à l'écran : trop fin et à moitié effacé (4 px, et un PALIER d'opacité au lieu d'un pic) ;
+  posé sous la pastille « Machine à eau », qui occupe toute l'herbe au-dessus de la bouche
+  (y < 529) ; et descendant à la verticale à côté d'elle au lieu d'y entrer. Il est
+  maintenant HORIZONTAL et rentre dans la bouche par la gauche — le seul côté libre.
+- **Pièges trouvés en relisant à l'écran, pas en théorie** : le goutte-à-goutte barrait la
+  courgette (descendu sur la terre nue du bord avant) ; et surtout **le sens des arcs
+  SVG** — `sweep-flag = 1` bombe vers le HAUT, donc le découpe du flanc du disque incluait
+  son dessus et l'éclat flottait sur la face supérieure. Le disque a été remesuré au
+  pixel : ellipse (851, 506), rayons 58 × 13.
+- **La leçon de ces deux allers-retours** : sur cette scène, une animation ne se juge pas
+  au code ni à une capture zoomée, mais à la taille réelle, repères compris. Deux des trois
+  défauts venaient d'une PASTILLE posée là où l'animation devait vivre.
+- **Vérifié en conditions réelles** (serveur de dev, scène forcée avec les quatorze
+  équipements posés) : les 35 éléments animés existent et tournent, chaque objet relu à la
+  loupe par un zoom du `viewBox`, zéro erreur console, `tsc -b` et `npm run build` passent
+  (420 URL au plan de site, inchangé).

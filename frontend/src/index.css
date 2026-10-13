@@ -105,18 +105,123 @@ input, select, textarea {
   .scene-eolienne { animation: none; }
 }
 
-/* --- Simulateur : flux d'energie de la scene ------------------------------- */
-/* Le trait pointille defile le long du chemin : c'est ce qui donne le sens du flux. */
-@keyframes scene-flux-defile {
-  to { stroke-dashoffset: -52; }
-}
-.scene-flux {
-  animation-name: scene-flux-defile;
+/* --- Simulateur : une animation par equipement (12/10/2026) ----------------
+   Tout est en transform / opacity / stroke-dashoffset : quatorze boucles simultanees ne
+   coutent rien tant qu'on ne touche ni a la geometrie ni aux filtres. La geometrie, elle,
+   est dans `components/simulateur/animations.tsx`, en pixels de l'image source. */
+
+/* La comete : un pointille court qui parcourt un trace, puis recommence. Les traces
+   portent `pathLength="100"`, donc le motif est en CENTIEMES DE TRACE — la meme classe
+   sert au rayon du toit (long) et au filet d'eau de la gourde (9 px). */
+@keyframes sc-comete { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+.sc-comete {
+  animation-name: sc-comete;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
+
+/* La gourde se remplit, s'arrete a l'epaule, puis s'efface : quelqu'un l'a emportee.
+   Le retour a zero est invisible parce qu'il se fait a opacite nulle. */
+@keyframes sc-gourde-niveau {
+  0%        { transform: scaleY(0); opacity: 1; }
+  78%, 92%  { transform: scaleY(1); opacity: 1; }
+  100%      { transform: scaleY(1); opacity: 0; }
+}
+.sc-gourde-niveau { animation: sc-gourde-niveau 8s ease-in infinite; }
+
+/* La jauge de la batterie. MEME jeu de keyframes dans les deux sens : `charge` la joue a
+   l'endroit (elle monte), `decharge` la joue en `reverse` (elle descend). */
+@keyframes sc-jauge {
+  0%        { transform: scaleY(0.12); opacity: 0.5; }
+  70%, 88%  { transform: scaleY(1);    opacity: 0.5; }
+  100%      { transform: scaleY(1);    opacity: 0; }
+}
+.sc-jauge { animation-name: sc-jauge; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; }
+
+/* Le reflet qui balaie le flanc du disque d'inertie : c'est lui qui dit la rotation. */
+@keyframes sc-inertie-reflet { from { transform: translateX(0); } to { transform: translateX(160px); } }
+.sc-inertie-reflet { animation: sc-inertie-reflet 3.4s linear infinite; }
+
+/* L'energie monte au nuage de la batterie virtuelle, puis en redescend. */
+@keyframes sc-nuage-point {
+  0%   { transform: translateY(0);     opacity: 0; }
+  15%  { opacity: 0.9; }
+  45%  { transform: translateY(-28px); opacity: 0; }
+  55%  { transform: translateY(-28px); opacity: 0; }
+  70%  { opacity: 0.9; }
+  100% { transform: translateY(0);     opacity: 0; }
+}
+.sc-nuage-point { animation: sc-nuage-point 6s ease-in-out infinite; }
+
+/* Le souffle de la climatisation, qui descend dans la piece et s'efface. */
+@keyframes sc-souffle {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  25%  { opacity: 0.75; }
+  100% { transform: translate(-14px, 26px); opacity: 0; }
+}
+.sc-souffle { animation: sc-souffle 3.3s ease-out infinite; }
+
+/* Les reflets qui derivent sur le bassin. */
+@keyframes sc-reflet {
+  0%   { transform: translateX(-30px); opacity: 0; }
+  50%  { opacity: 0.5; }
+  100% { transform: translateX(30px);  opacity: 0; }
+}
+.sc-reflet { animation-name: sc-reflet; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; }
+
+/* Le temoin de la borne de recharge. */
+@keyframes sc-temoin { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.sc-temoin { animation: sc-temoin 1.8s ease-in-out infinite; }
+
+/* Le puits canadien : l'air descend dans la bouche dehors, ressort par la grille dedans. */
+/* HORIZONTAL, et c'est le point : l'air RENTRE dans la bouche, il ne tombe pas a cote.
+   Le palier d'opacite (et non un pic) est ce qui le rend visible a l'ecran. */
+@keyframes sc-aspire {
+  0%        { transform: translateX(-20px); opacity: 0; }
+  20%, 72%  { opacity: 0.85; }
+  100%      { transform: translateX(26px);  opacity: 0; }
+}
+.sc-aspire { animation: sc-aspire 3.6s ease-in infinite; }
+
+/* L'onde a la surface de la vasque, la ou le filet tombe. */
+@keyframes sc-onde {
+  0%   { transform: scale(0.15); opacity: 0.75; }
+  100% { transform: scale(1);    opacity: 0; }
+}
+.sc-onde { animation: sc-onde 2.8s ease-out infinite; }
+@keyframes sc-filet {
+  0%   { transform: translateY(14px);  opacity: 0; }
+  30%  { opacity: 0.8; }
+  100% { transform: translateY(-18px); opacity: 0; }
+}
+.sc-filet { animation: sc-filet 4.5s ease-out infinite; }
+
+/* Le goutte-a-goutte du potager : la goutte tombe, la terre se mouille, puis seche.
+   Les deux partagent la meme duree et le meme decalage, sinon la tache apparaitrait
+   avant que la goutte ne touche le sol. */
+@keyframes sc-goutte {
+  0%        { transform: translateY(0);    opacity: 0; }
+  12%       { opacity: 0.9; }
+  18%       { transform: translateY(0);    opacity: 0.9; }
+  52%       { transform: translateY(14px); opacity: 0.9; }
+  56%, 100% { transform: translateY(14px); opacity: 0; }
+}
+.sc-goutte { animation: sc-goutte 3.9s ease-in infinite; }
+@keyframes sc-tache {
+  0%, 52% { opacity: 0; }
+  60%     { opacity: 0.5; }
+  100%    { opacity: 0; }
+}
+.sc-tache { animation: sc-tache 3.9s ease-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .scene-flux { animation: none; }
+  .sc-comete, .sc-gourde-niveau, .sc-jauge, .sc-inertie-reflet, .sc-nuage-point,
+  .sc-souffle, .sc-reflet, .sc-temoin, .sc-aspire, .sc-filet, .sc-goutte, .sc-tache,
+  .sc-onde {
+    animation: none;
+  }
 }
 
 /* Feuille de reglage qui monte depuis le bas, sur mobile. */

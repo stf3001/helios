@@ -41,7 +41,10 @@ export const POSITIONS: Record<string, { x: number; y: number }> = {
   carport: { x: 250, y: 262 },            // le toit du carport, qui existe vraiment maintenant
   eolienne: { x: 1150, y: 248 },          // juste au-dessus des trois rotors
   eau: { x: 960, y: 495 },                // A COTE du boitier bleu a la goutte (AWG)
-  batterie: { x: 460, y: 368 },           // le coffret vert contre le mur du garage
+  // A COTE du coffret vert, sur le mur : le coffret ne fait que 29 px de large quand la
+  // pastille en fait 68, elle le recouvrait entierement — et avec lui la jauge de charge
+  // ajoutee le 12/10/2026. Meme regle que le puits, le disque, la machine a eau et la
+  batterie: { x: 520, y: 402 },
   inertie: { x: 750, y: 520 },            // A COTE du disque de beton pose sur la pelouse
   batterie_virtuelle: { x: 250, y: 152 }, // dans le ciel : elle n'a pas d'objet, c'est le propos
   ballon: { x: 770, y: 200 },             // approximatif : sur le circuit orange (chaleur)
@@ -73,18 +76,14 @@ export const ROTORS = [
 ] as const
 
 /**
- * Où partent et où arrivent les flux d'énergie.
+ * Le soleil du décor : son halo s'y accroche, et les rayons animés en partent.
  *
- * ATTENTION — LE POTEAU A CHANGÉ DE CÔTÉ le 01/10/2026 : il était supposé à droite
- * (x = 1068) sur l'ancienne illustration, qui n'en dessinait aucun. Il est maintenant
- * dessiné, EN HAUT À GAUCHE. Les deux flux réseau (surplus exporté, électricité achetée)
- * partent donc du bord gauche et non plus du bord droit.
+ * IL EST SEUL DEPUIS LE 12/10/2026. Les trois autres ancres (maison, batterie, réseau)
+ * ne servaient qu'aux cinq arcs de flux, supprimés ce jour-là — voir l'en-tête de
+ * `SceneMaison.tsx`. Les rouvrir n'aurait de sens que si ces arcs revenaient.
  */
 export const ANCRE = {
   soleil: { x: 390, y: 40 },
-  maison: { x: 830, y: 300 },
-  batterie: { x: 460, y: 368 },
-  reseau: { x: 95, y: 200 },
 } as const
 
 /** Les vitrages qui s'allument quand la scène passe en mode nuit. */
