@@ -11,7 +11,14 @@ from app.core.db import Base
 
 
 class KbDocument(Base):
-    """Un document source (ex. une entrée FAQ) — doc 02, doc 07."""
+    """Un document source (ex. une entrée FAQ) — doc 02, doc 07.
+
+    LES DEUX DATES NE DISENT PAS LA MÊME CHOSE, et c'est tout l'objet de la migration 0022 :
+    `date_maj` est la date où le CONTENU a changé, `date_crawl` celle du dernier passage du
+    crawler. Tant qu'il n'y en avait qu'une, le crawler la remettait à aujourd'hui à chaque
+    passage et la veille ne pouvait plus rien repérer. **Ne jamais écrire `date_maj` sans
+    avoir constaté que l'empreinte a bougé.**
+    """
 
     __tablename__ = "kb_documents"
 
@@ -19,8 +26,23 @@ class KbDocument(Base):
     source: Mapped[str] = mapped_column(String(50), nullable=False)  # ex. "faq_maison"
     titre: Mapped[str] = mapped_column(String(500), nullable=False)
     url: Mapped[str | None] = mapped_column(String(500))
-    date_maj: Mapped[date] = mapped_column(Date, nullable=False)
+    date_maj: Mapped[date] = mapped_column(Date, nullable=False)  # dernier changement de CONTENU
     statut: Mapped[str] = mapped_column(String(20), nullable=False, default="actif")  # actif | obsolete
+
+    #: SHA-256 du contenu (migration 0022). Sert à ne ré-embedder que ce qui a réellement
+    #: changé : l'embedding est la seule opération coûteuse de l'ingestion. Nulle sur un
+    #: document ingéré avant la migration — le prochain crawl la renseigne.
+    empreinte: Mapped[str | None] = mapped_column(String(64))
+    #: Dernier passage du crawler, qu'il ait trouvé du nouveau ou non.
+    date_crawl: Mapped[date | None] = mapped_column(Date)
+    #: Fin de validité quand elle est connue (barèmes d'aides, échéances réglementaires).
+    #: Dépassée = la veille le signale. Nulle = pas de péremption connue.
+    valide_jusqu_au: Mapped[date | None] = mapped_column(Date)
+    #: Nature de la source, déclarée dans `agents_engine.SourceSpec` :
+    #: officiel | maison | constructeur | hypothese | pedagogique | veille.
+    fiabilite: Mapped[str] = mapped_column(String(20), nullable=False, default="maison")
+    #: Zone géographique d'application (département, région). Nulle = national.
+    zone: Mapped[str | None] = mapped_column(String(50))
 
 
 class KbChunk(Base):

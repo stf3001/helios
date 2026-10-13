@@ -1070,3 +1070,63 @@ des éoliennes verticales. »
   équipements posés) : les 35 éléments animés existent et tournent, chaque objet relu à la
   loupe par un zoom du `viewBox`, zéro erreur console, `tsc -b` et `npm run build` passent
   (420 URL au plan de site, inchangé).
+
+## Les métadonnées documentaires, et la veille qui ne voyait rien (13/10/2026)
+
+Premier lot de la préparation du crawler, décidé avec Stéphane après analyse d'un brief
+d'optimisation : sur ses sept chantiers, c'est le seul qui ne demandait aucune mesure
+préalable — et en le préparant, il s'est avéré qu'il ne préparait pas l'avenir, il réparait
+une fonction morte.
+
+- **LE DÉFAUT.** `crawl_source` écrivait `date_maj = today` à **chaque** passage, que le
+  contenu ait bougé ou non, et `run_veille` cherche les documents dont `date_maj` dépasse
+  180 jours. Chaque crawl remettait le compteur à zéro sur toute la source : **la veille ne
+  pouvait structurellement rien signaler.** Le « 0 document périmé » consigné plus haut dans
+  ce fichier comme un test réussi était la seule réponse qu'elle savait donner.
+- **Migration `0022_kb_metadonnees`** — cinq colonnes sur `kb_documents` :
+  `empreinte` (SHA-256 du contenu), `date_crawl`, `valide_jusqu_au`, `fiabilite`
+  (NOT NULL, défaut `maison`), `zone`. Aucun index : quelques centaines de lignes, même
+  raison qu'en 0020.
+- **`date_maj` ET `date_crawl` NE DISENT PAS LA MÊME CHOSE**, et c'est tout l'objet du lot :
+  `date_maj` = dernier changement de CONTENU, `date_crawl` = dernier passage. **Ne jamais
+  écrire `date_maj` sans avoir constaté que l'empreinte a bougé** — c'est l'invariant tenu
+  par `api/tests/test_crawler_empreinte.py`, et le jour où il cède rien ne tombe en panne
+  visiblement : la veille redevient simplement muette.
+- **Mesuré, pas supposé** : un crawl à vide passe de **717,5 s à 1,7 s** sur les 398 fiches
+  (passage 1 = empreintes nulles, donc exactement l'ancien comportement ; passage 2 = rien
+  n'a changé). L'embedding local était la seule opération coûteuse de l'ingestion.
+- **La fiabilité était fausse, et de façon gênante** : elle existait déjà dans
+  `kb_chunks.metadata.niveau_confiance`, mais codée en dur par TYPE de fichier — « officiel »
+  pour tout markdown. Les cas pratiques (profils FICTIFS) et la fiche VOSS (hypothèse de
+  lancement) étaient donc annoncés « officiel ». Elle est maintenant déclarée par source dans
+  `SourceSpec.fiabilite` : 23 `officiel`, 7 `hypothese`, 4 `pedagogique`, 364 `maison`.
+  **Une source « web » reste `veille` quoi qu'elle déclare** — un texte ramené du réseau et
+  découpé à l'aveugle ne peut pas s'auto-déclarer officiel.
+- **Deux signaux distincts dans la veille**, qui ne disent pas la même chose : validité
+  dépassée (une date connue est passée — signal fort, il y a quelque chose à aller lire) et
+  contenu non revu depuis le seuil (signal faible, une file d'attente de relecture). Un
+  document qui coche les deux n'est compté qu'une fois. Les deux atterrissent dans
+  `agents_log`, donc dans `/admin/agents` sans changement d'écran.
+- **Cadence de re-vérification** (`SourceSpec.validite_mois`) sur les trois sources qui se
+  périment — `baremes_aides`, `reglementation`, `achat_energie`, 12 mois, 28 fiches. **C'est
+  un rythme de surveillance, pas une affirmation sur la durée de vie d'une aide** : rien
+  n'est retiré, une ligne est journalisée. Une fiche peut porter sa propre date avec
+  `valide:AAAA-MM-JJ`, qui l'emporte sur la cadence de sa source ; une date mal écrite est
+  signalée et ignorée, jamais devinée.
+- **Limite honnête, à connaître en lisant les premiers relevés** : pour les fiches déjà en
+  base, `date_maj` porte la date du crawl du 13/10 et non celle de leur dernier vrai
+  changement — l'information n'existe nulle part et ne peut pas être reconstituée. Le
+  compteur part de maintenant. Même situation que `rag_score` à son introduction.
+- **NON FAIT, DÉLIBÉRÉMENT : le classement.** `search_chunks` trie toujours sur la seule
+  distance cosinus — faire primer le récent et l'officiel change ce qu'Helios *répond*, donc
+  ça se mesure sur de vraies questions avant d'être gardé. Point 26 de `TODO.md`.
+- **Vérifié en conditions réelles** (Postgres + Ollama, 398 fiches) : migration appliquée,
+  schéma relu, les deux crawls chronométrés, veille forcée à déclencher sur une fiche
+  expirée puis remise en état, journal relu (accents corrects en base — la console Windows
+  les mange, pas Postgres), et la recherche inchangée après ré-embarquement complet
+  (« par quoi commencer pour isoler ma maison » retrouve **exactement** son 0,688 d'origine).
+  **275 tests au vert**, dont 11 nouveaux.
+- **Repéré au passage, antérieur à ce lot** : « c'est quoi le VOSS » tombe à 0,624 et perd sa
+  réponse instantanée, là où le journal de juillet notait 0,775 — la base a doublé depuis
+  (185 → 398 fiches), donc plus de voisins qui se disputent le haut du classement. Le test
+  d'auto-récupération n'a pas été relancé depuis. Point 27 de `TODO.md`.
