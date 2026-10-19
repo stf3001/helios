@@ -8,8 +8,8 @@
 R: Oui, et elles sont souvent méconnues car elles varient selon la région, le département, l'intercommunalité et même la commune — Helios ne peut donc pas vous donner un montant nationalement valable pour ces aides locales. Le réflexe : contacter un Espace Conseil France Rénov' de votre secteur (gratuit, indépendant) ou consulter le simulateur d'aides locales sur france-renov.gouv.fr, qui les recense par code postal. Certaines communes ajoutent aussi une exonération partielle de taxe foncière après travaux.
 
 ### Q: Quelles aides pour l'achat d'un véhicule électrique ?
-`cat:ve | tags:bonus_ecologique,prime_conversion,vehicule | verif:CRITIQUE`
-R: Deux dispositifs principaux, cumulables sous conditions : le bonus écologique (aide directe à l'achat d'un véhicule électrique neuf, sous plafond de prix et de revenus) et la prime à la conversion (versée en échange de la mise au rebut d'un ancien véhicule polluant). Les montants et les conditions d'éligibilité changent chaque année et selon le revenu fiscal de référence — à vérifier sur service-public.fr avant tout achat, ne jamais se fier au montant annoncé par un vendeur.
+`cat:ve | tags:bonus_ecologique,prime_conversion,coup_de_pouce,cee,vehicule | verif:CRITIQUE | valide:2027-01-01`
+R: Le paysage a changé, et beaucoup de sites ne sont pas à jour. La prime à la conversion (versée contre la mise au rebut d'un vieux véhicule) est supprimée depuis le 2 décembre 2024. Le bonus écologique d'État a été remplacé le 1er juillet 2025 par une prime « coup de pouce véhicules particuliers électriques », financée par les certificats d'économies d'énergie (CEE) : elle s'applique à une voiture électrique neuve, sous conditions de revenus, de prix et de score environnemental du véhicule. Les montants et les conditions d'éligibilité changent chaque année et selon le revenu fiscal de référence — à vérifier sur service-public.fr avant tout achat, ne jamais se fier au montant annoncé par un vendeur.
 
 ### Q: MaPrimeAdapt', c'est la même chose que MaPrimeRénov' ?
 `cat:aides | tags:maprimeadapt,adaptation,confusion | verif:generique`

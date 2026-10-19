@@ -231,15 +231,36 @@ pour que personne ne « corrige » la ligne à 5,5 % en croyant bien faire.
 
 ## Contenu à écrire — l'outil est prêt, le texte manque
 
-### [ ] 10. Les guides
+### [x] 10. Les guides — caducs, constaté le 19/10/2026
 
-`frontend/src/data/guides.ts` : les chapôs sont réels, les sections sont des
-placeholders `[À rédiger]`. Choix assumé le 19/07/2026 (« structure seulement »).
+La section Guides a été **supprimée le 28/09/2026** (elle redisait la FAQ) : `guides.ts`
+n'existe plus, `/guides/*` redirige vers `/faq` (301 dans `deploy/nginx.conf`, et
+`<Navigate>` dans `App.tsx`). Ce point était resté ouvert par oubli.
 
-### [ ] 11. Le glossaire
+En vérifiant, **une des 13 redirections menait à une page morte** : l'ancien guide « devis »
+pointait vers une fiche renommée depuis. Corrigée vers
+`/faq/quelles-mentions-doivent-obligatoirement-figurer-sur-un-devis-de-trava`. Les 13
+cibles existent toutes dans le pré-rendu. **À refaire après chaque renommage de fiche** :
+une redirection ne suit pas le slug.
 
-`frontend/src/data/glossaire.ts` : les montants d'aides sont marqués
-`[à vérifier]`. Un montant d'aide faux engage HELIOS.
+### [x] 11. Le glossaire — fait le 19/10/2026
+
+Plus aucun `[à vérifier]`, et une règle en tête de `glossaire.ts` : **aucun montant d'aide
+dans le glossaire** — la définition donne le mécanisme, la base de connaissances porte les
+montants datés.
+
+**Deux entrées n'étaient pas « à vérifier », elles étaient fausses**, et la fiche de
+`kb/complements.md` sur les aides au véhicule électrique disait la même chose — donc le chat
+aussi : la **prime à la conversion est supprimée depuis le 2 décembre 2024** (décret
+2024-1084), et le **bonus écologique d'État est remplacé depuis le 1er juillet 2025** par
+une prime « coup de pouce » financée par les CEE. Glossaire et fiche corrigés, fiche
+réingérée avec `valide:2027-01-01` pour que la veille la remonte ; la question type reçoit
+la fiche corrigée en réponse instantanée.
+
+Précisés au passage : MaPrimeRénov' (deux parcours, résidence principale), CEE (à demander
+avant de signer), éco-PTZ (50 000 € pour une rénovation globale, prolongé fin 2027), TVA
+5,5 % (logement de plus de 2 ans, mention par l'entreprise) — cohérents avec
+`kb/baremes_aides.md`.
 
 ### [x] 12. Deux trous connus de la base de connaissances — comblés
 

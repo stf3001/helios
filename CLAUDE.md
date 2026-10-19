@@ -1302,3 +1302,14 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
   test HTTP reproduisant `try_files` (les pages fixes servent leur contenu, l'espace et
   les guides retombent sur la coquille) ; 420 URL au plan de site.
 
+## Guides et glossaire — points 10 et 11 (19/10/2026)
+
+- **Point 10 caduc** : les guides sont supprimés depuis le 28/09/2026. En le vérifiant, une
+  des 13 redirections 301 de `deploy/nginx.conf` menait à une fiche renommée : corrigée.
+  **Une redirection ne suit pas un renommage de fiche** — revérifier les cibles à chaque fois.
+- **Glossaire sans montant d'aide**, règle écrite en tête de `glossaire.ts`. Bonus
+  écologique et prime à la conversion étaient FAUX (prime supprimée le 02/12/2024, bonus
+  remplacé par le coup de pouce CEE le 01/07/2025), comme la fiche « Quelles aides pour
+  l'achat d'un véhicule électrique ? » de `kb/complements.md` : les deux sont corrigés, la
+  fiche réingérée (crawl 7,8 s) avec `valide:2027-01-01`.
+
