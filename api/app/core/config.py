@@ -85,9 +85,70 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v1"                    # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2"                    # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
+
+    # Moteur v2 (19/10/2026). Chaque grille couvre TOUTES les valeurs du schéma de la fiche
+    # (`schemas/house.py`) : un test le vérifie, aucun repli silencieux.
+    #
+    # Coefficient énergie primaire -> finale, par énergie. Électricité : 1,9 depuis le
+    # 01/01/2026 (2,3 avant) ; un passage à 1,7 en 2027 est annoncé, A VÉRIFIER.
+    audit_coef_ep_ef: tuple[tuple[str, float], ...] = (
+        ("electricite", 1.9), ("gaz", 1.0), ("fioul", 1.0), ("bois", 1.0), ("reseau", 1.0),
+    )
+    # Part du chauffage dans un DPE « tous usages » (chauffage, ECS, froid, éclairage,
+    # auxiliaires), par système. A CALIBRER : plus faible pour une PAC, dont le chauffage
+    # pèse moins face à l'eau chaude.
+    audit_part_chauffage_dpe: tuple[tuple[str, float], ...] = (
+        ("elec_direct", 0.70), ("PAC_air_eau", 0.50), ("PAC_air_air", 0.50), ("gaz", 0.70),
+        ("fioul", 0.72), ("bois", 0.72), ("reseau", 0.70), ("autre", 0.70),
+    )
+    # Rendement saisonnier (chaleur utile / énergie finale), ordres de grandeur A CALIBRER.
+    # La valeur PAC_air_eau sert aussi de SCOP pour l'action « remplacer par une PAC ».
+    audit_rendement_chauffage: tuple[tuple[str, float], ...] = (
+        ("elec_direct", 1.0), ("PAC_air_eau", 2.8), ("PAC_air_air", 3.0), ("gaz", 0.9),
+        ("fioul", 0.85), ("bois", 0.75), ("reseau", 1.0), ("autre", 1.0),
+    )
+    # Correction climatique du besoin de chauffage (référence H1), A CALIBRER. Altitude ignorée.
+    audit_coef_zone: tuple[tuple[str, float], ...] = (("H1", 1.0), ("H2", 0.8), ("H3", 0.55))
+    audit_zone_defaut: str = "H2"                # code postal illisible -> zone médiane (supposée)
+    # Prix de l'énergie finale hors abonnement (€/kWh), A VALIDER PAR STÉPHANE — l'électricité
+    # vient de `simu_prix_kwh_par_kva` (TRV), une seule source de vérité.
+    #   gaz    0,1456  prix repère CRE « chauffage », octobre 2026
+    #   fioul  0,19    1,88 €/L (moyenne DGEC septembre 2026) / ~10 kWh PCI par litre
+    #   bois   0,08    entre bûches (~0,05) et granulés (~0,10 : ~466 €/t vrac / 4,6 MWh/t), oct. 2026
+    #   reseau 0,095   prix moyen d'un réseau de chaleur, relevé mars 2026
+    audit_prix_energie_eur_kwh: tuple[tuple[str, float], ...] = (
+        ("gaz", 0.1456), ("fioul", 0.19), ("bois", 0.08), ("reseau", 0.095),
+    )
+    audit_puissance_kva_defaut: int = 6
+    # Usages hors chauffage, pour isoler le chauffage d'une facture électrique. Ce sont les
+    # couches du simulateur (`simu_conso_*`) ; seuls les défauts de la fiche sont propres ici.
+    audit_occupants_defaut: int = 3              # même défaut que le simulateur (`simu_types.Maison`)
+    audit_ecs_defaut: str = "ballon_elec"        # eau chaude inconnue -> cas le plus courant
+    audit_clim_pieces_defaut: int = 1            # la fiche dit « clim oui/non », pas combien de pièces
+    # Sous ce chauffage déduit (kWh/an), la facture ne peut pas contenir le chauffage :
+    # alerte d'incohérence, et l'estimation reprend la main.
+    audit_chauffage_declare_min_kwh: int = 500
+    # Rapport conso réelle / théorique -> message (bornes hautes exclues), seuils A CONFIRMER.
+    audit_ratio_messages: tuple[tuple[float, str], ...] = (
+        (0.6, "Votre consommation réelle est nettement plus basse que ce que prévoit le calcul "
+              "théorique (DPE ancien, chauffage partiel, pièces peu chauffées…). Les économies "
+              "sont calculées sur votre consommation réelle."),
+        (1.4, "Votre consommation réelle est cohérente avec l'état de la maison."),
+        (float("inf"), "Vous consommez plus que prévu : réglages, usages ou isolation à vérifier."),
+    )
+    # Horizons : « maintenant » = sobriété ou coût haut <= seuil ; « prioritaire » = retour
+    # <= seuil ; au-delà (ou au-delà de la durée de vie) : « à l'occasion ». A CONFIRMER.
+    audit_horizon_cout_max_eur: int = 500
+    audit_horizon_retour_max_ans: float = 20.0
+    # Surface de murs = surface habitable x ratio, selon le nombre de niveaux (le dernier
+    # vaut au-delà). A CALIBRER — une maison mitoyenne en a moins.
+    audit_ratio_murs_par_niveaux: tuple[tuple[int, float], ...] = ((1, 0.90), (2, 0.85), (3, 0.80))
+    # Les fourchettes d'aides (`aide_pct_bas/haut` dans `audit_reference.ACTIONS`) n'ont PAS
+    # été revérifiées depuis juillet 2026 : affichées « à vérifier ».
+    audit_aides_date_reference: str = "2026-07-18"
 
     # --- Espace énergie / SOBRY (doc 09 §2) ---
     sobry_spot_api_url: str = ""                 # API publique SOBRY (prix spot quart-horaire) — vide = courbe de démo

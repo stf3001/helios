@@ -33,7 +33,7 @@ _POSTE_LABEL = {
 
 def _s(text: str) -> str:
     """Rend une chaîne compatible police latin-1 (remplace € et caractères hors jeu)."""
-    return (text or "").replace("€", "EUR").replace("œ", "oe").replace("’", "'").encode(
+    return (text or "").replace("€", "EUR").replace("œ", "oe").replace("’", "'").replace("…", "...").encode(
         "latin-1", "replace"
     ).decode("latin-1")
 
@@ -134,61 +134,47 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
         pdf.set_x(x + 130)
         pdf.cell(0, 6, _s(f"{part} %"), ln=True)
 
-    # Consommation
+    # Consommation — un audit v1 stocké garde son rendu d'origine.
     c = audit.get("consommation", {})
+    v2 = "conso_chauffage_estimee_kwh_an" in c
     _section(pdf, "2. Consommation")
-    _para(pdf,
-        f"Besoin de chauffage estimé : {c.get('besoin_kwh_m2_an')} kWh/m2/an "
-        f"(source : {c.get('origine_besoin')}) x {c.get('surface_m2')} m2 "
-        f"= {c.get('conso_chauffage_theorique_kwh_an')} kWh/an."
-    )
-    if c.get("conso_elec_declaree_kwh_an"):
+    if v2:
+        _consommation_v2(pdf, audit)
+    else:
         _para(pdf,
-            f"Conso électrique déclarée : {c['conso_elec_declaree_kwh_an']} kWh/an "
-            f"(écart vs théorique chauffage : {c.get('ecart_pct')} %)."
+            f"Besoin de chauffage estimé : {c.get('besoin_kwh_m2_an')} kWh/m2/an "
+            f"(source : {c.get('origine_besoin')}) x {c.get('surface_m2')} m2 "
+            f"= {c.get('conso_chauffage_theorique_kwh_an')} kWh/an."
         )
+        if c.get("conso_elec_declaree_kwh_an"):
+            _para(pdf,
+                f"Conso électrique déclarée : {c['conso_elec_declaree_kwh_an']} kWh/an "
+                f"(écart vs théorique chauffage : {c.get('ecart_pct')} %)."
+            )
 
-    # Priorités — tableau à lignes simples (cellules de hauteur fixe, label tronqué si besoin)
     _section(pdf, "3. Vos priorités de travaux (dans l'ordre)")
-    cols = [("Action", 64), ("Cout", 30), ("Aide", 22), ("Reste", 22), ("Eco/an", 24), ("Retour", 18)]
-    pdf.set_x(pdf.l_margin)
-    pdf.set_font("Helvetica", "B", 8)
-    pdf.set_fill_color(*CREAM)
-    for h, w in cols:
-        pdf.cell(w, 6, _s(h), border=1, fill=True)
-    pdf.ln()
-    pdf.set_font("Helvetica", "", 8)
-    for a in audit.get("priorites", []):
-        retour = f"{a['temps_retour_ans']} ans" if a.get("temps_retour_ans") is not None else "-"
-        label = _s(f"#{a['rang']} {a['label']}")
-        while pdf.get_string_width(label) > 62 and len(label) > 4:  # tronque au besoin
-            label = label[:-2]
-        cells = [
-            (label, 64),
-            (f"{_eur(a['cout_eur']['bas'])[:-4]}-{_eur(a['cout_eur']['haut'])}", 30),
-            (_eur(a["aide_estimee_eur"]), 22),
-            (_eur(a["reste_a_charge_eur"]), 22),
-            (_eur(a["economie_annuelle_eur"]["central"]), 24),
-            (retour, 18),
-        ]
-        pdf.set_x(pdf.l_margin)
-        for txt, w in cells:
-            pdf.cell(w, 6, _s(txt), border=1)
-        pdf.ln()
+    if v2:
+        _priorites_v2(pdf, audit.get("priorites", []))
+    else:
+        _priorites_v1(pdf, audit.get("priorites", []))
 
     # Synthèse
     sy = audit.get("synthese", {})
     _section(pdf, "4. Synthèse")
     if sy.get("nb_actions"):
+        aides = sy["aides_estimees_eur"]
+        aides_txt = (f"{_eur(aides['bas'])} à {_eur(aides['haut'])} selon vos revenus (barèmes à vérifier)"
+                     if isinstance(aides, dict) else _eur(aides))
         _para(pdf,
             f"{sy['nb_actions']} actions recommandées. Investissement total estimé : "
             f"{_eur(sy['investissement_eur']['bas'])} à {_eur(sy['investissement_eur']['haut'])}, "
-            f"aides estimées : {_eur(sy['aides_estimees_eur'])}."
+            f"aides estimées : {aides_txt}."
         )
         if sy.get("economie_annuelle_totale_eur"):
             e = sy["economie_annuelle_totale_eur"]
             _para(pdf, f"Économie annuelle totale potentielle : {_eur(e['bas'])} à {_eur(e['haut'])}.")
-        _para(pdf, f"Première étape conseillée : {sy['premiere_action']} (esprit colibri : on commence petit).")
+        if sy.get("premiere_action"):
+            _para(pdf, f"Première étape conseillée : {sy['premiere_action']} (esprit colibri : on commence petit).")
     else:
         _para(pdf, "Aucune action prioritaire détectée : votre logement est déjà bien optimisé.")
 
@@ -196,3 +182,97 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
     out = PDF_DIR / f"preaudit_{date.today().isoformat()}_{abs(hash(str(audit))) % 10**8}.pdf"
     pdf.output(str(out))
     return out
+
+
+_ORIGINE = {
+    "dpe": "d'après la lettre DPE",
+    "annee_construction": "d'après l'année de construction",
+    "defaut": "valeur par défaut, faute de DPE et d'année de construction",
+}
+_ENERGIE = {"electricite": "électricité", "gaz": "gaz", "fioul": "fioul", "bois": "bois",
+            "reseau": "réseau de chaleur"}
+_HORIZON = {"maintenant": "Maintenant", "prioritaire": "Prioritaire", "a_l_occasion": "A l'occasion"}
+
+
+def _kwh(n) -> str:
+    return f"{int(n):,}".replace(",", " ") + " kWh"
+
+
+def _plage(f: dict) -> str:
+    return f"{_eur(f['bas'])[:-4]}-{_eur(f['haut'])[:-4]}"
+
+
+def _retour(a: dict) -> str:
+    return f"{a['temps_retour_ans']} ans" if a.get("temps_retour_ans") is not None else "-"
+
+
+def _tableau(pdf: FPDF, cols: list[tuple[str, int]], lignes: list[list[str]]):
+    """Tableau à lignes simples : hauteur fixe, première colonne tronquée si besoin."""
+    pdf.set_x(pdf.l_margin)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_fill_color(*CREAM)
+    for h, w in cols:
+        pdf.cell(w, 6, _s(h), border=1, fill=True)
+    pdf.ln()
+    pdf.set_font("Helvetica", "", 8)
+    for ligne in lignes:
+        label = _s(ligne[0])
+        while pdf.get_string_width(label) > cols[0][1] - 2 and len(label) > 4:
+            label = label[:-2]
+        pdf.set_x(pdf.l_margin)
+        for txt, (_, w) in zip([label, *ligne[1:]], cols):
+            pdf.cell(w, 6, _s(txt), border=1)
+        pdf.ln()
+    pdf.set_font("Helvetica", "", 10)
+
+
+def _priorites_v1(pdf: FPDF, priorites: list[dict]):
+    cols = [("Action", 64), ("Cout", 30), ("Aide", 22), ("Reste", 22), ("Eco/an", 24), ("Retour", 18)]
+    _tableau(pdf, cols, [[
+        f"#{a['rang']} {a['label']}",
+        f"{_eur(a['cout_eur']['bas'])[:-4]}-{_eur(a['cout_eur']['haut'])}",
+        _eur(a["aide_estimee_eur"]), _eur(a["reste_a_charge_eur"]),
+        _eur(a["economie_annuelle_eur"]["central"]), _retour(a),
+    ] for a in priorites])
+
+
+def _consommation_v2(pdf: FPDF, audit: dict):
+    c = audit["consommation"]
+    _para(pdf,
+        f"Consommation de chauffage estimée : {_kwh(c['conso_chauffage_estimee_kwh_an'])}/an de "
+        f"{_ENERGIE.get(c.get('energie_chauffage'), c.get('energie_chauffage'))} "
+        f"({_ORIGINE.get(c.get('origine'), c.get('origine'))}, zone climatique {c.get('zone_climatique')})."
+    )
+    if c.get("conso_chauffage_declaree_kwh_an") is not None:
+        _para(pdf,
+            f"D'après votre facture : {_kwh(c['conso_elec_declaree_kwh_an'])}/an d'électricité, dont environ "
+            f"{_kwh(c['usages_specifiques_kwh_an'])} pour les usages courants (appareils, eau chaude) : "
+            f"il reste {_kwh(c['conso_chauffage_declaree_kwh_an'])} pour le chauffage."
+        )
+    if c.get("message_ratio"):
+        _para(pdf, c["message_ratio"])
+    for alerte in audit.get("alertes", []):
+        _para(pdf, f"Attention : {alerte}")
+    _para(pdf,
+        f"Les économies portent sur {_kwh(c['conso_chauffage_retenue_kwh_an'])}/an de chauffage, au prix "
+        f"de {c['prix_energie_eur_kwh']} EUR/kWh, soit environ {_eur(c['cout_chauffage_actuel_eur'])}/an."
+    )
+
+
+def _priorites_v2(pdf: FPDF, priorites: list[dict]):
+    cols = [("Action", 50), ("Cout", 28), ("Aide*", 24), ("Reste", 26), ("Eco/an", 18), ("Retour", 18),
+            ("Quand", 22)]
+    _tableau(pdf, cols, [[
+        f"#{a['rang']} {a['label']}", _plage(a["cout_eur"]), _plage(a["aide_estimee_eur"]),
+        _plage(a["reste_a_charge_eur"]), _eur(a["economie_annuelle_eur"]["central"])[:-4], _retour(a),
+        _HORIZON.get(a.get("horizon"), "-"),
+    ] for a in priorites])
+    pdf.set_font("Helvetica", "I", 8)
+    _para(pdf, "Montants en EUR. * Aides selon vos revenus, barèmes à vérifier. L'économie de chaque "
+               "action tient compte de celles qui la précèdent.")
+    pdf.set_font("Helvetica", "", 10)
+    occasion = [a for a in priorites if a.get("horizon") == "a_l_occasion"]
+    if occasion:
+        _para(pdf, "A faire à l'occasion, pas en priorité (le temps de retour seul ne le justifie pas) :")
+        for a in occasion:
+            _para(pdf, f"- {a['label']} : {a.get('libelle_occasion') or 'lors de travaux sur ce poste'}.")

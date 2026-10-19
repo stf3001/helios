@@ -5,35 +5,45 @@ import { useAuth } from '../context/AuthContext'
 import ApiError from '../components/ApiError'
 
 interface Fourchette { bas: number; haut: number; central: number }
+interface Plage { bas: number; haut: number }
 interface Priorite {
   rang: number
   label: string
   poste: string
   part_deperdition_pct: number | null
   cout_eur: { bas: number; haut: number }
-  aide_estimee_eur: number
-  reste_a_charge_eur: number
+  // v1 : un nombre ; v2 : une fourchette selon les revenus.
+  aide_estimee_eur: number | Plage
+  reste_a_charge_eur: number | Plage
   economie_annuelle_eur: Fourchette
   temps_retour_ans: number | null
+  horizon?: 'maintenant' | 'prioritaire' | 'a_l_occasion'
+  libelle_occasion?: string | null
 }
 interface AuditResult {
   version_helios: string
   completeness_score: number
   niveau: string
   deperditions: { poste: string; part_pct: number }[]
+  // Les clés v1 et v2 coexistent : les audits déjà stockés ne sont jamais recalculés.
   consommation: {
-    besoin_kwh_m2_an: number
-    origine_besoin: string
+    besoin_kwh_m2_an?: number
+    origine_besoin?: string
     surface_m2: number
-    conso_chauffage_theorique_kwh_an: number
+    conso_chauffage_theorique_kwh_an?: number
     conso_elec_declaree_kwh_an: number | null
-    ecart_pct: number | null
+    ecart_pct?: number | null
+    conso_chauffage_estimee_kwh_an?: number
+    origine?: string
+    zone_climatique?: string
+    conso_chauffage_declaree_kwh_an?: number | null
+    message_ratio?: string | null
   }
   priorites: Priorite[]
   synthese: {
     nb_actions: number
     investissement_eur: { bas: number; haut: number }
-    aides_estimees_eur: number
+    aides_estimees_eur: number | Plage
     economie_annuelle_totale_eur: Fourchette | null
     premiere_action: string | null
   }
@@ -46,6 +56,13 @@ const POSTE_LABEL: Record<string, string> = {
   menuiseries: 'Menuiseries', plancher: 'Plancher bas', ponts_thermiques: 'Ponts thermiques',
 }
 const eur = (n: number) => n.toLocaleString('fr-FR') + ' €'
+const montant = (v: number | Plage) => (typeof v === 'number' ? `~${eur(v)}` : `${eur(v.bas)}–${eur(v.haut)}`)
+const ORIGINE: Record<string, string> = {
+  dpe: "d'après la lettre DPE", annee_construction: "d'après l'année de construction", defaut: 'valeur par défaut',
+}
+const HORIZON: Record<string, string> = {
+  maintenant: 'Maintenant', prioritaire: 'Prioritaire', a_l_occasion: "À l'occasion",
+}
 
 export default function EspaceAudits() {
   const { authFetch } = useAuth()
@@ -199,13 +216,24 @@ export default function EspaceAudits() {
                   {/* Consommation */}
                   <div>
                     <h2 className="font-semibold text-lg mb-2">Consommation</h2>
-                    <p className="text-sm text-gray-600">
-                      Besoin de chauffage estimé : <strong>{r.consommation.besoin_kwh_m2_an} kWh/m²/an</strong>{' '}
-                      × {r.consommation.surface_m2} m² = <strong>{r.consommation.conso_chauffage_theorique_kwh_an.toLocaleString('fr-FR')} kWh/an</strong>.
-                      {r.consommation.conso_elec_declaree_kwh_an && (
-                        <> Conso déclarée : {r.consommation.conso_elec_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an.</>
-                      )}
-                    </p>
+                    {r.consommation.conso_chauffage_estimee_kwh_an !== undefined ? (
+                      <p className="text-sm text-gray-600">
+                        Consommation de chauffage estimée : <strong>{r.consommation.conso_chauffage_estimee_kwh_an.toLocaleString('fr-FR')} kWh/an</strong>{' '}
+                        ({ORIGINE[r.consommation.origine ?? ''] ?? r.consommation.origine}, zone {r.consommation.zone_climatique}).
+                        {r.consommation.conso_chauffage_declaree_kwh_an != null && (
+                          <> D'après votre facture : environ {r.consommation.conso_chauffage_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an de chauffage.</>
+                        )}
+                        {r.consommation.message_ratio && <> {r.consommation.message_ratio}</>}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Besoin de chauffage estimé : <strong>{r.consommation.besoin_kwh_m2_an} kWh/m²/an</strong>{' '}
+                        × {r.consommation.surface_m2} m² = <strong>{(r.consommation.conso_chauffage_theorique_kwh_an ?? 0).toLocaleString('fr-FR')} kWh/an</strong>.
+                        {r.consommation.conso_elec_declaree_kwh_an && (
+                          <> Conso déclarée : {r.consommation.conso_elec_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an.</>
+                        )}
+                      </p>
+                    )}
                   </div>
 
                   {/* Priorités */}
@@ -215,17 +243,23 @@ export default function EspaceAudits() {
                       {r.priorites.map((p) => (
                         <div key={p.rang} className="border border-gray-200 rounded-xl p-4">
                           <div className="flex items-baseline justify-between gap-2 mb-2">
-                            <div className="font-medium">#{p.rang} {p.label}</div>
+                            <div className="font-medium">
+                              #{p.rang} {p.label}
+                              {p.horizon && <span className="ml-2 text-xs text-gray-500">· {HORIZON[p.horizon]}</span>}
+                            </div>
                             {p.temps_retour_ans !== null && (
                               <div className="text-xs text-gray-500 shrink-0">retour ~{p.temps_retour_ans} ans</div>
                             )}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
                             <div>Coût : {eur(p.cout_eur.bas)}–{eur(p.cout_eur.haut)}</div>
-                            <div>Aide : ~{eur(p.aide_estimee_eur)}</div>
-                            <div>Reste : ~{eur(p.reste_a_charge_eur)}</div>
+                            <div>Aide : {montant(p.aide_estimee_eur)}</div>
+                            <div>Reste : {montant(p.reste_a_charge_eur)}</div>
                             <div>Éco/an : {eur(p.economie_annuelle_eur.bas)}–{eur(p.economie_annuelle_eur.haut)}</div>
                           </div>
+                          {p.libelle_occasion && (
+                            <div className="text-xs text-gray-500 mt-2">À faire {p.libelle_occasion}.</div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -236,7 +270,7 @@ export default function EspaceAudits() {
                     <h2 className="font-semibold text-lg mb-2">Synthèse</h2>
                     <p className="text-sm text-gray-700">
                       <strong>{r.synthese.nb_actions} actions</strong> recommandées. Investissement estimé :{' '}
-                      {eur(r.synthese.investissement_eur.bas)}–{eur(r.synthese.investissement_eur.haut)}, aides ~{eur(r.synthese.aides_estimees_eur)}.
+                      {eur(r.synthese.investissement_eur.bas)}–{eur(r.synthese.investissement_eur.haut)}, aides {montant(r.synthese.aides_estimees_eur)}.
                       {r.synthese.economie_annuelle_totale_eur && (
                         <> Économie annuelle potentielle : <strong>{eur(r.synthese.economie_annuelle_totale_eur.bas)}–{eur(r.synthese.economie_annuelle_totale_eur.haut)}</strong>.</>
                       )}

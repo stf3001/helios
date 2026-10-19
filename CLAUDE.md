@@ -1313,3 +1313,7 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
   l'achat d'un véhicule électrique ? » de `kb/complements.md` : les deux sont corrigés, la
   fiche réingérée (crawl 7,8 s) avec `valide:2027-01-01`.
 
+## Pré-audit v2
+- `audit_engine` raisonne en consommation de CHAUFFAGE en énergie finale (DPE tous usages converti, ou besoin utile × zone ÷ rendement), calée sur la facture si le chauffage est électrique ; actions combinées en séquence et rangées en horizons (`a_l_occasion` n'est jamais une priorité).
+- Toute grille couvre chaque valeur `Literal` de `schemas/house.py` (testé) ; valeurs à valider au point 31 de `TODO.md`.
+- Les audits v1 stockés ne sont jamais recalculés : `pdf_audit`, `rag.build_audit_context` et `EspaceAudits.tsx` lisent les deux formats.

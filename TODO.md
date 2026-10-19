@@ -874,6 +874,23 @@ accepte désormais une adresse) ; chapeaux, fiches et villes sortent identiques 
 Au passage, deux titres d'onglet affichaient « … | HELIOS — HELIOS » (`HeliosIA.tsx`,
 `SimulateurSolaire.tsx` ajoutaient la marque que `useTitle` ajoute déjà) : corrigé.
 
+### [ ] 31. Pré-audit v2 : les valeurs de référence attendent Stéphane
+
+Le moteur v2 (19/10/2026) corrige le calcul, mais ses valeurs de référence sont des
+points de départ, toutes dans `api/app/core/config.py` (`audit_*`) et
+`api/app/services/audit_reference.py`. **À valider** : prix du gaz, du fioul, du bois et
+du réseau de chaleur ; seuils des horizons (500 €, 20 ans) ; coefficients de zone
+(H2 0,8, H3 0,55) ; parts du chauffage dans le DPE ; besoins utiles par année ; ratio des
+murs ; fourchettes d'aides `aide_pct_bas/haut` ; durées de vie des actions.
+
+**Contradiction repérée** : `isolation_murs` garde une aide haute de 40 %, alors que
+`kb/baremes_aides.md` dit que l'isolation des murs seule n'est plus aidée par
+MaPrimeRénov' par geste depuis le 01/01/2026. Ne pas trancher sans Stéphane.
+
+**Choix à connaître** : `conso_autre_energie_qte` n'est jamais lue (la fiche ne dit pas son
+unité) ; une maison au gaz, au fioul ou au bois est donc chiffrée sur l'estimation seule,
+tant que la fiche n'a pas de champ « kWh de gaz » ou « litres de fioul ».
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

@@ -358,10 +358,41 @@ def build_solar_context(study) -> dict:
 
 def build_audit_context(audit) -> dict:
     """Résumé du dernier pré-audit déterministe du foyer (déperditions, priorités chiffrées) —
-    Helios doit s'appuyer sur ce diagnostic déjà fait plutôt que de re-décrire la méthode en général."""
+    Helios doit s'appuyer sur ce diagnostic déjà fait plutôt que de re-décrire la méthode en général.
+
+    Un audit v1 est transmis tel quel. Un v2 est resserré sur ce qu'Helios doit savoir dire :
+    les horizons (une action « à l'occasion » n'est pas une priorité), le rapport réel /
+    théorique, les hypothèses et les statuts — sans les blocs de traçabilité complets, trop
+    lourds pour un petit modèle local.
+    """
+    date_audit = audit.created_at.isoformat() if hasattr(audit.created_at, "isoformat") else str(audit.created_at)
+    r = audit.json_result or {}
+    if "conso_chauffage_estimee_kwh_an" not in r.get("consommation", {}):
+        return {"date_audit": date_audit, "resultat": r}
+    c = r["consommation"]
     return {
-        "date_audit": audit.created_at.isoformat() if hasattr(audit.created_at, "isoformat") else str(audit.created_at),
-        "resultat": audit.json_result,
+        "date_audit": date_audit,
+        "version": r.get("version_helios"),
+        "consigne": (
+            "Chiffres issus du moteur déterministe : les reprendre tels quels, en fourchettes, sans "
+            "en inventer. Une action d'horizon « a_l_occasion » ne doit JAMAIS être présentée comme "
+            "une priorité. Les aides sont « à vérifier ». Statuts : declare = saisi par le foyer, "
+            "suppose = hypothèse, calcule = dérivé par le moteur."
+        ),
+        "consommation": {k: c.get(k) for k in (
+            "conso_chauffage_estimee_kwh_an", "energie_chauffage", "origine", "zone_climatique",
+            "conso_elec_declaree_kwh_an", "conso_chauffage_declaree_kwh_an", "conso_chauffage_retenue_kwh_an",
+            "base_economies", "ratio_reel_theorique", "message_ratio", "prix_energie_eur_kwh",
+            "cout_chauffage_actuel_eur", "statuts")},
+        "deperditions": r.get("deperditions"),
+        "priorites": [{k: a.get(k) for k in (
+            "rang", "label", "horizon", "libelle_occasion", "cout_eur", "aide_estimee_eur",
+            "reste_a_charge_eur", "aides_statut", "economie_annuelle_eur", "temps_retour_ans", "statuts")}
+            for a in r.get("priorites", [])],
+        "synthese": r.get("synthese"),
+        "alertes": r.get("alertes"),
+        "hypotheses": [{"cle": h["cle"], "valeur": h["valeur"]} for h in r.get("hypotheses", [])],
+        "entrees_supposees": [e for e in r.get("entrees", []) if e.get("statut") == "suppose"],
     }
 
 
