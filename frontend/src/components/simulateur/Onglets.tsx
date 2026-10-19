@@ -449,6 +449,12 @@ export function OngletStockage({ config, resultat, majConfig }: OngletProps) {
 
       <Depliant titre="Stockage par inertie"
         aide="Une batterie enterrée, sans lithium, garantie 40 ans. Une seule unité — ce n’est pas un pack qu’on empile.">
+        {/* Même phrase que `ReglageEquipement.tsx` (cas 'inertie') : le moteur fait passer
+            tout le projet à 20 %, les deux écrans doivent le dire pareil. */}
+        <p className="rounded-lg border border-terra/40 bg-terra/10 px-3 py-2 text-sm text-ink">
+          Comme toute batterie, elle fait passer <strong>tout le projet</strong> de 5,5 % à
+          20 % de TVA. Point à confirmer auprès de votre installateur.
+        </p>
         <Bascule label="J’enterre un stockage par inertie" actif={s.inertie}
           onChange={(v) => majStockage({ inertie: v })}
           aide={resultat

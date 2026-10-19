@@ -21,7 +21,9 @@ from app.services.simu_types import Configuration
 
 # Version du moteur, enregistree avec chaque etude : les hypotheses evoluent, une etude
 # relue plus tard doit dire avec quoi elle a ete produite.
-VERSION_MOTEUR = "simu-1"
+# simu-2 (19/10/2026) : l'etude enregistree et les options tiennent enfin compte de
+# l'eolienne et de la machine a eau, comme `/calcul` le faisait deja.
+VERSION_MOTEUR = "simu-2"
 
 SAISONS = {
     "hiver": (12, 1, 2),

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Building2, Lightbulb } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ApiError from '../components/ApiError'
 import { useTitle } from '../hooks/useTitle'
 
 const SECTEURS = [
@@ -34,11 +35,20 @@ export default function EspacePro() {
   const [consent, setConsent] = useState(false)
   const [courtage, setCourtage] = useState<Courtage | null>(null)
 
+  const [loadError, setLoadError] = useState(false)
+
   function load() {
-    authFetch('/api/pro/profile').then((r) => (r.ok ? r.json() : null)).then((p) => {
+    setLoadError(false)
+    // 404 = pas encore de profil (état normal) ; toute autre erreur = service indisponible.
+    authFetch('/api/pro/profile').then((r) => (r.ok ? r.json() : r.status === 404 ? null : Promise.reject(new Error(String(r.status))))).then((p) => {
       setProfile(p)
-      if (p) { setForm(p); authFetch('/api/pro/advice').then((r) => (r.ok ? r.json() : null)).then(setAdvice) }
-    }).finally(() => setLoading(false))
+      if (p) {
+        setForm(p)
+        return authFetch('/api/pro/advice')
+          .then((r) => (r.ok ? r.json() : r.status === 404 ? null : Promise.reject(new Error(String(r.status)))))
+          .then(setAdvice)
+      }
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false))
   }
   useEffect(load, [authFetch])
 
@@ -75,6 +85,7 @@ export default function EspacePro() {
     setForm((f) => ({ ...f, [k]: e.target.value || undefined }))
 
   if (loading) return <p className="text-gray-400 p-12 text-center">Chargement…</p>
+  if (loadError) return <section className="max-w-[900px] mx-auto px-4 py-12"><ApiError retry={() => { setLoading(true); load() }} /></section>
 
   return (
     <section className="max-w-[900px] mx-auto px-4 py-12">

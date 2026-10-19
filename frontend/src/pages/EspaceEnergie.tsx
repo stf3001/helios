@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Zap, TrendingUp } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ApiError from '../components/ApiError'
 
 interface Reco { sujet: string; constat: string; conseil: string }
 interface Advice {
@@ -60,12 +61,19 @@ export default function EspaceEnergie() {
   const [courtageBusy, setCourtageBusy] = useState(false)
   const [courtageDecided, setCourtageDecided] = useState<string | null>(null)
 
-  useEffect(() => {
+  const [loadError, setLoadError] = useState(false)
+
+  const load = useCallback(() => {
+    setLoading(true)
+    setLoadError(false)
     Promise.all([
-      authFetch('/api/energy/advice').then((r) => (r.ok ? r.json() : null)),
-      authFetch('/api/energy/spot-prices').then((r) => (r.ok ? r.json() : null)),
-    ]).then(([a, s]) => { setAdvice(a); setSpot(s) }).finally(() => setLoading(false))
+      // 404 = pas encore de fiche (état normal) ; toute autre erreur = service indisponible.
+      authFetch('/api/energy/advice').then((r) => (r.ok ? r.json() : r.status === 404 ? null : Promise.reject(new Error(String(r.status))))),
+      authFetch('/api/energy/spot-prices').then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
+    ]).then(([a, s]) => { setAdvice(a); setSpot(s) })
+      .catch(() => setLoadError(true)).finally(() => setLoading(false))
   }, [authFetch])
+  useEffect(load, [load])
 
   async function launchStudy(e: FormEvent) {
     e.preventDefault()
@@ -153,6 +161,8 @@ export default function EspaceEnergie() {
 
       {loading ? (
         <p className="text-gray-400">Chargement…</p>
+      ) : loadError ? (
+        <ApiError retry={load} />
       ) : (
         <div className="space-y-10">
           {/* Niveau 1 : conseil Helios */}

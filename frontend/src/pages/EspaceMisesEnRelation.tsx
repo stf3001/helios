@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Handshake } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ApiError from '../components/ApiError'
 
 interface PartnerCard { id: string; raison_sociale: string; metiers: string[]; note_moyenne: number | null }
 interface Lead {
@@ -41,16 +42,28 @@ export default function EspaceMisesEnRelation() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const [loadError, setLoadError] = useState(false)
+
+  // 404 = pas encore de fiche (état normal) ; toute autre erreur = service indisponible.
+  const fetchLeads = useCallback(
+    () => authFetch('/api/leads').then((r) => (r.ok ? r.json() : r.status === 404 ? [] : Promise.reject(new Error(String(r.status))))),
+    [authFetch],
+  )
+
   function loadLeads() {
-    authFetch('/api/leads').then((r) => (r.ok ? r.json() : [])).then(setLeads)
+    fetchLeads().then(setLeads).catch(() => setLoadError(true))
   }
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
+    setLoadError(false)
     Promise.all([
-      fetch('/api/partners').then((r) => (r.ok ? r.json() : [])),
-      authFetch('/api/leads').then((r) => (r.ok ? r.json() : [])),
-    ]).then(([p, l]) => { setPartners(p); setLeads(l) }).finally(() => setLoading(false))
-  }, [authFetch])
+      fetch('/api/partners').then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
+      fetchLeads(),
+    ]).then(([p, l]) => { setPartners(p); setLeads(l) })
+      .catch(() => setLoadError(true)).finally(() => setLoading(false))
+  }, [fetchLeads])
+  useEffect(load, [load])
 
   async function createLead(e: FormEvent) {
     e.preventDefault()
@@ -116,6 +129,8 @@ export default function EspaceMisesEnRelation() {
 
       {loading ? (
         <p className="text-gray-400">Chargement…</p>
+      ) : loadError ? (
+        <ApiError retry={load} />
       ) : (
         <div className="space-y-10">
           {/* Nouvelle mise en relation */}

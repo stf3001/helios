@@ -1233,3 +1233,30 @@ Point 28 de `TODO.md`. Moitié faite, moitié démontrée infaisable — les deu
 - Vérifié : 290 tests au vert, parsing des 31 sources inchangé, et le sitemap n'est pas
   versionné (généré au build) — la page de la fiche retirée disparaîtra au prochain
   `npm run build`, sans lien mort puisque la fiche survivante garde son intitulé, donc son URL.
+
+## Suites de la revue de Florian — phase 1 (19/10/2026)
+
+Revue externe du dépôt, contre-vérifiée dans le code avant d'agir. Cinq corrections.
+
+- **Une seule maison pour les trois routes du simulateur.** `/calcul` passait l'éolienne et
+  la machine à eau au moteur ; `/options` et `POST /etudes` non — l'étude enregistrée (celle
+  que le chat relit), les options et la prochaine étape portaient sur une autre maison que
+  celle affichée. Mesuré sur l'ancien code : **42,6 % d'autonomie dans l'étude contre 69,2 %
+  à l'écran.** `simulateur._series_annexes()` prépare désormais les deux séries (climat
+  appelé seulement si une machine à eau est posée) pour les trois routes, et
+  `simu_options` les fait descendre jusqu'à `_evaluer` : les variantes ne touchent qu'aux
+  panneaux et au stockage, les séries restent valables pour toutes. `VERSION_MOTEUR` passe
+  à **`simu-2`**. Études déjà en base : **0** (aucune étude simulateur en dev), rien à
+  reprendre. Test : `test_calcul_options_et_etude_portent_sur_la_meme_maison`. Vérifié aussi
+  en réel (PVGIS, Brest, compte démo) : écran = étude rouverte = options, au dixième près.
+- **Plus de page vide quand l'API tombe** : `EspaceAudits`, `EspaceEnergie`,
+  `EspaceMisesEnRelation`, `EspacePro` reprennent le motif d'`Espace.tsx` — non ok = rejet,
+  sauf 404 = « rien encore » — et affichent `ApiError` avec Réessayer. Le piège : avec
+  `r.ok ? r.json() : []`, une 500 ne rejette jamais, un `.catch` seul ne suffit pas.
+- **`/le-vent` et `/achat-energie` ajoutées à `PAGES_FIXES`** — donc au plan de site. Elles
+  n'ont PAS de HTML statique, comme aucune page fixe : point 30 de `TODO.md`.
+- **Le dépliant « Stockage par inertie » d'`Onglets.tsx`** porte la même mention de TVA que
+  `ReglageEquipement.tsx`, réserve comprise (la question de fond reste le point 6 du TODO).
+- **`test_awg.py` saute tout le module** si les tables Hydrolia manquent (clone neuf) ; le
+  test d'égalité du simulateur aussi. Sans les tables : 279 verts, 12 sautés, zéro échec.
+- 291 tests verts, `tsc -b` et `npm run build` passent (421 URL au plan de site).

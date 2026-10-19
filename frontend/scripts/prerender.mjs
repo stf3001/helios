@@ -154,6 +154,7 @@ const PAGES_FIXES = [
   '/simulateur-solaire', '/potentiel-hydrique',
   '/partenaires', '/devenir-partenaire',
   '/engagements', '/vision', '/colibri', '/qui-sommes-nous',
+  '/le-vent', '/achat-energie',
 ]
 
 /** Pages chapeau (`/aides`, `/solaire`…) : contenu éditorial dans `src/data/piliers.json`,

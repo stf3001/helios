@@ -824,6 +824,21 @@ aiderait pas. Et dans le seul endroit où ancien et officiel s'affrontent vraime
 
 Où : `api/app/services/rag.py:search_chunks`.
 
+### [ ] 30. Les pages fixes n'ont pas de HTML statique — repéré le 19/10/2026
+
+Trouvé en traitant la revue de Florian (« `/le-vent` et `/achat-energie` ne sont pas
+pré-rendues ») : c'est vrai, mais c'est vrai de **toutes** les pages de `PAGES_FIXES`
+(`/vision`, `/helios`, `/engagements`…). Dans `frontend/scripts/prerender.mjs`, cette liste
+n'alimente **que le plan de site** ; seuls les fiches, les chapeaux et les pages de ville
+reçoivent leur propre `.html`. Les autres servent la coquille vide de l'application à un
+robot qui n'exécute pas le JavaScript.
+
+Les deux pages ont été ajoutées au plan de site le 19/10. Leur donner — à elles et aux
+quinze autres — un HTML propre (titre, description, canonique, contenu visible) demande
+d'écrire ce contenu pour chacune : c'est un lot à part, à décider.
+
+Où : `frontend/scripts/prerender.mjs` (`PAGES_FIXES`, `main`).
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

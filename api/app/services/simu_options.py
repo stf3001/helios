@@ -19,14 +19,20 @@ from app.services.simu_conso import ProfilConso
 from app.services.simu_types import Configuration, Stockage
 
 
-def _evaluer(config: Configuration, profil: ProfilConso, production_ref: dict) -> dict:
+def _evaluer(config: Configuration, profil: ProfilConso, production_ref: dict,
+             annexes: dict | None = None) -> dict:
     """Passe le moteur sur une variante, sans jamais rappeler PVGIS.
 
     `detail=False` : la recherche fait des dizaines de passages et n'a besoin ni des
     bilans mensuels ni des journées moyennes.
+
+    `annexes` : les séries de l'éolienne et de la machine à eau, préparées une fois par le
+    routeur (`_series_annexes`). Les variantes ne touchent qu'aux panneaux et au stockage,
+    ces séries restent donc valables pour toutes. Sans elles, les options portaient sur une
+    maison sans éolienne ni machine à eau, différente de celle affichée.
     """
     prod_h = simu_pv.recomposer(production_ref, config.panneaux.nb_panneaux)
-    return simu_engine.calculer(config, profil, prod_h, detail=False)
+    return simu_engine.calculer(config, profil, prod_h, detail=False, **(annexes or {}))
 
 
 def _plafond_panneaux(config: Configuration) -> int:
@@ -36,7 +42,8 @@ def _plafond_panneaux(config: Configuration) -> int:
 
 
 def _meilleure_taille(
-    config: Configuration, profil: ProfilConso, production_ref: dict, stockage: Stockage
+    config: Configuration, profil: ProfilConso, production_ref: dict, stockage: Stockage,
+    annexes: dict | None = None,
 ) -> dict:
     """Cherche panneau par panneau la taille la plus rentable pour un type de stockage.
 
@@ -60,7 +67,7 @@ def _meilleure_taille(
             nb_panneaux_carport=carport,
             surface_toit_m2=config.panneaux.surface_toit_m2,
         ), stockage=stockage)
-        resultat = _evaluer(variante, profil, production_ref)
+        resultat = _evaluer(variante, profil, production_ref, annexes)
 
         if precedent is not None:
             delta_cout = (resultat["investissement"]["total_eur"]
@@ -76,7 +83,7 @@ def _meilleure_taille(
     if meilleur is None:  # plafond à 0 panneau : rien à proposer
         variante = config.avec(stockage=stockage)
         meilleur = {"nb_panneaux": 0, "config": variante,
-                    "resultat": _evaluer(variante, profil, production_ref)}
+                    "resultat": _evaluer(variante, profil, production_ref, annexes)}
     return meilleur
 
 
@@ -128,18 +135,20 @@ def _offre_virtuelle_par_defaut() -> str | None:
     return next(iter(disponibles), None)
 
 
-def calculer_options(config: Configuration, profil: ProfilConso, production_ref: dict) -> dict:
+def calculer_options(config: Configuration, profil: ProfilConso, production_ref: dict,
+                     annexes: dict | None = None) -> dict:
     """Les trois options, la recommandation, la prochaine étape et les objectifs."""
     secours = config.maison.besoin_secours
     base = config.stockage
 
     candidats = {
         "batterie_virtuelle": _meilleure_taille(config, profil, production_ref, Stockage(
-            nb_packs=0, batterie_virtuelle=_offre_virtuelle_par_defaut(), pilotage=False)),
+            nb_packs=0, batterie_virtuelle=_offre_virtuelle_par_defaut(), pilotage=False),
+            annexes),
         "batterie_physique": _meilleure_taille(config, profil, production_ref, Stockage(
-            nb_packs=max(base.nb_packs, 1), batterie_virtuelle=None, pilotage=True)),
+            nb_packs=max(base.nb_packs, 1), batterie_virtuelle=None, pilotage=True), annexes),
         "pilotage": _meilleure_taille(config, profil, production_ref, Stockage(
-            nb_packs=0, batterie_virtuelle=None, pilotage=True)),
+            nb_packs=0, batterie_virtuelle=None, pilotage=True), annexes),
     }
 
     libelles = {
@@ -151,8 +160,9 @@ def calculer_options(config: Configuration, profil: ProfilConso, production_ref:
     options.sort(key=lambda o: o["gain_net_25_ans_eur"], reverse=True)
     recommandee = options[0]["code"] if options else None
 
-    actuel = _evaluer(config, profil, production_ref)
-    etape = _prochaine_etape(config, profil, production_ref, actuel, candidats, recommandee)
+    actuel = _evaluer(config, profil, production_ref, annexes)
+    etape = _prochaine_etape(config, profil, production_ref, actuel, candidats, recommandee,
+                             annexes)
 
     return {
         "options": options,
@@ -169,6 +179,7 @@ def _prochaine_etape(
     actuel: dict,
     candidats: dict,
     recommandee: str | None,
+    annexes: dict | None = None,
 ) -> dict | None:
     """L'action au meilleur rapport gain / euro investi, depuis la configuration courante.
 
@@ -180,7 +191,7 @@ def _prochaine_etape(
     pistes: list[dict] = []
 
     def ajouter(libelle: str, variante: Configuration, application: dict):
-        resultat = _evaluer(variante, profil, production_ref)
+        resultat = _evaluer(variante, profil, production_ref, annexes)
         delta_gain = resultat["indicateurs"]["economie_1re_annee_eur"] - gain_actuel
         delta_cout = resultat["investissement"]["total_eur"] - cout_actuel
         if delta_gain <= 0:
@@ -246,7 +257,7 @@ def _prochaine_etape(
             inclinaison=config.panneaux.inclinaison, ombrage=config.panneaux.ombrage,
             nb_panneaux_carport=config.panneaux.nb_panneaux_carport,
             surface_toit_m2=config.panneaux.surface_toit_m2))
-        resultat = _evaluer(variante, profil, production_ref)
+        resultat = _evaluer(variante, profil, production_ref, annexes)
         economie_invest = cout_actuel - resultat["investissement"]["total_eur"]
         perte_gain = gain_actuel - resultat["indicateurs"]["economie_1re_annee_eur"]
         if economie_invest > 0 and perte_gain <= 0:

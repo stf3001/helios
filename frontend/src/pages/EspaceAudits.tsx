@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FileText, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ApiError from '../components/ApiError'
 
 interface Fourchette { bas: number; haut: number; central: number }
 interface Priorite {
@@ -54,17 +55,22 @@ export default function EspaceAudits() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
+    setLoadError(false)
     Promise.all([
-      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : null)),
-      authFetch('/api/audits').then((r) => (r.ok ? r.json() : [])),
+      // 404 = pas encore de fiche (état normal) ; toute autre erreur = service indisponible.
+      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : r.status === 404 ? null : Promise.reject(new Error(String(r.status))))),
+      authFetch('/api/audits').then((r) => (r.ok ? r.json() : r.status === 404 ? [] : Promise.reject(new Error(String(r.status))))),
     ]).then(([house, list]) => {
       setScore(house?.completeness_score ?? null)
       setAudits(list)
       if (list.length > 0) setSelected(list[0])
-    }).finally(() => setLoading(false))
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false))
   }, [authFetch])
+  useEffect(load, [load])
 
   async function generate() {
     setError(null)
@@ -113,6 +119,8 @@ export default function EspaceAudits() {
 
       {loading ? (
         <p className="text-gray-400">Chargement…</p>
+      ) : loadError ? (
+        <ApiError retry={load} />
       ) : (
         <>
           {/* Bandeau complétude / génération */}

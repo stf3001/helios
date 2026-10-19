@@ -105,6 +105,31 @@ async def _preparer(payload: SimulateurIn):
     return config, profil, production
 
 
+async def _series_annexes(config: Configuration) -> tuple[dict, dict]:
+    """Les séries horaires de l'éolienne et de la machine à eau — UNE seule préparation.
+
+    `/calcul`, `/options` et `POST /etudes` passent tous par ici : l'étude enregistrée, les
+    options et la prochaine étape portent donc sur la maison affichée à l'écran, éolienne
+    et machine à eau comprises. Renvoie les arguments à donner à `simu_engine.calculer`,
+    et d'où vient l'estimation du vent (la station retenue, affichée à l'écran).
+    """
+    # L'eolienne se calcule ici, pas dans le moteur : elle depend du LIEU, et le moteur
+    # ne connait que des series horaires.
+    eolien_h, info_vent = eolien.production_horaire(
+        config.eolien.kwc, config.lieu.lat, config.lieu.lon, config.eolien.facteur_anemometre)
+
+    # La machine a eau ne declenche l'appel climat QUE si elle est posee : PVGIS renvoie
+    # 1,2 Mo pour une annee type, on ne le demande pas pour rien. Ensuite c'est en cache.
+    eau_litres_h = eau_kwh_h = None
+    if config.eau.modele:
+        temperature_h, humidite_h = await simu_climat.climat(
+            lat=config.lieu.lat, lon=config.lieu.lon)
+        eau_litres_h, eau_kwh_h = awg.horaire(config.eau.modele, temperature_h, humidite_h)
+
+    return {"eolien_h": eolien_h, "eau_litres_h": eau_litres_h,
+            "eau_kwh_h": eau_kwh_h}, info_vent
+
+
 def _lieu_public(config: Configuration) -> dict:
     """Ce qu'on accepte de renvoyer : la commune et des coordonnées arrondies. Jamais l'adresse."""
     pas = settings.simu_pvgis_pas_grille_deg
@@ -121,21 +146,8 @@ def _lieu_public(config: Configuration) -> dict:
 async def calcul(request: Request, payload: SimulateurIn):
     """Les indicateurs de la configuration courante. Appelé à chaque changement de réglage."""
     config, profil, production = await _preparer(payload)
-    # L'eolienne se calcule ici, pas dans le moteur : elle depend du LIEU, et le moteur
-    # ne connait que des series horaires. La station retenue est renvoyee a l'ecran.
-    eolien_h, info_vent = eolien.production_horaire(
-        config.eolien.kwc, config.lieu.lat, config.lieu.lon, config.eolien.facteur_anemometre)
-
-    # La machine a eau ne declenche l'appel climat QUE si elle est posee : PVGIS renvoie
-    # 1,2 Mo pour une annee type, on ne le demande pas pour rien. Ensuite c'est en cache.
-    eau_litres_h = eau_kwh_h = None
-    if config.eau.modele:
-        temperature_h, humidite_h = await simu_climat.climat(
-            lat=config.lieu.lat, lon=config.lieu.lon)
-        eau_litres_h, eau_kwh_h = awg.horaire(config.eau.modele, temperature_h, humidite_h)
-
-    resultat = simu_engine.calculer(config, profil, production["total_h"], eolien_h=eolien_h,
-                                    eau_litres_h=eau_litres_h, eau_kwh_h=eau_kwh_h)
+    annexes, info_vent = await _series_annexes(config)
+    resultat = simu_engine.calculer(config, profil, production["total_h"], **annexes)
     return {
         "lieu": _lieu_public(config),
         "production": {
@@ -168,10 +180,11 @@ async def options(request: Request, payload: SimulateurIn):
     qu'à l'ouverture de l'onglet Étude et après un temps d'inactivité, pas à chaque clic.
     """
     config, profil, production = await _preparer(payload)
+    annexes, _ = await _series_annexes(config)
     return {
         "lieu": _lieu_public(config),
         "version_moteur": simu_engine.VERSION_MOTEUR,
-        **simu_options.calculer_options(config, profil, production),
+        **simu_options.calculer_options(config, profil, production, annexes),
     }
 
 
@@ -209,7 +222,8 @@ async def enregistrer_etude(
                             "Créez d'abord votre fiche Maison pour enregistrer une étude.")
 
     config, profil, production = await _preparer(payload.configuration)
-    resultat = simu_engine.calculer(config, profil, production["total_h"])
+    annexes, _ = await _series_annexes(config)
+    resultat = simu_engine.calculer(config, profil, production["total_h"], **annexes)
 
     etude = SimulateurStudy(
         house_id=house.id,

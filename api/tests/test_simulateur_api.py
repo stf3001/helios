@@ -126,3 +126,95 @@ def test_temps_de_reponse_avec_cache_chaud(client):
     print(f"  /options : {options_ms:.0f} ms (objectif 1500)")
     assert calcul_ms < 500, f"/calcul a pris {calcul_ms:.0f} ms"
     assert options_ms < 3000, f"/options a pris {options_ms:.0f} ms"
+
+
+# --- Une seule maison pour les trois routes (revue du 19/10/2026) -----------------------
+#
+# `/calcul` passait l'éolienne et la machine à eau au moteur ; `/options` et `POST /etudes`
+# non. L'étude enregistrée — celle que le chat relit — et les options portaient donc sur
+# une autre maison que celle affichée. Ce test pose les deux équipements et exige les
+# mêmes chiffres partout.
+
+AVEC_VENT_ET_EAU = {
+    **CONFIG,
+    "eolien": {"kwc": 6},
+    "eau": {"modele": "20L"},
+}
+
+
+class _FausseSession:
+    """Juste ce que `POST /etudes` demande à la base : trouver la maison, garder l'étude."""
+
+    def __init__(self):
+        self.etudes = []
+
+    async def scalar(self, _requete):
+        from app.models.house import House
+        return House(id="maison-test", user_id="user-test")
+
+    def add(self, objet):
+        self.etudes.append(objet)
+
+    async def commit(self):
+        pass
+
+    async def refresh(self, objet):
+        objet.id = "etude-test"
+
+
+@pytest.fixture
+def client_complet(client, monkeypatch):
+    """Le client public, plus un climat simulé et un compte connecté sans base réelle."""
+    from app.core.db import get_db
+    from app.core.deps import get_current_user
+    from app.models.user import User
+    from app.services import awg, simu_climat
+
+    if not awg.tables_disponibles():
+        pytest.skip("Tables constructeur Hydrolia absentes : la machine à eau ne peut pas être chiffrée")
+
+    async def faux_climat(*, lat, lon):
+        heures = [h % 24 for h in range(8760)]
+        return [14.0 + 8.0 * (h >= 10 and h <= 18) for h in heures], [70.0] * 8760
+
+    monkeypatch.setattr("app.services.pvgis.climat_horaire", faux_climat)
+    simu_climat.vider_cache()
+
+    session = _FausseSession()
+
+    async def faux_utilisateur():
+        return User(id="user-test", email="test@helios.fr")
+
+    async def fausse_db():
+        yield session
+
+    app.dependency_overrides[get_current_user] = faux_utilisateur
+    app.dependency_overrides[get_db] = fausse_db
+    yield client, session
+    app.dependency_overrides.clear()
+    simu_climat.vider_cache()
+
+
+def test_calcul_options_et_etude_portent_sur_la_meme_maison(client_complet):
+    client, session = client_complet
+
+    calcul = client.post("/api/simulateur/calcul", json=AVEC_VENT_ET_EAU).json()
+    sans = client.post("/api/simulateur/calcul", json=CONFIG).json()
+    # Sinon le test ne prouverait rien : les deux équipements doivent peser.
+    assert calcul["indicateurs"]["autonomie_pct"] != sans["indicateurs"]["autonomie_pct"]
+    assert calcul["indicateurs"]["facture_mois_eur"] != sans["indicateurs"]["facture_mois_eur"]
+
+    reponse = client.post("/api/simulateur/etudes", json={"configuration": AVEC_VENT_ET_EAU})
+    assert reponse.status_code == 201, reponse.text
+    etude = session.etudes[0].resultat["indicateurs"]
+
+    options = client.post("/api/simulateur/options", json=AVEC_VENT_ET_EAU).json()
+    # La configuration « actuelle » n'est exposée par `/options` qu'à travers ses objectifs.
+    objectifs = {o["code"]: o["valeur"] for o in options["objectifs"]}
+
+    ind = calcul["indicateurs"]
+    assert etude["autonomie_pct"] == ind["autonomie_pct"]
+    assert etude["facture_mois_eur"] == ind["facture_mois_eur"]
+    assert objectifs["autonomie"] == f"{ind['autonomie_pct']:g} %"
+    assert objectifs["facture"].startswith(f"{ind['facture_mois_eur']:g} € au lieu de")
+    assert session.etudes[0].version_moteur == calcul["version_moteur"] == "simu-2"

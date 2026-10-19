@@ -9,6 +9,16 @@ import pytest
 
 from app.services import awg
 
+# Les tables constructeur Hydrolia sont propriétaires et restent HORS du dépôt
+# (`api/data/hydrolia/`, gitignoré). Sur un clone neuf elles manquent : on saute le module
+# entier, plutôt que d'afficher onze échecs qui ne disent rien du code.
+if not awg.tables_disponibles():
+    pytest.skip(
+        "Tables constructeur Hydrolia absentes (api/data/hydrolia/, hors dépôt) : "
+        "tests de la machine à eau sautés",
+        allow_module_level=True,
+    )
+
 #: Une annee simplifiee : un climat constant, pour raisonner sans le bruit des saisons.
 DOUX = ([20.0] * awg.HEURES, [70.0] * awg.HEURES)
 
