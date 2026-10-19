@@ -1260,3 +1260,29 @@ Revue externe du dépôt, contre-vérifiée dans le code avant d'agir. Cinq corr
 - **`test_awg.py` saute tout le module** si les tables Hydrolia manquent (clone neuf) ; le
   test d'égalité du simulateur aussi. Sans les tables : 279 verts, 12 sautés, zéro échec.
 - 291 tests verts, `tsc -b` et `npm run build` passent (421 URL au plan de site).
+
+## Suites de la revue de Florian — phase 2 : tests des moteurs (19/10/2026)
+
+- **`tests/test_audit_engine.py`** : une maison type (100 m², 1975-1988, fioul, combles nus,
+  simple vitrage) dont **chaque chiffre attendu est refait à la main en commentaire** —
+  déperditions renormalisées, besoin pris sur l'année puis sur le DPE, chiffrage des cinq
+  actions (dont deux aides à x,5 € arrondies au pair par Python), synthèse, et l'ordre de
+  priorité qui change avec l'objectif « facture » (menuiseries devant murs). Un premier
+  test épingle les hypothèses (0,20 €/kWh, ±15 %) : si elles bougent, tout est à refaire.
+- **Bornes de `niveau_for_score`** : 39,9 / 40 / 69,9 / 70 (même fichier).
+- **`tests/test_router_llm.py`** : `choose_route` (public toujours local, niveau, mots-clés,
+  longueur au caractère près, pré-audit récent), quota quotidien et plafonds jour / mois.
+  Les plafonds lisent la base : une fausse session rend les totaux, ce qui teste les
+  SEUILS et l'ordre des questions (le plafond du jour bloque sans interroger le mois), pas
+  le SQL. Pas de pytest-asyncio dans le projet : `asyncio.run`, aucune dépendance ajoutée.
+- **`simu_engine` appelle `awg.sur_surplus`** au lieu de sa copie. La part de la machine à
+  eau ne dépend que du surplus de l'heure avant batterie : elle se calcule d'un bloc avant
+  la boucle, qui reprend le surplus restant. `sur_surplus` est réécrite en « ce qui est
+  pris » plutôt qu'en proportion — même mathématique, mais exacte au bit près.
+  **Prouvé** sur 3 configurations en solaire seul (mono 20 L sans stockage, tri 50 L +
+  2 packs, 100 L + virtuelle + inertie + éolienne) : résultat complet ET les 13 séries
+  horaires identiques au bit près avant/après, chaque cas exerçant heures pleines,
+  partielles et sans surplus. `VERSION_MOTEUR` reste `simu-2` puisque rien ne bouge. Un
+  test (`test_awg.py`) tient l'égalité moteur = `awg` pour qu'une copie ne revienne pas.
+- 324 tests verts (311 + 13 sautés sans les tables Hydrolia).
+

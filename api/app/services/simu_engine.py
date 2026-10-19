@@ -15,7 +15,7 @@ Si un bilan cesse de se fermer, c'est que de l'énergie est créée ou perdue qu
 from dataclasses import dataclass, field
 
 from app.core.config import settings
-from app.services import batterie_virtuelle, eolien, simu_conso, solar_engine
+from app.services import awg, batterie_virtuelle, eolien, simu_conso, solar_engine
 from app.services.simu_conso import HEURES, ProfilConso
 from app.services.simu_types import Configuration
 
@@ -129,28 +129,27 @@ def _simuler_horaire(conso_h: list[float], prod_h: list[float], config: Configur
     soc = 0.0
     direct_h, charge_h, decharge_h = [], [], []
     injectable_h, ecrete_h, besoin_h = [], [], []
+
     #: Ce que la machine a eau a reellement consomme et produit, heure par heure. En marche
-    #: continue elle est deja dans `conso_h` et ces listes restent a zero ; c'est le mode
+    #: continue elle est deja dans `conso_h` et ces listes restent vides ; c'est le mode
     #: « sur solaire seul » qui les remplit, puisque lui seul module la marche.
+    #:
+    #: Elle se sert AVANT la batterie (raison dans `awg.sur_surplus`). Sa part d'une heure ne
+    #: depend donc que du surplus de cette heure apres consommation directe — pas de l'etat
+    #: de la batterie : on la calcule d'un bloc, avec la fonction d'`awg`, et la boucle
+    #: reprend le surplus qu'elle laisse. Il n'existe plus de seconde copie de la regle.
     eau_kwh_h: list[float] = []
     eau_litres_h: list[float] = []
+    surplus_apres_eau: list[float] | None = None
+    if eau_potentiel_kwh is not None:
+        surplus_avant_eau = [prod - min(conso, prod) for conso, prod in zip(conso_h, prod_h)]
+        eau_litres_h, eau_kwh_h, surplus_apres_eau = awg.sur_surplus(
+            eau_potentiel_litres, eau_potentiel_kwh, surplus_avant_eau)
 
     for i, (conso, prod) in enumerate(zip(conso_h, prod_h)):
         direct = min(conso, prod)
-        surplus = prod - direct
+        surplus = prod - direct if surplus_apres_eau is None else surplus_apres_eau[i]
         besoin = conso - direct
-
-        # La machine a eau sur solaire seul : elle se sert AVANT la batterie. Elle consomme
-        # sur-le-champ, et stocker pour faire de l'eau plus tard ajouterait les pertes de la
-        # batterie a une operation deja couteuse en energie. Ce qu'elle laisse continue son
-        # chemin : batterie, puis injection.
-        if eau_potentiel_kwh is not None:
-            besoin_eau = eau_potentiel_kwh[i]
-            pris = min(surplus, besoin_eau) if besoin_eau > 0 else 0.0
-            surplus -= pris
-            eau_kwh_h.append(pris)
-            eau_litres_h.append(
-                eau_potentiel_litres[i] * (pris / besoin_eau) if besoin_eau > 0 else 0.0)
 
         charge = min(surplus, puissance, max(capacite - soc, 0.0)) if (capacite and surplus > 0) else 0.0
         soc += charge * rendement

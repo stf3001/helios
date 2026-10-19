@@ -81,8 +81,12 @@ def sur_surplus(litres_h: list[float], kwh_h: list[float],
             kwh_reels.append(0.0)
             reste.append(surplus)
             continue
-        part = min(1.0, max(0.0, surplus) / kwh)
-        litres_reels.append(litres * part)
-        kwh_reels.append(kwh * part)
-        reste.append(max(0.0, surplus - kwh * part))
+        # Ecrit en « ce qui est pris » plutot qu'en proportion (kwh * surplus / kwh) : c'est
+        # mathematiquement la meme chose, mais exact au bit pres — `simu_engine` appelle
+        # cette fonction et ses resultats ne doivent pas bouger d'un centieme.
+        dispo = max(0.0, surplus)
+        pris = min(dispo, kwh)
+        litres_reels.append(litres * (pris / kwh))
+        kwh_reels.append(pris)
+        reste.append(dispo - pris)
     return litres_reels, kwh_reels, reste

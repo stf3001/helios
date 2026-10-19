@@ -92,3 +92,36 @@ def test_le_mode_solaire_produit_toujours_moins_que_la_marche_continue():
     maigre = [k * 0.3 for k in kwh]
     l2, _, _ = awg.sur_surplus(litres, kwh, maigre)
     assert sum(l2) < sum(litres)
+
+
+def test_le_moteur_utilise_la_regle_d_awg_et_pas_une_copie(monkeypatch):
+    """Depuis le 19/10/2026, `simu_engine` appelle `awg.sur_surplus` au lieu de sa propre
+    version de la regle. Ce test tient l'egalite : avec une batterie posee (elle se sert
+    APRES la machine), l'eau du moteur est exactement celle que rend `awg` sur le surplus
+    laisse par la consommation directe."""
+    from app.services import simu_conso, simu_engine
+    from app.services.simu_types import Eau
+    from tests.conftest import config_type, production_ref
+
+    config = config_type(16, nb_packs=2, pilotage=True).avec(
+        eau=Eau(modele="50L", solaire_uniquement=True))
+    litres, kwh = awg.horaire("50L", *DOUX)
+    profil = simu_conso.construire(config.maison)
+    prod = production_ref(16)["total_h"]
+
+    bilans = []
+    vrai = simu_engine._simuler_horaire
+
+    def espion(*a, **k):
+        bilans.append(vrai(*a, **k))
+        return bilans[-1]
+
+    monkeypatch.setattr(simu_engine, "_simuler_horaire", espion)
+    simu_engine.calculer(config, profil, prod, eau_litres_h=litres, eau_kwh_h=kwh)
+
+    bilan = bilans[0]
+    surplus = [p - min(c, p) for c, p in zip(bilan.conso_h, bilan.prod_h)]
+    attendu_litres, attendu_kwh, _ = awg.sur_surplus(litres, kwh, surplus)
+    assert bilan.eau_litres_h == attendu_litres
+    assert bilan.eau_kwh_h == attendu_kwh
+    assert 0 < sum(bilan.eau_kwh_h) < sum(kwh)  # la machine a tourne, mais pas a plein
