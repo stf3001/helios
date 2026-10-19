@@ -1286,3 +1286,19 @@ Revue externe du dépôt, contre-vérifiée dans le code avant d'agir. Cinq corr
   test (`test_awg.py`) tient l'égalité moteur = `awg` pour qu'une copie ne revienne pas.
 - 324 tests verts (311 + 13 sautés sans les tables Hydrolia).
 
+## Les pages fixes ont leur HTML statique (19/10/2026)
+
+Point 30 de `TODO.md`. `PAGES_FIXES` n'alimentait que le plan de site : les 15 pages fixes
+servaient la coquille vide à un robot sans JavaScript. `src/data/pagesFixes.json` porte
+maintenant titre, description et contenu de **12 pages**, repris du texte réellement
+affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabarit des chapeaux.
+**Ce fichier et les pages React se tiennent à jour ENSEMBLE**, comme `piliers.json`.
+- Exclus volontairement : `/` (sa coquille sert de repli à toutes les routes — voir le
+  commentaire de `PAGES_FIXES_CONTENU`) et `/potentiel-hydrique` (point 13). Le HTML de
+  `/helios` ne reprend ni les experts inventés ni la prise de rendez-vous.
+- Le script échoue si une page décrite n'est pas dans `PAGES_FIXES`, et liste celles qui
+  n'ont pas de HTML propre. `/comment-ca-marche` (redirection JS) sort du plan de site.
+- Vérifié : chapeaux, fiches, villes et `index.html` identiques à l'octet avant/après ;
+  test HTTP reproduisant `try_files` (les pages fixes servent leur contenu, l'espace et
+  les guides retombent sur la coquille) ; 420 URL au plan de site.
+

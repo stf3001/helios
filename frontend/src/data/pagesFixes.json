@@ -1,0 +1,146 @@
+[
+  {
+    "chemin": "/helios",
+    "metaTitre": "Qui est Helios ? L'IA qui conseille votre maison",
+    "metaDesc": "Une IA qui ne s'intéresse qu'à votre logement : chauffage, isolation, solaire, devis. Quand elle ne sait pas, elle le dit. Ce qu'elle fait, ce qu'elle refuse.",
+    "titre": "Qui est Helios ?",
+    "sousTitre": "Une intelligence artificielle qui ne s'intéresse qu'à une seule chose : votre logement.",
+    "intro": "Chauffage, isolation, solaire, facture, devis — posez votre question. S'il ne sait pas, il vous le dira. S'il sait, il vous aidera à choisir. Sa particularité n'est pas sa technologie, mais sa constitution : des règles et des valeurs — transparence, humilité, honnêteté, excellence.",
+    "sections": [
+      { "titre": "Ce qu'Helios fait", "contenu": "Il répond sur l'énergie, les travaux et les aides. Il analyse votre logement et priorise vos gestes. Il estime coûts, économies et aides en ordres de grandeur, et vous oriente vers un professionnel certifié si besoin." },
+      { "titre": "Ce qu'il ne fait jamais", "contenu": "Vendre, ou survendre quoi que ce soit. Donner un chiffre certain là où il y a un doute. Proposer un partenaire sans votre accord. Se faire passer pour un audit réglementaire." },
+      { "titre": "Quand il ne sait pas, il le dit", "contenu": "C'est la règle qui coûte le plus cher à tenir, et c'est celle qui fait la valeur du reste. Il annonce ses incertitudes par des fourchettes, cite les fiches qui fondent chaque réponse, sait dire « ne faites rien » quand le bon conseil est d'attendre. Une réponse fausse se signale en un clic, et elle est relue." },
+      { "titre": "Plus il connaît votre maison, plus ses réponses sont justes", "contenu": "Sans compte, Helios répond déjà — mais à tout le monde pareil. En créant votre espace, il répond à vous : votre surface, votre chauffage, votre consommation, vos projets. C'est gratuit, et rien ne part chez personne sans votre accord." },
+      { "titre": "Et quand une machine ne suffit pas", "contenu": "Quand il faut un document officiel — pour une vente, une location, un dossier d'aide —, Helios vous oriente vers un DPE réalisé par un diagnostiqueur certifié." }
+    ]
+  },
+  {
+    "chemin": "/faq",
+    "metaTitre": "Questions fréquentes sur l'énergie de la maison",
+    "metaDesc": "Isolation, chauffage, solaire, aides, DPE, stockage, eau : les réponses d'Helios, classées par thème et tirées de sa base de connaissances.",
+    "titre": "Questions fréquentes",
+    "sousTitre": "Les réponses d'Helios, tirées de sa base de connaissances.",
+    "intro": "Achat d'énergie, aides, autoconsommation, chantier, chauffage, confort, copropriété, DPE, eau, éolien, financement, isolation, photovoltaïque, pilotage, réglementation, stockage, véhicule électrique, ventilation, vigilance : les questions sont classées par thème. Choisissez le vôtre — ou cherchez directement.",
+    "sections": []
+  },
+  {
+    "chemin": "/glossaire",
+    "metaTitre": "Glossaire de l'énergie, expliqué sans jargon",
+    "metaDesc": "DPE, COP, autoconsommation, batterie virtuelle, CEE, TURPE : tous les mots de l'énergie et de la rénovation, expliqués simplement par Helios.",
+    "titre": "Glossaire",
+    "sousTitre": "Tous les mots de l'énergie, expliqués sans jargon.",
+    "intro": "Les termes qu'on croise dans un devis, une facture ou un dossier d'aide : ABF, accise sur l'électricité, audit énergétique réglementaire, autoconsommation, batterie virtuelle, COP, DPE, TURPE et bien d'autres.",
+    "sections": []
+  },
+  {
+    "chemin": "/simulateur-solaire",
+    "metaTitre": "Simulateur solaire : équipez votre maison",
+    "metaDesc": "Panneaux, batterie, éolienne, machine à eau : posez les équipements et voyez l'autonomie, la facture et le retour sur investissement, heure par heure.",
+    "titre": "Équipez votre maison, voyez ce que ça change",
+    "sousTitre": "Autonomie, facture, économies et retour sur investissement.",
+    "intro": "Commencez par votre adresse : elle donne l'ensoleillement réel de votre commune. Elle n'est jamais enregistrée ni mise dans le lien de partage — seule la commune l'est. Décrivez ensuite votre logement, votre consommation et votre raccordement, puis posez panneaux, stockage et autres équipements.",
+    "sections": [
+      { "titre": "Un calcul sur votre consommation", "contenu": "La courbe de consommation est recalée sur votre facture annuelle, et votre présence en journée compte : consommer pendant que le soleil brille change tout." },
+      { "titre": "Ce qui pèse sur le résultat", "contenu": "Seul un chauffage électrique pèse sur votre facture d'électricité. En monophasé, on ne peut injecter que 6 kVA : au-delà, l'énergie est perdue. La puissance souscrite fixe le prix du kWh et l'abonnement." }
+    ]
+  },
+  {
+    "chemin": "/partenaires",
+    "metaTitre": "Nos partenaires : des entreprises et une charte",
+    "metaDesc": "Certifications à jour, prix transparents, aucun démarchage, notation par les clients : la charte que signent les partenaires HELIOS, et ce qu'ils nous versent.",
+    "titre": "Des entreprises choisies, une charte exigeante.",
+    "sousTitre": "La charte partenaire.",
+    "intro": "Certifications à jour (RGE quand les aides l'exigent), assurance décennale. Transparence des prix : devis détaillés, sans frais cachés, délais tenus. Aucun démarchage hors demande explicite, pas de vente forcée. Travaux conformes aux règles de l'art, SAV réactif. Acceptation de la notation par les clients. Un partenaire qui ne respecte plus la charte est déréférencé — sans exception.",
+    "sections": [
+      { "titre": "Transparence", "contenu": "Les partenaires versent à HELIOS une commission d'apport d'affaires quand un client leur confie des travaux via la plateforme. Cette commission ne modifie jamais les préconisations d'Helios, et n'est jamais facturée au client." }
+    ]
+  },
+  {
+    "chemin": "/devenir-partenaire",
+    "metaTitre": "Devenir partenaire HELIOS",
+    "metaDesc": "Des clients qualifiés, avec leur consentement. Commission d'apport d'affaires seulement si les travaux sont signés, jamais d'abonnement. Référencement vérifié.",
+    "titre": "Devenez partenaire HELIOS.",
+    "sousTitre": "Des clients qualifiés, avec leur consentement.",
+    "intro": "HELIOS vous apporte des clients qualifiés (fiche maison, pré-audit et projet), avec leur consentement. Commission d'apport d'affaires uniquement si les travaux sont signés — jamais d'abonnement. Référencement soumis à vérification : RGE si requis, assurance décennale, Kbis.",
+    "sections": []
+  },
+  {
+    "chemin": "/engagements",
+    "metaTitre": "Nos engagements : des règles, pas des promesses",
+    "metaDesc": "Un avis qui peut être négatif, jamais un euro facturé au client, des chiffres calculés et non générés, vos données sous votre contrôle, aucun démarchage.",
+    "titre": "Nos engagements",
+    "sousTitre": "Pas des promesses marketing : des règles inscrites dans le fonctionnement même d'Helios.",
+    "intro": "",
+    "sections": [
+      { "titre": "Notre avis d'abord — et il peut être négatif", "contenu": "Avant toute mise en relation ou offre partenaire, Helios vous donne son avis indépendant. S'il est défavorable, nous vous le disons — et nous ne vous proposons pas le partenaire. Nous vous dirons aussi quand la meilleure option est de ne rien faire." },
+      { "titre": "Jamais un euro facturé au client", "contenu": "HELIOS est gratuit pour vous, toujours. Nous nous rémunérons par une commission versée par les entreprises partenaires quand un chantier se signe — jamais par vous, et cette commission ne modifie jamais nos préconisations." },
+      { "titre": "Des chiffres calculés, pas générés", "contenu": "Tous les montants (pré-audits, simulateur solaire, économies estimées) sortent de moteurs de calcul déterministes fondés sur des données de référence — jamais d'une IA générative. Et ils sont donnés en fourchettes, car un chiffre certain serait un mensonge." },
+      { "titre": "Le comparateur public toujours cité", "contenu": "Pour tout ce qui touche à votre contrat d'énergie, nous citons systématiquement le comparateur public et indépendant energie-info.fr, pour que vous puissiez vérifier par vous-même." },
+      { "titre": "Vos données vous appartiennent", "contenu": "Consentement explicite et horodaté avant toute transmission à un partenaire, retirable tant que rien n'est signé. Export complet de vos données et suppression de compte en un clic depuis votre espace. Votre numéro de compteur (PDL) n'est jamais transmis aux modèles d'IA." },
+      { "titre": "Aucun démarchage", "contenu": "Personne ne vous appellera sans que vous l'ayez demandé. Un partenaire qui démarche hors demande explicite ou ne respecte plus la charte est déréférencé — sans exception." }
+    ]
+  },
+  {
+    "chemin": "/vision",
+    "metaTitre": "Notre vision : la maison de demain existe déjà",
+    "metaDesc": "Isolée, intelligente, elle produit et stocke son énergie, se chauffe, recharge la voiture. Tous les morceaux existent : il manquait l'assemblage.",
+    "titre": "La maison de demain existe déjà. Aidons chaque foyer à la bâtir.",
+    "sousTitre": "Notre vision",
+    "intro": "Pour la première fois, une maison ordinaire peut devenir presque autonome : bien isolée, intelligente, capable de produire sa propre énergie verte, de la stocker, de se chauffer, de cuire, de recharger la voiture, de se piloter seule — et demain, de produire son eau. Le solaire est abordable, le stockage arrive à maturité, l'intelligence artificielle sait enfin conseiller chacun selon son cas. Tous les morceaux existent — il manquait quelqu'un pour les assembler, honnêtement, autour de vous.",
+    "sections": [
+      { "titre": "Ce que votre maison peut devenir", "contenu": "Pas d'un coup, pas forcément tout — mais dans le bon ordre, à votre rythme et votre budget. Bien isolée d'abord, le socle de tout le reste. Puis elle produit son énergie, la stocke, se chauffe proprement, cuit à l'électricité produite sur place, recharge la voiture, se pilote intelligemment — et demain, produit son eau." }
+    ]
+  },
+  {
+    "chemin": "/colibri",
+    "metaTitre": "L'esprit colibri : chaque geste énergie compte",
+    "metaDesc": "Un thermostat réglé, des combles isolés, un pilotage des usages : pour Helios, aucun geste n'est trop petit. La légende du colibri appliquée à votre logement.",
+    "titre": "L'esprit colibri",
+    "sousTitre": "Chaque geste compte pour construire un avenir durable.",
+    "intro": "Une légende amérindienne, popularisée par Pierre Rabhi : face à un incendie de forêt, le petit colibri va chercher quelques gouttes d'eau pour les jeter sur le feu. « Je le sais, mais je fais ma part. » Chaque action individuelle, aussi modeste soit-elle, contribue à un changement collectif.",
+    "sections": [
+      { "titre": "Notre interprétation", "contenu": "Chez Helios, l'esprit colibri s'applique à l'énergie de votre logement. Un thermostat bien réglé : 1 °C de moins, c'est environ 7 % de consommation de chauffage en moins. Des combles isolés : le chantier au meilleur rapport coût/efficacité. Un panneau solaire bien dimensionné. Un pilotage intelligent, qui décale les usages vers les heures solaires sans rien acheter." },
+      { "titre": "Et à grande échelle ?", "contenu": "Helios ne prétend pas éteindre seul l'incendie climatique — et se méfie des grands chiffres ronds qui impressionnent sans rien prouver." }
+    ]
+  },
+  {
+    "chemin": "/qui-sommes-nous",
+    "metaTitre": "Qui sommes-nous : un conseil énergie honnête",
+    "metaDesc": "HELIOS est né d'un constat : la rénovation énergétique est devenue un labyrinthe. Notre conviction : un conseil honnête, sans vendeur juge et partie.",
+    "titre": "Qui sommes-nous",
+    "sousTitre": "Une conviction simple, mise au service de chaque foyer.",
+    "intro": "HELIOS est né d'un constat frustrant : la transition énergétique de la maison est devenue un labyrinthe. Aides qui changent chaque année, démarchage agressif, devis incompréhensibles, conseils orientés par celui qui vend. Notre conviction : chacun devrait pouvoir avoir accès à un conseil honnête, personnalisé et disponible — sans qu'un vendeur soit juge et partie.",
+    "sections": [
+      { "titre": "L'alliance de l'humain et de l'IA", "contenu": "L'IA pour la puissance et la disponibilité : Helios est disponible à toute heure, connaît les normes et les aides, et s'adapte à votre logement précis. L'humain pour le sens et le contrôle : les chiffres viennent de moteurs de calcul vérifiés, jamais d'une IA qui invente, et les partenaires sont sélectionnés et suivis par une équipe." },
+      { "titre": "Un engagement écrit, pas une promesse marketing", "contenu": "Nos règles sont écrites dans une « constitution » versionnée, et appliquées directement dans le code d'Helios. Un avis défavorable peut être rendu avant toute mise en relation. Un chiffre est toujours une fourchette. Un partenaire n'apparaît jamais si l'avis d'Helios est négatif." }
+    ]
+  },
+  {
+    "chemin": "/le-vent",
+    "metaTitre": "Éolienne domestique verticale : pour qui, combien",
+    "metaDesc": "Le vent souffle la nuit et en hiver, quand les panneaux ne donnent rien. Éolienne verticale, prêt d'anémomètre gratuit, démarches et production à attendre.",
+    "titre": "Le vent, quand le soleil se couche",
+    "sousTitre": "L'éolien domestique.",
+    "intro": "Il souffle la nuit et en hiver, précisément quand les panneaux ne donnent plus rien. Une éolienne ne remplace pas le solaire : elle le complète, et les deux ensemble couvrent l'année.",
+    "sections": [
+      { "titre": "Pourquoi une éolienne verticale", "contenu": "Chez un particulier, le vent est turbulent : il rebondit sur les toits, les arbres, les murs, et change sans arrêt de direction. Une verticale est faite pour ça : elle prend le vent de partout, démarre dès 2 m/s, fait moins de 35 dB à cinq mètres, n'a pas de pales tranchantes et ne demande qu'un contrôle visuel par an." },
+      { "titre": "On vous prête un anémomètre. Gratuitement.", "contenu": "Les données météo régionales donnent une estimation ; votre terrain, lui, est unique. Un anémomètre professionnel est prêté un mois, contre une caution, avec un bon de retour prépayé. L'estimation est ensuite recalée sur votre terrain." },
+      { "titre": "Ce qu'il faut savoir avant de se décider", "contenu": "Sous 1,80 m, aucune démarche d'urbanisme : une simple notice et une déclaration à Enedis suffisent. Au-delà, comptez une déclaration préalable, et un permis de construire à partir de 12 mètres. Un freinage automatique arrête les pales au-delà de 25 m/s." },
+      { "titre": "Ce qu'on peut en attendre", "contenu": "Une éolienne de 3 kW produit entre 3 000 et 6 000 kWh par an selon l'exposition. L'écart entre ces deux chiffres, c'est exactement ce que l'anémomètre sert à trancher — et c'est la mesure qui fait foi, pas l'estimation." }
+    ]
+  },
+  {
+    "chemin": "/achat-energie",
+    "metaTitre": "Achat d'électricité : option, offre et courtage",
+    "metaDesc": "Base, heures creuses ou Tempo, prix fixe, indexé ou dynamique, courtage : bien acheter son électricité ne coûte rien et se cumule avec le solaire.",
+    "titre": "L'achat d'énergie",
+    "sousTitre": "Abonnements, tarifs et courtage.",
+    "intro": "Produire moins cher, c'est une moitié du sujet. Acheter moins cher ce qu'on ne produit pas, c'est l'autre — et elle ne coûte rien à mettre en œuvre.",
+    "sections": [
+      { "titre": "Votre facture se joue sur deux lignes", "contenu": "L'abonnement, qui dépend de votre puissance souscrite, et le prix du kWh, qui dépend de votre option tarifaire et de votre offre. Poser des panneaux agit sur la quantité achetée ; choisir son contrat agit sur le prix de chaque kWh restant. Changer de fournisseur ne coûte rien, ne coupe rien, et ne demande aucune intervention technique." },
+      { "titre": "Base, heures creuses ou Tempo ?", "contenu": "Trois options du même tarif réglementé. Le critère de choix n'est pas le prix affiché : c'est votre capacité à déplacer une consommation. Un même foyer peut gagner ou perdre plusieurs centaines d'euros par an selon l'option, à consommation identique." },
+      { "titre": "Vos heures creuses vont changer d'horaire", "contenu": "Depuis novembre 2025, Enedis applique une réforme décidée par la Commission de régulation de l'énergie : les heures creuses du matin et du début de soirée disparaissent progressivement, remplacées par au moins cinq heures consécutives la nuit et jusqu'à trois heures l'après-midi. Le jour où vos horaires changent, reprogrammez votre ballon d'eau chaude et votre voiture." },
+      { "titre": "Bloquer son prix, le suivre, ou en profiter heure par heure", "contenu": "Prix fixe : le risque est pour le fournisseur. Prix indexé : le risque est partagé. Prix dynamique, qui suit le marché de gros heure par heure : le risque est pour vous — et le gain aussi. Aucune forme n'est meilleure en soi." }
+    ]
+  }
+]

@@ -150,7 +150,9 @@ function pageHtml(coquille, fiche) {
  * site, et une liste explicite rend cette exclusion évidente et vérifiable.
  */
 const PAGES_FIXES = [
-  '/', '/comment-ca-marche', '/helios', '/faq', '/glossaire',
+  // Pas `/comment-ca-marche` : elle redirige vers `/helios` par le JavaScript, un robot
+  // qui ne l'execute pas y trouverait une page vide.
+  '/', '/helios', '/faq', '/glossaire',
   '/simulateur-solaire', '/potentiel-hydrique',
   '/partenaires', '/devenir-partenaire',
   '/engagements', '/vision', '/colibri', '/qui-sommes-nous',
@@ -160,6 +162,14 @@ const PAGES_FIXES = [
 /** Pages chapeau (`/aides`, `/solaire`…) : contenu éditorial dans `src/data/piliers.json`,
  *  même source que les pages React — la version servie aux moteurs dit donc la même chose. */
 const PILIERS = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/piliers.json'), 'utf-8'))
+
+/** Contenu servi aux moteurs pour les pages fixes, REPRIS du texte affiché par chaque page :
+ *  la version servie aux robots doit dire la même chose que la page.
+ *  `/` n'y est pas : son HTML est la coquille `index.html` elle-même, qui sert aussi de
+ *  repli à toutes les routes de l'application — y écrire le contenu de l'accueil et sa
+ *  canonique les donnerait à chacune. Son titre et sa description y sont déjà.
+ *  `/potentiel-hydrique` non plus : elle lit une table climatique fausse (TODO 13-14). */
+const PAGES_FIXES_CONTENU = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/pagesFixes.json'), 'utf-8'))
 
 /** Pages locales : production PVGIS RÉELLE par ville (écart x1,5 entre Lille et Marseille).
  *  C'est cette différence de contenu qui distingue une page locale légitime d'une page
@@ -204,15 +214,16 @@ const ZONES_PRIVEES = [
 
 const jour = (chemin) => statSync(chemin).mtime.toISOString().slice(0, 10)
 
-/** HTML statique d'une page chapeau : intro + sections visibles sans JavaScript. */
-function pilierHtml(coquille, pilier) {
-  const url = `${SITE}/${pilier.slug}`
+/** HTML statique d'une page chapeau ou d'une page fixe : intro + sections visibles sans
+ *  JavaScript. Les deux partagent ce gabarit ; seule l'adresse diffère. */
+function pilierHtml(coquille, pilier, chemin = `/${pilier.slug}`) {
+  const url = `${SITE}${chemin}`
+  // Un paragraphe vide n'apprend rien à un moteur : on ne l'écrit pas.
+  const paragraphe = (texte) => (texte ? `        <p>${echapper(texte)}</p>\n` : '')
   const contenu = `
       <article>
         <h1>${echapper(pilier.titre)}</h1>
-        <p>${echapper(pilier.sousTitre)}</p>
-        <p>${echapper(pilier.intro)}</p>
-${pilier.sections.map((s) => `        <h2>${echapper(s.titre)}</h2>\n        <p>${echapper(s.contenu)}</p>`).join('\n')}
+${paragraphe(pilier.sousTitre)}${paragraphe(pilier.intro)}${pilier.sections.map((s) => `        <h2>${echapper(s.titre)}</h2>\n        <p>${echapper(s.contenu)}</p>`).join('\n')}
         <p><a href="/faq">Toutes les questions fréquentes</a> · <a href="/">HELIOS</a></p>
       </article>`
 
@@ -291,6 +302,16 @@ function main() {
     writeFileSync(join(DIST, `${pilier.slug}.html`), pilierHtml(coquille, pilier), 'utf-8')
   }
 
+  // Pages fixes : `/vision.html`, `/le-vent.html`… même service que les chapeaux. Une page
+  // décrite ici mais absente du plan de site serait orpheline : on échoue bruyamment.
+  for (const page of PAGES_FIXES_CONTENU) {
+    if (!PAGES_FIXES.includes(page.chemin)) {
+      console.error(`\n[pré-rendu] ÉCHEC — ${page.chemin} a un contenu mais n'est pas dans PAGES_FIXES`)
+      process.exit(1)
+    }
+    writeFileSync(join(DIST, `${page.chemin.slice(1)}.html`), pilierHtml(coquille, page, page.chemin), 'utf-8')
+  }
+
   mkdirSync(join(DIST, 'solaire'), { recursive: true })
   for (const v of VILLES) {
     writeFileSync(join(DIST, 'solaire', `${v.slug}.html`), villeHtml(coquille, v), 'utf-8')
@@ -304,6 +325,8 @@ function main() {
   console.log('[pré-rendu] ' + Object.entries(parSource).map(([s, n]) => `${s}:${n}`).join(' '))
   console.log(`[pré-rendu] ${VILLES.length} pages locales sous /solaire/`)
   console.log(`[pré-rendu] ${PILIERS.length} pages chapeau : ${PILIERS.map((p) => '/' + p.slug).join(' ')}`)
+  const sansHtml = PAGES_FIXES.filter((c) => !PAGES_FIXES_CONTENU.some((p) => p.chemin === c))
+  console.log(`[pré-rendu] ${PAGES_FIXES_CONTENU.length} pages fixes pré-rendues · sans HTML propre : ${sansHtml.join(' ')}`)
   console.log(`[pré-rendu] sitemap.xml : ${nbUrls} URL (${PAGES_FIXES.length} pages + ${PILIERS.length} chapeaux + ${fiches.length} fiches)`)
   console.log(`[pré-rendu] robots.txt écrit · site déclaré : ${SITE}`)
 }

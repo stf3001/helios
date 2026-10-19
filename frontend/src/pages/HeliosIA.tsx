@@ -87,7 +87,7 @@ const CONTRAT = [
 ]
 
 export default function HeliosIA() {
-  useTitle('Helios — l’IA au service de votre foyer | HELIOS')
+  useTitle('Helios — l’IA au service de votre foyer')
 
   /* ?q= : arrivée depuis le champ de saisie de l'accueil → question pré-remplie, que
      l'utilisateur relit et envoie lui-même. L'effet compte : depuis la fusion, on est

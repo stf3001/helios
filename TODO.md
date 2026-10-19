@@ -824,20 +824,34 @@ aiderait pas. Et dans le seul endroit où ancien et officiel s'affrontent vraime
 
 Où : `api/app/services/rag.py:search_chunks`.
 
-### [ ] 30. Les pages fixes n'ont pas de HTML statique — repéré le 19/10/2026
+### [x] 30. Les pages fixes n'avaient pas de HTML statique — fait le 19/10/2026
 
 Trouvé en traitant la revue de Florian (« `/le-vent` et `/achat-energie` ne sont pas
-pré-rendues ») : c'est vrai, mais c'est vrai de **toutes** les pages de `PAGES_FIXES`
-(`/vision`, `/helios`, `/engagements`…). Dans `frontend/scripts/prerender.mjs`, cette liste
-n'alimente **que le plan de site** ; seuls les fiches, les chapeaux et les pages de ville
-reçoivent leur propre `.html`. Les autres servent la coquille vide de l'application à un
-robot qui n'exécute pas le JavaScript.
+pré-rendues ») : c'était vrai de **toutes** les pages de `PAGES_FIXES`. Cette liste
+n'alimentait que le plan de site ; un robot sans JavaScript recevait, pour les 15, la même
+coquille vide avec le même titre.
 
-Les deux pages ont été ajoutées au plan de site le 19/10. Leur donner — à elles et aux
-quinze autres — un HTML propre (titre, description, canonique, contenu visible) demande
-d'écrire ce contenu pour chacune : c'est un lot à part, à décider.
+**Fait** : `frontend/src/data/pagesFixes.json` porte titre, description et contenu visible de
+**12 pages**, tous REPRIS du texte affiché par chaque page (rien d'inventé), relevés dans le
+navigateur. Le pré-rendu les écrit avec le gabarit des pages chapeau (`pilierHtml`, qui
+accepte désormais une adresse) ; chapeaux, fiches et villes sortent identiques à l'octet.
+`/comment-ca-marche` est retirée du plan de site (redirection par le JavaScript vers
+`/helios`). Titres 25-49 caractères, descriptions ≤ 160, tous uniques.
 
-Où : `frontend/scripts/prerender.mjs` (`PAGES_FIXES`, `main`).
+**Choix à connaître :**
+- Le HTML servi pour `/helios` **ne contient ni les quatre experts ni la prise de
+  rendez-vous** (points 4 et 2) : les graver dans l'index aurait aggravé les deux.
+- `/achat-energie` ne reprend pas les prix Tempo (ils changent deux fois par an).
+- **`/` n'a pas de contenu propre, volontairement** : son HTML est `index.html`, qui sert
+  aussi de repli à TOUTES les routes (guides, espace…). Y écrire l'accueil et sa canonique
+  les donnerait à chacune. Son titre et sa description y sont déjà.
+- **`/potentiel-hydrique`** reste dans le plan de site, sans HTML propre : point 13.
+
+**Règle d'entretien** : quand on change le texte d'une de ces pages, on change aussi
+`pagesFixes.json` — sinon les moteurs lisent une autre version que les visiteurs.
+
+Au passage, deux titres d'onglet affichaient « … | HELIOS — HELIOS » (`HeliosIA.tsx`,
+`SimulateurSolaire.tsx` ajoutaient la marque que `useTitle` ajoute déjà) : corrigé.
 
 ## Le piège à ne pas réintroduire
 

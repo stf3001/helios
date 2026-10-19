@@ -155,7 +155,7 @@ const ANTI_REBOND_MS = 200
 const INACTIVITE_OPTIONS_MS = 2000
 
 export default function SimulateurSolaire() {
-  useTitle('Simulateur solaire — équipez votre maison | HELIOS')
+  useTitle('Simulateur solaire — équipez votre maison')
   const { user, authFetch } = useAuth()
 
   const [config, setConfig] = useState<Config>(() => {
