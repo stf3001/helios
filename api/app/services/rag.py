@@ -376,7 +376,8 @@ def build_audit_context(audit) -> dict:
         "consigne": (
             "Chiffres issus du moteur déterministe : les reprendre tels quels, en fourchettes, sans "
             "en inventer. Une action d'horizon « a_l_occasion » ne doit JAMAIS être présentée comme "
-            "une priorité. Les aides sont « à vérifier ». Statuts : declare = saisi par le foyer, "
+            "une priorité. Les aides sont « à vérifier ». Le solaire n'est jamais « la » solution : "
+            "sans étude, aucun chiffre solaire. Statuts : declare = saisi par le foyer, "
             "suppose = hypothèse, calcule = dérivé par le moteur."
         ),
         "consommation": {k: c.get(k) for k in (
@@ -386,10 +387,17 @@ def build_audit_context(audit) -> dict:
             "cout_chauffage_actuel_eur", "statuts")},
         "deperditions": r.get("deperditions"),
         "priorites": [{k: a.get(k) for k in (
-            "rang", "label", "horizon", "libelle_occasion", "cout_eur", "aide_estimee_eur",
-            "reste_a_charge_eur", "aides_statut", "economie_annuelle_eur", "temps_retour_ans", "statuts")}
+            "rang", "label", "categorie", "horizon", "libelle_occasion", "contexte", "cout_eur",
+            "aide_estimee_eur", "aide_note", "reste_a_charge_eur", "aides_statut", "economie_annuelle_eur",
+            "temps_retour_ans", "source", "mention", "statuts") if k in a}
             for a in r.get("priorites", [])],
         "synthese": r.get("synthese"),
+        # v2.1 : conseils sans chiffre, et le solaire CITÉ d'une étude ou proposé comme piste.
+        "premiere_etape": (r.get("synthese") or {}).get("premiere_action"),
+        "gestes_gratuits": [g["texte"] for g in r.get("gestes", [])] or None,
+        "conseils_equipements": [c["texte"] for c in r.get("conseils_equipements", [])] or None,
+        "confort_ete": r.get("confort_ete"),
+        "solaire": r.get("solaire"),
         "alertes": r.get("alertes"),
         "hypotheses": [{"cle": h["cle"], "valeur": h["valeur"]} for h in r.get("hypotheses", [])],
         "entrees_supposees": [e for e in r.get("entrees", []) if e.get("statut") == "suppose"],

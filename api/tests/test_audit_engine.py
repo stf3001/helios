@@ -6,7 +6,8 @@ table change, le test casse — c'est voulu : un chiffre de pré-audit qui bouge
 regardé, pas avalé.
 """
 
-from datetime import datetime
+import re
+from datetime import date, datetime
 from types import SimpleNamespace
 from typing import get_args
 
@@ -17,7 +18,7 @@ from app.models.house import House
 from app.schemas import house as schema
 from app.services import audit_reference as ref
 from app.services import pdf_audit
-from app.services.audit_engine import run_audit, zone_climatique
+from app.services.audit_engine import resume_etude_simulateur, run_audit, zone_climatique
 from app.services.completeness import niveau_for_score
 from app.services.rag import build_audit_context
 from app.services.regions import TOUS_DEPARTEMENTS
@@ -59,7 +60,7 @@ def test_les_hypotheses_du_calcul_a_la_main_tiennent():
     assert dict(settings.audit_coef_zone)["H3"] == 0.55
     assert ref.ANNEE_BESOIN_UTILE_KWH_M2_AN["1975_1988"] == 180
     assert settings.audit_incertitude == 0.15
-    assert settings.audit_version == "v2"
+    assert settings.audit_version == "v2.1"
 
 
 # --- Couverture du schéma : aucun repli silencieux -----------------------------------------
@@ -164,8 +165,9 @@ def test_les_deux_premieres_actions_a_la_main():
     """Régulation d'abord (sobriété) : 11 647,06 × 10 % × 0,19 = 221 €/an, retour 325 / 221,3 = 1,5 an.
 
     Puis les combles, sur ce qui reste : 10 482,35 × 25 % = 2 620,6 kWh × 0,19 = 498 €/an.
-    Coût 100 m² × 25-70 € = 2 500-7 000, central 4 750 ; aides 15 %-45 % → 712-2 138 ;
-    reste central 4 750 − 1 425 = 3 325 → retour 3 325 / 497,9 = 6,7 ans → prioritaire.
+    Coût 100 m² × 25-70 € = 2 500-7 000, central 4 750 ; aides 0-25 €/m² → 0-2 500 ;
+    reste bas max(0, 2 500 − 2 500) = 0, haut 7 000 − 0 = 7 000 ;
+    reste central 4 750 − 1 250 = 3 500 → retour 3 500 / 497,9 = 7,0 ans → prioritaire.
     """
     p = run_audit(maison_type())["priorites"]
     assert [a["action"] for a in p[:2]] == ["regulation", "isolation_combles"]
@@ -176,17 +178,18 @@ def test_les_deux_premieres_actions_a_la_main():
     assert combles["horizon"] == "prioritaire"
     assert combles["economie_annuelle_kwh"] == 2621
     assert combles["economie_annuelle_eur"]["central"] == 498
-    assert combles["aide_estimee_eur"] == {"bas": 712, "haut": 2138}
-    assert combles["reste_a_charge_eur"] == {"bas": 2612, "haut": 4038}
-    assert combles["aides_statut"] == "a_verifier"
-    assert combles["temps_retour_ans"] == 6.7
+    assert combles["aide_estimee_eur"] == {"bas": 0, "haut": 2500}
+    assert combles["reste_a_charge_eur"] == {"bas": 0, "haut": 7000}
+    assert combles["aides_statut"] == "base_connaissances"
+    assert "CEE" in combles["aide_note"]
+    assert combles["temps_retour_ans"] == 7.0
 
 
 def test_combinaison_sequentielle():
     """Le total n'est pas la somme des gains isolés, et ne dépasse jamais le coût actuel."""
     r = run_audit(maison_type())
     c, s = r["consommation"], r["synthese"]
-    total = s["economie_annuelle_totale_eur"]["central"]
+    total = s["economie_chauffage_eur"]["central"]
     marginales = sum(a["economie_annuelle_eur"]["central"] for a in r["priorites"])
     assert total == pytest.approx(marginales, abs=len(r["priorites"]))  # arrondis
 
@@ -327,14 +330,38 @@ def test_un_audit_v1_genere_toujours_son_pdf_et_son_contexte(pdf_dans_tmp):
     assert ctx["resultat"] == AUDIT_V1
 
 
+# Un audit v2 tel qu'il a été stocké (moteur du lot 1, sans gestes ni solaire).
+AUDIT_V2 = {
+    "version_helios": "v2", "completeness_score": 40.6, "niveau": "prediagnostic_qualitatif",
+    "entrees": [], "deperditions": [{"poste": "toiture", "part_pct": 100.0, "statut": "calcule"}],
+    "consommation": {"conso_chauffage_estimee_kwh_an": 11316, "energie_chauffage": "electricite", "origine": "dpe",
+                     "zone_climatique": "H3", "surface_m2": 200, "conso_elec_declaree_kwh_an": 9000,
+                     "usages_specifiques_kwh_an": 4650, "conso_chauffage_declaree_kwh_an": 4350,
+                     "ratio_reel_theorique": 0.38, "message_ratio": "Votre consommation réelle est plus basse.",
+                     "conso_chauffage_retenue_kwh_an": 4350, "base_economies": "declaree",
+                     "prix_energie_eur_kwh": 0.2001, "cout_chauffage_actuel_eur": 870, "statuts": {}},
+    "priorites": [{"action": "regulation", "label": "Thermostat programmable / régulation", "rang": 1,
+                   "cout_eur": {"bas": 150, "haut": 500}, "aide_estimee_eur": {"bas": 0, "haut": 0},
+                   "reste_a_charge_eur": {"bas": 325, "haut": 325}, "aides_statut": "a_verifier",
+                   "economie_annuelle_eur": {"bas": 74, "haut": 100, "central": 87}, "temps_retour_ans": 3.7,
+                   "horizon": "maintenant", "libelle_occasion": None, "priorite_hierarchie": 1}],
+    "synthese": {"nb_actions": 1, "investissement_eur": {"bas": 150, "haut": 500},
+                 "aides_estimees_eur": {"bas": 0, "haut": 0}, "reste_a_charge_eur": {"bas": 325, "haut": 325},
+                 "economie_annuelle_totale_eur": {"bas": 74, "haut": 100, "central": 87},
+                 "premiere_action": "Thermostat programmable / régulation"},
+    "alertes": [], "hypotheses": [{"cle": "zone_climatique", "valeur": "H3", "source": "x", "date": None}],
+    "avertissement": "…",
+}
+
+
 def test_un_audit_v2_genere_son_pdf_et_un_contexte_resserre(pdf_dans_tmp):
-    r = run_audit(cas_du_04_10_2026())
-    assert pdf_audit.build_pdf(r, house_label="maison - 83000").exists()
-    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=r))
+    assert pdf_audit.build_pdf(AUDIT_V2, house_label="maison - 83000").exists()
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=AUDIT_V2))
     assert ctx["version"] == "v2"
     assert ctx["consommation"]["message_ratio"]
     assert all("horizon" in a for a in ctx["priorites"])
     assert ctx["hypotheses"] and "a_l_occasion" in ctx["consigne"]
+    assert ctx["gestes_gratuits"] is None  # un v2 n'en a pas : rien d'inventé
 
 
 # --- Score et niveaux (inchangés) -----------------------------------------------------------
@@ -350,3 +377,216 @@ def test_un_audit_v2_genere_son_pdf_et_un_contexte_resserre(pdf_dans_tmp):
 def test_bornes_des_niveaux(score, niveau):
     """40 % ouvre le pré-diagnostic (et la route API du chat), 70 % le pré-audit chiffré."""
     assert niveau_for_score(score) == niveau
+
+
+# --- Lot 2 (v2.1) : un audit qui conseille --------------------------------------------------
+
+AUJOURD_HUI = date(2026, 10, 19)
+
+
+def reference_complete(**kw) -> House:
+    """La maison de référence avec tout ce que la fiche sait dire."""
+    champs = dict(
+        code_postal="83000", type_logement="maison", dpe_lettre="D", surface_habitable=200, nb_niveaux=2,
+        nb_occupants=4, chauffage_principal="PAC_air_air", chauffage_principal_annee=2010,
+        chauffage_appoint="autre", ecs="ballon_elec", ecs_annee=2010, clim=True, clim_nb_pieces=4,
+        regulation="thermostat", conso_elec_kwh_an=9000, isolation_combles="partielle",
+        isolation_murs="partielle", menuiseries="double", ventilation="VMC_simple",
+    )
+    champs.update(kw)
+    return House(**champs)
+
+
+def etude(jour: str = "2026-09-01") -> dict:
+    """Résumé tel que `resume_etude_simulateur` le produit, avec des chiffres d'étude ronds."""
+    return {"date": jour, "version_moteur": "simu-2", "option": "6 kWc + pilotage", "puissance_kwc": 6.0,
+            "investissement_eur": 10500, "economie_1re_annee_eur": 812, "temps_retour_ans": 12.9,
+            "gain_net_25_ans_eur": 14230, "autonomie_pct": 41.5}
+
+
+@pytest.fixture
+def ref_sans_etude():
+    return run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)
+
+
+def test_reference_hypotheses_clim_et_appoint(ref_sans_etude):
+    """Usages : 900 + 4 × 450 + 4 × 800 (ballon) + 4 pièces × 250 = 6 900 kWh, la clim
+    comptée une seule fois. Chauffage d'après la facture : 9 000 − 6 900 = 2 100 kWh."""
+    hyp = {h["cle"]: h["valeur"] for h in ref_sans_etude["hypotheses"]}
+    assert "PAC air/air réversible" in hyp["clim_pac_reversible"]
+    assert "appoint" in hyp["appoint_hors_facture"]
+    assert ref_sans_etude["consommation"]["usages_specifiques_kwh_an"] == 6900
+    assert ref_sans_etude["consommation"]["conso_chauffage_declaree_kwh_an"] == 2100
+    assert "appoint d'une autre" in ref_sans_etude["consommation"]["message_ratio"]
+
+
+def test_pac_air_air_sans_clim_declaree():
+    r = run_audit(reference_complete(clim=False), aujourd_hui=AUJOURD_HUI)
+    assert "pac_air_air_ete" in {h["cle"] for h in r["hypotheses"]}
+
+
+def test_valeurs_par_defaut_dans_les_hypotheses():
+    r = run_audit(reference_complete(nb_occupants=None, nb_niveaux=None, clim_nb_pieces=None),
+                  aujourd_hui=AUJOURD_HUI)
+    cles = {h["cle"] for h in r["hypotheses"] if h["source"] == "Fiche Maison"}
+    assert {"nb_occupants", "nb_niveaux", "clim_nb_pieces"} <= cles
+
+
+def test_reference_conseils_d_age(ref_sans_etude):
+    """PAC air/air et ballon de 2010 : 16 ans pour 15 de durée de vie (seuil 80 % = 12)."""
+    conseils = {c["equipement"]: c for c in ref_sans_etude["conseils_equipements"]}
+    assert set(conseils) == {"PAC_air_air", "ballon_elec"}
+    assert conseils["PAC_air_air"]["age_ans"] == 16
+    assert "faites-la entretenir" in conseils["PAC_air_air"]["texte"]
+    assert "une PAC récente consomme généralement moins" in conseils["PAC_air_air"]["texte"]
+    assert "faites-le entretenir" in conseils["ballon_elec"]["texte"]
+
+
+def test_reference_ballon_thermodynamique(ref_sans_etude):
+    """(800 − 280) × 4 = 2 080 kWh × 0,2001 = 416 €/an. Ballon en fin de vie : surcoût
+    1 500-2 500, central 2 000 ; aide 0-30 % (à vérifier) → 0-600 ; reste central 1 700 ;
+    retour 1 700 / 416,2 = 4,1 ans → prioritaire."""
+    b = next(a for a in ref_sans_etude["priorites"] if a["action"] == "ballon_thermodynamique")
+    assert b["horizon"] == "prioritaire"
+    assert b["base_cout"] == "surcout"
+    assert b["cout_eur"] == {"bas": 1500, "haut": 2500}
+    assert b["economie_annuelle_kwh"] == 2080
+    assert b["economie_annuelle_eur"]["central"] == 416
+    assert b["temps_retour_ans"] == 4.1
+    assert b["contexte"] == "au remplacement de votre ballon, qui approche de sa fin de vie"
+    assert b["aides_statut"] == "a_verifier"
+    assert b["categorie"] == "eau_chaude"
+
+
+def test_ballon_recent_chiffre_sur_le_cout_complet():
+    r = run_audit(reference_complete(ecs_annee=2022), aujourd_hui=AUJOURD_HUI)
+    b = next(a for a in r["priorites"] if a["action"] == "ballon_thermodynamique")
+    assert b["base_cout"] == "cout_complet"
+    assert b["cout_eur"] == {"bas": 2500, "haut": 4000}
+
+
+def test_reference_piste_solaire_sans_chiffre(ref_sans_etude):
+    sol = ref_sans_etude["solaire"]
+    assert sol["type"] == "piste"
+    assert sol["lien"] == "/simulateur-solaire"
+    assert "9 000 kWh" in sol["texte"]
+    assert re.findall(r"\d+", sol["texte"].replace("9 000", "")) == []  # aucun autre chiffre
+    assert "production_solaire" not in {a["action"] for a in ref_sans_etude["priorites"]}
+
+
+def test_reference_confort_d_ete_et_combles(ref_sans_etude):
+    ete = ref_sans_etude["confort_ete"]
+    assert len(ete["conseils"]) == 4
+    assert ete["note_combles"] == ref.CONFORT_ETE_COMBLES
+
+
+def test_reference_premiere_etape_et_decompte(ref_sans_etude):
+    s = ref_sans_etude["synthese"]
+    assert s["premiere_action"] == "Ballon d'eau chaude thermodynamique"
+    assert s["premiere_action_type"] == "action"
+    assert s["decompte"] == "1 action prioritaire, 3 à prévoir à l'occasion"
+    assert s["message_sans_isolation"].startswith("Aucuns travaux d'isolation")
+
+
+def test_reference_murs_sans_aide(ref_sans_etude):
+    murs = next(a for a in ref_sans_etude["priorites"] if a["action"] == "isolation_murs")
+    assert murs["aide_estimee_eur"] == {"bas": 0, "haut": 0}
+    assert "rénovation d'ampleur" in murs["aide_note"]
+
+
+def test_aide_pac_en_euros_selon_la_base():
+    pac = next(a for a in run_audit(maison_type(), aujourd_hui=AUJOURD_HUI)["priorites"]
+               if a["action"] == "pac_air_eau")
+    assert pac["aide_estimee_eur"] == {"bas": 0, "haut": 5000}
+
+
+def test_gestes_gratuits_presents_et_sans_chiffre(ref_sans_etude):
+    gestes = ref_sans_etude["gestes"]
+    assert gestes and "filtres_pac" in {g["cle"] for g in gestes}
+    assert all(set(g) == {"cle", "texte"} for g in gestes)
+
+
+def test_premiere_etape_jamais_vide():
+    """Maison déjà bien traitée, sans piste solaire : la première étape est un geste."""
+    r = run_audit(maison_type(isolation_combles="bonne", isolation_murs="bonne", menuiseries="triple",
+                              regulation="connecte", chauffage_principal="PAC_air_eau"), aujourd_hui=AUJOURD_HUI)
+    assert r["synthese"]["premiere_action"]
+    assert r["synthese"]["premiere_action_type"] == "geste"
+
+
+def test_eau_chaude_non_combinee_au_chauffage(ref_sans_etude):
+    s = ref_sans_etude["synthese"]
+    chauffage = sum(a["economie_annuelle_eur"]["central"] for a in ref_sans_etude["priorites"]
+                    if a["categorie"] == "chauffage")
+    assert s["economie_eau_chaude_eur"]["central"] == 416
+    assert s["economie_chauffage_eur"]["central"] == pytest.approx(chauffage, abs=3)
+    assert s["economie_annuelle_totale_eur"]["central"] == pytest.approx(
+        s["economie_chauffage_eur"]["central"] + 416, abs=1)
+
+
+@pytest.mark.parametrize("house", [maison_type(), cas_du_04_10_2026(), reference_complete(),
+                                   maison_type(chauffage_principal="gaz", ecs="ballon_elec")])
+def test_reste_a_charge_coherent(house):
+    for a in run_audit(house, aujourd_hui=AUJOURD_HUI)["priorites"]:
+        r = a["reste_a_charge_eur"]
+        assert 0 <= r["bas"] <= r["haut"], a["action"]
+        assert r["bas"] == max(0, a["cout_eur"]["bas"] - a["aide_estimee_eur"]["haut"])
+        assert r["haut"] == a["cout_eur"]["haut"] - a["aide_estimee_eur"]["bas"]
+
+
+def test_pas_de_confort_d_ete_en_h1():
+    assert run_audit(reference_complete(code_postal="59000"), aujourd_hui=AUJOURD_HUI)["confort_ete"] is None
+
+
+@pytest.mark.parametrize("kw", [{"type_logement": "appartement"}, {"conso_elec_kwh_an": 3500},
+                                {"statut": "locataire"}])
+def test_pas_de_piste_solaire_hors_cible(kw):
+    assert run_audit(reference_complete(**kw), aujourd_hui=AUJOURD_HUI)["solaire"] is None
+
+
+def test_etude_simulateur_citee_a_l_identique():
+    r = run_audit(reference_complete(), etude_simulateur=etude(), aujourd_hui=AUJOURD_HUI)
+    sol = next(a for a in r["priorites"] if a["action"] == "production_solaire")
+    assert sol["priorite_hierarchie"] == 4
+    assert sol["cout_eur"] == {"bas": 10500, "haut": 10500}
+    assert sol["economie_annuelle_eur"] == {"bas": 812, "haut": 812, "central": 812}
+    assert sol["temps_retour_ans"] == 12.9
+    assert sol["statuts"]["economie_annuelle_eur"] == "calcule"
+    assert sol["source"] == "simulateur, étude du 01/09/2026, moteur simu-2"
+    assert sol["mention"] is None
+    assert r["solaire"]["type"] == "etude" and r["solaire"]["etude"] == etude()
+    # Jamais devant une action de sobriété, d'enveloppe ou de système du même horizon.
+    meme = [a for a in r["priorites"] if a["horizon"] == sol["horizon"]]
+    assert meme[-1]["action"] == "production_solaire"
+    # Ses chiffres restent à part des travaux.
+    sans = run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)["synthese"]
+    assert r["synthese"]["investissement_eur"] == sans["investissement_eur"]
+    assert r["synthese"]["economie_annuelle_totale_eur"] == sans["economie_annuelle_totale_eur"]
+
+
+def test_etude_de_plus_de_six_mois_a_mettre_a_jour():
+    r = run_audit(reference_complete(), etude_simulateur=etude("2026-03-01"), aujourd_hui=AUJOURD_HUI)
+    assert r["solaire"]["a_mettre_a_jour"] is True
+    sol = next(a for a in r["priorites"] if a["action"] == "production_solaire")
+    assert sol["mention"] == "étude à mettre à jour"
+
+
+def test_resume_etude_simulateur_recopie_le_resultat():
+    stockee = SimpleNamespace(
+        created_at=datetime(2026, 9, 1, 10, 30), version_moteur="simu-2", nom="6 kWc + pilotage",
+        resultat={"indicateurs": {"puissance_kwc": 6.0, "economie_1re_annee_eur": 812, "temps_retour_ans": 12.9,
+                                  "gain_net_25_ans_eur": 14230, "autonomie_pct": 41.5},
+                  "investissement": {"total_eur": 10500}},
+    )
+    assert resume_etude_simulateur(stockee) == etude()
+
+
+def test_un_audit_v21_genere_son_pdf_et_son_contexte(pdf_dans_tmp):
+    r = run_audit(reference_complete(), etude_simulateur=etude(), aujourd_hui=AUJOURD_HUI)
+    assert pdf_audit.build_pdf(r, house_label="maison - 83000").exists()
+    r2 = run_audit(reference_complete(nb_occupants=None), aujourd_hui=AUJOURD_HUI)
+    assert pdf_audit.build_pdf(r2, house_label="maison - 83000").exists()
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=r))
+    assert ctx["premiere_etape"] == "Ballon d'eau chaude thermodynamique"
+    assert ctx["gestes_gratuits"] and ctx["conseils_equipements"] and ctx["confort_ete"]
+    assert ctx["solaire"]["type"] == "etude"

@@ -72,6 +72,7 @@ class HouseUpdate(BaseModel):
     ecs_annee: int | None = None
     clim: bool | None = None
     clim_type: str | None = Field(default=None, max_length=50)
+    clim_nb_pieces: int | None = Field(default=None, ge=0, le=20)
     regulation: Regulation | None = None
 
     conso_elec_kwh_an: int | None = Field(default=None, ge=0)

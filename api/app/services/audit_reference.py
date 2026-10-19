@@ -124,9 +124,11 @@ CHAUFFAGE_A_REMPLACER = {"elec_direct", "gaz", "fioul"}
 # Actions de rénovation recommandables. Coûts TTC pose comprise, ordres de grandeur 2026.
 # `unit` : "m2_emprise" (surface habitable / nombre de niveaux : combles, plancher bas),
 #          "m2_mur" (surface de murs estimée), "fenetre", "forfait".
-# `aide_pct_bas` / `aide_pct_haut` : part prise en charge (MaPrimeRénov' + CEE), des revenus
-#   élevés aux revenus modestes. Le haut reprend la valeur v1 ; le bas ~ CEE seuls.
-#   A VÉRIFIER (cf. `audit_aides_date_reference`).
+# `aide` : fourchette du revenu le plus élevé (bas) au plus modeste (haut), de trois formes :
+#   ("pct", bas, haut)    part du coût central — valeurs v1, A VÉRIFIER ;
+#   ("eur_m2", bas, haut) euros par m² traité ; ("eur", bas, haut) forfait en euros.
+#   `aide_source` renvoie à la fiche de `kb/baremes_aides.md` (relevé du 22/07/2026) quand
+#   elle existe ; sans elle, l'aide est affichée « à vérifier ». `aide_note` s'affiche avec.
 # `gain_pct_chauffage` : économie sur la CONSO DE CHAUFFAGE quand le poste est nu, modulée
 #   ensuite par son état (QUALITE_*). A CALIBRER.
 # `duree_vie_ans` : au-delà, un temps de retour n'a plus de sens. A CALIBRER.
@@ -136,7 +138,12 @@ ACTIONS: dict[str, dict] = {
         "poste": "toiture",
         "label": "Isolation des combles / toiture",
         "cout_bas": 25, "cout_haut": 70, "unit": "m2_emprise",
-        "aide_pct_bas": 0.15, "aide_pct_haut": 0.45,
+        # kb/baremes_aides.md, « Quel montant MaPrimeRénov' pour l'isolation des combles ou de
+        # la toiture en 2026 ? » : ~25 / 20 / 15 €/m² (très modeste / modeste / intermédiaire),
+        # rien pour les revenus supérieurs. Toiture-terrasse plus aidée : non distinguée ici.
+        "aide": ("eur_m2", 0, 25),
+        "aide_source": "kb/baremes_aides.md (22/07/2026)",
+        "aide_note": "+ CEE possibles, montant variable selon le fournisseur",
         "gain_pct_chauffage": 0.25,
         "duree_vie_ans": 30,
         "libelle_occasion": "lors d'une réfection de la toiture ou de l'aménagement des combles",
@@ -146,9 +153,12 @@ ACTIONS: dict[str, dict] = {
         "poste": "murs",
         "label": "Isolation des murs",
         "cout_bas": 90, "cout_haut": 180, "unit": "m2_mur",
-        # NB : la base de connaissances (`kb/baremes_aides.md`) indique que l'isolation des
-        # murs SEULE n'est plus aidée par MaPrimeRénov' par geste depuis le 01/01/2026.
-        "aide_pct_bas": 0.10, "aide_pct_haut": 0.40,
+        # kb/baremes_aides.md, « Peut-on encore isoler ses murs avec MaPrimeRénov' en 2026 ? » :
+        # plus aidée par geste depuis le 01/01/2026 (décret du 08/09/2025).
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (22/07/2026)",
+        "aide_note": ("finançable uniquement en rénovation d'ampleur (bouquet de travaux visant au "
+                      "moins 2 classes de DPE, accompagnateur agréé)"),
         "gain_pct_chauffage": 0.20,
         "duree_vie_ans": 40,
         "libelle_occasion": "lors d'un ravalement de façade",
@@ -158,7 +168,7 @@ ACTIONS: dict[str, dict] = {
         "poste": "plancher",
         "label": "Isolation du plancher bas",
         "cout_bas": 30, "cout_haut": 60, "unit": "m2_emprise",
-        "aide_pct_bas": 0.15, "aide_pct_haut": 0.35,
+        "aide": ("pct", 0.15, 0.35),
         "gain_pct_chauffage": 0.08,
         "duree_vie_ans": 40,
         "libelle_occasion": "lors d'une réfection des sols ou si le vide sanitaire est accessible",
@@ -168,7 +178,7 @@ ACTIONS: dict[str, dict] = {
         "poste": "menuiseries",
         "label": "Remplacement des menuiseries (double/triple vitrage)",
         "cout_bas": 500, "cout_haut": 800, "unit": "fenetre",
-        "aide_pct_bas": 0.05, "aide_pct_haut": 0.25,
+        "aide": ("pct", 0.05, 0.25),
         "gain_pct_chauffage": 0.12,
         "duree_vie_ans": 30,
         "libelle_occasion": "au remplacement des fenêtres en fin de vie",
@@ -178,7 +188,7 @@ ACTIONS: dict[str, dict] = {
         "poste": "air_ventilation",
         "label": "Ventilation VMC double flux",
         "cout_bas": 4000, "cout_haut": 7000, "unit": "forfait",
-        "aide_pct_bas": 0.10, "aide_pct_haut": 0.30,
+        "aide": ("pct", 0.10, 0.30),
         "gain_pct_chauffage": 0.12,
         "duree_vie_ans": 20,
         "libelle_occasion": "lors d'une rénovation globale, une fois l'enveloppe étanche",
@@ -188,7 +198,11 @@ ACTIONS: dict[str, dict] = {
         "poste": "systeme_chauffage",
         "label": "Pompe à chaleur air/eau (remplacement du chauffage actuel)",
         "cout_bas": 12000, "cout_haut": 18000, "unit": "forfait",
-        "aide_pct_bas": 0.15, "aide_pct_haut": 0.40,
+        # kb/baremes_aides.md, « Quel montant MaPrimeRénov' pour une pompe à chaleur en 2026 ? » :
+        # air/eau ~5 000 / 4 000 / 3 000 € (très modeste / modeste / intermédiaire), 0 au-delà.
+        "aide": ("eur", 0, 5000),
+        "aide_source": "kb/baremes_aides.md (22/07/2026)",
+        "aide_note": "+ CEE possibles, montant variable selon le fournisseur",
         # Pas de pourcentage : l'économie se calcule par changement d'énergie (moteur).
         "duree_vie_ans": 17,
         "libelle_occasion": "au remplacement du système actuel en fin de vie",
@@ -198,13 +212,92 @@ ACTIONS: dict[str, dict] = {
         "poste": "pilotage",
         "label": "Thermostat programmable / régulation",
         "cout_bas": 150, "cout_haut": 500, "unit": "forfait",
-        "aide_pct_bas": 0.0, "aide_pct_haut": 0.0,
+        "aide": ("eur", 0, 0),
         "gain_pct_chauffage": 0.10,
         "duree_vie_ans": 10,
         "libelle_occasion": "au prochain remplacement du thermostat",
         "priorite_hierarchie": 1,  # sobriété (geste peu coûteux, esprit colibri)
     },
+    # Eau chaude, pas chauffage : son économie ne se combine pas avec celles du chauffage.
+    # Coûts dans `config.audit_ballon_thermo_*` (complet, ou surcoût si l'ancien est en fin
+    # de vie) ; économie = écart des couches ECS du simulateur x occupants x prix élec.
+    "ballon_thermodynamique": {
+        "poste": "eau_chaude",
+        "label": "Ballon d'eau chaude thermodynamique",
+        "unit": "forfait",
+        "aide": ("pct", 0.0, 0.30),  # absent de la base : A VÉRIFIER
+        "duree_vie_ans": 15,
+        "libelle_occasion": "au remplacement du ballon",
+        "libelle_fin_de_vie": "au remplacement de votre ballon, qui approche de sa fin de vie",
+        "priorite_hierarchie": 3,
+    },
 }
+
+# Ligne « production solaire » : chiffres CITÉS d'une étude du simulateur, jamais recalculés.
+SOLAIRE = {
+    "action": "production_solaire",
+    "label": "Production solaire (d'après votre étude du simulateur)",
+    "poste": "production",
+    "priorite_hierarchie": 4,  # production, après sobriété, enveloppe et systèmes
+    "duree_vie_ans": 25,       # durée d'étude du simulateur (`simu_duree_etude_ans`)
+    "libelle_occasion": "lors d'une réfection de la toiture, ou quand le projet se précise",
+}
+PISTE_SOLAIRE = (
+    "Votre maison consomme {conso} kWh d'électricité par an : une production solaire pourrait "
+    "en couvrir une partie. Estimez-la avec le simulateur (pré-rempli avec votre fiche)."
+)
+PISTE_SOLAIRE_COURTE = "Estimer votre production solaire avec le simulateur"
+LIEN_SIMULATEUR = "/simulateur-solaire"
+
+# Postes d'isolation : s'il y en a et qu'aucun n'est rentable, l'audit le dit.
+POSTES_ISOLATION = {"isolation_combles", "isolation_murs", "isolation_plancher", "menuiseries"}
+MESSAGE_SANS_ISOLATION = (
+    "Aucuns travaux d'isolation ne sont rentables à court terme : votre chauffage vous coûte "
+    "environ {cout} €/an. Les leviers utiles sont ailleurs : {leviers}."
+)
+
+# Équipements dont l'âge est surveillé (clés de `audit_duree_vie_*`).
+# (nom, pronom) : « faites-la entretenir » pour une pompe, « faites-le » pour un ballon.
+NOM_EQUIPEMENT: dict[str, tuple[str, str]] = {
+    "PAC_air_air": ("pompe à chaleur air/air", "la"),
+    "PAC_air_eau": ("pompe à chaleur air/eau", "la"),
+    "gaz": ("chaudière gaz", "la"),
+    "fioul": ("chaudière fioul", "la"),
+    "ballon_elec": ("ballon d'eau chaude électrique", "le"),
+    "thermodynamique": ("ballon thermodynamique", "le"),
+}
+CONSEIL_AGE = ("Votre {equipement} a {age} ans : faites-{pronom} entretenir et préparez son "
+               "remplacement plutôt que de le subir en panne.")
+CONSEIL_AGE_PAC = " Au remplacement, une PAC récente consomme généralement moins."
+
+# Appoint qui ne passe pas (ou pas forcément) par le compteur électrique.
+APPOINT_HORS_FACTURE = {"autre", "bois", "gaz", "fioul", "reseau"}
+
+# Gestes gratuits, horizon « maintenant ». Des CONSEILS, sans chiffre d'économie, hors
+# synthèse financière. `si_chauffage` : None = toujours, sinon les systèmes concernés.
+GESTES_GRATUITS: tuple[dict, ...] = (
+    {"cle": "consigne_19", "texte": "Réglez la consigne à 19 °C dans les pièces de vie, moins "
+                                     "dans les chambres et la nuit.", "si_chauffage": None},
+    {"cle": "programmation", "texte": "Programmez le chauffage selon votre présence : il baisse "
+                                       "quand la maison est vide.", "si_chauffage": None},
+    {"cle": "filtres_pac", "texte": "Nettoyez régulièrement les filtres de la pompe à chaleur et "
+                                     "faites-la entretenir.", "si_chauffage": {"PAC_air_air", "PAC_air_eau"}},
+    {"cle": "entretien_chaudiere", "texte": "Faites entretenir la chaudière chaque année (obligatoire).",
+     "si_chauffage": {"gaz", "fioul", "bois"}},
+    {"cle": "volets_nuit", "texte": "Fermez volets et rideaux la nuit en hiver.", "si_chauffage": None},
+)
+
+# Confort d'été, zones H2 et H3 : qualitatif, sans chiffre.
+ZONES_CONFORT_ETE = {"H2", "H3"}
+CONFORT_ETE: tuple[str, ...] = (
+    "Des protections solaires extérieures (volets, stores, brise-soleil) sur les baies exposées "
+    "sud et ouest : elles arrêtent la chaleur avant qu'elle n'entre.",
+    "Ventiler la nuit, quand l'air extérieur est plus frais, et fermer en journée.",
+    "Des brasseurs d'air (ventilateurs de plafond) avant toute climatisation supplémentaire.",
+    "L'isolation des combles, qui limite fortement la chaleur sous le toit.",
+)
+CONFORT_ETE_COMBLES = ("Peu rentable sur votre chauffage, l'isolation des combles reste le premier "
+                       "levier contre la surchauffe d'été.")
 
 # Estimation grossière du nombre de fenêtres à partir de la surface habitable (1 fenêtre / ~15 m²).
 M2_PAR_FENETRE = 15
@@ -229,7 +322,9 @@ SOURCES: dict[str, tuple[str, str]] = {
     "usages_specifiques": ("Couches de consommation du simulateur (simu_conso_*)", "2026-10-19"),
     "deperditions": ("Répartition ADEME d'une maison non isolée, modulée", "2026-07-18"),
     "couts_actions": ("Ordres de grandeur TTC posés, à calibrer", "2026-07-18"),
-    "aides": ("MaPrimeRénov' + CEE, fourchette à vérifier", "2026-07-18"),
+    "aides": ("kb/baremes_aides.md quand la fiche existe, sinon à vérifier", "2026-07-22"),
+    "equipements": ("Durées de vie typiques, à calibrer", "2026-10-19"),
+    "ballon_thermo": ("Coût du ballon thermodynamique, à valider", "2026-10-19"),
     "gains_actions": ("Gain sur le chauffage par action, à calibrer", "2026-10-19"),
     "horizons": ("Seuils de classement, à confirmer", "2026-10-19"),
     "ratio_murs": ("Surface de murs / surface habitable, à calibrer", "2026-10-19"),

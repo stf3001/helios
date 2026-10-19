@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2"                    # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.1"                    # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 
@@ -134,7 +134,8 @@ class Settings(BaseSettings):
     # Rapport conso réelle / théorique -> message (bornes hautes exclues), seuils A CONFIRMER.
     audit_ratio_messages: tuple[tuple[float, str], ...] = (
         (0.6, "Votre consommation réelle est nettement plus basse que ce que prévoit le calcul "
-              "théorique (DPE ancien, chauffage partiel, pièces peu chauffées…). Les économies "
+              "théorique (DPE ancien, chauffage partiel, pièces peu chauffées, appoint d'une autre "
+              "énergie…). Les économies "
               "sont calculées sur votre consommation réelle."),
         (1.4, "Votre consommation réelle est cohérente avec l'état de la maison."),
         (float("inf"), "Vous consommez plus que prévu : réglages, usages ou isolation à vérifier."),
@@ -149,6 +150,22 @@ class Settings(BaseSettings):
     # Les fourchettes d'aides (`aide_pct_bas/haut` dans `audit_reference.ACTIONS`) n'ont PAS
     # été revérifiées depuis juillet 2026 : affichées « à vérifier ».
     audit_aides_date_reference: str = "2026-07-18"
+    # Durée de vie typique des équipements (ans), A CALIBRER. Un équipement qui a atteint
+    # `audit_age_alerte_pct` % de la sienne reçoit un conseil (entretien, remplacement préparé).
+    audit_duree_vie_chauffage: tuple[tuple[str, int], ...] = (
+        ("PAC_air_air", 15), ("PAC_air_eau", 17), ("gaz", 20), ("fioul", 20),
+    )
+    audit_duree_vie_ecs: tuple[tuple[str, int], ...] = (("ballon_elec", 15), ("thermodynamique", 15))
+    audit_age_alerte_pct: float = 80.0
+    # Ballon thermodynamique posé (€ TTC, bas/haut), et surcoût par rapport à un ballon
+    # électrique neuf, retenu quand l'ancien ballon est en fin de vie. A VALIDER.
+    audit_ballon_thermo_cout_eur: tuple[int, int] = (2500, 4000)
+    audit_ballon_thermo_surcout_eur: tuple[int, int] = (1500, 2500)
+    # Piste solaire sans étude : maison, propriétaire (ou statut inconnu), et au moins cette
+    # consommation électrique déclarée (kWh/an). A VALIDER.
+    audit_solaire_conso_min_kwh: int = 4000
+    # Au-delà, une étude du simulateur citée par l'audit est signalée « à mettre à jour ».
+    audit_etude_simulateur_max_mois: int = 6
 
     # --- Espace énergie / SOBRY (doc 09 §2) ---
     sobry_spot_api_url: str = ""                 # API publique SOBRY (prix spot quart-horaire) — vide = courbe de démo

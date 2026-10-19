@@ -50,6 +50,7 @@ class House(Base):
     ecs_annee: Mapped[int | None] = mapped_column(Integer)
     clim: Mapped[bool | None] = mapped_column(Boolean)
     clim_type: Mapped[str | None] = mapped_column(String(50))
+    clim_nb_pieces: Mapped[int | None] = mapped_column(Integer)  # hors score de complétude (0023)
     regulation: Mapped[str | None] = mapped_column(String(20))  # aucune|thermostat|programmable|connecte
 
     # Bloc Énergie & factures (15%) — pdl : phase 2, hors score tant que non consenti

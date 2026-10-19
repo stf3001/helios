@@ -19,6 +19,24 @@ interface Priorite {
   temps_retour_ans: number | null
   horizon?: 'maintenant' | 'prioritaire' | 'a_l_occasion'
   libelle_occasion?: string | null
+  // v2.1
+  categorie?: 'chauffage' | 'eau_chaude' | 'production'
+  contexte?: string | null
+  aide_note?: string | null
+  source?: string
+  mention?: string | null
+}
+interface Solaire {
+  type: 'piste' | 'etude'
+  texte?: string
+  lien: string
+  source?: string
+  mention?: string | null
+  etude?: {
+    date: string; puissance_kwc: number | null; investissement_eur: number | null
+    economie_1re_annee_eur: number | null; temps_retour_ans: number | null
+    gain_net_25_ans_eur: number | null; autonomie_pct: number | null
+  }
 }
 interface AuditResult {
   version_helios: string
@@ -46,7 +64,19 @@ interface AuditResult {
     aides_estimees_eur: number | Plage
     economie_annuelle_totale_eur: Fourchette | null
     premiere_action: string | null
+    // v2.1
+    decompte?: string
+    reste_a_charge_eur?: Plage
+    economie_chauffage_eur?: Fourchette | null
+    economie_eau_chaude_eur?: Fourchette | null
+    message_sans_isolation?: string | null
   }
+  // v2.1 : conseils sans chiffre et solaire (absents des audits plus anciens)
+  gestes?: { cle: string; texte: string }[]
+  conseils_equipements?: { equipement: string; texte: string }[]
+  confort_ete?: { conseils: string[]; note_combles: string | null } | null
+  solaire?: Solaire | null
+  hypotheses?: { cle: string; valeur: unknown; source: string }[]
   avertissement: string
 }
 interface AuditRow { id: string; created_at: string; result: AuditResult }
@@ -62,6 +92,132 @@ const ORIGINE: Record<string, string> = {
 }
 const HORIZON: Record<string, string> = {
   maintenant: 'Maintenant', prioritaire: 'Prioritaire', a_l_occasion: "À l'occasion",
+}
+const dec = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+
+function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) {
+  return (
+    <div className="border border-gray-200 rounded-xl p-4">
+      <div className="flex items-baseline justify-between gap-2 mb-2">
+        <div className="font-medium">
+          {numero && <>#{p.rang} </>}{p.label}
+          {numero && p.horizon && <span className="ml-2 text-xs text-gray-500">· {HORIZON[p.horizon]}</span>}
+        </div>
+        {p.temps_retour_ans !== null && (
+          <div className="text-xs text-gray-500 shrink-0">retour ~{dec(p.temps_retour_ans)} ans</div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
+        <div>Coût : {eur(p.cout_eur.bas)}–{eur(p.cout_eur.haut)}</div>
+        <div>Aide : {montant(p.aide_estimee_eur)}</div>
+        <div>Reste : {montant(p.reste_a_charge_eur)}</div>
+        <div>Éco/an : {eur(p.economie_annuelle_eur.bas)}–{eur(p.economie_annuelle_eur.haut)}</div>
+      </div>
+      {p.contexte && <div className="text-xs text-gray-500 mt-2">À faire {p.contexte}.</div>}
+      {p.libelle_occasion && <div className="text-xs text-gray-500 mt-2">À faire {p.libelle_occasion}.</div>}
+      {p.aide_note && <div className="text-xs text-gray-500 mt-1">Aide : {p.aide_note}.</div>}
+    </div>
+  )
+}
+
+/** Audits v2.1 : le plan en quatre temps, le confort d'été et les hypothèses par défaut. */
+function PlanV21({ r }: { r: AuditResult }) {
+  const travaux = r.priorites.filter((p) => p.categorie !== 'production')
+  const par = (h: string) => travaux.filter((p) => p.horizon === h)
+  const sol = r.solaire
+  const defauts = (r.hypotheses ?? []).filter((h) => h.source === 'Fiche Maison' && typeof h.valeur === 'string')
+  const Titre = ({ children }: { children: React.ReactNode }) => (
+    <h3 className="font-semibold text-primary mt-5 mb-2">{children}</h3>
+  )
+  return (
+    <>
+      <div>
+        <h2 className="font-semibold text-lg mb-1">Votre plan</h2>
+        <p className="text-sm text-gray-600">{r.synthese.decompte}.</p>
+        {r.synthese.message_sans_isolation && (
+          <p className="text-sm text-gray-700 mt-2">{r.synthese.message_sans_isolation}</p>
+        )}
+
+        <Titre>Maintenant</Titre>
+        <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+          {(r.gestes ?? []).map((g) => <li key={g.cle}>{g.texte}</li>)}
+          {(r.conseils_equipements ?? []).map((c) => <li key={c.equipement}>{c.texte}</li>)}
+        </ul>
+        <div className="space-y-3 mt-3">{par('maintenant').map((p) => <CartePriorite key={p.rang} p={p} numero={false} />)}</div>
+
+        <Titre>Cette année</Titre>
+        {par('prioritaire').length ? (
+          <div className="space-y-3">{par('prioritaire').map((p) => <CartePriorite key={p.rang} p={p} numero={false} />)}</div>
+        ) : (
+          <p className="text-sm text-gray-600">Aucun investissement ne se justifie à court terme : les gestes ci-dessus suffisent pour l'instant.</p>
+        )}
+
+        <Titre>À l'occasion de…</Titre>
+        {par('a_l_occasion').length ? (
+          <div className="space-y-3">{par('a_l_occasion').map((p) => <CartePriorite key={p.rang} p={p} numero={false} />)}</div>
+        ) : (
+          <p className="text-sm text-gray-600">Rien à prévoir pour l'instant.</p>
+        )}
+
+        {sol && (
+          <>
+            <Titre>Pour aller plus loin</Titre>
+            {sol.type === 'piste' ? (
+              <p className="text-sm text-gray-700">
+                {sol.texte}{' '}
+                <Link to={sol.lien} className="text-primary font-semibold hover:underline">Ouvrir le simulateur</Link>
+              </p>
+            ) : (
+              <div className="text-sm text-gray-700 space-y-1">
+                {sol.etude?.puissance_kwc != null && <div>Installation étudiée : {dec(sol.etude.puissance_kwc)} kWc</div>}
+                {sol.etude?.investissement_eur != null && <div>Investissement : {eur(sol.etude.investissement_eur)}</div>}
+                {sol.etude?.economie_1re_annee_eur != null && <div>Économie la première année : {eur(sol.etude.economie_1re_annee_eur)}</div>}
+                {sol.etude?.temps_retour_ans != null && <div>Temps de retour : {dec(sol.etude.temps_retour_ans)} ans</div>}
+                {sol.etude?.gain_net_25_ans_eur != null && <div>Gain net sur 25 ans : {eur(sol.etude.gain_net_25_ans_eur)}</div>}
+                <div className="text-xs text-gray-500">
+                  Source : {sol.source}.{sol.mention && <> <strong>{sol.mention}</strong> — <Link to={sol.lien} className="text-primary hover:underline">refaire l'étude</Link>.</>}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {r.confort_ete && (
+        <div>
+          <h2 className="font-semibold text-lg mb-2">Confort d'été</h2>
+          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+            {r.confort_ete.conseils.map((c) => <li key={c}>{c}</li>)}
+          </ul>
+          {r.confort_ete.note_combles && <p className="text-sm text-gray-700 mt-2">{r.confort_ete.note_combles}</p>}
+        </div>
+      )}
+
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5">
+        <h2 className="font-semibold text-lg mb-2">Synthèse</h2>
+        <p className="text-sm text-gray-700">
+          {r.synthese.decompte}.{' '}
+          {r.synthese.nb_actions > 0 && r.synthese.reste_a_charge_eur && (
+            <>Travaux chiffrés : {eur(r.synthese.investissement_eur.bas)}–{eur(r.synthese.investissement_eur.haut)}, aides {montant(r.synthese.aides_estimees_eur)} selon vos revenus, reste à charge {montant(r.synthese.reste_a_charge_eur)}.</>
+          )}
+          {r.synthese.economie_chauffage_eur && <> Économie de chauffage : {eur(r.synthese.economie_chauffage_eur.bas)}–{eur(r.synthese.economie_chauffage_eur.haut)}/an.</>}
+          {r.synthese.economie_eau_chaude_eur && <> Économie d'eau chaude : {eur(r.synthese.economie_eau_chaude_eur.bas)}–{eur(r.synthese.economie_eau_chaude_eur.haut)}/an.</>}
+        </p>
+        <p className="text-sm text-gray-700 mt-2">
+          Première étape conseillée : <strong>{r.synthese.premiere_action}</strong> — l'esprit colibri, on commence petit.
+        </p>
+      </div>
+
+      {defauts.length > 0 && (
+        <div>
+          <h2 className="font-semibold text-lg mb-2">Hypothèses utilisées</h2>
+          <ul className="list-disc pl-5 text-xs text-gray-600 space-y-1">
+            {defauts.map((h) => <li key={h.cle}>{String(h.valeur)}</li>)}
+          </ul>
+        </div>
+      )}
+    </>
+  )
 }
 
 export default function EspaceAudits() {
@@ -236,32 +392,13 @@ export default function EspaceAudits() {
                     )}
                   </div>
 
+                  {r.gestes ? <PlanV21 r={r} /> : (
+                  <>
                   {/* Priorités */}
                   <div>
                     <h2 className="font-semibold text-lg mb-3">Vos priorités de travaux</h2>
                     <div className="space-y-3">
-                      {r.priorites.map((p) => (
-                        <div key={p.rang} className="border border-gray-200 rounded-xl p-4">
-                          <div className="flex items-baseline justify-between gap-2 mb-2">
-                            <div className="font-medium">
-                              #{p.rang} {p.label}
-                              {p.horizon && <span className="ml-2 text-xs text-gray-500">· {HORIZON[p.horizon]}</span>}
-                            </div>
-                            {p.temps_retour_ans !== null && (
-                              <div className="text-xs text-gray-500 shrink-0">retour ~{p.temps_retour_ans} ans</div>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
-                            <div>Coût : {eur(p.cout_eur.bas)}–{eur(p.cout_eur.haut)}</div>
-                            <div>Aide : {montant(p.aide_estimee_eur)}</div>
-                            <div>Reste : {montant(p.reste_a_charge_eur)}</div>
-                            <div>Éco/an : {eur(p.economie_annuelle_eur.bas)}–{eur(p.economie_annuelle_eur.haut)}</div>
-                          </div>
-                          {p.libelle_occasion && (
-                            <div className="text-xs text-gray-500 mt-2">À faire {p.libelle_occasion}.</div>
-                          )}
-                        </div>
-                      ))}
+                      {r.priorites.map((p) => <CartePriorite key={p.rang} p={p} />)}
                     </div>
                   </div>
 
@@ -281,6 +418,9 @@ export default function EspaceAudits() {
                       </p>
                     )}
                   </div>
+
+                  </>
+                  )}
 
                   <p className="text-xs text-gray-400">{r.avertissement}</p>
                 </div>

@@ -71,6 +71,8 @@ const SYSTEMES_FIELDS: FieldSpec[] = [
   ] },
   { key: 'ecs_annee', label: 'Année ECS', type: 'number', min: 1900, max: 2100 },
   { key: 'clim', label: 'Climatisation ?', type: 'boolean' },
+  { key: 'clim_nb_pieces', label: 'Nombre de pièces climatisées', type: 'number', min: 0, max: 20,
+    help: 'Une PAC air/air réversible compte comme climatisation', si: { key: 'clim', vaut: true } },
   { key: 'clim_type', label: 'Type de climatisation', type: 'text' },
   { key: 'regulation', label: 'Régulation du chauffage', type: 'select', options: [
     { value: 'aucune', label: 'Aucune' }, { value: 'thermostat', label: 'Thermostat' },

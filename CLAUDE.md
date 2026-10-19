@@ -1316,4 +1316,6 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 ## Pré-audit v2
 - `audit_engine` raisonne en consommation de CHAUFFAGE en énergie finale (DPE tous usages converti, ou besoin utile × zone ÷ rendement), calée sur la facture si le chauffage est électrique ; actions combinées en séquence et rangées en horizons (`a_l_occasion` n'est jamais une priorité).
 - Toute grille couvre chaque valeur `Literal` de `schemas/house.py` (testé) ; valeurs à valider au point 31 de `TODO.md`.
-- Les audits v1 stockés ne sont jamais recalculés : `pdf_audit`, `rag.build_audit_context` et `EspaceAudits.tsx` lisent les deux formats.
+- Les audits stockés (v1, v2, v2.1) ne sont jamais recalculés : `pdf_audit`, `rag.build_audit_context` et `EspaceAudits.tsx` lisent tous les formats.
+- v2.1 : le moteur reste pur — la route `audits.py` lui passe la dernière étude du simulateur, dont il CITE les chiffres ; sans étude, piste solaire sans aucun chiffre.
+- Gestes gratuits, conseils d'âge et confort d'été sont des tables de `audit_reference.py`, jamais chiffrées ; l'eau chaude ne se combine pas avec le chauffage.

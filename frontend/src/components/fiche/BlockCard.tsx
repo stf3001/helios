@@ -34,8 +34,10 @@ export default function BlockCard({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const remplis = fields.filter((f) => estRempli(draft[f.key])).length
-  const complet = remplis === fields.length
+  // Un champ conditionnel masqué ne compte ni dans l'affichage ni dans « x / n ».
+  const visibles = fields.filter((f) => !f.si || draft[f.si.key] === f.si.vaut)
+  const remplis = visibles.filter((f) => estRempli(draft[f.key])).length
+  const complet = remplis === visibles.length
 
   async function handleSave() {
     setSaving(true)
@@ -61,7 +63,7 @@ export default function BlockCard({
         </span>
       ) : (
         <span className={remplis === 0 ? 'text-dark/40' : undefined}>
-          {remplis} / {fields.length}
+          {remplis} / {visibles.length}
         </span>
       )}
       <span className="hidden sm:inline text-dark/40">·</span>
@@ -77,7 +79,7 @@ export default function BlockCard({
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        {fields.map((f) => (
+        {visibles.map((f) => (
           <FieldInput key={f.key} spec={f} value={draft[f.key]} onChange={(v) => onChange(f.key, v)} />
         ))}
       </div>

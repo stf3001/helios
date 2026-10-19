@@ -119,7 +119,8 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
     pdf.cell(0, 5, _s(f"Date : {date.today().strftime('%d/%m/%Y')}   -   Version moteur : {audit.get('version_helios', '')}"), ln=True)
     if house_label:
         pdf.cell(0, 5, _s(f"Logement : {house_label}"), ln=True)
-    pdf.cell(0, 5, _s(f"Complétude de la fiche : {audit.get('completeness_score')}%   -   Niveau : {audit.get('niveau')}"), ln=True)
+    niveau = _NIVEAU.get(audit.get("niveau"), audit.get("niveau"))
+    pdf.cell(0, 5, _s(f"Complétude de la fiche : {_pct(audit.get('completeness_score'))}   -   Niveau : {niveau}"), ln=True)
 
     # Déperditions
     _section(pdf, "1. Où votre logement perd de la chaleur")
@@ -132,11 +133,12 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
         pdf.set_fill_color(*ORANGE)
         pdf.rect(x, y + 1, max(1.0, part * 1.2), 4, style="F")
         pdf.set_x(x + 130)
-        pdf.cell(0, 6, _s(f"{part} %"), ln=True)
+        pdf.cell(0, 6, _s(_pct(part)), ln=True)
 
-    # Consommation — un audit v1 stocké garde son rendu d'origine.
+    # Consommation — les audits stockés gardent le rendu de leur version.
     c = audit.get("consommation", {})
     v2 = "conso_chauffage_estimee_kwh_an" in c
+    v21 = "gestes" in audit
     _section(pdf, "2. Consommation")
     if v2:
         _consommation_v2(pdf, audit)
@@ -152,14 +154,25 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
                 f"(écart vs théorique chauffage : {c.get('ecart_pct')} %)."
             )
 
-    _section(pdf, "3. Vos priorités de travaux (dans l'ordre)")
-    if v2:
-        _priorites_v2(pdf, audit.get("priorites", []))
+    if v21:
+        _plan_v21(pdf, audit)
+        _synthese_v21(pdf, audit)
+        _hypotheses_v21(pdf, audit)
     else:
-        _priorites_v1(pdf, audit.get("priorites", []))
+        _section(pdf, "3. Vos priorités de travaux (dans l'ordre)")
+        if v2:
+            _priorites_v2(pdf, audit.get("priorites", []))
+        else:
+            _priorites_v1(pdf, audit.get("priorites", []))
+        _synthese_v1_v2(pdf, audit.get("synthese", {}))
 
-    # Synthèse
-    sy = audit.get("synthese", {})
+    PDF_DIR.mkdir(parents=True, exist_ok=True)
+    out = PDF_DIR / f"preaudit_{date.today().isoformat()}_{abs(hash(str(audit))) % 10**8}.pdf"
+    pdf.output(str(out))
+    return out
+
+
+def _synthese_v1_v2(pdf: FPDF, sy: dict):
     _section(pdf, "4. Synthèse")
     if sy.get("nb_actions"):
         aides = sy["aides_estimees_eur"]
@@ -178,11 +191,6 @@ def build_pdf(audit: dict, house_label: str | None = None) -> Path:
     else:
         _para(pdf, "Aucune action prioritaire détectée : votre logement est déjà bien optimisé.")
 
-    PDF_DIR.mkdir(parents=True, exist_ok=True)
-    out = PDF_DIR / f"preaudit_{date.today().isoformat()}_{abs(hash(str(audit))) % 10**8}.pdf"
-    pdf.output(str(out))
-    return out
-
 
 _ORIGINE = {
     "dpe": "d'après la lettre DPE",
@@ -192,6 +200,23 @@ _ORIGINE = {
 _ENERGIE = {"electricite": "électricité", "gaz": "gaz", "fioul": "fioul", "bois": "bois",
             "reseau": "réseau de chaleur"}
 _HORIZON = {"maintenant": "Maintenant", "prioritaire": "Prioritaire", "a_l_occasion": "A l'occasion"}
+_NIVEAU = {
+    "conseils_generaux": "Conseils généraux",
+    "prediagnostic_qualitatif": "Pré-diagnostic qualitatif",
+    "preaudit_chiffre": "Pré-audit chiffré",
+}
+
+
+def _dec(x, n: int = 1) -> str:
+    """Décimale à la française : 0.2001 -> « 0,2001 », 4.1 -> « 4,1 »."""
+    if x is None:
+        return "-"
+    texte = f"{x:.{n}f}" if isinstance(x, float) and n is not None else str(x)
+    return texte.replace(".", ",")
+
+
+def _pct(x) -> str:
+    return "-" if x is None else f"{_dec(float(x))} %".replace(",0 %", " %")
 
 
 def _kwh(n) -> str:
@@ -203,7 +228,7 @@ def _plage(f: dict) -> str:
 
 
 def _retour(a: dict) -> str:
-    return f"{a['temps_retour_ans']} ans" if a.get("temps_retour_ans") is not None else "-"
+    return f"{_dec(float(a['temps_retour_ans']))} ans" if a.get("temps_retour_ans") is not None else "-"
 
 
 def _tableau(pdf: FPDF, cols: list[tuple[str, int]], lignes: list[list[str]]):
@@ -255,7 +280,7 @@ def _consommation_v2(pdf: FPDF, audit: dict):
         _para(pdf, f"Attention : {alerte}")
     _para(pdf,
         f"Les économies portent sur {_kwh(c['conso_chauffage_retenue_kwh_an'])}/an de chauffage, au prix "
-        f"de {c['prix_energie_eur_kwh']} EUR/kWh, soit environ {_eur(c['cout_chauffage_actuel_eur'])}/an."
+        f"de {_dec(c['prix_energie_eur_kwh'], 4)} EUR/kWh, soit environ {_eur(c['cout_chauffage_actuel_eur'])}/an."
     )
 
 
@@ -276,3 +301,129 @@ def _priorites_v2(pdf: FPDF, priorites: list[dict]):
         _para(pdf, "A faire à l'occasion, pas en priorité (le temps de retour seul ne le justifie pas) :")
         for a in occasion:
             _para(pdf, f"- {a['label']} : {a.get('libelle_occasion') or 'lors de travaux sur ce poste'}.")
+
+
+# --- v2.1 : « Votre plan » en quatre temps, confort d'été, hypothèses ---------------------
+
+def _sous_titre(pdf: FPDF, titre: str):
+    pdf.ln(1)
+    pdf.set_x(pdf.l_margin)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_text_color(*ORANGE)
+    pdf.cell(0, 6, _s(titre), ln=True)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Helvetica", "", 10)
+
+
+def _puces(pdf: FPDF, lignes: list[str]):
+    for ligne in lignes:
+        _para(pdf, f"- {ligne}")
+
+
+def _table_actions(pdf: FPDF, actions: list[dict]):
+    cols = [("Action", 62), ("Cout", 28), ("Aide*", 26), ("Reste", 28), ("Eco/an", 22), ("Retour", 20)]
+    _tableau(pdf, cols, [[
+        a["label"], _plage(a["cout_eur"]), _plage(a["aide_estimee_eur"]), _plage(a["reste_a_charge_eur"]),
+        _eur(a["economie_annuelle_eur"]["central"])[:-4], _retour(a),
+    ] for a in actions])
+    notes = [f"{a['label']} : {a['contexte']}." for a in actions if a.get("contexte")]
+    notes += [f"{a['label']} - aide : {a['aide_note']}." for a in actions if a.get("aide_note")]
+    if notes:
+        pdf.set_font("Helvetica", "I", 8)
+        for n in notes:
+            _para(pdf, n)
+        pdf.set_font("Helvetica", "", 10)
+
+
+def _plan_v21(pdf: FPDF, audit: dict):
+    sy = audit.get("synthese", {})
+    travaux = [a for a in audit.get("priorites", []) if a.get("categorie") != "production"]
+    par = {h: [a for a in travaux if a.get("horizon") == h] for h in ("maintenant", "prioritaire", "a_l_occasion")}
+
+    _section(pdf, "3. Votre plan")
+    _para(pdf, f"{sy.get('decompte', '')}. Première étape : {sy.get('premiere_action')}.")
+    if sy.get("message_sans_isolation"):
+        _para(pdf, sy["message_sans_isolation"])
+
+    _sous_titre(pdf, "Maintenant")
+    _puces(pdf, [g["texte"] for g in audit.get("gestes", [])])
+    _puces(pdf, [c["texte"] for c in audit.get("conseils_equipements", [])])
+    if par["maintenant"]:
+        _table_actions(pdf, par["maintenant"])
+
+    _sous_titre(pdf, "Cette année")
+    if par["prioritaire"]:
+        _table_actions(pdf, par["prioritaire"])
+    else:
+        _para(pdf, "Aucun investissement ne se justifie à court terme : les gestes ci-dessus suffisent pour l'instant.")
+
+    _sous_titre(pdf, "A l'occasion de...")
+    if par["a_l_occasion"]:
+        _puces(pdf, [f"{a['label']} : {a.get('libelle_occasion') or 'lors de travaux sur ce poste'}."
+                     for a in par["a_l_occasion"]])
+        _table_actions(pdf, par["a_l_occasion"])
+    else:
+        _para(pdf, "Rien à prévoir pour l'instant.")
+    pdf.set_font("Helvetica", "I", 8)
+    _para(pdf, "Montants en EUR. * Aides selon vos revenus, du plus élevé au plus modeste : barèmes 2026 "
+               "de notre base (relevé du 22/07/2026) ou à vérifier. L'économie de chauffage de chaque "
+               "action tient compte de celles qui la précèdent ; l'eau chaude se compte à part.")
+    pdf.set_font("Helvetica", "", 10)
+
+    sol = audit.get("solaire")
+    if sol:
+        _sous_titre(pdf, "Pour aller plus loin")
+        if sol["type"] == "piste":
+            _para(pdf, sol["texte"])
+        else:
+            e = sol["etude"]
+            kwc = f"{_dec(float(e['puissance_kwc']))} kWc" if e.get("puissance_kwc") is not None else "-"
+            lignes = [f"Installation étudiée : {kwc}" + (f" ({e['option']})" if e.get("option") else "")]
+            if e.get("investissement_eur") is not None:
+                lignes.append(f"Investissement : {_eur(e['investissement_eur'])}")
+            if e.get("economie_1re_annee_eur") is not None:
+                lignes.append(f"Économie la première année : {_eur(e['economie_1re_annee_eur'])}")
+            if e.get("temps_retour_ans") is not None:
+                lignes.append(f"Temps de retour : {_dec(float(e['temps_retour_ans']))} ans")
+            if e.get("gain_net_25_ans_eur") is not None:
+                lignes.append(f"Gain net sur 25 ans : {_eur(e['gain_net_25_ans_eur'])}")
+            if e.get("autonomie_pct") is not None:
+                lignes.append(f"Autonomie : {_pct(e['autonomie_pct'])}")
+            _puces(pdf, lignes)
+            _para(pdf, f"Source : {sol['source']}." + (f" {sol['mention'].capitalize()}." if sol.get("mention") else ""))
+
+    ete = audit.get("confort_ete")
+    if ete:
+        _section(pdf, "4. Confort d'été")
+        _puces(pdf, ete["conseils"])
+        if ete.get("note_combles"):
+            _para(pdf, ete["note_combles"])
+
+
+def _synthese_v21(pdf: FPDF, audit: dict):
+    sy = audit.get("synthese", {})
+    _section(pdf, "5. Synthèse" if audit.get("confort_ete") else "4. Synthèse")
+    _para(pdf, f"{sy.get('decompte', '')}.")
+    if sy.get("nb_actions"):
+        a, r = sy["aides_estimees_eur"], sy["reste_a_charge_eur"]
+        _para(pdf,
+            f"Travaux chiffrés : {_eur(sy['investissement_eur']['bas'])} à {_eur(sy['investissement_eur']['haut'])}, "
+            f"aides estimées {_eur(a['bas'])} à {_eur(a['haut'])} selon vos revenus, "
+            f"reste à charge {_eur(r['bas'])} à {_eur(r['haut'])}."
+        )
+    for cle, libelle in (("economie_chauffage_eur", "Économie de chauffage"),
+                         ("economie_eau_chaude_eur", "Économie d'eau chaude")):
+        if sy.get(cle):
+            _para(pdf, f"{libelle} si tout le plan est réalisé : {_eur(sy[cle]['bas'])} à {_eur(sy[cle]['haut'])} par an.")
+    _para(pdf, f"Première étape conseillée : {sy.get('premiere_action')} (esprit colibri : on commence petit).")
+
+
+def _hypotheses_v21(pdf: FPDF, audit: dict):
+    lignes = [h["valeur"] for h in audit.get("hypotheses", [])
+              if h.get("source") == "Fiche Maison" and isinstance(h.get("valeur"), str)]
+    if not lignes:
+        return
+    _section(pdf, "6. Hypothèses utilisées" if audit.get("confort_ete") else "5. Hypothèses utilisées")
+    pdf.set_font("Helvetica", "", 9)
+    _puces(pdf, [l[0].upper() + l[1:] for l in lignes])
+    pdf.set_font("Helvetica", "", 10)

@@ -874,18 +874,19 @@ accepte désormais une adresse) ; chapeaux, fiches et villes sortent identiques 
 Au passage, deux titres d'onglet affichaient « … | HELIOS — HELIOS » (`HeliosIA.tsx`,
 `SimulateurSolaire.tsx` ajoutaient la marque que `useTitle` ajoute déjà) : corrigé.
 
-### [ ] 31. Pré-audit v2 : les valeurs de référence attendent Stéphane
+### [ ] 31. Pré-audit : les valeurs de référence attendent Stéphane
 
-Le moteur v2 (19/10/2026) corrige le calcul, mais ses valeurs de référence sont des
-points de départ, toutes dans `api/app/core/config.py` (`audit_*`) et
-`api/app/services/audit_reference.py`. **À valider** : prix du gaz, du fioul, du bois et
-du réseau de chaleur ; seuils des horizons (500 €, 20 ans) ; coefficients de zone
-(H2 0,8, H3 0,55) ; parts du chauffage dans le DPE ; besoins utiles par année ; ratio des
-murs ; fourchettes d'aides `aide_pct_bas/haut` ; durées de vie des actions.
+**Tranché le 19/10/2026 (lot 2, v2.1)** : les aides des murs (0 €, rénovation d'ampleur),
+des combles (0-25 €/m²) et de la PAC air/eau (0-5 000 €) suivent `kb/baremes_aides.md` ;
+prix des énergies, seuils 500 € / 20 ans, coefficients H2 0,8 / H3 0,55 et 3 occupants
+par défaut sont validés comme point de départ.
 
-**Contradiction repérée** : `isolation_murs` garde une aide haute de 40 %, alors que
-`kb/baremes_aides.md` dit que l'isolation des murs seule n'est plus aidée par
-MaPrimeRénov' par geste depuis le 01/01/2026. Ne pas trancher sans Stéphane.
+**Reste à valider**, dans `config.py` (`audit_*`) et `audit_reference.py` : parts du
+chauffage dans le DPE ; besoins utiles par année ; ratio des murs ; fourchettes d'aides
+encore « à vérifier » (plancher, menuiseries, VMC, ballon thermodynamique) ; durées de vie
+des actions et des équipements (PAC air/air 15, air/eau 17, ballons 15, chaudières 20 ans,
+alerte à 80 %) ; coût du ballon thermodynamique (2 500-4 000 €, surcoût 1 500-2 500 €) ;
+seuil de la piste solaire (4 000 kWh) ; ancienneté maximale d'une étude citée (6 mois).
 
 **Choix à connaître** : `conso_autre_energie_qte` n'est jamais lue (la fiche ne dit pas son
 unité) ; une maison au gaz, au fioul ou au bois est donc chiffrée sur l'estimation seule,

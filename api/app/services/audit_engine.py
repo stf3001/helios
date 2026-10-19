@@ -1,18 +1,25 @@
-"""Moteur déterministe de pré-audit — doc 07 §6, version v2.
+"""Moteur déterministe de pré-audit — doc 07 §6, version v2.1.
 
 Pipeline : fiche Maison → consommation de CHAUFFAGE en énergie finale (DPE ou année de
 construction, corrigée du climat) → calage sur la facture quand le chauffage est électrique
 → déperditions par poste → actions chiffrées, combinées dans l'ordre du plan, rangées en
-trois horizons (maintenant / prioritaire / à l'occasion).
+trois horizons (maintenant / prioritaire / à l'occasion) → conseils sans chiffre (gestes
+gratuits, âge des équipements, confort d'été) → solaire, CITÉ d'une étude du simulateur ou
+proposé comme piste sans chiffre.
 
 RÈGLE ABSOLUE (doc 07 §5-6) : tous les chiffres sortent d'ici, JAMAIS du LLM. Toutes les
 valeurs de référence vivent dans `audit_reference.py` ou `config.py` (`audit_*`), et le
 pré-audit dit lesquelles il a utilisées (bloc `hypotheses`) et d'où vient chaque entrée
-(bloc `entrees`). Les audits v1 déjà stockés ne sont jamais recalculés.
+(bloc `entrees`). Les audits déjà stockés (v1, v2) ne sont jamais recalculés.
+
+Le moteur est PUR : aucun accès réseau ni base. L'étude du simulateur lui est passée par
+la route (`resume_etude_simulateur`), et il en cite les chiffres sans les recalculer.
 
 Statuts d'un chiffre : `observe` (mesuré), `declare` (saisi dans la fiche), `suppose`
-(hypothèse faute de donnée), `calcule` (dérivé par le moteur).
+(hypothèse faute de donnée), `calcule` (dérivé par un moteur).
 """
+
+from datetime import date, datetime
 
 from app.core.config import settings
 from app.models.house import House
@@ -32,6 +39,11 @@ def _fourchette(value: float) -> dict:
     return {"bas": round(value * (1 - demi)), "haut": round(value * (1 + demi)), "central": round(value)}
 
 
+def _fr_int(n) -> str:
+    """9000 -> « 9 000 » (espace insécable fine absente des polices de base : espace simple)."""
+    return f"{int(round(n)):,}".replace(",", " ")
+
+
 class _Trace:
     """Ce que le moteur a lu dans la fiche, et les valeurs de référence qu'il a utilisées."""
 
@@ -48,11 +60,12 @@ class _Trace:
             self.entrees.append({"champ": champ, "valeur": valeur, "statut": "declare"})
 
     def hyp(self, cle: str, valeur, source: str):
-        texte, date = ref.SOURCES[source]
-        self.hypotheses[cle] = {"cle": cle, "valeur": valeur, "source": texte, "date": date}
+        texte, date_source = ref.SOURCES[source]
+        self.hypotheses[cle] = {"cle": cle, "valeur": valeur, "source": texte, "date": date_source}
 
     def hyp_fiche(self, cle: str, valeur: str):
-        """Une hypothèse qui tient à la fiche elle-même, pas à une valeur de référence."""
+        """Une hypothèse qui tient à la fiche elle-même (valeur par défaut, lecture d'un champ).
+        Ce sont celles que le PDF affiche en clair sous « Hypothèses utilisées »."""
         self.hypotheses[cle] = {"cle": cle, "valeur": valeur, "source": "Fiche Maison", "date": None}
 
 
@@ -66,7 +79,13 @@ def zone_climatique(code_postal: str | None) -> tuple[str, bool]:
     return settings.audit_zone_defaut, True
 
 
-def _profil(house: House, t: _Trace) -> dict:
+def _age(annee: int | None, aujourd_hui: date) -> int | None:
+    if not annee or annee > aujourd_hui.year:
+        return None
+    return aujourd_hui.year - annee
+
+
+def _profil(house: House, t: _Trace, aujourd_hui: date) -> dict:
     """Valeurs de la fiche utilisées par le moteur, avec leurs hypothèses quand elles manquent."""
     surface = house.surface_habitable or 0
     t.entree("surface_habitable", house.surface_habitable, "inconnue → aucun chiffrage au m²")
@@ -75,9 +94,13 @@ def _profil(house: House, t: _Trace) -> dict:
 
     niveaux = house.nb_niveaux or 1
     t.entree("nb_niveaux", house.nb_niveaux, "inconnu → 1 niveau (combles et plancher = surface habitable)")
+    if not house.nb_niveaux:
+        t.hyp_fiche("nb_niveaux", "1 niveau (valeur par défaut) : combles et plancher = surface habitable")
 
     occupants = house.nb_occupants if house.nb_occupants is not None else settings.audit_occupants_defaut
     t.entree("nb_occupants", house.nb_occupants, f"inconnu → {settings.audit_occupants_defaut} occupants")
+    if house.nb_occupants is None:
+        t.hyp_fiche("nb_occupants", f"{settings.audit_occupants_defaut} occupants (valeur par défaut)")
 
     zone, zone_supposee = zone_climatique(house.code_postal)
     t.entree("code_postal", house.code_postal)
@@ -86,25 +109,48 @@ def _profil(house: House, t: _Trace) -> dict:
     chauffage = house.chauffage_principal or ref.CHAUFFAGE_DEFAUT
     t.entree("chauffage_principal", house.chauffage_principal,
              f"inconnu → {ref.CHAUFFAGE_DEFAUT} (cas le plus courant)")
+    if not house.chauffage_principal:
+        t.hyp_fiche("chauffage_principal", "chauffage électrique direct (valeur par défaut)")
     energie = ref.ENERGIE_CHAUFFAGE[chauffage]
     if chauffage == "autre":
         t.hyp_fiche("energie_chauffage_autre", "chauffage « autre » traité comme électrique")
 
     ecs = house.ecs or settings.audit_ecs_defaut
     t.entree("ecs", house.ecs, f"inconnue → {settings.audit_ecs_defaut}")
+    if not house.ecs:
+        t.hyp_fiche("ecs", "ballon électrique (valeur par défaut)")
+
+    clim_pieces = 0
+    if house.clim:
+        if house.clim_nb_pieces is not None:
+            clim_pieces = house.clim_nb_pieces
+        else:
+            clim_pieces = settings.audit_clim_pieces_defaut
+            t.hyp_fiche("clim_nb_pieces", f"{clim_pieces} pièce climatisée (valeur par défaut)")
+    if chauffage == "PAC_air_air":
+        if house.clim:
+            t.hyp_fiche("clim_pac_reversible",
+                        "clim assurée par la PAC air/air réversible : comptée une seule fois")
+        else:
+            t.hyp_fiche("pac_air_air_ete",
+                        "rafraîchissement d'été possible non compté, chauffage peut-être surestimé")
+    if energie == "electricite" and house.chauffage_appoint in ref.APPOINT_HORS_FACTURE:
+        t.hyp_fiche("appoint_hors_facture", "une partie du chauffage peut venir de l'appoint et "
+                                            "n'apparaît pas dans la facture électrique")
 
     kva = int(house.puissance_souscrite) if house.puissance_souscrite else settings.audit_puissance_kva_defaut
     t.entree("puissance_souscrite", house.puissance_souscrite,
              f"inconnue → {settings.audit_puissance_kva_defaut} kVA")
 
-    for champ in ("annee_construction", "dpe_lettre", "isolation_combles", "isolation_murs",
-                  "isolation_plancher", "menuiseries", "ventilation", "regulation", "clim",
-                  "conso_elec_kwh_an", "objectifs"):
+    for champ in ("type_logement", "statut", "annee_construction", "dpe_lettre", "isolation_combles",
+                  "isolation_murs", "isolation_plancher", "menuiseries", "ventilation", "regulation",
+                  "chauffage_principal_annee", "chauffage_appoint", "chauffage_appoint_annee", "ecs_annee",
+                  "clim", "clim_nb_pieces", "conso_elec_kwh_an", "objectifs"):
         t.entree(champ, getattr(house, champ))
 
     return {"surface": surface, "niveaux": niveaux, "occupants": occupants, "zone": zone,
             "zone_supposee": zone_supposee, "chauffage": chauffage, "energie": energie,
-            "ecs": ecs, "kva": kva}
+            "ecs": ecs, "kva": kva, "clim_pieces": clim_pieces, "aujourd_hui": aujourd_hui}
 
 
 def prix_energie(energie: str, kva: int) -> float:
@@ -152,15 +198,16 @@ def conso_chauffage_estimee(house: House, p: dict, t: _Trace) -> dict:
 
 
 def usages_specifiques_kwh(house: House, p: dict, t: _Trace) -> int:
-    """Électricité hors chauffage : mêmes couches que le simulateur (`simu_conso_*`)."""
+    """Électricité hors chauffage : mêmes couches que le simulateur (`simu_conso_*`).
+
+    La climatisation n'est comptée qu'une fois, même quand c'est la PAC air/air réversible
+    qui la fait : c'est le même appareil."""
     occ = max(p["occupants"], 1)
     base = settings.simu_conso_base_fixe_kwh_an + settings.simu_conso_base_par_occupant_kwh_an * occ
     ecs = _grille(settings.simu_conso_ecs_kwh_occupant_an, p["ecs"]) * occ
-    clim = settings.simu_conso_clim_kwh_piece_an * settings.audit_clim_pieces_defaut if house.clim else 0
+    clim = settings.simu_conso_clim_kwh_piece_an * p["clim_pieces"]
     t.hyp("usages_specifiques_kwh_an",
           {"base": round(base), "eau_chaude": round(ecs), "climatisation": round(clim)}, "usages_specifiques")
-    if house.clim:
-        t.hyp("clim_pieces", settings.audit_clim_pieces_defaut, "usages_specifiques")
     return round(base + ecs + clim)
 
 
@@ -189,9 +236,9 @@ def consommation(house: House, p: dict, t: _Trace) -> dict:
                         "conso_chauffage_declaree_kwh_an": "calcule"})
         if declaree < settings.audit_chauffage_declare_min_kwh:
             t.alertes.append(
-                f"Incohérence : une fois retirés les usages courants (~{usages} kWh), la consommation "
-                f"déclarée ({house.conso_elec_kwh_an} kWh) ne laisse presque rien pour le chauffage. "
-                "Les économies sont calculées sur l'estimation, à confirmer avec vos factures."
+                f"Incohérence : une fois retirés les usages courants (~{_fr_int(usages)} kWh), la "
+                f"consommation déclarée ({_fr_int(house.conso_elec_kwh_an)} kWh) ne laisse presque rien "
+                "pour le chauffage. Les économies sont calculées sur l'estimation, à confirmer avec vos factures."
             )
         else:
             retenue, base = declaree, "declaree"
@@ -248,6 +295,111 @@ def deperditions(house: House) -> list[dict]:
     ]
 
 
+# --- Conseils sans chiffre ------------------------------------------------------------------
+
+def conseils_equipements(house: House, p: dict, t: _Trace) -> list[dict]:
+    """Un conseil par équipement qui a atteint `audit_age_alerte_pct` % de sa durée de vie."""
+    vie_chauffage = dict(settings.audit_duree_vie_chauffage)
+    vie_ecs = dict(settings.audit_duree_vie_ecs)
+    candidats = (
+        (house.chauffage_principal, house.chauffage_principal_annee, vie_chauffage),
+        (house.chauffage_appoint, house.chauffage_appoint_annee, vie_chauffage),
+        (house.ecs, house.ecs_annee, vie_ecs),
+    )
+    conseils = []
+    for equipement, annee, table in candidats:
+        age = _age(annee, p["aujourd_hui"])
+        if equipement not in table or age is None:
+            continue
+        if age < table[equipement] * settings.audit_age_alerte_pct / 100:
+            continue
+        nom, pronom = ref.NOM_EQUIPEMENT[equipement]
+        texte = ref.CONSEIL_AGE.format(equipement=nom, pronom=pronom, age=age)
+        if equipement.startswith("PAC"):
+            texte += ref.CONSEIL_AGE_PAC
+        conseils.append({"equipement": equipement, "age_ans": age, "duree_vie_ans": table[equipement],
+                         "texte": texte})
+    if conseils:
+        t.hyp("duree_vie_equipements", {e["equipement"]: e["duree_vie_ans"] for e in conseils}, "equipements")
+    return conseils
+
+
+def gestes_gratuits(p: dict) -> list[dict]:
+    return [{"cle": g["cle"], "texte": g["texte"]} for g in ref.GESTES_GRATUITS
+            if g["si_chauffage"] is None or p["chauffage"] in g["si_chauffage"]]
+
+
+def confort_ete(p: dict, actions: list[dict]) -> dict | None:
+    if p["zone"] not in ref.ZONES_CONFORT_ETE:
+        return None
+    combles = next((a for a in actions if a["action"] == "isolation_combles"), None)
+    note = ref.CONFORT_ETE_COMBLES if combles and combles["horizon"] == "a_l_occasion" else None
+    return {"conseils": list(ref.CONFORT_ETE), "note_combles": note}
+
+
+# --- Solaire --------------------------------------------------------------------------------
+
+def resume_etude_simulateur(etude) -> dict:
+    """Ce que l'audit retient d'une étude `simulateur_studies`, recopié tel quel du résultat
+    stocké. Appelé par la route : le moteur ne lit jamais la base lui-même."""
+    r = etude.resultat or {}
+    ind, inv = r.get("indicateurs") or {}, r.get("investissement") or {}
+    cree = etude.created_at
+    return {
+        "date": cree.date().isoformat() if isinstance(cree, datetime) else str(cree)[:10],
+        "version_moteur": etude.version_moteur,
+        "option": etude.nom,
+        "puissance_kwc": ind.get("puissance_kwc"),
+        "investissement_eur": inv.get("total_eur"),
+        "economie_1re_annee_eur": ind.get("economie_1re_annee_eur"),
+        "temps_retour_ans": ind.get("temps_retour_ans"),
+        "gain_net_25_ans_eur": ind.get("gain_net_25_ans_eur"),
+        "autonomie_pct": ind.get("autonomie_pct"),
+    }
+
+
+def _mois_ecoules(depuis: date, aujourd_hui: date) -> int:
+    return (aujourd_hui.year - depuis.year) * 12 + aujourd_hui.month - depuis.month - (aujourd_hui.day < depuis.day)
+
+
+def _solaire(house: House, p: dict, etude: dict | None, t: _Trace) -> tuple[dict | None, dict | None]:
+    """(bloc solaire, action chiffrée ou None). Sans étude : une piste SANS AUCUN chiffre."""
+    if etude:
+        jour = date.fromisoformat(etude["date"])
+        a_jour = _mois_ecoules(jour, p["aujourd_hui"]) <= settings.audit_etude_simulateur_max_mois
+        source = f"simulateur, étude du {jour.strftime('%d/%m/%Y')}, moteur {etude.get('version_moteur')}"
+        bloc = {"type": "etude", "etude": etude, "source": source, "a_mettre_a_jour": not a_jour,
+                "mention": None if a_jour else "étude à mettre à jour", "lien": ref.LIEN_SIMULATEUR}
+        t.hyp_fiche("etude_simulateur", source)
+        inv, eco = etude.get("investissement_eur"), etude.get("economie_1re_annee_eur")
+        if inv is None or eco is None:
+            return bloc, None
+        s = ref.SOLAIRE
+        action = {
+            "action": s["action"], "label": s["label"], "poste": s["poste"], "part_deperdition_pct": None,
+            "_type": "solaire",
+            "quantite": {"valeur": etude.get("puissance_kwc"), "unite": "kWc"},
+            "cout_eur": {"bas": round(inv), "haut": round(inv)},
+            "aide_estimee_eur": {"bas": 0, "haut": 0}, "aides_statut": "sans_objet", "aide_note": None,
+            "reste_a_charge_eur": {"bas": round(inv), "haut": round(inv)},
+            # Cités, pas recalculés : pas de fourchette ±15 % sur un chiffre d'étude.
+            "economie_annuelle_eur": {"bas": round(eco), "haut": round(eco), "central": round(eco)},
+            "temps_retour_ans": etude.get("temps_retour_ans"),
+            "gain_pct_chauffage": None, "duree_vie_ans": s["duree_vie_ans"],
+            "libelle_occasion": s["libelle_occasion"], "priorite_hierarchie": s["priorite_hierarchie"],
+            "source": source, "mention": bloc["mention"],
+            "statuts": {"cout_eur": "calcule", "economie_annuelle_eur": "calcule", "temps_retour_ans": "calcule"},
+        }
+        return bloc, action
+
+    eligible = (house.type_logement == "maison" and house.statut in (None, "proprietaire")
+                and (house.conso_elec_kwh_an or 0) >= settings.audit_solaire_conso_min_kwh)
+    if not eligible:
+        return None, None
+    texte = ref.PISTE_SOLAIRE.format(conso=_fr_int(house.conso_elec_kwh_an))
+    return {"type": "piste", "texte": texte, "lien": ref.LIEN_SIMULATEUR}, None
+
+
 # --- Actions --------------------------------------------------------------------------------
 
 def _gain_local(key: str, house: House) -> float:
@@ -282,6 +434,8 @@ def _action_recommandee(key: str, house: House, chauffage: str) -> bool:
     if key == "regulation":
         # Régulation non renseignée : supposée absente (hypothèse prudente, déjà v1).
         return ref.REGULATION_A_AMELIORER[house.regulation or "aucune"]
+    if key == "ballon_thermodynamique":
+        return house.ecs == "ballon_elec"  # déclaré : on ne remplace pas un ballon supposé
     return False
 
 
@@ -304,6 +458,30 @@ def _quantite(action: dict, p: dict) -> tuple[float, str]:
     return 1, "forfait"
 
 
+def _aide(a: dict, qte: float, cout_central: float) -> dict:
+    forme, bas, haut = a["aide"]
+    if forme == "pct":
+        return {"bas": round(cout_central * bas), "haut": round(cout_central * haut)}
+    if forme == "eur_m2":
+        return {"bas": round(qte * bas), "haut": round(qte * haut)}
+    return {"bas": bas, "haut": haut}
+
+
+def _ballon(house: House, p: dict, t: _Trace) -> dict:
+    """Coût et économie du ballon thermodynamique : surcoût si l'ancien est en fin de vie."""
+    vie = _grille(settings.audit_duree_vie_ecs, "ballon_elec")
+    age = _age(house.ecs_annee, p["aujourd_hui"])
+    fin_de_vie = age is not None and age >= vie * settings.audit_age_alerte_pct / 100
+    bas, haut = settings.audit_ballon_thermo_surcout_eur if fin_de_vie else settings.audit_ballon_thermo_cout_eur
+    ecs = dict(settings.simu_conso_ecs_kwh_occupant_an)
+    kwh = (ecs["ballon_elec"] - ecs["thermodynamique"]) * max(p["occupants"], 1)
+    eur = kwh * prix_energie("electricite", p["kva"])
+    t.hyp("ballon_thermodynamique", {"cout_eur": list(settings.audit_ballon_thermo_cout_eur),
+                                     "surcout_eur": list(settings.audit_ballon_thermo_surcout_eur),
+                                     "base_retenue": "surcout" if fin_de_vie else "cout_complet"}, "ballon_thermo")
+    return {"cout": (bas, haut), "fin_de_vie": fin_de_vie, "kwh": kwh, "eur": eur}
+
+
 def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> list[dict]:
     part_par_poste = {d["poste"]: d["part_pct"] for d in deps}
     actions = []
@@ -311,22 +489,36 @@ def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> l
         if not _action_recommandee(key, house, p["chauffage"]):
             continue
         qte, unite = _quantite(a, p)
-        cout_bas, cout_haut = round(a["cout_bas"] * qte), round(a["cout_haut"] * qte)
+        extra = {}
+        if key == "ballon_thermodynamique":
+            b = _ballon(house, p, t)
+            cout_bas, cout_haut = b["cout"]
+            unit_bas, unit_haut = b["cout"]
+            extra = {"_type": "eau_chaude", "_eco_kwh": b["kwh"], "_eco_eur": b["eur"],
+                     "base_cout": "surcout" if b["fin_de_vie"] else "cout_complet",
+                     "contexte": a["libelle_fin_de_vie"] if b["fin_de_vie"] else None}
+        else:
+            unit_bas, unit_haut = a["cout_bas"], a["cout_haut"]
+            cout_bas, cout_haut = round(unit_bas * qte), round(unit_haut * qte)
         central = (cout_bas + cout_haut) / 2
-        aide = {"bas": round(central * a["aide_pct_bas"]), "haut": round(central * a["aide_pct_haut"])}
+        aide = _aide(a, qte, central)
         actions.append({
             "action": key,
             "label": a["label"],
             "poste": a["poste"],
             "part_deperdition_pct": part_par_poste.get(a["poste"]),
             "quantite": {"valeur": qte, "unite": unite},
-            "cout_unitaire_eur": {"bas": a["cout_bas"], "haut": a["cout_haut"], "unite": unite},
+            "cout_unitaire_eur": {"bas": unit_bas, "haut": unit_haut, "unite": unite},
             "cout_eur": {"bas": cout_bas, "haut": cout_haut},
             "aide_estimee_eur": aide,
-            "reste_a_charge_eur": {"bas": round(central - aide["haut"]), "haut": round(central - aide["bas"])},
-            "aides_statut": "a_verifier",
-            "_reste_central": central - (aide["bas"] + aide["haut"]) / 2,
-            "gain_pct_chauffage": None if key == "pac_air_eau" else round(_gain_local(key, house), 3),
+            # Mêmes unités que la colonne Coût : du plus favorable au moins favorable.
+            "reste_a_charge_eur": {"bas": max(0, cout_bas - aide["haut"]), "haut": cout_haut - aide["bas"]},
+            "aides_statut": "base_connaissances" if a.get("aide_source") else "a_verifier",
+            "aide_source": a.get("aide_source"),
+            "aide_note": a.get("aide_note"),
+            "_reste_central": max(0.0, central - (aide["bas"] + aide["haut"]) / 2),
+            "gain_pct_chauffage": (round(_gain_local(key, house), 3)
+                                   if key not in ("pac_air_eau", "ballon_thermodynamique") else None),
             "duree_vie_ans": a["duree_vie_ans"],
             "libelle_occasion": a["libelle_occasion"],
             "priorite_hierarchie": a["priorite_hierarchie"],
@@ -335,12 +527,12 @@ def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> l
                 "economie_annuelle_eur": "calcule", "temps_retour_ans": "calcule",
                 "part_deperdition_pct": next((d["statut"] for d in deps if d["poste"] == a["poste"]), None),
             },
+            **extra,
         })
     if actions:
         t.hyp("couts_actions", {a["action"]: [a["cout_unitaire_eur"]["bas"], a["cout_unitaire_eur"]["haut"],
                                               a["cout_unitaire_eur"]["unite"]] for a in actions}, "couts_actions")
-        t.hyp("aides_pct", {a: [ref.ACTIONS[a]["aide_pct_bas"], ref.ACTIONS[a]["aide_pct_haut"]]
-                            for a in (x["action"] for x in actions)}, "aides")
+        t.hyp("aides", {x["action"]: list(ref.ACTIONS[x["action"]]["aide"]) for x in actions}, "aides")
         t.hyp("gains_pct_chauffage", {a["action"]: a["gain_pct_chauffage"] for a in actions
                                       if a["gain_pct_chauffage"] is not None}, "gains_actions")
         if any(a["action"] == "isolation_murs" for a in actions):
@@ -349,16 +541,23 @@ def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> l
 
 
 def _appliquer(ordre: list[dict], conso: float, energie: str, prix: float, chauffage: str, kva: int) -> float:
-    """Combinaison séquentielle : chaque action porte sur ce qui reste après les précédentes.
+    """Combinaison séquentielle : chaque action de CHAUFFAGE porte sur ce qui reste après les
+    précédentes. L'eau chaude et le solaire ne touchent pas à cette consommation : leur
+    économie est fixe, et s'additionne à part dans la synthèse.
 
-    Renvoie le coût annuel du chauffage une fois tout le plan réalisé. L'économie inscrite
-    sur chaque action est son économie MARGINALE à sa place dans le plan.
+    Renvoie le coût annuel du chauffage une fois tout le plan réalisé.
     """
     rendement = _grille(settings.audit_rendement_chauffage, chauffage)
     scop = _grille(settings.audit_rendement_chauffage, "PAC_air_eau")
     prix_elec = prix_energie("electricite", kva)
     for a in ordre:
-        if a["action"] == "pac_air_eau":
+        if a.get("_type") == "solaire":
+            continue  # chiffres cités de l'étude, déjà posés
+        if a.get("_type") == "eau_chaude":
+            eur = a["_eco_eur"]
+            a["economie_annuelle_kwh"] = round(a["_eco_kwh"])
+            a["energie_economisee"] = "electricite"
+        elif a["action"] == "pac_air_eau":
             apres = conso * rendement / scop
             eur = conso * prix - apres * prix_elec
             a["economie_annuelle_kwh"] = None  # changement d'énergie : des kWh qui ne se soustraient pas
@@ -396,7 +595,9 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
     Horizon et économies marginales dépendent l'un de l'autre : on itère. Une action passée
     « à l'occasion » y reste — son économie ne peut que baisser en reculant dans le plan —
     donc les horizons se stabilisent en au plus n tours ; la borne large ne sert qu'à
-    l'objectif « facture », où l'ordre suit le temps de retour. Renvoie le coût final.
+    l'objectif « facture », où l'ordre suit le temps de retour. Renvoie le coût final du
+    chauffage. La hiérarchie (production = 4) garantit que le solaire ne passe jamais devant
+    une action de sobriété ou d'enveloppe du même horizon.
     """
     facture = _objectif_facture(objectifs)
     etat = (c["conso_chauffage_retenue_kwh_an"], c["energie_chauffage"], c["prix_energie_eur_kwh"],
@@ -412,6 +613,7 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
         _appliquer([a], *etat)
     occasion: set[str] = set()
     ordre, signature = actions, None
+    cout_final = etat[0] * etat[2]
     for _ in range(50):
         for a in ordre:
             a["horizon"] = _horizon(a, occasion)
@@ -426,30 +628,83 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
     actions[:] = ordre
     for i, a in enumerate(actions, 1):
         a["rang"] = i
-        a.pop("_reste_central", None)
+        for interne in ("_reste_central", "_eco_kwh", "_eco_eur"):
+            a.pop(interne, None)
         if a["horizon"] != "a_l_occasion":
             a["libelle_occasion"] = None
-    return cout_final if actions else c["cout_chauffage_actuel_eur"]
+    return cout_final
 
 
-def run_audit(house: House) -> dict:
-    """Produit le JSON structuré complet du pré-audit (sans texte LLM — chiffres déterministes)."""
+# --- Synthèse -------------------------------------------------------------------------------
+
+def _decompte(nb: dict) -> str:
+    morceaux = []
+    if nb["maintenant"]:
+        morceaux.append(f"{nb['maintenant']} action{'s' if nb['maintenant'] > 1 else ''} à faire maintenant")
+    if nb["prioritaire"]:
+        morceaux.append(f"{nb['prioritaire']} action{'s' if nb['prioritaire'] > 1 else ''} "
+                        f"prioritaire{'s' if nb['prioritaire'] > 1 else ''}")
+    if nb["a_l_occasion"]:
+        morceaux.append(f"{nb['a_l_occasion']} à prévoir à l'occasion")
+    return ", ".join(morceaux) if morceaux else "Aucune action chiffrée"
+
+
+def _premiere_etape(actions: list[dict], solaire: dict | None, gestes: list[dict]) -> tuple[str, str]:
+    """Jamais vide : une action utile, à défaut la piste solaire, à défaut un geste gratuit."""
+    for a in actions:
+        if a["horizon"] in ("maintenant", "prioritaire"):
+            return a["label"], "action"
+    if solaire and solaire["type"] == "piste":
+        return ref.PISTE_SOLAIRE_COURTE, "piste_solaire"
+    return gestes[0]["texte"], "geste"
+
+
+def _message_sans_isolation(actions: list[dict], solaire: dict | None, cout_chauffage: float) -> str | None:
+    isolations = [a for a in actions if a["action"] in ref.POSTES_ISOLATION]
+    if not isolations or any(a["horizon"] != "a_l_occasion" for a in isolations):
+        return None
+    leviers = [a["label"].lower() for a in actions
+               if a["action"] not in ref.POSTES_ISOLATION and a["horizon"] in ("maintenant", "prioritaire")]
+    if solaire:
+        leviers.append("étudier une production solaire")
+    leviers.append("les gestes gratuits")
+    return ref.MESSAGE_SANS_ISOLATION.format(cout=_fr_int(cout_chauffage), leviers=", ".join(leviers))
+
+
+def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: date | None = None) -> dict:
+    """Produit le JSON structuré complet du pré-audit (sans texte LLM — chiffres déterministes).
+
+    `etude_simulateur` : résumé de la dernière étude du simulateur (`resume_etude_simulateur`),
+    passé par la route ; ses chiffres sont cités tels quels.
+    """
+    aujourd_hui = aujourd_hui or date.today()
     t = _Trace()
     score = compute_score(house)
-    p = _profil(house, t)
+    p = _profil(house, t, aujourd_hui)
     c = consommation(house, p, t)
     dep = deperditions(house)
     t.hyp("deperditions_base", ref.DEPERDITION_BASE, "deperditions")
     actions = _actions_candidates(house, p, dep, t)
+    solaire, action_solaire = _solaire(house, p, etude_simulateur, t)
+    if action_solaire:
+        actions.append(action_solaire)
     cout_final = planifier(actions, c, p, house.objectifs)
     t.hyp("horizons", {"cout_max_eur": settings.audit_horizon_cout_max_eur,
                        "retour_max_ans": settings.audit_horizon_retour_max_ans}, "horizons")
     t.hyp("incertitude", settings.audit_incertitude, "incertitude")
 
+    gestes = gestes_gratuits(p)
+    conseils = conseils_equipements(house, p, t)
     cout_actuel = c["conso_chauffage_retenue_kwh_an"] * c["prix_energie_eur_kwh"]
-    economie_total = cout_actuel - cout_final
-    centrals = [(a["cout_eur"]["bas"] + a["cout_eur"]["haut"]) / 2 for a in actions]
-    a_faire = [a for a in actions if a["horizon"] != "a_l_occasion"]
+    eco_chauffage = cout_actuel - cout_final
+    eco_eau = sum(a["economie_annuelle_eur"]["central"] for a in actions if a.get("_type") == "eau_chaude")
+    eco_total = eco_chauffage + eco_eau
+    travaux = [a for a in actions if a.get("_type") != "solaire"]  # le solaire a ses propres chiffres
+    nb = {h: sum(a["horizon"] == h for a in actions) for h in ref.HORIZONS}
+    premiere, premiere_type = _premiere_etape(actions, solaire, gestes)
+
+    for a in actions:
+        a["categorie"] = {"eau_chaude": "eau_chaude", "solaire": "production"}.get(a.pop("_type", None), "chauffage")
 
     return {
         "version_helios": settings.audit_version,
@@ -461,21 +716,29 @@ def run_audit(house: House) -> dict:
                                                  for d in dep) else "calcule",
         "consommation": c,
         "priorites": actions,
+        "gestes": gestes,
+        "conseils_equipements": conseils,
+        "confort_ete": confort_ete(p, actions),
+        "solaire": solaire,
         "synthese": {
             "nb_actions": len(actions),
-            "nb_par_horizon": {h: sum(a["horizon"] == h for a in actions) for h in ref.HORIZONS},
-            "investissement_eur": {"bas": sum(a["cout_eur"]["bas"] for a in actions),
-                                   "haut": sum(a["cout_eur"]["haut"] for a in actions)},
-            "aides_estimees_eur": {"bas": sum(a["aide_estimee_eur"]["bas"] for a in actions),
-                                   "haut": sum(a["aide_estimee_eur"]["haut"] for a in actions)},
-            "reste_a_charge_eur": {"bas": round(sum(centrals) - sum(a["aide_estimee_eur"]["haut"] for a in actions)),
-                                   "haut": round(sum(centrals) - sum(a["aide_estimee_eur"]["bas"] for a in actions))},
+            "nb_par_horizon": nb,
+            "decompte": _decompte(nb),
+            "investissement_eur": {"bas": sum(a["cout_eur"]["bas"] for a in travaux),
+                                   "haut": sum(a["cout_eur"]["haut"] for a in travaux)},
+            "aides_estimees_eur": {"bas": sum(a["aide_estimee_eur"]["bas"] for a in travaux),
+                                   "haut": sum(a["aide_estimee_eur"]["haut"] for a in travaux)},
+            "reste_a_charge_eur": {"bas": sum(a["reste_a_charge_eur"]["bas"] for a in travaux),
+                                   "haut": sum(a["reste_a_charge_eur"]["haut"] for a in travaux)},
             "aides_statut": "a_verifier",
             "cout_chauffage_actuel_eur": round(cout_actuel),
-            "economie_annuelle_totale_eur": _fourchette(economie_total) if economie_total > 0 else None,
-            "economie_chauffage_pct": round(100 * economie_total / cout_actuel) if cout_actuel else None,
-            # Jamais une action « à l'occasion » : si rien d'autre, pas de première étape.
-            "premiere_action": a_faire[0]["label"] if a_faire else None,
+            "economie_chauffage_eur": _fourchette(eco_chauffage) if eco_chauffage > 0 else None,
+            "economie_eau_chaude_eur": _fourchette(eco_eau) if eco_eau > 0 else None,
+            "economie_annuelle_totale_eur": _fourchette(eco_total) if eco_total > 0 else None,
+            "economie_chauffage_pct": round(100 * eco_chauffage / cout_actuel) if cout_actuel else None,
+            "premiere_action": premiere,
+            "premiere_action_type": premiere_type,  # action | piste_solaire | geste
+            "message_sans_isolation": _message_sans_isolation(actions, solaire, cout_actuel),
         },
         "alertes": t.alertes,
         "hypotheses": list(t.hypotheses.values()),

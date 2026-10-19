@@ -10,6 +10,7 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.audit import Audit
 from app.models.house import House
+from app.models.simulateur import SimulateurStudy
 from app.models.user import User
 from app.services import audit_engine, pdf_audit
 from app.services.completeness import compute_score
@@ -36,7 +37,14 @@ async def generate_audit(user: User = Depends(get_current_user), db: AsyncSessio
             f"{settings.audit_min_completeness:.0f}% de complétude.",
         )
 
-    result = audit_engine.run_audit(house)
+    # Le moteur reste pur : la route lui passe la dernière étude du simulateur, qu'il cite
+    # telle quelle. Aucun calcul solaire (ni PVGIS) pendant la génération d'un audit.
+    etude = await db.scalar(
+        select(SimulateurStudy).where(SimulateurStudy.house_id == house.id)
+        .order_by(SimulateurStudy.created_at.desc()).limit(1)
+    )
+    resume = audit_engine.resume_etude_simulateur(etude) if etude else None
+    result = audit_engine.run_audit(house, etude_simulateur=resume)
     label = f"{house.type_logement or 'logement'} - {house.code_postal}"
     pdf_path = pdf_audit.build_pdf(result, house_label=label)
 
