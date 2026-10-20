@@ -903,6 +903,29 @@ plus aidés par geste depuis le 01/09/2026.
 unité) ; une maison au gaz, au fioul ou au bois est donc chiffrée sur l'estimation seule,
 tant que la fiche n'a pas de champ « kWh de gaz » ou « litres de fioul ».
 
+### [ ] 32. Deux fiches « aides » du lot A perdent leur propre question
+
+Trouvé le 20/10/2026 au contrôle d'auto-récupération des 70 nouvelles fiches (`kb/action_*`) :
+68 se retrouvent au rang 1 avec leur réponse instantanée, **deux non** :
+
+- « Quelles aides pour la régulation du chauffage en 2026 ? » (`action_regulation`) : sa
+  propre question sert **instantanément** la fiche « Quelles aides pour remplacer son chauffage
+  par une pompe à chaleur en 2026 ? » (`action_pac_remplacement`, 0,691 contre 0,666). Une
+  mauvaise réponse avec l'assurance d'une fiche validée — le défaut du point 27, que l'écart
+  minimal (0,025 ici) ne rattrape pas.
+- « Quelles aides pour remplacer une pompe à chaleur air/air en 2026 ? » : même fiche servie
+  (0,806 contre 0,702). Moins grave — elle dit que l'air/air n'est pas aidée — mais ce n'est
+  pas la bonne.
+
+La cause est l'intitulé : « Quelles aides pour … en 2026 ? » pèse plus que le sujet, et la
+fiche PAC est la plus dense sur « aides + chauffage ». **Le texte est celui de Stéphane, non
+retouché** (consigne du lot A). Piste la plus simple : nommer le sujet en tête de l'intitulé
+(« Un thermostat ou une régulation sont-ils aidés en 2026 ? »), réingérer, relancer le
+contrôle. Une redirection 301 sera à prévoir si la page a déjà été publiée (le slug change).
+
+Trois autres paires proches (0,73) entre une fiche du lot et `faq_maison`, sans conflit
+mesuré : plancher bas, ballon électrique ancien, thermostat programmable.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
