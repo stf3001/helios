@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2.2"                    # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.3"                    # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 
@@ -144,6 +144,9 @@ class Settings(BaseSettings):
     # <= seuil ; au-delà (ou au-delà de la durée de vie) : « à l'occasion ». A CONFIRMER.
     audit_horizon_cout_max_eur: int = 500
     audit_horizon_retour_max_ans: float = 20.0
+    # Au-delà, le PDF et l'espace client écrivent "> 30 ans" et "non rentable sur l'énergie
+    # seule" ; le JSON garde la valeur. Seuil d'AFFICHAGE, sans effet sur les horizons.
+    audit_retour_affichage_max_ans: int = 30
     # Surface de murs = surface habitable x ratio, selon le nombre de niveaux (le dernier
     # vaut au-delà). A CALIBRER — une maison mitoyenne en a moins.
     audit_ratio_murs_par_niveaux: tuple[tuple[int, float], ...] = ((1, 0.90), (2, 0.85), (3, 0.80))

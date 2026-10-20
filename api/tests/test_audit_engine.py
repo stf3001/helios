@@ -60,7 +60,7 @@ def test_les_hypotheses_du_calcul_a_la_main_tiennent():
     assert dict(settings.audit_coef_zone)["H3"] == 0.55
     assert ref.ANNEE_BESOIN_UTILE_KWH_M2_AN["1975_1988"] == 180
     assert settings.audit_incertitude == 0.15
-    assert settings.audit_version == "v2.2"
+    assert settings.audit_version == "v2.3"
 
 
 # --- Couverture du schéma : aucun repli silencieux -----------------------------------------
@@ -485,7 +485,7 @@ def test_reference_premiere_etape_et_decompte(ref_sans_etude):
     assert s["premiere_action"] == "Ballon d'eau chaude thermodynamique"
     assert s["premiere_action_type"] == "action"
     assert s["decompte"] == "1 action prioritaire, 3 à prévoir à l'occasion"
-    assert s["message_sans_isolation"].startswith("Aucuns travaux d'isolation")
+    assert s["message_sans_isolation"].startswith("Aucune isolation n'est rentable")
 
 
 def test_reference_murs_sans_aide(ref_sans_etude):

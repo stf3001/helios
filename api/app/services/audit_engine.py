@@ -1,4 +1,4 @@
-"""Moteur déterministe de pré-audit — doc 07 §6, version v2.2.
+"""Moteur déterministe de pré-audit — doc 07 §6, version v2.3.
 
 Pipeline : fiche Maison → consommation de CHAUFFAGE en énergie finale (DPE ou année de
 construction, corrigée du climat) → calage sur la facture quand le chauffage est électrique
@@ -671,6 +671,35 @@ def _message_sans_isolation(actions: list[dict], solaire: dict | None, cout_chau
     return ref.MESSAGE_SANS_ISOLATION.format(cout=_fr_int(cout_chauffage), leviers=", ".join(leviers))
 
 
+def _bloc_plan(actions: list[dict]) -> dict:
+    """Totaux d'un groupe d'actions chiffrées (hors production solaire).
+
+    Les économies sont la somme des économies MARGINALES du groupe : le plan recommandé
+    précède toujours les actions « à l'occasion », donc son économie ne dépend pas d'elles,
+    et les deux blocs ensemble redonnent les totaux de la synthèse. Chauffage et eau chaude
+    restent séparés, comme dans la synthèse.
+    """
+    def somme(cle: str) -> dict:
+        return {"bas": sum(a[cle]["bas"] for a in actions), "haut": sum(a[cle]["haut"] for a in actions)}
+
+    def eco(categorie: str) -> dict:
+        return _fourchette(sum(a["economie_annuelle_eur"]["central"] for a in actions
+                               if a["categorie"] == categorie))
+
+    return {"nb": len(actions), "investissement_eur": somme("cout_eur"),
+            "aides_estimees_eur": somme("aide_estimee_eur"), "reste_a_charge_eur": somme("reste_a_charge_eur"),
+            "economie_chauffage_eur": eco("chauffage"), "economie_eau_chaude_eur": eco("eau_chaude")}
+
+
+def a_preciser(entrees: list[dict], p: dict) -> list[dict]:
+    """Les valeurs SUPPOSÉES qui pèsent le plus sur le résultat (ordre de `CHAMPS_A_PRECISER`)."""
+    supposes = {e["champ"] for e in entrees if e["statut"] == "suppose"}
+    valeurs = {"kva": p["kva"], "occupants": p["occupants"]}
+    textes = {"annee_construction": ref.ANNEE_AVEC_DPE} if "dpe_lettre" not in supposes else {}
+    return [{"champ": champ, "libelle": libelle, "hypothese": textes.get(champ, hypothese).format(**valeurs)}
+            for champ, libelle, hypothese in ref.CHAMPS_A_PRECISER if champ in supposes][:ref.A_PRECISER_MAX]
+
+
 def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: date | None = None) -> dict:
     """Produit le JSON structuré complet du pré-audit (sans texte LLM — chiffres déterministes).
 
@@ -705,6 +734,8 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
 
     for a in actions:
         a["categorie"] = {"eau_chaude": "eau_chaude", "solaire": "production"}.get(a.pop("_type", None), "chauffage")
+    plan = [a for a in travaux if a["horizon"] in ("maintenant", "prioritaire")]
+    occasion = [a for a in travaux if a["horizon"] == "a_l_occasion"]
 
     return {
         "version_helios": settings.audit_version,
@@ -742,7 +773,12 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
             "premiere_action": premiere,
             "premiere_action_type": premiere_type,  # action | piste_solaire | geste
             "message_sans_isolation": _message_sans_isolation(actions, solaire, cout_actuel),
+            # v2.3 : ce qui est recommandé, séparé de ce qui attend une occasion — le total
+            # ci-dessus additionne les deux, ce qu'un lecteur prend pour le budget conseillé.
+            "plan_recommande": _bloc_plan(plan),
+            "a_l_occasion": _bloc_plan(occasion),
         },
+        "a_preciser": a_preciser(t.entrees, p),
         "alertes": t.alertes,
         "hypotheses": list(t.hypotheses.values()),
         "avertissement": (

@@ -270,8 +270,8 @@ LIEN_SIMULATEUR = "/simulateur-solaire"
 # Postes d'isolation : s'il y en a et qu'aucun n'est rentable, l'audit le dit.
 POSTES_ISOLATION = {"isolation_combles", "isolation_murs", "isolation_plancher", "menuiseries"}
 MESSAGE_SANS_ISOLATION = (
-    "Aucuns travaux d'isolation ne sont rentables à court terme : votre chauffage vous coûte "
-    "environ {cout} €/an. Les leviers utiles sont ailleurs : {leviers}."
+    "Aucune isolation n'est rentable à court terme : votre chauffage vous coûte environ "
+    "{cout} €/an. Les leviers utiles sont ailleurs : {leviers}."
 )
 
 # Équipements dont l'âge est surveillé (clés de `audit_duree_vie_*`).
@@ -319,6 +319,56 @@ CONFORT_ETE_COMBLES = ("Peu rentable sur votre chauffage, l'isolation des comble
 
 # Estimation grossière du nombre de fenêtres à partir de la surface habitable (1 fenêtre / ~15 m²).
 M2_PAR_FENETRE = 15
+
+# Libellés en français des valeurs de la fiche (`schemas/house.py`), pour le document.
+# Une valeur absente d'une table s'affiche telle quelle : jamais d'erreur à l'affichage.
+LIBELLE_VALEUR: dict[str, dict[str, str]] = {
+    "type_logement": {"maison": "Maison", "appartement": "Appartement"},
+    "chauffage_principal": {
+        "elec_direct": "convecteurs électriques", "PAC_air_eau": "pompe à chaleur air/eau",
+        "PAC_air_air": "pompe à chaleur air/air", "gaz": "chaudière gaz", "fioul": "chaudière fioul",
+        "bois": "chauffage au bois", "reseau": "réseau de chaleur", "autre": "autre chauffage",
+    },
+    "ecs": {
+        "ballon_elec": "ballon électrique", "thermodynamique": "ballon thermodynamique",
+        "gaz": "chaudière gaz", "solaire": "chauffe-eau solaire", "instantane": "chauffe-eau instantané",
+    },
+    "zone_climatique": {"H1": "climat froid", "H2": "climat tempéré", "H3": "climat doux"},
+}
+LIBELLE_VALEUR["chauffage_appoint"] = LIBELLE_VALEUR["chauffage_principal"]
+
+# « Pour un pré-audit plus précis » : les valeurs SUPPOSÉES de la fiche, du plus au moins
+# décisif pour le résultat. Le moteur en retient les 3 premières. Chaque entrée : (champ,
+# libellé, ce que le moteur a supposé à la place). L'hypothèse peut citer un réglage :
+# `{kva}`, `{occupants}`.
+#  - surface et chauffage d'abord : sans eux, rien n'est chiffré juste (un chauffage
+#    inconnu est traité en convecteurs, l'énergie la plus chère) ;
+#  - la facture ensuite : c'est elle qui cale toutes les économies sur le réel ;
+#  - puis ce qui fixe l'estimation (DPE, année), l'état de l'enveloppe, l'âge des
+#    équipements (qui décide « surcoût » ou « coût complet »), et le reste.
+CHAMPS_A_PRECISER: tuple[tuple[str, str, str], ...] = (
+    ("surface_habitable", "Votre surface habitable", "inconnue : rien n'est chiffré au m²"),
+    ("chauffage_principal", "Votre chauffage principal", "supposé : convecteurs électriques"),
+    ("conso_elec_kwh_an", "Votre consommation d'électricité (facture)",
+     "inconnue : économies calculées sur une estimation"),
+    ("dpe_lettre", "La lettre de votre DPE", "inconnue : estimation d'après l'année de construction"),
+    ("annee_construction", "L'année de construction", "inconnue : une maison de 1948-1974 est supposée"),
+    ("isolation_combles", "L'isolation de vos combles", "inconnue : supposée faible"),
+    ("isolation_murs", "L'isolation de vos murs", "inconnue : supposée faible"),
+    ("isolation_plancher", "L'isolation de votre plancher bas", "inconnue : supposée faible"),
+    ("menuiseries", "Vos fenêtres", "inconnues : supposées anciennes"),
+    ("chauffage_principal_annee", "L'année de votre chauffage", "inconnue : son âge n'est pas évalué"),
+    ("ecs", "Votre production d'eau chaude", "supposée : ballon électrique"),
+    ("ecs_annee", "L'année de votre ballon d'eau chaude",
+     "inconnue : le ballon thermodynamique est chiffré au prix complet"),
+    ("nb_occupants", "Le nombre d'occupants", "supposé : {occupants} personnes"),
+    ("puissance_souscrite", "Votre puissance souscrite", "supposée : {kva} kVA"),
+    ("nb_niveaux", "Le nombre de niveaux", "supposé : 1 niveau"),
+)
+A_PRECISER_MAX = 3
+# Avec un DPE déclaré, l'année de construction n'entre pas dans l'estimation : on ne
+# prétend pas l'avoir supposée.
+ANNEE_AVEC_DPE = "inconnue : l'estimation repose sur la lettre de votre DPE"
 
 # Ordre d'affichage des horizons.
 HORIZONS = ("maintenant", "prioritaire", "a_l_occasion")
