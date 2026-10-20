@@ -931,7 +931,14 @@ contrôle. Une redirection 301 sera à prévoir si la page a déjà été publi�
 Trois autres paires proches (0,73) entre une fiche du lot et `faq_maison`, sans conflit
 mesuré : plancher bas, ballon électrique ancien, thermostat programmable.
 
-### [ ] 33. Pré-audit v2.4 : des textes de fiche qui se trompent selon la maison
+### [x] 33. Pré-audit v2.4 : des textes de fiche qui se trompent selon la maison — réglé le 20/10/2026 (lot 5)
+
+**Vérifié sur les quatre PDF du lot 5** (maison de référence, fioul, F au fioul,
+convecteurs) : commits `13ef29e` (le moteur pose `raison_occasion`) et `f184dcc` (un texte
+par raison, fiches d'abord). Plus aucune maison au-dessus de 800 €/an de chauffage ne lit
+« vous coûte peu » ; la PAC air/air parle d'électricité et de pièces ; la régulation ne
+parle de PAC qu'aux PAC ; des fenêtres inconnues ont leur propre texte. Tenu par
+`tests/test_audit_textes.py`. Constat d'origine, gardé pour mémoire :
 
 Trouvé le 20/10/2026 en relisant les PDF du lot 4. Les textes sont recopiés tels quels
 (`audit_reference.TEXTES_ACTIONS`) : **c'est la fiche qu'il faut corriger**, puis recopier.

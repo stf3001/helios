@@ -1326,3 +1326,4 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - `audit_retour_affichage_max_ans` (30, affichage seul) est recopié dans `EspaceAudits.tsx`.
 - v2.4 : les textes affichés (pourquoi, gestes, contrat, parcours) sont recopiés MOT POUR MOT des sections « Pour le pré-audit » des fiches dans `audit_reference.py` ; `tests/test_audit_textes.py` le vérifie. Changer la fiche, puis recopier — jamais réécrire côté code.
 - Climat et coût sur 10 ans rejouent les économies déjà calculées ; facteurs CO₂ de la méthode DPE en config (`audit_facteurs_co2_kg_kwh`).
+- v2.5 : une action « à l'occasion » porte `raison_occasion` (apres_autres / chauffage_peu_cher / trop_cher) et reçoit le texte de SA raison, sinon `pourquoi_occasion`, sinon rien — jamais `pourquoi_peu_rentable` pour une autre raison (règle en tête de `TEXTES_ACTIONS`).
