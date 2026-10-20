@@ -180,6 +180,17 @@ class Settings(BaseSettings):
     # âgée (conseil d'âge, pas une action : ni coût ni temps de retour). Comparé au rendement
     # retenu pour l'appareil actuel (`audit_rendement_chauffage`). Ordre de grandeur, A CALIBRER.
     audit_scop_pac_air_air_neuf: float = 4.3
+    # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :
+    # arrêté du 31 mars 2021 modifié (3CL-DPE), tableau des facteurs d'émission, relevé le
+    # 20/10/2026 dans sa transcription open source (Open3CL, src/conso.js, « au 31 mars
+    # 2021 ») — l'annexe n'est pas lisible en ligne hors du PDF du JO, A VÉRIFIER sur le texte.
+    # L'électricité dépend de l'usage. Bois : bûches et granulés (0,030 ; plaquettes 0,024).
+    # Réseau de chaleur : la fiche ne dit pas lequel, d'où la ligne « autres réseaux de
+    # chaleur » des arrêtés réseaux (21/10/2021 … 30/03/2026), 0,385 — prudente.
+    audit_facteurs_co2_kg_kwh: tuple[tuple[str, float], ...] = (
+        ("electricite_chauffage", 0.079), ("electricite_eau_chaude", 0.065), ("gaz", 0.227),
+        ("fioul", 0.324), ("bois", 0.030), ("reseau", 0.385),
+    )
 
     # --- Espace énergie / SOBRY (doc 09 §2) ---
     sobry_spot_api_url: str = ""                 # API publique SOBRY (prix spot quart-horaire) — vide = courbe de démo

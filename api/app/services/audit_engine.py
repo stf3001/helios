@@ -770,6 +770,80 @@ def renovation_ampleur(house: House, p: dict, variables: dict) -> dict | None:
             "fiche": ref.FICHE_AMPLEUR}
 
 
+# --- Climat et coût dans le temps (v2.4) ----------------------------------------------------
+
+def eau_chaude_kwh(p: dict) -> float | None:
+    """Électricité de l'eau chaude, la couche déjà utilisée pour les usages courants (réglages
+    du simulateur). Une eau chaude au gaz n'y figure pas (0) : inconnue, rien n'est inventé."""
+    kwh = _grille(settings.simu_conso_ecs_kwh_occupant_an, p["ecs"]) * max(p["occupants"], 1)
+    return kwh or None
+
+
+def _facteur_co2(energie: str, usage: str) -> float:
+    facteurs = dict(settings.audit_facteurs_co2_kg_kwh)
+    return facteurs[f"electricite_{usage}"] if energie == "electricite" else facteurs[energie]
+
+
+def _dizaine(x: float) -> int:
+    return int(round(x, -1))
+
+
+def climat(c: dict, p: dict, actions: list[dict], t: _Trace) -> dict:
+    """Émissions du chauffage et de l'eau chaude, aujourd'hui puis après le plan.
+
+    Les actions sont déjà rangées et chiffrées : on rejoue leurs économies d'énergie dans
+    l'ordre du plan. Une PAC change d'énergie : l'énergie retirée sort, l'électricité qu'elle
+    consomme entre. La production solaire n'est pas comptée (ses chiffres sont ceux d'une
+    étude, qui ne dit pas l'électricité réseau évitée)."""
+    t.hyp("facteurs_co2_kg_kwh", dict(settings.audit_facteurs_co2_kg_kwh), "facteurs_co2")
+    kwh, energie = float(c["conso_chauffage_retenue_kwh_an"]), c["energie_chauffage"]
+    ecs = eau_chaude_kwh(p)
+
+    def total() -> float:
+        return kwh * _facteur_co2(energie, "chauffage") + (ecs or 0) * _facteur_co2("electricite", "eau_chaude")
+
+    chauffage_kg = kwh * _facteur_co2(energie, "chauffage")
+    eau_kg = ecs * _facteur_co2("electricite", "eau_chaude") if ecs else None
+    apres_plan = None
+    for a in actions:
+        if apres_plan is None and a["horizon"] == "a_l_occasion":
+            apres_plan = total()
+        if a["categorie"] == "chauffage":
+            if a.get("conso_apres_kwh_electricite") is not None:
+                kwh, energie = float(a["conso_apres_kwh_electricite"]), "electricite"
+            elif a.get("economie_annuelle_kwh"):
+                kwh = max(0.0, kwh - a["economie_annuelle_kwh"])
+        elif a["categorie"] == "eau_chaude" and ecs and a.get("economie_annuelle_kwh"):
+            ecs = max(0.0, ecs - a["economie_annuelle_kwh"])
+    tout = total()
+    return {
+        "chauffage_kg_an": _dizaine(chauffage_kg),
+        "eau_chaude_kg_an": _dizaine(eau_kg) if eau_kg is not None else None,
+        "apres_plan_recommande_kg_an": _dizaine(apres_plan if apres_plan is not None else tout),
+        "apres_tout_le_plan_kg_an": _dizaine(tout),
+        "facteurs": dict(settings.audit_facteurs_co2_kg_kwh),
+        "statut": "calcule",
+    }
+
+
+def couts(c: dict, p: dict, plan: dict, t: _Trace) -> dict:
+    """Chauffage et eau chaude sur 10 ans, à la hausse de prix du simulateur."""
+    h = settings.simu_hausse_prix_kwh_pct_an
+    t.hyp("hausse_prix_pct_an", h, "hausse_prix")
+    facteur = sum((1 + h / 100) ** an for an in range(10))
+    ecs = eau_chaude_kwh(p)
+    eau = ecs * prix_energie("electricite", p["kva"]) if ecs else None
+    chauffage = c["cout_chauffage_actuel_eur"]
+    return {
+        "chauffage_eur_an": chauffage,
+        "eau_chaude_eur_an": round(eau) if eau is not None else None,
+        "hausse_pct_an": h,
+        "chauffage_et_eau_chaude_10_ans_eur": _dizaine((chauffage + (eau or 0)) * facteur),
+        "economie_10_ans_plan_recommande_eur": _dizaine(plan["economie_annuelle_eur"]["central"] * facteur),
+        "statut": "calcule",
+    }
+
+
 # --- Synthèse -------------------------------------------------------------------------------
 
 def _decompte(nb: dict) -> str:
@@ -890,6 +964,9 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
         a["categorie"] = {"eau_chaude": "eau_chaude", "solaire": "production"}.get(a.pop("_type", None), "chauffage")
     plan = [a for a in travaux if a["horizon"] in ("maintenant", "prioritaire")]
     occasion = [a for a in travaux if a["horizon"] == "a_l_occasion"]
+    bloc_plan = _bloc_plan(plan)
+    bloc_climat = climat(c, p, travaux, t)
+    bloc_couts = couts(c, p, bloc_plan, t)
 
     return {
         "version_helios": settings.audit_version,
@@ -912,6 +989,8 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
         "contrat": leviers_contrat(house, p, variables, etude_simulateur is not None),
         "dpe_attestation": dpe_attestation(house, variables),
         "renovation_ampleur": renovation_ampleur(house, p, variables),
+        "climat": bloc_climat,
+        "couts": bloc_couts,
         "solaire": solaire,
         "synthese": {
             "nb_actions": len(actions),
@@ -934,7 +1013,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
             "message_sans_isolation": _message_sans_isolation(actions, solaire, cout_actuel),
             # v2.3 : ce qui est recommandé, séparé de ce qui attend une occasion — le total
             # ci-dessus additionne les deux, ce qu'un lecteur prend pour le budget conseillé.
-            "plan_recommande": _bloc_plan(plan),
+            "plan_recommande": bloc_plan,
             "a_l_occasion": _bloc_plan(occasion),
         },
         "a_preciser": a_preciser(t.entrees),

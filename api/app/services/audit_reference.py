@@ -437,6 +437,8 @@ LIBELLES_HYPOTHESES: dict[str, str] = {
     "incertitude": "Demi-largeur des fourchettes : {valeur}",
     "duree_vie_equipements": "Durée de vie retenue, en années : {valeur}",
     "scop_pac_air_air_neuf": "Rendement saisonnier d'une pompe à chaleur air/air neuve : {valeur}",
+    "facteurs_co2_kg_kwh": "Émissions de CO₂, en kg par kWh consommé : {valeur}",
+    "hausse_prix_pct_an": "Hausse du prix de l'énergie, en % par an (coût sur 10 ans) : {valeur}",
 }
 # Mots techniques qui apparaissent dans ces valeurs (clés de dictionnaire, formes d'aide,
 # paramètres). Les actions, postes et équipements ont déjà leurs libellés ailleurs.
@@ -452,6 +454,7 @@ TERMES_HYPOTHESES: dict[str, str] = {
     "toiture": "toiture", "murs": "murs", "air_ventilation": "air et ventilation", "menuiseries": "fenêtres",
     "plancher": "plancher", "ponts_thermiques": "ponts thermiques",
     "ballon_elec": "ballon électrique", "thermodynamique": "ballon thermodynamique",
+    "electricite_chauffage": "électricité (chauffage)", "electricite_eau_chaude": "électricité (eau chaude)",
 }
 
 # Ordre d'affichage des horizons.
@@ -482,6 +485,8 @@ SOURCES: dict[str, tuple[str, str]] = {
     "ratio_murs": ("Surface de murs / surface habitable, à calibrer", "2026-10-19"),
     "incertitude": ("Demi-largeur des fourchettes", "2026-07-18"),
     "scop_air_air_neuf": ("SCOP d'une PAC air/air neuve, ordre de grandeur, à calibrer", "2026-10-20"),
+    "facteurs_co2": ("Méthode du DPE, arrêté du 31/03/2021 modifié", "2026-10-20"),
+    "hausse_prix": ("Hausse annuelle du prix de l'énergie, même hypothèse que le simulateur", "2026-10-20"),
 }
 
 # --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------

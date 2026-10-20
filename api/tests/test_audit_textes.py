@@ -256,3 +256,47 @@ def test_la_pac_de_16_ans_chiffre_son_remplacement(ref_audit):
 def test_le_ballon_n_a_pas_d_economie_au_remplacement(ref_audit):
     ballon = next(x for x in ref_audit["conseils_equipements"] if x["equipement"] == "ballon_elec")
     assert "economie_au_remplacement_eur" not in ballon
+
+
+# --- Étapes 7 et 8 : le climat et le coût dans le temps --------------------------------------
+
+def test_reference_climat(ref_audit):
+    """Chauffage : 2 100 kWh × 0,079 = 166 kg → 170. Eau chaude : 4 × 800 = 3 200 kWh × 0,065
+    = 208 → 210. Après le ballon (− 2 080 kWh) : 166 + 1 120 × 0,065 = 239 → 240."""
+    cl = ref_audit["climat"]
+    assert cl["chauffage_kg_an"] == 170
+    assert cl["eau_chaude_kg_an"] == 210
+    assert cl["apres_plan_recommande_kg_an"] == 240
+    assert cl["apres_plan_recommande_kg_an"] <= cl["chauffage_kg_an"] + cl["eau_chaude_kg_an"]
+    assert cl["apres_tout_le_plan_kg_an"] <= cl["apres_plan_recommande_kg_an"]
+    assert cl["statut"] == "calcule"
+    assert "facteurs_co2_kg_kwh" in {h["cle"] for h in ref_audit["hypotheses"]}
+
+
+def test_le_fioul_vers_la_pac_compte_l_electricite_ajoutee():
+    r = run_audit(maison_type(), aujourd_hui=AUJOURD_HUI)
+    cl = r["climat"]
+    assert cl["chauffage_kg_an"] == round(11647.06 * 0.324, -1)
+    assert cl["apres_tout_le_plan_kg_an"] < cl["apres_plan_recommande_kg_an"] < cl["chauffage_kg_an"]
+    pac = _action(r, "pac_air_eau")
+    # Après la PAC, le chauffage restant est de l'électricité, au facteur de l'électricité.
+    assert cl["apres_tout_le_plan_kg_an"] >= round(pac["conso_apres_kwh_electricite"] * 0.079 * 0.5, -1)
+
+
+def test_eau_chaude_au_gaz_inconnue():
+    r = run_audit(maison_type(chauffage_principal="gaz", ecs="gaz"), aujourd_hui=AUJOURD_HUI)
+    assert r["climat"]["eau_chaude_kg_an"] is None
+    assert r["couts"]["eau_chaude_eur_an"] is None
+
+
+def test_reference_couts_sur_10_ans(ref_audit):
+    """Eau chaude : 3 200 kWh × 0,2001 = 640 €/an. 10 ans à +2 %/an : × 10,95."""
+    co = ref_audit["couts"]
+    assert co["chauffage_eur_an"] == 420 and co["eau_chaude_eur_an"] == 640
+    assert co["hausse_pct_an"] == 2.0
+    assert co["chauffage_et_eau_chaude_10_ans_eur"] > 10 * (co["chauffage_eur_an"] + co["eau_chaude_eur_an"])
+    facteur = sum(1.02 ** an for an in range(10))
+    assert co["chauffage_et_eau_chaude_10_ans_eur"] == round(1060 * facteur, -1)
+    eco = ref_audit["synthese"]["plan_recommande"]["economie_annuelle_eur"]["central"]
+    assert co["economie_10_ans_plan_recommande_eur"] == round(eco * facteur, -1)
+    assert "hausse_prix_pct_an" in {h["cle"] for h in ref_audit["hypotheses"]}
