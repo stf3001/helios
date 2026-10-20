@@ -25,7 +25,7 @@ Le premier hiver, ajustez au ressenti : une programmation qu'on finit par contou
 `cat: sobriete | tags: regulation, thermostat, vigilance, sonde | verif: generique`
 R: Le plus fréquent : **la sonde mal placée**. Un thermostat près d'une fenêtre, d'une porte d'entrée, d'un radiateur, au soleil ou dans un couloir froid mesure une température qui n'est pas celle où vous vivez. Placez-le dans la pièce principale, à environ 1,5 m du sol, loin des sources de chaleur et des courants d'air. Autres pièges : **pousser la consigne à 25 °C pour chauffer plus vite**, ce qui ne chauffe pas plus vite mais fait dépasser la cible ; **des robinets thermostatiques dans la pièce du thermostat d'ambiance**, qui se contredisent ; et **des piles mortes** qui laissent le chauffage en marche forcée.
 
-### Q: Quelles aides pour la régulation du chauffage en 2026 ?
+### Q: Un thermostat ou une régulation sont-ils aidés en 2026 ?
 `cat: aides | tags: regulation, thermostat, cee | verif: date_sensible_20_10_2026`
 R: MaPrimeRénov' ne finance pas un thermostat seul. Des **primes CEE** existent pour l'installation d'un système de régulation et de programmation par un professionnel, avec un montant variable selon l'organisme. Sur une petite dépense, le premier gain reste gratuit : bien régler ce que vous avez déjà.
 

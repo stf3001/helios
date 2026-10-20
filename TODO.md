@@ -917,6 +917,11 @@ Trouvé le 20/10/2026 au contrôle d'auto-récupération des 70 nouvelles fiches
   (0,806 contre 0,702). Moins grave — elle dit que l'air/air n'est pas aidée — mais ce n'est
   pas la bonne.
 
+**Régulation : corrigé le 20/10/2026** à la demande de Stéphane. Intitulé renommé en « Un
+thermostat ou une régulation sont-ils aidés en 2026 ? » : la fiche revient au rang 1 (0,708
+contre 0,627 pour la fiche PAC) et sert sa propre réponse instantanée. La page n'avait jamais
+été publiée, aucune redirection n'est donc nécessaire. **Reste ouvert : la PAC air/air.**
+
 La cause est l'intitulé : « Quelles aides pour … en 2026 ? » pèse plus que le sujet, et la
 fiche PAC est la plus dense sur « aides + chauffage ». **Le texte est celui de Stéphane, non
 retouché** (consigne du lot A). Piste la plus simple : nommer le sujet en tête de l'intitulé
