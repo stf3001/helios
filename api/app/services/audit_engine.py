@@ -703,9 +703,12 @@ def champs_supposes(entrees: list[dict]) -> list[dict]:
     recalculer. Une valeur supposée vaut la valeur par défaut du réglage, d'où `settings`.
     """
     supposes = {e["champ"] for e in entrees if e["statut"] == "suppose"}
+    if "dpe_lettre" not in supposes:
+        # Avec un DPE déclaré, l'année de construction n'entre pas dans le calcul : la
+        # demander ne rendrait pas le pré-audit plus précis.
+        supposes.discard("annee_construction")
     valeurs = {"kva": settings.audit_puissance_kva_defaut, "occupants": settings.audit_occupants_defaut}
-    textes = {"annee_construction": ref.ANNEE_AVEC_DPE} if "dpe_lettre" not in supposes else {}
-    return [{"champ": champ, "libelle": libelle, "hypothese": textes.get(champ, hypothese).format(**valeurs)}
+    return [{"champ": champ, "libelle": libelle, "hypothese": hypothese.format(**valeurs)}
             for champ, libelle, hypothese in ref.CHAMPS_A_PRECISER if champ in supposes]
 
 

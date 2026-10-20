@@ -13,6 +13,7 @@ Formats : les audits stockés ne sont jamais recalculés. Un audit v2.3 (présen
 leur structure, avec les mêmes polices, couleurs et règles d'affichage.
 """
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -184,7 +185,7 @@ class _AuditPDF(FPDF):
         super().__init__()
         self.unicode = self._charger_polices(fonts_dir)
         self.set_margins(15, 15, 15)
-        self.set_auto_page_break(auto=True, margin=20)
+        self.set_auto_page_break(auto=True, margin=18)
 
     def _charger_polices(self, fonts_dir: Path) -> bool:
         fichiers = {cle: fonts_dir / nom for cle, nom in _POLICES.items()}
@@ -271,22 +272,22 @@ def _titre_page(pdf: FPDF, titre: str, sous_titre: str | None = None):
         pdf.set_text_color(*TEXTE_2)
         pdf.multi_cell(_largeur(pdf), 5, sous_titre, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_text_color(*INK)
-    pdf.ln(3)
+    pdf.ln(1.5)
 
 
 def _section(pdf: FPDF, titre: str, compte: str | None = None):
     _place(pdf, 22)
-    pdf.ln(3)
+    pdf.ln(1.5)
     pdf.set_x(pdf.l_margin)
     pdf.police("serif", "", 15)
     pdf.set_text_color(*INK)
     largeur = pdf.get_string_width(titre) + 2
-    pdf.cell(largeur, 8, titre)
+    pdf.cell(largeur, 7, titre)
     if compte:
         pdf.police("sans", "", 8.5)
         pdf.set_text_color(*TEXTE_2)
-        pdf.cell(0, 8, compte)
-    pdf.ln(9)
+        pdf.cell(0, 7, compte)
+    pdf.ln(7.5)
     pdf.set_text_color(*INK)
     pdf.police("sans", "", 9.5)
 
@@ -307,8 +308,8 @@ def _puce(pdf: FPDF, texte: str, couleur=INK, taille: float = 9.5):
     pdf.ellipse(pdf.l_margin + 0.6, y + 1.6, 1.8, 1.8, style="F")
     pdf.set_xy(pdf.l_margin + 4.5, y)
     pdf.police("sans", "", taille)
-    pdf.multi_cell(_largeur(pdf) - 4.5, 4.8, texte, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(0.8)
+    pdf.multi_cell(_largeur(pdf) - 4.5, 4.5, texte, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(0.4)
 
 
 def _hauteur_texte(pdf: FPDF, largeur: float, texte: str, h: float) -> float:
@@ -341,7 +342,7 @@ def _encadre(pdf: FPDF, blocs: list[tuple[str, str, float, str, tuple]], fond=SA
         pdf.set_text_color(*couleur)
         pdf.multi_cell(largeur, taille * 0.5, texte, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(1.2)
-    pdf.set_y(y + total + 3)
+    pdf.set_y(y + total + 2)
     pdf.set_text_color(*INK)
     pdf.set_line_width(0.2)
 
@@ -358,9 +359,9 @@ def _tableau(pdf: FPDF, entetes: list[str], largeurs: list[float], lignes: list[
     pdf.set_draw_color(*BORD)
     pdf.set_fill_color(*BLANC)
     pdf.set_line_width(0.25)
-    entete = FontFace(emphasis="BOLD", color=INK, fill_color=SABLE, size_pt=8)
+    entete = FontFace(emphasis="BOLD", color=INK, fill_color=SABLE, size_pt=7.5)
     with pdf.table(col_widths=largeurs, width=_largeur(pdf), text_align=aligns or "LEFT",
-                   headings_style=entete, line_height=4, padding=(1.4, 1.3), markdown=True,
+                   headings_style=entete, line_height=4, padding=(1.1, 1.3), markdown=True,
                    cell_fill_mode="NONE", borders_layout="HORIZONTAL_LINES", repeat_headings=1,
                    v_align="TOP") as table:
         ligne = table.row()
@@ -376,7 +377,7 @@ def _tableau(pdf: FPDF, entetes: list[str], largeurs: list[float], lignes: list[
 # --- Tableaux d'actions ---------------------------------------------------------------------
 
 _ENTETES = ["Action", "Coût", "Aide MaPrimeRénov'", "Reste à charge", "Économie / an", "Retour"]
-_LARGEURS = [60, 25, 25, 25, 25, 20]
+_LARGEURS = [59, 25, 29, 25, 23, 19]
 _ALIGNS = ["LEFT", "RIGHT", "RIGHT", "RIGHT", "RIGHT", "RIGHT"]
 
 
@@ -405,21 +406,59 @@ def _table_actions(pdf: FPDF, actions: list[dict], avec_occasion: bool = False):
     _tableau(pdf, _ENTETES, _LARGEURS, [_ligne_action(a, avec_occasion) for a in actions], _ALIGNS)
 
 
+def _aide_nulle(a: dict) -> bool:
+    aide = a.get("aide_estimee_eur")
+    return aide == 0 or (isinstance(aide, dict) and not aide["bas"] and not aide["haut"])
+
+
+def _enumerer(mots: list[str]) -> str:
+    return mots[0] if len(mots) == 1 else f"{', '.join(mots[:-1])} et {mots[-1]}"
+
+
+def _note_commune(actions: list[dict]) -> tuple[str | None, list[dict]]:
+    """Une seule phrase pour tous les travaux sortis de MaPrimeRénov' par geste.
+
+    Le moteur pose une note par action ; sous trois tableaux, la même phrase revenait trois
+    fois. On regroupe à l'affichage les actions SANS aide dont le geste est sorti du parcours
+    (`ref.SORTIE_PAR_GESTE`), et on ne cite que les travaux présents. Les autres notes (PAC,
+    régulation) restent une par une.
+    """
+    sortis = [a for a in actions if a.get("action") in ref.SORTIE_PAR_GESTE and _aide_nulle(a)]
+    autres = [a for a in actions if a not in sortis and a.get("aide_note")]
+    if not sortis:
+        return None, autres
+    presentes = {a["action"] for a in sortis}
+    par_date: dict[str, list[str]] = {}
+    for action, (nom, quand) in ref.SORTIE_PAR_GESTE.items():  # ordre fixe de la table
+        if action in presentes:
+            par_date.setdefault(quand, []).append(nom)
+    dates = sorted(par_date, key=lambda d: d[6:] + d[3:5] + d[:2])
+    detail = " ; ".join(f"{_enumerer(par_date[d])} depuis le {d}" for d in dates)
+    phrase = (f"MaPrimeRénov' par geste ne finance plus ces travaux ({detail}). Primes CEE possibles, "
+              "montant variable selon l'organisme")
+    if any(a["action"] in ref.POSTES_ISOLATION for a in sortis):
+        phrase += " ; l'isolation reste finançable en rénovation d'ampleur"
+    return phrase + ".", autres
+
+
 def _notes_aides(pdf: FPDF, audit: dict, actions: list[dict]):
-    """Notes d'aide dédoublonnées : une note commune à plusieurs actions n'apparaît qu'une fois."""
+    """Notes d'aide : la phrase commune, puis les notes propres, puis la légende « > 30 ans »."""
+    commune, autres = _note_commune(actions)
+    lignes = [f"Aides MaPrimeRénov' du revenu le plus élevé au plus modeste, barèmes relevés le "
+              f"{_date_aides(audit)}, à vérifier au moment du dépôt."]
+    if commune:
+        lignes.append(commune)
     notes: dict[str, list[str]] = {}
-    for a in actions:
-        if a.get("aide_note"):
-            notes.setdefault(a["aide_note"], []).append(a["label"])
-    lignes = [f"Aides MaPrimeRénov' selon vos revenus, du plus élevé au plus modeste : barèmes 2026 "
-              f"de notre base, relevé du {_date_aides(audit)}, à vérifier au moment du dépôt."]
+    for a in autres:
+        notes.setdefault(a["aide_note"], []).append(a["label"])
     lignes += [f"{', '.join(labels)} : {note}." for note, labels in notes.items()]
     if any(_retour_trop_long(a) for a in actions):
         lignes.append("* " + _LEGENDE_RETOUR.format(max=settings.audit_retour_affichage_max_ans))
-    _place(pdf, 8 + 5 * len(lignes))
+    pdf.police("sans", "", 7)
+    _place(pdf, sum(_hauteur_texte(pdf, _largeur(pdf), ligne, 3.3) + 0.5 for ligne in lignes))
     for ligne in lignes:
-        _para(pdf, ligne, taille=7.8, couleur=TEXTE_2, h=3.9)
-        pdf.ln(0.6)
+        _para(pdf, ligne, taille=7, couleur=TEXTE_2, h=3.3)
+        pdf.ln(0.5)
 
 
 # --- v2.3 : page 1, « Votre maison en bref » -------------------------------------------------
@@ -646,7 +685,7 @@ def _page_en_bref(pdf: FPDF, audit: dict, house_label: str | None):
 def _frise(pdf: FPDF, etapes: list[tuple[str, int]]):
     """Quatre étapes reliées ; une étape vide est grisée."""
     _place(pdf, 24)
-    y = pdf.get_y() + 4
+    y = pdf.get_y() + 1
     pas = _largeur(pdf) / len(etapes)
     centres = [pdf.l_margin + pas * (i + 0.5) for i in range(len(etapes))]
     pdf.set_draw_color(*BORD)
@@ -666,7 +705,7 @@ def _frise(pdf: FPDF, etapes: list[tuple[str, int]]):
         pdf.cell(pas, 4.5, libelle, align="C")
     pdf.set_text_color(*INK)
     pdf.set_line_width(0.2)
-    pdf.set_y(y + 15)
+    pdf.set_y(y + 12)
 
 
 def _solaire(pdf: FPDF, sol: dict):
@@ -703,8 +742,7 @@ def _page_plan(pdf: FPDF, audit: dict):
     gestes, conseils, sol = audit.get("gestes", []), audit.get("conseils_equipements", []), audit.get("solaire")
     n_maintenant = len(gestes) + len(conseils) + len(par["maintenant"])
 
-    _titre_page(pdf, "Votre plan", f"{sy.get('decompte', '')}. Dans l'ordre : ce qui ne coûte rien, "
-                                   "puis ce qui rapporte, puis ce qui attend une occasion.")
+    _titre_page(pdf, "Votre plan")
     _frise(pdf, [("Maintenant", n_maintenant), ("Cette année", len(par["prioritaire"])),
                  ("À l'occasion de…", len(par["a_l_occasion"])), ("Pour aller plus loin", 1 if sol else 0)])
 
@@ -735,9 +773,9 @@ def _page_plan(pdf: FPDF, audit: dict):
         _section(pdf, "Pour aller plus loin")
         _solaire(pdf, sol)
 
-    pdf.ln(2)
-    _notes_aides(pdf, audit, travaux)
+    pdf.ln(1)
     _en_resume(pdf, sy)
+    _notes_aides(pdf, audit, travaux)
 
 
 def _phrase_bloc(bloc: dict) -> str:
@@ -762,7 +800,7 @@ def _en_resume(pdf: FPDF, sy: dict):
     if occ["nb"]:
         blocs.append(("sans", "", 9, f"Si vous faites aussi les travaux à prévoir à l'occasion "
                                      f"({_compte(occ['nb'], 'action')}) : {_phrase_bloc(occ)}.", TEXTE_2))
-    _encadre(pdf, blocs)
+    _encadre(pdf, blocs, padding=3.2)
 
 
 # --- v2.3 : page 3, « Comprendre votre maison » ----------------------------------------------
@@ -846,6 +884,55 @@ def _valeur_lisible(v) -> str:
     return str(v)
 
 
+_CLE_BRUTE = re.compile(r"[a-z]+_[a-z_]+")
+
+
+def _terme(x) -> str:
+    """Un mot technique des hypothèses, en français (action, poste, équipement, forme d'aide…)."""
+    x = str(x)
+    if x in ref.ACTIONS:
+        return ref.ACTIONS[x]["label"]
+    for table in (ref.TERMES_HYPOTHESES, ref.LIBELLE_VALEUR["chauffage_principal"], ref.LIBELLE_VALEUR["ecs"]):
+        if x in table:
+            return table[x]
+    return x
+
+
+def _valeur_fr(v) -> str:
+    if isinstance(v, dict):
+        return " ; ".join(f"{_terme(k)} {_valeur_fr(x)}" for k, x in v.items())
+    if isinstance(v, (list, tuple)):
+        return " / ".join(_valeur_fr(x) for x in v)
+    if isinstance(v, bool):
+        return "oui" if v else "non"
+    if isinstance(v, float):
+        return _dec(v, None)
+    if isinstance(v, int):
+        return _milliers(v) if abs(v) >= 1000 else str(v)
+    return _terme(v)
+
+
+def _reference_lisible(h: dict) -> str | None:
+    """« Consommation moyenne d'un DPE D : 215 kWh/m²/an … — source, date », ou None si la clé
+    n'a pas de libellé ou si sa valeur garde un mot technique : elle part alors en annexe brute."""
+    cle, _, param = h["cle"].partition("[")
+    gabarit = ref.LIBELLES_HYPOTHESES.get(cle)
+    if not gabarit:
+        return None
+    texte = gabarit.format(param=_terme(param.rstrip("]")), valeur=_valeur_fr(h["valeur"]))
+    if _CLE_BRUTE.search(texte):
+        return None
+    date_src = f", {date.fromisoformat(h['date']).strftime('%d/%m/%Y')}" if h.get("date") else ""
+    ligne = f"{texte} — {_source_lisible(h['source'])}{date_src}."
+    return None if _CLE_BRUTE.search(ligne) else ligne
+
+
+def _source_lisible(source: str) -> str:
+    """La source telle qu'un lecteur la comprend : sans nom de fichier ni nom de réglage."""
+    source = re.sub(r"kb/[\w.]+", "fiches Helios", source)
+    return re.sub(r"\s*\([^)]*_[^)]*\)", "", source)
+
+
 def _hypotheses_fiche(audit: dict) -> list[str]:
     lignes = [h["valeur"] for h in audit.get("hypotheses", [])
               if h.get("source") == "Fiche Maison" and isinstance(h.get("valeur"), str)]
@@ -853,6 +940,11 @@ def _hypotheses_fiche(audit: dict) -> list[str]:
 
 
 def _page_hypotheses(pdf: FPDF, audit: dict):
+    # Suit le contenu ; ne passe à la page suivante que si le titre et les premières lignes
+    # ne tiennent pas.
+    pdf.ln(6)
+    if pdf.will_page_break(45):
+        pdf.add_page()
     _titre_page(pdf, "Hypothèses et méthode")
 
     supposes = champs_supposes(audit.get("entrees", []))
@@ -867,12 +959,13 @@ def _page_hypotheses(pdf: FPDF, audit: dict):
             _puce(pdf, ligne, couleur=TEXTE_2, taille=9)
 
     refs = [h for h in audit.get("hypotheses", []) if h.get("source") != "Fiche Maison"]
+    lisibles = [(h, _reference_lisible(h)) for h in refs]
     if refs:
         _section(pdf, "Valeurs de référence")
-        for h in refs:
-            date_src = f", {date.fromisoformat(h['date']).strftime('%d/%m/%Y')}" if h.get("date") else ""
-            _para(pdf, f"{h['cle']} : {_valeur_lisible(h['valeur'])} — {h['source']}{date_src}.",
-                  taille=7.5, couleur=TEXTE_2, h=3.6)
+        for _, texte in lisibles:
+            if texte:
+                _para(pdf, texte, taille=7.5, couleur=TEXTE_2, h=3.6)
+                pdf.ln(0.4)
 
     pdf.ln(3)
     _para(pdf, _STATUTS, taille=8, couleur=TEXTE_2)
@@ -881,6 +974,13 @@ def _page_hypotheses(pdf: FPDF, audit: dict):
           taille=8, couleur=TEXTE_2)
     pdf.ln(1)
     _para(pdf, audit.get("avertissement", ""), taille=8.5, style="B")
+
+    brutes = [h for h, texte in lisibles if not texte]
+    if brutes:
+        _section(pdf, "Autres paramètres techniques")
+        for h in brutes:
+            _para(pdf, f"{h['cle']} : {_valeur_lisible(h['valeur'])} — {h['source']}.", taille=7,
+                  couleur=TEXTE_2, h=3.3)
 
 
 # --- Formats antérieurs (v1, v2, v2.1, v2.2) : leur structure, les règles d'aujourd'hui ------
@@ -1042,7 +1142,6 @@ def build_pdf(audit: dict, house_label: str | None = None, fonts_dir: Path | Non
         _page_plan(pdf, audit)
         pdf.add_page()
         _page_comprendre(pdf, audit)
-        pdf.add_page()
         _page_hypotheses(pdf, audit)
     else:
         _document_ancien(pdf, audit, house_label)

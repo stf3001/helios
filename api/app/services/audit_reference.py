@@ -366,9 +366,63 @@ CHAMPS_A_PRECISER: tuple[tuple[str, str, str], ...] = (
     ("nb_niveaux", "Le nombre de niveaux", "supposé : 1 niveau"),
 )
 A_PRECISER_MAX = 3
-# Avec un DPE déclaré, l'année de construction n'entre pas dans l'estimation : on ne
-# prétend pas l'avoir supposée.
-ANNEE_AVEC_DPE = "inconnue : l'estimation repose sur la lettre de votre DPE"
+
+# Travaux sortis de MaPrimeRénov' par geste (kb/baremes_aides.md, 20/10/2026) : nom court et
+# date de sortie, pour la note d'aide COMMUNE du document — une phrase au lieu d'une note
+# répétée sous chaque action. Les notes du moteur (`aide_note`) ne changent pas.
+SORTIE_PAR_GESTE: dict[str, tuple[str, str]] = {
+    "isolation_murs": ("murs", "01/01/2026"),
+    "isolation_plancher": ("plancher", "01/01/2026"),
+    "isolation_combles": ("combles", "01/09/2026"),
+    "menuiseries": ("fenêtres", "01/09/2026"),
+    "ventilation_double_flux": ("VMC double flux", "01/09/2026"),
+    "ballon_thermodynamique": ("ballon thermodynamique", "01/09/2026"),
+}
+
+# Valeurs de référence (`hypotheses` du pré-audit) en français, pour l'annexe du document.
+# Clé = nom de l'hypothèse sans son paramètre (`dpe_kwh_ep_m2_an[D]` → `dpe_kwh_ep_m2_an`) ;
+# `{param}` reçoit le paramètre traduit, `{valeur}` la valeur mise en forme. Une clé absente
+# d'ici s'affiche à part, dans « Autres paramètres techniques » : rien ne disparaît.
+LIBELLES_HYPOTHESES: dict[str, str] = {
+    "zone_climatique": "Zone climatique : {valeur}",
+    "dpe_kwh_ep_m2_an": "Consommation moyenne d'un DPE {param} : {valeur} kWh/m²/an (énergie primaire)",
+    "coef_ep_ef": "Conversion énergie primaire / énergie finale ({param}) : {valeur}",
+    "part_chauffage_dpe": "Part du chauffage dans un DPE tous usages ({param}) : {valeur}",
+    "besoin_utile_kwh_m2_an": "Besoin de chauffage d'une maison {param} : {valeur} kWh/m²/an",
+    "coef_zone": "Correction climatique de la zone {param} : {valeur}",
+    "rendement_chauffage": "Rendement saisonnier ({param}) : {valeur}",
+    "altitude": "Altitude : {valeur}",
+    "usages_specifiques_kwh_an": "Électricité hors chauffage, en kWh/an : {valeur}",
+    "prix_electricite_eur_kwh": "Prix de l'électricité : {valeur} €/kWh",
+    "prix_gaz_eur_kwh": "Prix du gaz : {valeur} €/kWh",
+    "prix_fioul_eur_kwh": "Prix du fioul : {valeur} €/kWh",
+    "prix_bois_eur_kwh": "Prix du bois : {valeur} €/kWh",
+    "prix_reseau_eur_kwh": "Prix du réseau de chaleur : {valeur} €/kWh",
+    "deperditions_base": "Répartition des pertes d'une maison non isolée : {valeur}",
+    "ballon_thermodynamique": "Ballon thermodynamique posé, en € : {valeur}",
+    "couts_actions": "Coût des travaux, bas / haut par unité : {valeur}",
+    "aides": "Aide MaPrimeRénov' par geste, forme / bas / haut : {valeur}",
+    "gains_pct_chauffage": "Économie de chauffage d'une action sur un poste nu (part) : {valeur}",
+    "ratio_murs": "Surface de murs par m² habitable ({param}) : {valeur}",
+    "horizons": "Seuils de classement : {valeur}",
+    "incertitude": "Demi-largeur des fourchettes : {valeur}",
+    "duree_vie_equipements": "Durée de vie retenue, en années : {valeur}",
+}
+# Mots techniques qui apparaissent dans ces valeurs (clés de dictionnaire, formes d'aide,
+# paramètres). Les actions, postes et équipements ont déjà leurs libellés ailleurs.
+TERMES_HYPOTHESES: dict[str, str] = {
+    "electricite": "électricité", "gaz": "gaz", "fioul": "fioul", "bois": "bois", "reseau": "réseau",
+    "base": "appareils", "eau_chaude": "eau chaude", "climatisation": "climatisation",
+    "cout_eur": "coût complet", "surcout_eur": "surcoût", "base_retenue": "retenu",
+    "surcout": "surcoût", "cout_complet": "coût complet",
+    "cout_max_eur": "coût maximal pour « maintenant » (€)", "retour_max_ans": "retour maximal (ans)",
+    "eur_m2": "€/m²", "eur": "€", "pct": "part du coût",
+    "avant_1948": "d'avant 1948", "1948_1974": "de 1948-1974", "1975_1988": "de 1975-1988",
+    "1989_2000": "de 1989-2000", "2001_2012": "de 2001-2012", "apres_2012": "d'après 2012",
+    "toiture": "toiture", "murs": "murs", "air_ventilation": "air et ventilation", "menuiseries": "fenêtres",
+    "plancher": "plancher", "ponts_thermiques": "ponts thermiques",
+    "ballon_elec": "ballon électrique", "thermodynamique": "ballon thermodynamique",
+}
 
 # Ordre d'affichage des horizons.
 HORIZONS = ("maintenant", "prioritaire", "a_l_occasion")

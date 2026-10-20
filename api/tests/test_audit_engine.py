@@ -698,9 +698,11 @@ def test_a_preciser_suit_l_ordre_et_ne_garde_que_le_suppose(nom):
     assert champs == [x["champ"] for x in champs_supposes(r["entrees"])][:3]
 
 
-def test_avec_un_dpe_l_annee_n_est_pas_dite_supposee(ref_sans_etude):
-    annee = next(x for x in ref_sans_etude["a_preciser"] if x["champ"] == "annee_construction")
-    assert "DPE" in annee["hypothese"] and "1948" not in annee["hypothese"]
+def test_avec_un_dpe_l_annee_n_est_pas_proposee(ref_sans_etude):
+    """Avec un DPE déclaré, l'année n'entre pas dans le calcul : la demander n'apporte rien."""
+    assert "annee_construction" not in [x["champ"] for x in ref_sans_etude["a_preciser"]]
+    sans_dpe = run_audit(reference_complete(dpe_lettre=None), aujourd_hui=AUJOURD_HUI)
+    assert "annee_construction" in [x["champ"] for x in champs_supposes(sans_dpe["entrees"])]
 
 
 def _pages_pdf(chemin) -> list[str]:
@@ -713,11 +715,10 @@ def test_le_pdf_de_reference_se_lit(pdf_dans_tmp, caplog):
     with caplog.at_level(logging.WARNING, logger="fpdf"):
         pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
     texte = " ".join(pages)
-    # Chaque partie commence sa page ; le nombre de pages suit le contenu, il n'est pas plafonné.
-    assert pages[0].count("Votre maison en bref") and "Votre plan" in pages[1]
-    # Le titre de partie suit directement l'en-tête de page : la partie ouvre sa page.
+    assert len(pages) <= 4
+    # « Votre plan » et « Comprendre votre maison » ouvrent leur page ; les hypothèses suivent.
+    assert pages[1].split("\n")[1:2] == ["Votre plan"]
     assert any(p.split("\n")[1:2] == ["Comprendre votre maison"] for p in pages)
-    assert "Hypothèses et méthode" in pages[-1]
     for attendu in ("€", "Votre maison en bref", "Surcoût", "> 30 ans", "m²"):
         assert attendu in texte, attendu
     assert "votre première étape" in texte.lower()
@@ -756,5 +757,38 @@ def test_le_chat_recoit_le_plan_recommande(ref_sans_etude):
     ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 20), json_result=ref_sans_etude))
     assert ctx["plan_recommande"]["nb"] == 1
     assert ctx["a_l_occasion"]["nb"] == 3
-    assert len(ctx["a_preciser"]) == 3
+    assert [x["champ"] for x in ctx["a_preciser"]] == ["isolation_plancher", "puissance_souscrite"]
     assert "synthese" in ctx  # aucune clé retirée
+
+
+# --- Lot 3 bis : une mise en page resserrée ------------------------------------------------
+
+@pytest.mark.parametrize("nom", ["reference", "fioul"])
+def test_le_plan_tient_avec_son_resume_et_sa_note(pdf_dans_tmp, nom):
+    """4 pages au plus ; « En résumé » et la note d'aide commune restent avec le tableau
+    « À l'occasion de… » au lieu de tomber seuls sur une page presque vide."""
+    r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
+    pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
+    assert len(pages) <= 4
+    page = next(p for p in pages if "À l'occasion de…" in p and "Action" in p)
+    assert "En résumé" in page
+    assert "ne finance plus ces travaux" in page
+    # Une seule fois : la note n'est plus répétée sous chaque action.
+    assert " ".join(pages).count("par geste ne finance plus") == 1
+
+
+def test_la_note_commune_ne_cite_que_les_travaux_presents(ref_sans_etude):
+    commune, autres = pdf_audit._note_commune(ref_sans_etude["priorites"])
+    assert "murs et plancher depuis le 01/01/2026" in commune
+    assert "combles et ballon thermodynamique depuis le 01/09/2026" in commune
+    assert "fenêtres" not in commune and "VMC" not in commune
+    assert not autres  # rien d'autre à dire pour cette maison
+
+
+@pytest.mark.parametrize("nom", ["reference", "fioul"])
+def test_aucune_cle_brute_hors_de_l_annexe_technique(pdf_dans_tmp, nom):
+    r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
+    texte = " ".join(_pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000")))
+    lisible = texte.split("Autres paramètres techniques")[0]
+    assert re.findall(r"[a-z]+_[a-z_]+", lisible) == []
+    assert "Consommation moyenne d'un DPE D : 215 kWh/m²/an" in texte or nom == "fioul"
