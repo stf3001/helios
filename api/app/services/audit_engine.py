@@ -45,6 +45,12 @@ def _fr_int(n) -> str:
     return f"{int(round(n)):,}".replace(",", " ")
 
 
+def cout_cite(eur: float) -> str:
+    """Un coût de chauffage CITÉ dans un texte : toujours arrondi à la dizaine, partout
+    (« environ 570 €/an »), pour qu'une page ne dise pas 566 ici et 570 là."""
+    return _fr_int(round(eur, -1))
+
+
 class _Trace:
     """Ce que le moteur a lu dans la fiche, et les valeurs de référence qu'il a utilisées."""
 
@@ -726,7 +732,7 @@ def variables_textes(house: House, p: dict, c: dict) -> dict:
     return {
         "chauffage": ref.ARTICLE_CHAUFFAGE.get(p["chauffage"]),
         "zone": ref.LIBELLE_ZONE.get(p["zone"]),
-        "cout_chauffage": _fr_int(round(c["cout_chauffage_actuel_eur"], -1)),
+        "cout_chauffage": cout_cite(c["cout_chauffage_actuel_eur"]),
         "age": _age(house.ecs_annee, p["aujourd_hui"]),
         "kva": int(kva) if kva else None,
         "mois": house.tarif_bloque_mois_restants,
@@ -929,7 +935,7 @@ def _message_sans_isolation(actions: list[dict], solaire: dict | None, cout_chau
     if solaire:
         leviers.append("étudier une production solaire")
     leviers.append("les gestes gratuits")
-    return ref.MESSAGE_SANS_ISOLATION.format(cout=_fr_int(cout_chauffage), leviers=", ".join(leviers))
+    return ref.MESSAGE_SANS_ISOLATION.format(cout=cout_cite(cout_chauffage), leviers=", ".join(leviers))
 
 
 def _bloc_plan(actions: list[dict]) -> dict:

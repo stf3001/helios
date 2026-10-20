@@ -496,3 +496,16 @@ def test_des_fenetres_inconnues_ne_sont_pas_du_simple_vitrage():
     assert not (fen["pourquoi"] or "").startswith("Du simple vitrage")
     if fen["horizon"] != "a_l_occasion":
         assert fen["pourquoi"].startswith("Vos fenêtres ne sont pas renseignées")
+
+
+def test_un_seul_arrondi_pour_le_cout_cite():
+    """Le même coût partout : arrondi à la dizaine dans le message comme dans le pourquoi ; un coût
+    de 426 € est cité 430 dans le message comme dans le pourquoi."""
+    r = run_audit(reference_complete(conso_elec_kwh_an=9030), aujourd_hui=AUJOURD_HUI)  # 426 € → 430
+    cout = moteur.cout_cite(r["consommation"]["cout_chauffage_actuel_eur"])
+    message = r["synthese"]["message_sans_isolation"]
+    assert f"environ {cout} €/an" in message
+    combles = _action(r, "isolation_combles")
+    assert f"environ {cout} €/an de chauffage" in combles["pourquoi"]
+    montants = set(re.findall(r"(\d[\d ]*) €/an", message + " " + combles["pourquoi"]))
+    assert montants == {cout}
