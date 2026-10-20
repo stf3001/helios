@@ -47,7 +47,7 @@ R: Dans une maison non isolée, les déperditions typiques : toiture 25–30 %, 
 
 ### Q: Combien coûte l'isolation des combles perdus ?
 `cat: isolation | tags: combles, prix | verif: prix`
-R: Par soufflage (laine de verre, roche, ouate) : ordre de grandeur 25–50 €/m² pose comprise, pour 30–40 cm d'isolant (R ≥ 7). Économie possible : 15–25 % sur le chauffage. Souvent amorti en moins de 5 ans.
+R: Par soufflage (laine de verre, roche, ouate) : ordre de grandeur 25–50 €/m² pose comprise, pour 30–40 cm d'isolant (R ≥ 7). Économie possible : 15 à 25 % sur le chauffage. Rapidement amorti avec un chauffage cher (fioul, gaz, convecteurs), beaucoup plus lentement avec une pompe à chaleur ou en climat doux.
 
 ### Q: Isolation des murs : intérieur ou extérieur ?
 `cat: isolation | tags: murs, ITE, ITI | verif: prix`
@@ -87,7 +87,7 @@ R: Une PAC prélève des calories dans l'air (ou le sol) pour chauffer le logeme
 
 ### Q: PAC air-eau : prix et économies ?
 `cat: chauffage | tags: PAC_air_eau, prix, aides | verif: prix, aides`
-R: Ordre de grandeur : 10 000–18 000 € pose comprise selon puissance et ECS intégrée ou non. En remplacement d'un fioul ou d'un électrique direct, la facture de chauffage peut être divisée par 2 à 3. Aides possibles : MaPrimeRénov' selon revenus + CEE « Coup de pouce » en remplacement d'une chaudière fossile.
+R: Ordre de grandeur : 10 000–18 000 € pose comprise selon puissance et ECS intégrée ou non. En remplacement d'un fioul ou d'un électrique direct, la facture de chauffage peut être divisée par 2 à 3. Aides possibles : MaPrimeRénov' selon revenus + CEE « Coup de pouce » en remplacement d'une chaudière fossile. Avec des convecteurs électriques, il n'existe pas de circuit d'eau : il faut le créer, ce qui change tout le budget. Une PAC air/air est alors souvent plus réaliste.
 
 ### Q: PAC air-air (clim réversible), bonne idée pour chauffer ?
 `cat: chauffage | tags: PAC_air_air, clim`
@@ -115,7 +115,7 @@ R: Depuis juillet 2022, l'installation de chaudières 100 % fioul neuves est int
 
 ### Q: Chauffe-eau thermodynamique : ça vaut le coup ?
 `cat: ecs | tags: thermodynamique, prix | verif: prix`
-R: Il consomme 2 à 3 fois moins qu'un ballon électrique classique (COP ~3). Prix : 2 500–4 500 € posé, aides possibles. Rentable en 5–8 ans pour une famille. Prévoir un local adapté (volume, bruit) ou une gaine vers l'extérieur.
+R: Il consomme 2 à 3 fois moins qu'un ballon électrique classique (COP ~3). Prix : 2 500 à 4 500 € posé. Il est surtout rentable au remplacement d'un ballon en fin de vie, quand seul le surcoût par rapport à un ballon neuf compte. Depuis le 1er septembre 2026, plus d'aide MaPrimeRénov' par geste ; des primes CEE restent possibles. Prévoir un local adapté (volume, bruit) ou une gaine vers l'extérieur.
 
 ### Q: Mon ballon électrique consomme trop, que faire sans le remplacer ?
 `cat: ecs | tags: ballon, heures_creuses`
@@ -123,7 +123,7 @@ R: Vérifier qu'il chauffe en heures creuses (contacteur HC), régler à 55 °C,
 
 ### Q: Le solaire thermique pour l'eau chaude ?
 `cat: ecs | tags: solaire_thermique, CESI | verif: prix`
-R: Un chauffe-eau solaire (CESI) couvre 50–70 % des besoins annuels d'ECS. Prix : 4 000–7 000 € posé, aides MaPrimeRénov' possibles. Pertinent surtout dans la moitié Sud et pour les foyers de 3+ personnes. Alternative moderne : le thermodynamique, souvent plus simple et moins cher.
+R: Un chauffe-eau solaire (CESI) couvre 50–70 % des besoins annuels d'ECS. Prix : 4 000–7 000 € posé, plus d'aide MaPrimeRénov' par geste depuis le 1er septembre 2026 (sauf outre-mer), primes CEE possibles. Pertinent surtout dans la moitié Sud et pour les foyers de 3+ personnes. Alternative moderne : le thermodynamique, souvent plus simple et moins cher.
 
 ---
 
@@ -175,7 +175,7 @@ R: Selon la région : 900–1 100 kWh/an au nord, 1 200–1 450 kWh/an au sud. U
 
 ### Q: MaPrimeRénov' en 2026, où en est-on ?
 `cat: aides | tags: maprimerenov, 2026 | verif: CRITIQUE`
-R: Le guichet a rouvert le 23 février 2026 après l'adoption de la loi de finances, pour tous les parcours et profils de revenus. Changements 2026 : plafonds de ressources relevés d'environ 1 %, plafond de la rénovation d'ampleur abaissé de 70 000 à 40 000 € HT (saut de 3 classes), exclusion du parcours par geste des chaudières biomasse et de l'isolation des murs, baisse des primes bois. Délais d'instruction allongés (jusqu'à 6 mois pour les rénovations d'ampleur). Montants exacts : à vérifier sur france-renov.gouv.fr selon votre profil.
+R: Le guichet a rouvert le 23 février 2026 après l'adoption de la loi de finances, pour tous les parcours et profils de revenus. Changements 2026 : plafonds de ressources relevés d'environ 1 %, plafond de la rénovation d'ampleur abaissé de 70 000 à 40 000 € HT (saut de 3 classes), exclusion du parcours par geste des chaudières biomasse et de l'isolation des murs, baisse des primes bois. Depuis le 1er septembre 2026, le parcours par geste ne finance plus que les pompes à chaleur, le raccordement à un réseau de chaleur, la dépose d'une cuve à fioul et l'audit : combles, fenêtres, ballon thermodynamique, VMC double flux, solaire thermique et poêles en sont sortis (décret n° 2026-822). Délais d'instruction allongés (jusqu'à 6 mois pour les rénovations d'ampleur). Montants exacts : à vérifier sur france-renov.gouv.fr selon votre profil.
 
 ### Q: Quels sont les profils de revenus MaPrimeRénov' ?
 `cat: aides | tags: maprimerenov, plafonds | verif: plafonds`

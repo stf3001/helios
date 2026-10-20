@@ -33,7 +33,7 @@ R: Rarement en totalité. La plupart des aides (MaPrimeRénov', CEE, éco-PTZ) e
 
 ### Q: Qu'est-ce qu'une solution biénergie (PAC + appoint) ?
 `cat:chauffage | tags:pac_hybride,biénergie,appoint | verif:generique`
-R: Une PAC hybride combine une pompe à chaleur (pour l'essentiel du chauffage) avec une chaudière d'appoint (souvent gaz), qui prend le relais automatiquement lors des pics de froid où le rendement de la PAC seule chute. C'est un compromis intéressant en rénovation quand l'isolation n'est pas encore optimale ou que la puissance électrique disponible est limitée — mais cela suppose de garder deux systèmes à entretenir.
+R: Une PAC hybride combine une pompe à chaleur (pour l'essentiel du chauffage) avec une chaudière d'appoint (souvent gaz), qui prend le relais automatiquement lors des pics de froid où le rendement de la PAC seule chute. C'est un compromis intéressant en rénovation quand l'isolation n'est pas encore optimale ou que la puissance électrique disponible est limitée — mais cela suppose de garder deux systèmes à entretenir. Attention : depuis le 1er septembre 2026, une PAC hybride avec chaudière fossile n'est plus financée en rénovation d'ampleur dans une maison individuelle.
 
 ### Q: Faire des travaux énergétiques change-t-il ma prime d'assurance habitation ?
 `cat:chantier | tags:assurance,prime,declaration | verif:generique`
