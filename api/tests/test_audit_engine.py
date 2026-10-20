@@ -236,7 +236,8 @@ def test_maison_au_gaz_economise_du_gaz_au_prix_du_gaz():
 
 
 def test_convecteurs_recoivent_la_pac():
-    """v2.4 : sans circuit d'eau, une PAC air/air. 100 m² / 30 = 3,3 → 4 unités × 2 500-4 000 €.
+    """v2.4 : sans circuit d'eau, une PAC air/air. 100 m² / 30 = 3,3 → 4 unités × 1 800-3 000 €
+    (validé le 20/10/2026).
     Économie par changement de rendement (1,0 → 3,0)."""
     r = run_audit(maison_type(chauffage_principal="elec_direct"))
     actions = {a["action"]: a for a in r["priorites"]}
@@ -244,7 +245,7 @@ def test_convecteurs_recoivent_la_pac():
     pac = actions["pac_air_air"]
     assert pac["label"] == "Pompe à chaleur air/air (une unité par pièce principale)"
     assert pac["quantite"] == {"valeur": 4, "unite": "unité(s) intérieure(s)"}
-    assert pac["cout_eur"] == {"bas": 10000, "haut": 16000}
+    assert pac["cout_eur"] == {"bas": 7200, "haut": 12000}
     assert pac["aide_estimee_eur"] == {"bas": 0, "haut": 0}
     assert pac["economie_annuelle_eur"]["central"] > 0
     assert pac["conso_apres_kwh_electricite"] is not None
@@ -454,15 +455,15 @@ def test_reference_conseils_d_age(ref_sans_etude):
 
 def test_reference_ballon_thermodynamique(ref_sans_etude):
     """(800 − 280) × 4 = 2 080 kWh × 0,2001 = 416 €/an. Ballon en fin de vie : surcoût
-    1 500-2 500, central 2 000 ; aucune aide MaPrimeRénov' par geste depuis le 01/09/2026 ;
-    retour 2 000 / 416,2 = 4,8 ans → prioritaire."""
+    1 800-2 800 (validé le 20/10/2026), central 2 300 ; aucune aide MaPrimeRénov' par geste
+    depuis le 01/09/2026 ; retour 2 300 / 416,2 = 5,5 ans → prioritaire."""
     b = next(a for a in ref_sans_etude["priorites"] if a["action"] == "ballon_thermodynamique")
     assert b["horizon"] == "prioritaire"
     assert b["base_cout"] == "surcout"
-    assert b["cout_eur"] == {"bas": 1500, "haut": 2500}
+    assert b["cout_eur"] == {"bas": 1800, "haut": 2800}
     assert b["economie_annuelle_kwh"] == 2080
     assert b["economie_annuelle_eur"]["central"] == 416
-    assert b["temps_retour_ans"] == 4.8
+    assert b["temps_retour_ans"] == 5.5
     assert b["contexte"] == "au remplacement de votre ballon, qui approche de sa fin de vie"
     assert b["aides_statut"] == "base_connaissances"
     assert b["categorie"] == "eau_chaude"
@@ -629,7 +630,7 @@ def test_le_pdf_date_les_aides_et_ecrit_aucune(pdf_dans_tmp):
     assert f"relevé du {attendu}" in texte
     # Coût puis aide, dans l'ordre des colonnes : combles, puis ballon (sur son surcoût).
     assert "2 500 – 7 000 € aucune" in texte
-    assert "Surcoût\n1 500 – 2 500 €\naucune" in texte
+    assert "Surcoût\n1 800 – 2 800 €\naucune" in texte
     assert "0-0" not in texte
 
 
@@ -691,7 +692,7 @@ def test_reference_plan_recommande_est_le_ballon(ref_sans_etude):
     plan = ref_sans_etude["synthese"]["plan_recommande"]
     ballon = next(a for a in ref_sans_etude["priorites"] if a["action"] == "ballon_thermodynamique")
     assert plan["nb"] == 1
-    assert plan["investissement_eur"] == {"bas": 1500, "haut": 2500}
+    assert plan["investissement_eur"] == {"bas": 1800, "haut": 2800}
     # Une action seule : exactement ses chiffres, pas une fourchette refaite sur la somme.
     assert plan["economie_annuelle_eur"] == ballon["economie_annuelle_eur"]
 

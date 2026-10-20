@@ -163,10 +163,11 @@ class Settings(BaseSettings):
     )
     audit_duree_vie_ecs: tuple[tuple[str, int], ...] = (("ballon_elec", 15), ("thermodynamique", 15))
     audit_age_alerte_pct: float = 80.0
-    # Ballon thermodynamique posé (€ TTC, bas/haut), et surcoût par rapport à un ballon
-    # électrique neuf, retenu quand l'ancien ballon est en fin de vie. A VALIDER.
+    # Ballon thermodynamique posé (€ TTC, bas/haut). A VALIDER.
     audit_ballon_thermo_cout_eur: tuple[int, int] = (2500, 4000)
-    audit_ballon_thermo_surcout_eur: tuple[int, int] = (1500, 2500)
+    # Surcoût par rapport à un ballon électrique neuf, retenu quand l'ancien ballon est en fin
+    # de vie (même fourchette que kb/ecs_solaire.md). Validé par Stéphane le 20/10/2026.
+    audit_ballon_thermo_surcout_eur: tuple[int, int] = (1800, 2800)
     # Piste solaire sans étude : maison, propriétaire (ou statut inconnu), et au moins cette
     # consommation électrique déclarée (kWh/an). A VALIDER.
     audit_solaire_conso_min_kwh: int = 4000
@@ -184,9 +185,10 @@ class Settings(BaseSettings):
     # retenu pour l'appareil actuel (`audit_rendement_chauffage`). Ordre de grandeur, A CALIBRER.
     audit_scop_pac_air_air_neuf: float = 4.3
     # Convecteurs : une PAC air/air (une unité par pièce principale) remplace la PAC air/eau,
-    # qui imposerait de créer un circuit d'eau. Coût posé par unité intérieure (bas, haut),
-    # surface couverte par unité et plafond d'unités. A CALIBRER PAR STÉPHANE.
-    audit_pac_air_air_cout_unite_eur: tuple[int, int] = (2500, 4000)
+    # qui imposerait de créer un circuit d'eau. Coût posé par unité intérieure (bas, haut) :
+    # validé par Stéphane le 20/10/2026. Surface couverte par unité et plafond d'unités :
+    # A CALIBRER PAR STÉPHANE.
+    audit_pac_air_air_cout_unite_eur: tuple[int, int] = (1800, 3000)
     audit_m2_par_unite_air_air: float = 30.0
     audit_unites_air_air_max: int = 6
     # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :

@@ -448,9 +448,12 @@ def test_apres_autres_cite_les_actions_d_avant():
     fen = _action(run_audit(maison_type(), aujourd_hui=AUJOURD_HUI), "menuiseries")
     assert fen["raison_occasion"] == "apres_autres"
     assert fen["pourquoi"] is None or "Après" not in fen["pourquoi"]  # fenêtres : pas de texte « après »
-    pac = _action(run_audit(maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=None),
-                            aujourd_hui=AUJOURD_HUI), "pac_air_air")
+    # 80 m² au fioul, murs nus : seule la PAC se rembourserait ; après la régulation et le
+    # toit, non.
+    house = maison_type(surface_habitable=80, isolation_murs="aucune", conso_elec_kwh_an=None)
+    pac = _action(run_audit(house, aujourd_hui=AUJOURD_HUI), "pac_air_eau")
     assert pac["raison_occasion"] == "apres_autres"
+    assert _seule(house, "pac_air_eau")["temps_retour_ans"] <= settings.audit_horizon_retour_max_ans
     assert pac["pourquoi"].startswith("Après la régulation et l'isolation du toit, votre maison")
 
 
