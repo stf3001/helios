@@ -754,8 +754,9 @@ def test_sans_dpe_declare_pas_d_echelle_ni_de_lettre(pdf_dans_tmp):
     assert "Ni lettre DPE ni année de construction" in page1  # d'où vient l'estimation
 
 
-@pytest.mark.parametrize("audit", [AUDIT_V1, AUDIT_V2, _fixture("audit_v21.json"), _fixture("audit_v22.json")],
-                         ids=["v1", "v2", "v2.1", "v2.2"])
+@pytest.mark.parametrize("audit", [AUDIT_V1, AUDIT_V2, _fixture("audit_v21.json"), _fixture("audit_v22.json"),
+                                   _fixture("audit_v23.json"), _fixture("audit_v24.json")],
+                         ids=["v1", "v2", "v2.1", "v2.2", "v2.3", "v2.4"])
 def test_les_anciens_audits_suivent_les_regles_d_aujourd_hui(pdf_dans_tmp, audit):
     texte = " ".join(_pages_pdf(pdf_audit.build_pdf(audit, house_label="Maison · 83000")))
     assert "esprit colibri" not in texte

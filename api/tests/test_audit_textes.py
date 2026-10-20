@@ -557,3 +557,15 @@ def test_la_reference_n_a_plus_de_trou_avant_l_occasion(pdf_tmp):
     pages = _pages(run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI))
     page = next(p for p in pages if re.search(r"Cette année \d+ action", p))
     assert re.search(r"À l'occasion de… \d+ action", page)
+
+
+def test_un_audit_v24_stocke_garde_ses_textes(pdf_tmp):
+    """Un v2.4 ne porte pas de raison_occasion : il s'affiche avec les textes qu'il a stockés."""
+    import json
+    audit = json.loads((Path(__file__).parent / "fixtures" / "audit_v24.json").read_text(encoding="utf-8"))
+    assert audit["version_helios"] == "v2.4"
+    assert not any("raison_occasion" in a for a in audit["priorites"])
+    texte = " ".join(_pages(audit))
+    assert "Pourquoi :" in texte and "Votre contrat" in texte
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 20), json_result=audit))
+    assert ctx["contrat"] and ctx["climat"]
