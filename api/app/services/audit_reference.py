@@ -120,6 +120,9 @@ REGULATION_A_AMELIORER: dict[str, bool] = {
 }
 # Systèmes à remplacer en priorité par une PAC (valeurs exactes du schéma `Chauffage`).
 CHAUFFAGE_A_REMPLACER = {"elec_direct", "gaz", "fioul"}
+# Parmi eux, ceux qui n'ont pas de circuit d'eau : la PAC air/air y remplace la PAC air/eau
+# (kb/action_pac_remplacement.md, « J'ai des convecteurs électriques : … »).
+CHAUFFAGE_VERS_AIR_AIR = {"elec_direct"}
 
 # Actions de rénovation recommandables. Coûts TTC pose comprise, ordres de grandeur 2026.
 # `unit` : "m2_emprise" (surface habitable / nombre de niveaux : combles, plancher bas),
@@ -219,6 +222,22 @@ ACTIONS: dict[str, dict] = {
         # Pas de pourcentage : l'économie se calcule par changement d'énergie (moteur).
         "duree_vie_ans": 17,
         "libelle_occasion": "au remplacement du système actuel en fin de vie",
+        "priorite_hierarchie": 3,
+    },
+    # Convecteurs seulement. Coût : `config.audit_pac_air_air_cout_unite_eur` × unités
+    # (`audit_m2_par_unite_air_air`, plafond `audit_unites_air_air_max`). Économie par
+    # changement de rendement, comme la PAC air/eau (moteur).
+    "pac_air_air": {
+        "poste": "systeme_chauffage",
+        "label": "Pompe à chaleur air/air (une unité par pièce principale)",
+        "unit": "unite_air_air",
+        # kb/action_pac_remplacement.md, « Quelles aides pour remplacer son chauffage par une
+        # pompe à chaleur en 2026 ? » : l'air/air n'est pas aidée par MaPrimeRénov'.
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/action_pac_remplacement.md (20/10/2026)",
+        "aide_note": "pas d'aide MaPrimeRénov' pour une PAC air/air ; primes CEE possibles",
+        "duree_vie_ans": 15,
+        "libelle_occasion": "au remplacement de vos convecteurs",
         "priorite_hierarchie": 3,
     },
     "regulation": {
@@ -569,6 +588,20 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "benefices": ("sortie du fioul ou du gaz", "une énergie qui peut venir de vos panneaux", "beaucoup moins de CO₂"),
         "vigilance": ("isoler avant pour une machine plus petite", "emplacement de l'unité extérieure (bruit)", "puissance justifiée par vos factures"),
         "devis": ("puissance justifiée", "désembouage et filtre", "mise en service et réglage de la loi d'eau"),
+        "note_convecteurs": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
+    },
+    # Les textes de la PAC (action_pac_remplacement). Trois éléments qui ne valent que pour
+    # une PAC air/eau ou une sortie du fossile sont laissés de côté — retirés, jamais
+    # réécrits : « sortie du fioul ou du gaz », « désembouage et filtre », « loi d'eau ».
+    # La note des convecteurs devient le contexte de l'action.
+    "pac_air_air": {
+        "fiche": "action_pac_remplacement",
+        "question": "J'ai des convecteurs électriques : pompe à chaleur air/eau ou air/air ?",
+        "pourquoi_rentable": "Avec {chauffage}, chaque kWh de chaleur vous coûte cher. Une pompe à chaleur en produit environ trois pour un kWh d'électricité : c'est votre plus gros levier.",
+        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Préparez son remplacement à la fin de vie de votre chaudière.",
+        "benefices": ("une énergie qui peut venir de vos panneaux", "beaucoup moins de CO₂"),
+        "vigilance": ("isoler avant pour une machine plus petite", "emplacement de l'unité extérieure (bruit)", "puissance justifiée par vos factures"),
+        "devis": ("puissance justifiée",),
         "note_convecteurs": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
     },
     "regulation": {

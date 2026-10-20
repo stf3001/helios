@@ -19,6 +19,7 @@ Statuts d'un chiffre : `observe` (mesuré), `declare` (saisi dans la fiche), `su
 (hypothèse faute de donnée), `calcule` (dérivé par un moteur).
 """
 
+import math
 from datetime import date, datetime
 
 from app.core.config import settings
@@ -467,7 +468,9 @@ def _action_recommandee(key: str, house: House, chauffage: str) -> bool:
     if key == "ventilation_double_flux":
         return ref.VENTILATION_A_REMPLACER[_etat(house.ventilation)]
     if key == "pac_air_eau":
-        return chauffage in ref.CHAUFFAGE_A_REMPLACER
+        return chauffage in ref.CHAUFFAGE_A_REMPLACER - ref.CHAUFFAGE_VERS_AIR_AIR
+    if key == "pac_air_air":
+        return chauffage in ref.CHAUFFAGE_VERS_AIR_AIR
     if key == "regulation":
         # Régulation non renseignée : supposée absente (hypothèse prudente, déjà v1).
         return ref.REGULATION_A_AMELIORER[house.regulation or "aucune"]
@@ -492,6 +495,9 @@ def _quantite(action: dict, p: dict) -> tuple[float, str]:
         return round(surface * ratio_murs(p["niveaux"])), "m² de mur"
     if unit == "fenetre":
         return max(1, round(surface / ref.M2_PAR_FENETRE)), "fenêtre(s)"
+    if unit == "unite_air_air":
+        n = math.ceil(surface / settings.audit_m2_par_unite_air_air) if surface else 1
+        return min(max(1, n), settings.audit_unites_air_air_max), "unité(s) intérieure(s)"
     return 1, "forfait"
 
 
@@ -535,7 +541,11 @@ def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> l
                      "base_cout": "surcout" if b["fin_de_vie"] else "cout_complet",
                      "contexte": a["libelle_fin_de_vie"] if b["fin_de_vie"] else None}
         else:
-            unit_bas, unit_haut = a["cout_bas"], a["cout_haut"]
+            if key == "pac_air_air":
+                unit_bas, unit_haut = settings.audit_pac_air_air_cout_unite_eur
+                extra = {"contexte": ref.TEXTES_ACTIONS[key]["note_convecteurs"]}
+            else:
+                unit_bas, unit_haut = a["cout_bas"], a["cout_haut"]
             cout_bas, cout_haut = round(unit_bas * qte), round(unit_haut * qte)
         central = (cout_bas + cout_haut) / 2
         aide = _aide(a, qte, central)
@@ -555,7 +565,8 @@ def _actions_candidates(house: House, p: dict, deps: list[dict], t: _Trace) -> l
             "aide_note": a.get("aide_note"),
             "_reste_central": max(0.0, central - (aide["bas"] + aide["haut"]) / 2),
             "gain_pct_chauffage": (round(_gain_local(key, house), 3)
-                                   if key not in ("pac_air_eau", "ballon_thermodynamique") else None),
+                                   if key not in ("pac_air_eau", "pac_air_air", "ballon_thermodynamique")
+                                   else None),
             "duree_vie_ans": a["duree_vie_ans"],
             "libelle_occasion": a["libelle_occasion"],
             "priorite_hierarchie": a["priorite_hierarchie"],
@@ -585,7 +596,8 @@ def _appliquer(ordre: list[dict], conso: float, energie: str, prix: float, chauf
     Renvoie le coût annuel du chauffage une fois tout le plan réalisé.
     """
     rendement = _grille(settings.audit_rendement_chauffage, chauffage)
-    scop = _grille(settings.audit_rendement_chauffage, "PAC_air_eau")
+    scops = {"pac_air_eau": _grille(settings.audit_rendement_chauffage, "PAC_air_eau"),
+             "pac_air_air": _grille(settings.audit_rendement_chauffage, "PAC_air_air")}
     prix_elec = prix_energie("electricite", kva)
     for a in ordre:
         if a.get("_type") == "solaire":
@@ -594,7 +606,8 @@ def _appliquer(ordre: list[dict], conso: float, energie: str, prix: float, chauf
             eur = a["_eco_eur"]
             a["economie_annuelle_kwh"] = round(a["_eco_kwh"])
             a["energie_economisee"] = "electricite"
-        elif a["action"] == "pac_air_eau":
+        elif a["action"] in scops:
+            scop = scops[a["action"]]
             apres = conso * rendement / scop
             eur = conso * prix - apres * prix_elec
             a["economie_annuelle_kwh"] = None  # changement d'énergie : des kWh qui ne se soustraient pas

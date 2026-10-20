@@ -236,10 +236,19 @@ def test_maison_au_gaz_economise_du_gaz_au_prix_du_gaz():
 
 
 def test_convecteurs_recoivent_la_pac():
+    """v2.4 : sans circuit d'eau, une PAC air/air. 100 m² / 30 = 3,3 → 4 unités × 2 500-4 000 €.
+    Économie par changement de rendement (1,0 → 3,0)."""
     r = run_audit(maison_type(chauffage_principal="elec_direct"))
-    pac = next(a for a in r["priorites"] if a["action"] == "pac_air_eau")
-    assert pac["label"] == "Pompe à chaleur air/eau (remplacement du chauffage actuel)"
+    actions = {a["action"]: a for a in r["priorites"]}
+    assert "pac_air_eau" not in actions
+    pac = actions["pac_air_air"]
+    assert pac["label"] == "Pompe à chaleur air/air (une unité par pièce principale)"
+    assert pac["quantite"] == {"valeur": 4, "unite": "unité(s) intérieure(s)"}
+    assert pac["cout_eur"] == {"bas": 10000, "haut": 16000}
+    assert pac["aide_estimee_eur"] == {"bas": 0, "haut": 0}
     assert pac["economie_annuelle_eur"]["central"] > 0
+    assert pac["conso_apres_kwh_electricite"] is not None
+    assert "pas de circuit d'eau" in pac["contexte"]
 
 
 def test_une_pac_ne_recoit_pas_de_pac():

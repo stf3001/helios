@@ -180,6 +180,12 @@ class Settings(BaseSettings):
     # âgée (conseil d'âge, pas une action : ni coût ni temps de retour). Comparé au rendement
     # retenu pour l'appareil actuel (`audit_rendement_chauffage`). Ordre de grandeur, A CALIBRER.
     audit_scop_pac_air_air_neuf: float = 4.3
+    # Convecteurs : une PAC air/air (une unité par pièce principale) remplace la PAC air/eau,
+    # qui imposerait de créer un circuit d'eau. Coût posé par unité intérieure (bas, haut),
+    # surface couverte par unité et plafond d'unités. A CALIBRER PAR STÉPHANE.
+    audit_pac_air_air_cout_unite_eur: tuple[int, int] = (2500, 4000)
+    audit_m2_par_unite_air_air: float = 30.0
+    audit_unites_air_air_max: int = 6
     # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :
     # arrêté du 31 mars 2021 modifié (3CL-DPE), tableau des facteurs d'émission, relevé le
     # 20/10/2026 dans sa transcription open source (Open3CL, src/conso.js, « au 31 mars

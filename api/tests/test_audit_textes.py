@@ -44,7 +44,11 @@ def test_les_textes_des_actions_sont_ceux_de_la_fiche(action):
         if cle in ("fiche", "question"):
             continue
         if isinstance(valeur, tuple):
-            assert list(valeur) == _items(section, cle), (action, cle)
+            fiche = _items(section, cle)
+            if action == "pac_air_air":  # trois éléments retirés, aucun réécrit, ordre gardé
+                assert [x for x in fiche if x in valeur] == list(valeur), (action, cle)
+            else:
+                assert list(valeur) == fiche, (action, cle)
         else:
             assert valeur == _phrase(section, cle), (action, cle)
     # La question mène à la page de la fiche dans la FAQ : elle doit exister telle quelle.
@@ -102,9 +106,25 @@ def test_le_fioul_dit_que_sa_chaleur_coute_cher():
     assert combles["pourquoi"].startswith("Avec une chaudière fioul, chaque kWh perdu")
 
 
-def test_convecteurs_et_pac_air_eau_la_note_du_circuit_d_eau():
-    pac = _action(run_audit(maison_type(chauffage_principal="elec_direct"), aujourd_hui=AUJOURD_HUI), "pac_air_eau")
-    assert "pas de circuit d'eau" in pac["pourquoi"]
+def test_convecteurs_la_pac_air_air_porte_la_note_du_circuit_d_eau():
+    pac = _action(run_audit(maison_type(chauffage_principal="elec_direct"), aujourd_hui=AUJOURD_HUI), "pac_air_air")
+    assert pac["contexte"] == ref.TEXTES_ACTIONS["pac_air_air"]["note_convecteurs"]
+    assert "pas de circuit d'eau" not in (pac["pourquoi"] or "")  # dite une fois, en contexte
+    assert "sortie du fioul ou du gaz" not in pac["benefices"]
+    assert pac["devis"] == ["puissance justifiée"]
+
+
+@pytest.mark.parametrize("surface, unites", [(20, 1), (100, 4), (300, 6), (None, 1)])
+def test_nombre_d_unites_borne(surface, unites):
+    r = run_audit(maison_type(chauffage_principal="elec_direct", surface_habitable=surface), aujourd_hui=AUJOURD_HUI)
+    assert _action(r, "pac_air_air")["quantite"]["valeur"] == unites
+
+
+@pytest.mark.parametrize("chauffage", ["gaz", "fioul"])
+def test_le_fossile_garde_la_pac_air_eau(chauffage):
+    actions = {a["action"] for a in run_audit(maison_type(chauffage_principal=chauffage),
+                                              aujourd_hui=AUJOURD_HUI)["priorites"]}
+    assert "pac_air_eau" in actions and "pac_air_air" not in actions
 
 
 # --- Étape 2 : les gestes par équipement ----------------------------------------------------

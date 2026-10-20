@@ -160,7 +160,11 @@ function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) 
         <div>Reste : {montant(p.reste_a_charge_eur)}</div>
         <div>Éco/an : {eur(p.economie_annuelle_eur.bas)}–{eur(p.economie_annuelle_eur.haut)}</div>
       </div>
-      {p.contexte && <div className="text-xs text-gray-500 mt-2">À faire {p.contexte}.</div>}
+      {p.contexte && (
+        <div className="text-xs text-gray-500 mt-2">
+          {/^[A-ZÀ-Ý]/.test(p.contexte) ? p.contexte : `À faire ${p.contexte}.`}
+        </div>
+      )}
       {p.libelle_occasion && <div className="text-xs text-gray-500 mt-2">À faire {p.libelle_occasion}.</div>}
       {p.aide_note && <div className="text-xs text-gray-500 mt-1">Aide : {p.aide_note}.</div>}
       <Explications p={p} />
