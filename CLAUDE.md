@@ -1321,3 +1321,6 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - Gestes gratuits, conseils d'âge et confort d'été sont des tables de `audit_reference.py`, jamais chiffrées ; l'eau chaude ne se combine pas avec le chauffage.
 - Les fiches `kb/action_*` (avec `gestes_equipements`, `renovation_ampleur`, `lire_son_dpe`) sont la source des conseils de l'audit ; leur section « Pour le pré-audit », après le dernier `---`, n'est pas ingérée.
 - Les aides de `ACTIONS` suivent `kb/baremes_aides.md` ; `audit_aides_date_reference` est écrite dans chaque audit, que le PDF date avec.
+- PDF v2.3 en quatre parties (en bref, plan, comprendre, hypothèses) : polices TTF de `api/app/assets/fonts/` (repli Helvetica testé), couleurs copiées de `frontend/src/index.css` — les deux se tiennent à jour ENSEMBLE.
+- Le document annonce `synthese.plan_recommande`, jamais le total qui additionne ce qui attend une occasion ; `a_preciser` suit `CHAMPS_A_PRECISER`.
+- `audit_retour_affichage_max_ans` (30, affichage seul) est recopié dans `EspaceAudits.tsx`.

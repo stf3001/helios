@@ -629,3 +629,128 @@ def test_un_audit_stocke_garde_la_date_de_ses_aides(pdf_dans_tmp):
     del r["aides_date_reference"]
     texte = _texte_pdf(pdf_audit.build_pdf(r, house_label="maison - 83000"))
     assert "relevé du 22/07/2026" in texte
+
+
+# --- Lot 3 (v2.3) : un document qu'on lit --------------------------------------------------
+
+import json  # noqa: E402
+import logging  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from app.services.audit_engine import champs_supposes  # noqa: E402
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def _fixture(nom: str) -> dict:
+    return json.loads((FIXTURES / nom).read_text(encoding="utf-8"))
+
+
+def _maisons():
+    return {"reference": reference_complete(), "fioul": maison_type()}
+
+
+@pytest.mark.parametrize("nom", ["reference", "fioul"])
+def test_plan_recommande_et_occasion_redonnent_les_totaux(nom):
+    """Les deux blocs ne créent aucun chiffre : ensemble, ils redonnent la synthèse."""
+    r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
+    s = r["synthese"]
+    plan, occ = s["plan_recommande"], s["a_l_occasion"]
+    for cle in ("investissement_eur", "aides_estimees_eur", "reste_a_charge_eur"):
+        for borne in ("bas", "haut"):
+            assert plan[cle][borne] + occ[cle][borne] == s[cle][borne], (cle, borne)
+    for cle_bloc, cle_synthese in (("economie_chauffage_eur", "economie_chauffage_eur"),
+                                   ("economie_eau_chaude_eur", "economie_eau_chaude_eur")):
+        total = s[cle_synthese] or {"bas": 0, "haut": 0, "central": 0}
+        for borne in ("bas", "haut", "central"):
+            # Somme d'arrondis contre arrondi d'une somme : un euro par action au plus.
+            assert plan[cle_bloc][borne] + occ[cle_bloc][borne] == pytest.approx(total[borne], abs=len(r["priorites"]))
+
+
+@pytest.mark.parametrize("nom", ["reference", "fioul"])
+def test_plan_recommande_compte_les_actions_chiffrees_a_faire(nom):
+    r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
+    a_faire = [a for a in r["priorites"] if a["categorie"] != "production"
+               and a["horizon"] in ("maintenant", "prioritaire")]
+    assert r["synthese"]["plan_recommande"]["nb"] == len(a_faire)
+    assert r["synthese"]["a_l_occasion"]["nb"] == sum(a["horizon"] == "a_l_occasion" for a in r["priorites"]
+                                                      if a["categorie"] != "production")
+
+
+def test_reference_plan_recommande_est_le_ballon(ref_sans_etude):
+    plan = ref_sans_etude["synthese"]["plan_recommande"]
+    ballon = next(a for a in ref_sans_etude["priorites"] if a["action"] == "ballon_thermodynamique")
+    assert plan["nb"] == 1
+    assert plan["investissement_eur"] == {"bas": 1500, "haut": 2500}
+    # Une action seule : exactement ses chiffres, pas une fourchette refaite sur la somme.
+    assert plan["economie_annuelle_eur"] == ballon["economie_annuelle_eur"]
+
+
+@pytest.mark.parametrize("nom", ["reference", "fioul"])
+def test_a_preciser_suit_l_ordre_et_ne_garde_que_le_suppose(nom):
+    r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
+    supposes = {e["champ"] for e in r["entrees"] if e["statut"] == "suppose"}
+    ordre = [champ for champ, _, _ in ref.CHAMPS_A_PRECISER]
+    champs = [x["champ"] for x in r["a_preciser"]]
+    assert 0 < len(champs) <= 3
+    assert set(champs) <= supposes
+    assert champs == sorted(champs, key=ordre.index)
+    assert champs == [x["champ"] for x in champs_supposes(r["entrees"])][:3]
+
+
+def test_avec_un_dpe_l_annee_n_est_pas_dite_supposee(ref_sans_etude):
+    annee = next(x for x in ref_sans_etude["a_preciser"] if x["champ"] == "annee_construction")
+    assert "DPE" in annee["hypothese"] and "1948" not in annee["hypothese"]
+
+
+def _pages_pdf(chemin) -> list[str]:
+    from pypdf import PdfReader
+    return [page.extract_text().replace(" ", " ") for page in PdfReader(chemin).pages]
+
+
+def test_le_pdf_de_reference_se_lit(pdf_dans_tmp, caplog):
+    r = run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)
+    with caplog.at_level(logging.WARNING, logger="fpdf"):
+        pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
+    texte = " ".join(pages)
+    assert len(pages) <= 4
+    for attendu in ("€", "Votre maison en bref", "Surcoût", "> 30 ans", "m²"):
+        assert attendu in texte, attendu
+    assert "votre première étape" in texte.lower()
+    for interdit in ("EUR", "535", "esprit colibri", "22 300", "Pré-diagnostic qualitatif"):
+        assert interdit not in texte, interdit
+    assert not [rec for rec in caplog.records if "missing" in rec.getMessage()], "glyphe manquant"
+
+
+def test_sans_polices_le_pdf_se_genere_quand_meme(pdf_dans_tmp, tmp_path):
+    r = run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)
+    out = pdf_audit.build_pdf(r, house_label="Maison · 83000", fonts_dir=tmp_path / "absent")
+    texte = " ".join(_pages_pdf(out))
+    assert "Votre maison en bref" in texte and "EUR" in texte  # repli Helvetica, € remplacé
+
+
+def test_sans_dpe_declare_pas_d_echelle_ni_de_lettre(pdf_dans_tmp):
+    r = run_audit(reference_complete(dpe_lettre=None), aujourd_hui=AUJOURD_HUI)
+    page1 = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))[0]
+    assert "votre lettre" not in page1
+    assert not re.search(r"(?m)^\s*[A-G]\s*$", page1)
+    assert "Ni lettre DPE ni année de construction" in page1  # d'où vient l'estimation
+
+
+@pytest.mark.parametrize("audit", [AUDIT_V1, AUDIT_V2, _fixture("audit_v21.json"), _fixture("audit_v22.json")],
+                         ids=["v1", "v2", "v2.1", "v2.2"])
+def test_les_anciens_audits_suivent_les_regles_d_aujourd_hui(pdf_dans_tmp, audit):
+    texte = " ".join(_pages_pdf(pdf_audit.build_pdf(audit, house_label="Maison · 83000")))
+    assert "esprit colibri" not in texte
+    assert "EUR" not in texte and "€" in texte
+    assert "0-0" not in texte
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=audit))
+    assert ctx["date_audit"].startswith("2026-10-19")
+
+
+def test_le_chat_recoit_le_plan_recommande(ref_sans_etude):
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 20), json_result=ref_sans_etude))
+    assert ctx["plan_recommande"]["nb"] == 1
+    assert ctx["a_l_occasion"]["nb"] == 3
+    assert len(ctx["a_preciser"]) == 3
+    assert "synthese" in ctx  # aucune clé retirée
