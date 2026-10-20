@@ -585,6 +585,7 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "pourquoi_rentable": "Du simple vitrage avec {chauffage} : vos fenêtres vous coûtent cher, et le confort y gagnera autant que la facture.",
         "pourquoi_rentable_inconnu": "Vos fenêtres ne sont pas renseignées dans votre fiche. Si ce sont des simples vitrages, avec {chauffage}, elles vous coûtent cher : vérifiez-les, le pré-audit sera plus juste.",
         "pourquoi_occasion": "Vos fenêtres pèsent peu dans vos pertes : les changer ne se rembourse pas sur l'énergie. Faites-le en fin de vie, ou pour le bruit et le confort. En attendant, des joints neufs font déjà beaucoup.",
+        "pourquoi_apres_autres": "Après {avant}, vos fenêtres pèseront moins dans votre facture : les changer ne se rembourserait pas sur l'énergie seule. Faites-le en fin de vie, ou plus tôt pour le confort et le bruit si ce sont des simples vitrages. En attendant, des joints neufs font déjà beaucoup.",
         "benefices": ("moins de bruit", "plus de sensation de froid près des vitres", "fin de la condensation (avec une ventilation adaptée)"),
         "vigilance": ("ventilation à vérifier", "pose en rénovation = moins de lumière", "déclaration préalable si l'aspect change"),
         "devis": ("Uw ≤ 1,3", "type de pose", "entrées d'air et calfeutrement"),

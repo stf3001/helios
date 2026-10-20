@@ -102,6 +102,10 @@ Les quatre PDF font 5 pages. Le ballon de la référence reste la première éta
   (6 unités) ; coût complet du ballon thermodynamique (2 500-4 000 €).
 - **Facteurs d'émission** : toujours à vérifier sur le texte du JO.
 
+**Lot 5 bis (même jour, v2.5 inchangée)** : les fenêtres ont leur `pourquoi_apres_autres` ;
+`ecs_solaire.md` part du prix complet du ballon (2 600 à 4 000 €) au lieu de « 3 500 € », réingérée ;
+les maisons de relecture F au fioul et convecteurs sont « maison » et « propriétaire ».
+
 ## Pistes pour le prochain brief
 
 1. **Texte `pourquoi_apres_autres` des fenêtres**, et revue de `ecs_solaire.md` (voir plus haut).

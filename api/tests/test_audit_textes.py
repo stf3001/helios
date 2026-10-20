@@ -390,8 +390,10 @@ def maisons_lot5() -> dict:
     return {
         "reference": reference_complete(),
         "fioul": maison_type(),
-        "fioul_F": maison_type(dpe_lettre="F", surface_habitable=150, isolation_murs="aucune", conso_elec_kwh_an=None),
-        "convecteurs": maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=None),
+        "fioul_F": maison_type(dpe_lettre="F", surface_habitable=150, isolation_murs="aucune", conso_elec_kwh_an=None,
+                               type_logement="maison", statut="proprietaire"),
+        "convecteurs": maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=None,
+                                   type_logement="maison", statut="proprietaire"),
     }
 
 
@@ -447,7 +449,8 @@ def test_les_nouvelles_cles_sont_couvertes_par_la_source_unique():
 def test_apres_autres_cite_les_actions_d_avant():
     fen = _action(run_audit(maison_type(), aujourd_hui=AUJOURD_HUI), "menuiseries")
     assert fen["raison_occasion"] == "apres_autres"
-    assert fen["pourquoi"] is None or "Après" not in fen["pourquoi"]  # fenêtres : pas de texte « après »
+    assert fen["pourquoi"].startswith("Après la régulation, l'isolation du toit et la pompe à chaleur, vos fenêtres")
+    assert "simples vitrages" in fen["pourquoi"]
     # 80 m² au fioul, murs nus : seule la PAC se rembourserait ; après la régulation et le
     # toit, non.
     house = maison_type(surface_habitable=80, isolation_murs="aucune", conso_elec_kwh_an=None)
@@ -569,3 +572,11 @@ def test_un_audit_v24_stocke_garde_ses_textes(pdf_tmp):
     assert "Pourquoi :" in texte and "Votre contrat" in texte
     ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 20), json_result=audit))
     assert ctx["contrat"] and ctx["climat"]
+
+
+# --- Lot 5 bis : la maison F au fioul de relecture voit ses pistes ---------------------------
+
+def test_la_maison_f_de_relecture_voit_ampleur_fossile_et_solaire():
+    r = run_audit(maisons_lot5()["fioul_F"], aujourd_hui=AUJOURD_HUI)
+    assert r["renovation_ampleur"] is not None
+    assert r["renovation_ampleur"]["fossile"] == ref.FOSSILE_AMPLEUR
