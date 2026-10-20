@@ -297,7 +297,25 @@ def deperditions(house: House) -> list[dict]:
 
 # --- Conseils sans chiffre ------------------------------------------------------------------
 
-def conseils_equipements(house: House, p: dict, t: _Trace) -> list[dict]:
+def economie_remplacement_pac(c: dict, t: _Trace) -> dict | None:
+    """Ce qu'une PAC air/air neuve ferait gagner sur le chauffage d'aujourd'hui, à prix égal.
+
+    Un conseil, pas une action : le remplacement viendra de toute façon, on ne le présente
+    pas comme un investissement — ni coût, ni temps de retour, hors synthèse."""
+    conso = c.get("conso_chauffage_retenue_kwh_an")
+    if not conso:
+        return None
+    actuel = _grille(settings.audit_rendement_chauffage, "PAC_air_air")
+    neuf = settings.audit_scop_pac_air_air_neuf
+    t.hyp("scop_pac_air_air_neuf", neuf, "scop_air_air_neuf")
+    eur = conso * (1 - actuel / neuf) * c["prix_energie_eur_kwh"]
+    if eur <= 0:
+        return None
+    f = _fourchette(eur)
+    return {"bas": f["bas"], "haut": f["haut"]}
+
+
+def conseils_equipements(house: House, p: dict, t: _Trace, c: dict) -> list[dict]:
     """Un conseil par équipement qui a atteint `audit_age_alerte_pct` % de sa durée de vie."""
     vie_chauffage = dict(settings.audit_duree_vie_chauffage)
     vie_ecs = dict(settings.audit_duree_vie_ecs)
@@ -315,10 +333,16 @@ def conseils_equipements(house: House, p: dict, t: _Trace) -> list[dict]:
             continue
         nom, pronom = ref.NOM_EQUIPEMENT[equipement]
         texte = ref.CONSEIL_AGE.format(equipement=nom, pronom=pronom, age=age)
-        if equipement.startswith("PAC"):
+        conseil = {"equipement": equipement, "age_ans": age, "duree_vie_ans": table[equipement]}
+        eco = (economie_remplacement_pac(c, t)
+               if equipement == "PAC_air_air" and annee == house.chauffage_principal_annee
+               and equipement == house.chauffage_principal else None)
+        if eco:
+            texte += ref.CONSEIL_AGE_PAC_ECONOMIE.format(bas=_fr_int(eco["bas"]), haut=_fr_int(eco["haut"]))
+            conseil.update({"economie_au_remplacement_eur": eco, "statut": "calcule"})
+        elif equipement.startswith("PAC"):
             texte += ref.CONSEIL_AGE_PAC
-        conseils.append({"equipement": equipement, "age_ans": age, "duree_vie_ans": table[equipement],
-                         "texte": texte})
+        conseils.append({**conseil, "texte": texte})
     if conseils:
         t.hyp("duree_vie_equipements", {e["equipement"]: e["duree_vie_ans"] for e in conseils}, "equipements")
     return conseils
@@ -851,7 +875,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
     t.hyp("incertitude", settings.audit_incertitude, "incertitude")
 
     gestes = gestes_gratuits(house, p)
-    conseils = conseils_equipements(house, p, t)
+    conseils = conseils_equipements(house, p, t, c)
     cout_actuel = c["conso_chauffage_retenue_kwh_an"] * c["prix_energie_eur_kwh"]
     eco_chauffage = cout_actuel - cout_final
     eco_eau = sum(a["economie_annuelle_eur"]["central"] for a in actions if a.get("_type") == "eau_chaude")

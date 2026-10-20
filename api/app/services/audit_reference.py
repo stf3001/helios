@@ -287,6 +287,10 @@ NOM_EQUIPEMENT: dict[str, tuple[str, str]] = {
 CONSEIL_AGE = ("Votre {equipement} a {age} ans : faites-{pronom} entretenir et préparez son "
                "remplacement plutôt que de le subir en panne.")
 CONSEIL_AGE_PAC = " Au remplacement, une PAC récente consomme généralement moins."
+# v2.4 : PAC air/air, quand l'économie au remplacement se chiffre (elle remplace la phrase
+# ci-dessus, qui disait la même chose sans le chiffre).
+CONSEIL_AGE_PAC_ECONOMIE = (" Au remplacement, un appareil récent devrait réduire votre facture de chauffage "
+                            "d'environ {bas} à {haut} €/an.")
 
 # Appoint qui ne passe pas (ou pas forcément) par le compteur électrique.
 APPOINT_HORS_FACTURE = {"autre", "bois", "gaz", "fioul", "reseau"}
@@ -432,6 +436,7 @@ LIBELLES_HYPOTHESES: dict[str, str] = {
     "horizons": "Seuils de classement : {valeur}",
     "incertitude": "Demi-largeur des fourchettes : {valeur}",
     "duree_vie_equipements": "Durée de vie retenue, en années : {valeur}",
+    "scop_pac_air_air_neuf": "Rendement saisonnier d'une pompe à chaleur air/air neuve : {valeur}",
 }
 # Mots techniques qui apparaissent dans ces valeurs (clés de dictionnaire, formes d'aide,
 # paramètres). Les actions, postes et équipements ont déjà leurs libellés ailleurs.
@@ -476,6 +481,7 @@ SOURCES: dict[str, tuple[str, str]] = {
     "horizons": ("Seuils de classement, à confirmer", "2026-10-19"),
     "ratio_murs": ("Surface de murs / surface habitable, à calibrer", "2026-10-19"),
     "incertitude": ("Demi-largeur des fourchettes", "2026-07-18"),
+    "scop_air_air_neuf": ("SCOP d'une PAC air/air neuve, ordre de grandeur, à calibrer", "2026-10-20"),
 }
 
 # --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------

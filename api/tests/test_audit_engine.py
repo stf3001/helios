@@ -438,7 +438,8 @@ def test_reference_conseils_d_age(ref_sans_etude):
     assert set(conseils) == {"PAC_air_air", "ballon_elec"}
     assert conseils["PAC_air_air"]["age_ans"] == 16
     assert "faites-la entretenir" in conseils["PAC_air_air"]["texte"]
-    assert "une PAC récente consomme généralement moins" in conseils["PAC_air_air"]["texte"]
+    # v2.4 : la phrase sans chiffre cède la place à l'économie au remplacement.
+    assert "un appareil récent devrait réduire votre facture" in conseils["PAC_air_air"]["texte"]
     assert "faites-le entretenir" in conseils["ballon_elec"]["texte"]
 
 

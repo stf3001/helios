@@ -235,3 +235,24 @@ def test_ampleur_sans_chaudiere_fossile_pas_de_phrase_fossile():
     r = run_audit(maison_type(type_logement="maison", dpe_lettre="G", chauffage_principal="elec_direct"),
                   aujourd_hui=AUJOURD_HUI)
     assert r["renovation_ampleur"]["fossile"] is None
+
+
+# --- Étape 5 : la PAC air/air au remplacement ------------------------------------------------
+
+def test_la_pac_de_16_ans_chiffre_son_remplacement(ref_audit):
+    """2 100 kWh × (1 − 3,0 / 4,3) × 0,2001 € = 127 €/an, ±15 % : 108 à 146 €."""
+    pac = next(x for x in ref_audit["conseils_equipements"] if x["equipement"] == "PAC_air_air")
+    eco = pac["economie_au_remplacement_eur"]
+    assert eco == {"bas": 108, "haut": 146}
+    assert 0 < eco["bas"] <= eco["haut"] <= ref_audit["consommation"]["cout_chauffage_actuel_eur"]
+    assert "d'environ 108 à 146 €/an" in pac["texte"]
+    assert pac["statut"] == "calcule"
+    assert "cout_eur" not in pac and "temps_retour_ans" not in pac  # un conseil, pas une action
+    assert "scop_pac_air_air_neuf" in {h["cle"] for h in ref_audit["hypotheses"]}
+    # Hors synthèse : le plan recommandé reste le seul ballon.
+    assert ref_audit["synthese"]["plan_recommande"]["nb"] == 1
+
+
+def test_le_ballon_n_a_pas_d_economie_au_remplacement(ref_audit):
+    ballon = next(x for x in ref_audit["conseils_equipements"] if x["equipement"] == "ballon_elec")
+    assert "economie_au_remplacement_eur" not in ballon

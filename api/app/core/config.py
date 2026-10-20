@@ -176,6 +176,10 @@ class Settings(BaseSettings):
     audit_kva_habituel: tuple[tuple[str, int], ...] = (("non_electrique", 6), ("electrique", 9))
     # Prix bloqué : alerte quand il reste au plus ce nombre de mois. A VALIDER PAR STÉPHANE.
     audit_tarif_bloque_alerte_mois: int = 3
+    # SCOP d'une PAC air/air NEUVE, pour l'économie annoncée au remplacement d'une PAC air/air
+    # âgée (conseil d'âge, pas une action : ni coût ni temps de retour). Comparé au rendement
+    # retenu pour l'appareil actuel (`audit_rendement_chauffage`). Ordre de grandeur, A CALIBRER.
+    audit_scop_pac_air_air_neuf: float = 4.3
 
     # --- Espace énergie / SOBRY (doc 09 §2) ---
     sobry_spot_api_url: str = ""                 # API publique SOBRY (prix spot quart-horaire) — vide = courbe de démo
