@@ -607,8 +607,9 @@ def test_reference_combles_plancher_ballon_sans_aide_par_geste(ref_sans_etude):
 
 
 def _texte_pdf(chemin) -> str:
+    """Texte du PDF, espaces insécables ramenées à des espaces simples pour les comparaisons."""
     from pypdf import PdfReader
-    return " ".join(page.extract_text() for page in PdfReader(chemin).pages)
+    return " ".join(page.extract_text() for page in PdfReader(chemin).pages).replace("\u00a0", " ")
 
 
 def test_le_pdf_date_les_aides_et_ecrit_aucune(pdf_dans_tmp):
@@ -616,8 +617,9 @@ def test_le_pdf_date_les_aides_et_ecrit_aucune(pdf_dans_tmp):
     texte = _texte_pdf(pdf_audit.build_pdf(r, house_label="maison - 83000"))
     attendu = date.fromisoformat(settings.audit_aides_date_reference).strftime("%d/%m/%Y")
     assert f"relevé du {attendu}" in texte
-    assert re.search(r"Isolation des combles / toiture [\d  ]+-[\d  ]+ aucune ", texte)
-    assert re.search(r"Ballon d'eau chaude thermodynamique [\d  ]+-[\d  ]+ aucune ", texte)
+    # Coût puis aide, dans l'ordre des colonnes : combles, puis ballon (sur son surcoût).
+    assert "2 500 – 7 000 € aucune" in texte
+    assert "Surcoût\n1 500 – 2 500 €\naucune" in texte
     assert "0-0" not in texte
 
 

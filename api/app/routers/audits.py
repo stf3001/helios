@@ -45,7 +45,7 @@ async def generate_audit(user: User = Depends(get_current_user), db: AsyncSessio
     )
     resume = audit_engine.resume_etude_simulateur(etude) if etude else None
     result = audit_engine.run_audit(house, etude_simulateur=resume)
-    label = f"{house.type_logement or 'logement'} - {house.code_postal}"
+    label = f"{(house.type_logement or 'logement').capitalize()} · {house.code_postal}"
     pdf_path = pdf_audit.build_pdf(result, house_label=label)
 
     audit = Audit(

@@ -682,22 +682,36 @@ def _bloc_plan(actions: list[dict]) -> dict:
     def somme(cle: str) -> dict:
         return {"bas": sum(a[cle]["bas"] for a in actions), "haut": sum(a[cle]["haut"] for a in actions)}
 
-    def eco(categorie: str) -> dict:
-        return _fourchette(sum(a["economie_annuelle_eur"]["central"] for a in actions
-                               if a["categorie"] == categorie))
+    def eco(*categories: str) -> dict:
+        # Somme des bornes, pas une nouvelle fourchette sur la somme : une action seule doit
+        # afficher exactement les mêmes chiffres dans le plan et dans sa ligne.
+        groupe = [a["economie_annuelle_eur"] for a in actions if a["categorie"] in categories]
+        return {k: sum(e[k] for e in groupe) for k in ("bas", "haut", "central")}
 
     return {"nb": len(actions), "investissement_eur": somme("cout_eur"),
             "aides_estimees_eur": somme("aide_estimee_eur"), "reste_a_charge_eur": somme("reste_a_charge_eur"),
-            "economie_chauffage_eur": eco("chauffage"), "economie_eau_chaude_eur": eco("eau_chaude")}
+            "economie_chauffage_eur": eco("chauffage"), "economie_eau_chaude_eur": eco("eau_chaude"),
+            # Chauffage + eau chaude : le chiffre de la carte « Le plan recommandé ». Calculé
+            # ici pour que le document n'ait jamais à additionner lui-même.
+            "economie_annuelle_eur": eco("chauffage", "eau_chaude")}
 
 
-def a_preciser(entrees: list[dict], p: dict) -> list[dict]:
-    """Les valeurs SUPPOSÉES qui pèsent le plus sur le résultat (ordre de `CHAMPS_A_PRECISER`)."""
+def champs_supposes(entrees: list[dict]) -> list[dict]:
+    """Les valeurs SUPPOSÉES de la fiche, de la plus à la moins décisive (`CHAMPS_A_PRECISER`).
+
+    Ne lit que `entrees` : le PDF s'en sert aussi pour sa page d'hypothèses, sans rien
+    recalculer. Une valeur supposée vaut la valeur par défaut du réglage, d'où `settings`.
+    """
     supposes = {e["champ"] for e in entrees if e["statut"] == "suppose"}
-    valeurs = {"kva": p["kva"], "occupants": p["occupants"]}
+    valeurs = {"kva": settings.audit_puissance_kva_defaut, "occupants": settings.audit_occupants_defaut}
     textes = {"annee_construction": ref.ANNEE_AVEC_DPE} if "dpe_lettre" not in supposes else {}
     return [{"champ": champ, "libelle": libelle, "hypothese": textes.get(champ, hypothese).format(**valeurs)}
-            for champ, libelle, hypothese in ref.CHAMPS_A_PRECISER if champ in supposes][:ref.A_PRECISER_MAX]
+            for champ, libelle, hypothese in ref.CHAMPS_A_PRECISER if champ in supposes]
+
+
+def a_preciser(entrees: list[dict]) -> list[dict]:
+    """Les 3 valeurs supposées qui pèsent le plus sur le résultat."""
+    return champs_supposes(entrees)[:ref.A_PRECISER_MAX]
 
 
 def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: date | None = None) -> dict:
@@ -778,7 +792,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
             "plan_recommande": _bloc_plan(plan),
             "a_l_occasion": _bloc_plan(occasion),
         },
-        "a_preciser": a_preciser(t.entrees, p),
+        "a_preciser": a_preciser(t.entrees),
         "alertes": t.alertes,
         "hypotheses": list(t.hypotheses.values()),
         "avertissement": (

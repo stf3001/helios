@@ -390,7 +390,7 @@ SOURCES: dict[str, tuple[str, str]] = {
     "usages_specifiques": ("Couches de consommation du simulateur (simu_conso_*)", "2026-10-19"),
     "deperditions": ("Répartition ADEME d'une maison non isolée, modulée", "2026-07-18"),
     "couts_actions": ("Ordres de grandeur TTC posés, à calibrer", "2026-07-18"),
-    "aides": ("kb/baremes_aides.md quand la fiche existe, sinon à vérifier", "2026-07-22"),
+    "aides": ("kb/baremes_aides.md quand la fiche existe, sinon à vérifier", "2026-10-20"),
     "equipements": ("Durées de vie typiques, à calibrer", "2026-10-19"),
     "ballon_thermo": ("Coût du ballon thermodynamique, à valider", "2026-10-19"),
     "gains_actions": ("Gain sur le chauffage par action, à calibrer", "2026-10-19"),
