@@ -1319,3 +1319,5 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - Les audits stockés (v1, v2, v2.1) ne sont jamais recalculés : `pdf_audit`, `rag.build_audit_context` et `EspaceAudits.tsx` lisent tous les formats.
 - v2.1 : le moteur reste pur — la route `audits.py` lui passe la dernière étude du simulateur, dont il CITE les chiffres ; sans étude, piste solaire sans aucun chiffre.
 - Gestes gratuits, conseils d'âge et confort d'été sont des tables de `audit_reference.py`, jamais chiffrées ; l'eau chaude ne se combine pas avec le chauffage.
+- Les fiches `kb/action_*` (avec `gestes_equipements`, `renovation_ampleur`, `lire_son_dpe`) sont la source des conseils de l'audit ; leur section « Pour le pré-audit », après le dernier `---`, n'est pas ingérée.
+- Les aides de `ACTIONS` suivent `kb/baremes_aides.md` ; `audit_aides_date_reference` est écrite dans chaque audit, que le PDF date avec.

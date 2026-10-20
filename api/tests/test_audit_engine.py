@@ -590,3 +590,40 @@ def test_un_audit_v21_genere_son_pdf_et_son_contexte(pdf_dans_tmp):
     assert ctx["premiere_etape"] == "Ballon d'eau chaude thermodynamique"
     assert ctx["gestes_gratuits"] and ctx["conseils_equipements"] and ctx["confort_ete"]
     assert ctx["solaire"]["type"] == "etude"
+
+
+# --- Aides au 20/10/2026 : la réforme du 1er septembre 2026 (décret n° 2026-822) ----------
+
+def test_reference_combles_plancher_ballon_sans_aide_par_geste(ref_sans_etude):
+    """Plus aucune MaPrimeRénov' par geste sur ces trois postes : le reste à charge est le coût."""
+    par_action = {a["action"]: a for a in ref_sans_etude["priorites"]}
+    for action in ("isolation_combles", "isolation_plancher", "ballon_thermodynamique"):
+        a = par_action[action]
+        assert a["aide_estimee_eur"] == {"bas": 0, "haut": 0}, action
+        assert a["reste_a_charge_eur"] == a["cout_eur"], action
+        assert "CEE" in a["aide_note"], action
+        assert a["aide_source"] == "kb/baremes_aides.md (20/10/2026)", action
+    assert ref_sans_etude["aides_date_reference"] == settings.audit_aides_date_reference
+
+
+def _texte_pdf(chemin) -> str:
+    from pypdf import PdfReader
+    return " ".join(page.extract_text() for page in PdfReader(chemin).pages)
+
+
+def test_le_pdf_date_les_aides_et_ecrit_aucune(pdf_dans_tmp):
+    r = run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)
+    texte = _texte_pdf(pdf_audit.build_pdf(r, house_label="maison - 83000"))
+    attendu = date.fromisoformat(settings.audit_aides_date_reference).strftime("%d/%m/%Y")
+    assert f"relevé du {attendu}" in texte
+    assert re.search(r"Isolation des combles / toiture [\d  ]+-[\d  ]+ aucune ", texte)
+    assert re.search(r"Ballon d'eau chaude thermodynamique [\d  ]+-[\d  ]+ aucune ", texte)
+    assert "0-0" not in texte
+
+
+def test_un_audit_stocke_garde_la_date_de_ses_aides(pdf_dans_tmp):
+    """Un audit v2.1 ne porte pas la date : il garde celle du relevé qui l'a chiffré."""
+    r = run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)
+    del r["aides_date_reference"]
+    texte = _texte_pdf(pdf_audit.build_pdf(r, house_label="maison - 83000"))
+    assert "relevé du 22/07/2026" in texte

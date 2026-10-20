@@ -881,12 +881,23 @@ des combles (0-25 €/m²) et de la PAC air/eau (0-5 000 €) suivent `kb/bareme
 prix des énergies, seuils 500 € / 20 ans, coefficients H2 0,8 / H3 0,55 et 3 occupants
 par défaut sont validés comme point de départ.
 
+**Mis à jour le 20/10/2026 (v2.2)** : la réforme du 1er septembre 2026 (décret
+n° 2026-822) a sorti du parcours par geste les combles, les fenêtres, le ballon
+thermodynamique, la VMC double flux, le solaire thermique et les poêles. Combles, plancher,
+menuiseries, VMC double flux et ballon passent donc à **0 €** avec une note CEE ; seule la
+pompe à chaleur air/eau reste aidée (0-5 000 €). Ces fourchettes ne sont plus « à vérifier ».
+
 **Reste à valider**, dans `config.py` (`audit_*`) et `audit_reference.py` : parts du
-chauffage dans le DPE ; besoins utiles par année ; ratio des murs ; fourchettes d'aides
-encore « à vérifier » (plancher, menuiseries, VMC, ballon thermodynamique) ; durées de vie
+chauffage dans le DPE ; besoins utiles par année ; ratio des murs ; durées de vie
 des actions et des équipements (PAC air/air 15, air/eau 17, ballons 15, chaudières 20 ans,
 alerte à 80 %) ; coût du ballon thermodynamique (2 500-4 000 €, surcoût 1 500-2 500 €) ;
 seuil de la piste solaire (4 000 kWh) ; ancienneté maximale d'une étude citée (6 mois).
+
+**Deux mentions d'aide périmées laissées en place** (relevées le 20/10/2026, à corriger
+avec l'accord de Stéphane) : la fiche PAC de `kb/baremes_aides.md` chiffre encore une aide
+au poêle à granulés (1 250 / 1 000 / 750 €), et « Le poêle à granulés, quel budget ? »
+(`kb/faq_maison.md`) dit que « les aides au bois ont baissé en 2026 » — les poêles ne sont
+plus aidés par geste depuis le 01/09/2026.
 
 **Choix à connaître** : `conso_autre_energie_qte` n'est jamais lue (la fiche ne dit pas son
 unité) ; une maison au gaz, au fioul ou au bois est donc chiffrée sur l'estimation seule,
