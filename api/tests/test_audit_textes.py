@@ -539,3 +539,21 @@ def test_les_liens_sont_dans_le_json():
     assert len(elements) == 6
     for x in elements:
         assert x["fiche_question"] in _questions(x["fiche"]), x
+
+
+# --- Lot 5, étape 6 : la pagination ----------------------------------------------------------
+
+@pytest.mark.parametrize("nom", ["reference", "fioul", "fioul_F", "convecteurs"])
+def test_les_quatre_maisons_tiennent_en_cinq_pages(pdf_tmp, nom):
+    pages = _pages(run_audit(maisons_lot5()[nom], aujourd_hui=AUJOURD_HUI))
+    assert len(pages) <= 5
+    resume = next(p for p in pages if "En résumé" in p)
+    assert "Aides MaPrimeRénov' du revenu le plus élevé" in resume  # la note suit le résumé
+    assert not re.search(r"\{[a-z_]+\}", " ".join(pages))
+
+
+def test_la_reference_n_a_plus_de_trou_avant_l_occasion(pdf_tmp):
+    """« À l'occasion de… » suit « Cette année » sur la même page au lieu de sauter."""
+    pages = _pages(run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI))
+    page = next(p for p in pages if re.search(r"Cette année \d+ action", p))
+    assert re.search(r"À l'occasion de… \d+ action", page)

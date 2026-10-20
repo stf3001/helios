@@ -864,19 +864,21 @@ def _page_plan(pdf: FPDF, audit: dict):
             _para(pdf, "Rien à prévoir pour l'instant.")
 
     def fin(pdf):
-        if sol or ampleur:
-            _section(pdf, "Pour aller plus loin")
-        if sol:
-            _solaire(pdf, sol)
-        if ampleur:
-            _ampleur(pdf, ampleur)
         pdf.ln(1)
         _en_resume(pdf, sy)
         _notes_aides(pdf, audit, travaux)
 
-    # « À l'occasion de… », « En résumé » et la note d'aide commune restent ensemble : la
-    # note explique les « aucune » du tableau, le résumé en donne le total.
-    _ensemble(pdf, lambda pdf: (occasion(pdf), fin(pdf)))
+    # v2.5 : « À l'occasion de… » peut se couper après son tableau (chaque explication reste
+    # entière) ; « En résumé » et la note d'aide commune restent ensemble, sans jamais se
+    # couper. Les tenir avec tout le bloc laissait une demi-page vide.
+    occasion(pdf)
+    if sol or ampleur:
+        _section(pdf, "Pour aller plus loin")
+    if sol:
+        _solaire(pdf, sol)
+    if ampleur:
+        _ampleur(pdf, ampleur)
+    _ensemble(pdf, fin)
 
 
 def _phrase_bloc(bloc: dict) -> str:

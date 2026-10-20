@@ -777,14 +777,12 @@ def test_le_chat_recoit_le_plan_recommande(ref_sans_etude):
 
 @pytest.mark.parametrize("nom", ["reference", "fioul"])
 def test_le_plan_tient_avec_son_resume_et_sa_note(pdf_dans_tmp, nom):
-    """5 pages au plus ; « En résumé » et la note d'aide commune restent avec le tableau
-    « À l'occasion de… » au lieu de tomber seuls sur une page presque vide."""
+    """5 pages au plus ; « En résumé » et la note d'aide commune restent ensemble, sur la
+    même page (v2.5 : « À l'occasion de… » peut, lui, se couper après son tableau)."""
     r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
     pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
     assert len(pages) <= 5  # v2.4 : le plan explique chaque action
-    # Le titre de section suivi de son compte, pas l'étiquette de la frise.
-    page = next(p for p in pages if re.search(r"À l'occasion de… \d+ action", p))
-    assert "En résumé" in page
+    page = next(p for p in pages if "En résumé" in p)
     assert "ne finance plus ces travaux" in page
     # Une seule fois : la note n'est plus répétée sous chaque action.
     assert " ".join(pages).count("par geste ne finance plus") == 1
