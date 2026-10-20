@@ -639,6 +639,21 @@ def _objectif_facture(objectifs: list[str] | None) -> bool:
     return any("factur" in o.lower() or "économ" in o.lower() or "econom" in o.lower() for o in objectifs or [])
 
 
+def raison_occasion(a: dict, c: dict) -> str:
+    """Pourquoi une action finit « à l'occasion » — le texte affiché en dépend.
+
+    - `apres_autres` : seule, elle serait prioritaire ; ce sont les actions placées avant
+      elle qui ont pris le gain ;
+    - `chauffage_peu_cher` : la chaleur coûte peu (`audit_chauffage_peu_cher_eur`) ;
+    - `trop_cher` : même avec un chauffage cher, le prix des travaux dépasse ce qu'ils rapportent.
+    """
+    if a.get("_prioritaire_seule"):
+        return "apres_autres"
+    if c["cout_chauffage_actuel_eur"] <= settings.audit_chauffage_peu_cher_eur:
+        return "chauffage_peu_cher"
+    return "trop_cher"
+
+
 def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None) -> float:
     """Classe les actions (horizon → hiérarchie → critère secondaire) et les chiffre en séquence.
 
@@ -658,9 +673,13 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
         secondaire = retour if facture else -(a.get("part_deperdition_pct") or 0)
         return (ref.HORIZONS.index(a["horizon"]), a["priorite_hierarchie"], secondaire)
 
-    # Premier passage : chaque action seule, sur la maison actuelle.
+    # Premier passage : chaque action seule, sur la maison actuelle. On garde ce qu'elle
+    # vaudrait seule : c'est ce qui dira pourquoi elle finit « à l'occasion ».
     for a in actions:
         _appliquer([a], *etat)
+        retour = a["temps_retour_ans"]
+        a["_prioritaire_seule"] = (retour is not None and retour <= settings.audit_horizon_retour_max_ans
+                                   and retour <= a["duree_vie_ans"])
     occasion: set[str] = set()
     ordre, signature = actions, None
     cout_final = etat[0] * etat[2]
@@ -676,9 +695,12 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
             break
         signature = nouvelle
     actions[:] = ordre
+    for a in actions:
+        if a["horizon"] == "a_l_occasion" and a.get("_type") not in ("eau_chaude", "solaire"):
+            a["raison_occasion"] = raison_occasion(a, c)
     for i, a in enumerate(actions, 1):
         a["rang"] = i
-        for interne in ("_reste_central", "_eco_kwh", "_eco_eur"):
+        for interne in ("_reste_central", "_eco_kwh", "_eco_eur", "_prioritaire_seule"):
             a.pop(interne, None)
         if a["horizon"] != "a_l_occasion":
             a["libelle_occasion"] = None

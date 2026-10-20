@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2.4"                   # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.5"                   # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 
@@ -144,6 +144,9 @@ class Settings(BaseSettings):
     # <= seuil ; au-delà (ou au-delà de la durée de vie) : « à l'occasion ». A CONFIRMER.
     audit_horizon_cout_max_eur: int = 500
     audit_horizon_retour_max_ans: float = 20.0
+    # v2.5 : en dessous, une action « à l'occasion » s'explique par un chauffage bon marché ;
+    # au-dessus, par le prix des travaux ou le gain déjà pris. Validé par Stéphane le 20/10/2026.
+    audit_chauffage_peu_cher_eur: int = 800
     # Au-delà, le PDF et l'espace client écrivent "> 30 ans" et "non rentable sur l'énergie
     # seule" ; le JSON garde la valeur. Seuil d'AFFICHAGE, sans effet sur les horizons.
     audit_retour_affichage_max_ans: int = 30

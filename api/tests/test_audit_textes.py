@@ -382,3 +382,57 @@ def test_les_audits_stockes_se_lisent_encore(pdf_tmp, nom):
     assert "Pourquoi :" not in texte and "kg/an" not in texte  # rien d'inventé pour un ancien audit
     ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=audit))
     assert ctx["climat"] is None and ctx["contrat"] is None
+
+
+# --- Lot 5 (v2.5) : la vraie raison d'un « à l'occasion » ------------------------------------
+
+from app.core.config import settings  # noqa: E402
+from app.services import audit_engine as moteur  # noqa: E402
+
+
+def maisons_lot5() -> dict:
+    return {
+        "reference": reference_complete(),
+        "fioul": maison_type(),
+        "fioul_F": maison_type(dpe_lettre="F", surface_habitable=150, isolation_murs="aucune", conso_elec_kwh_an=None),
+        "convecteurs": maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=None),
+    }
+
+
+def _seule(house, cle: str) -> dict:
+    """L'action chiffrée seule, sur la maison actuelle (premier passage de `planifier`)."""
+    t = moteur._Trace()
+    p = moteur._profil(house, t, AUJOURD_HUI)
+    c = moteur.consommation(house, p, t)
+    a = next(x for x in moteur._actions_candidates(house, p, moteur.deperditions(house), t) if x["action"] == cle)
+    moteur._appliquer([a], c["conso_chauffage_retenue_kwh_an"], c["energie_chauffage"],
+                      c["prix_energie_eur_kwh"], p["chauffage"], p["kva"])
+    return a
+
+
+def test_reference_occasion_par_chauffage_peu_cher(ref_audit):
+    for cle in ("isolation_combles", "isolation_murs", "isolation_plancher"):
+        assert _action(ref_audit, cle)["raison_occasion"] == "chauffage_peu_cher", cle
+
+
+def test_fioul_murs_trop_chers():
+    house = maison_type()
+    murs = _action(run_audit(house, aujourd_hui=AUJOURD_HUI), "isolation_murs")
+    assert murs["raison_occasion"] == "trop_cher"
+    assert _seule(house, "isolation_murs")["temps_retour_ans"] > settings.audit_horizon_retour_max_ans
+
+
+def test_fioul_fenetres_apres_les_autres():
+    """Seules, les fenêtres se rembourseraient ; après la régulation, le toit et la PAC, non."""
+    house = maison_type()
+    fen = _action(run_audit(house, aujourd_hui=AUJOURD_HUI), "menuiseries")
+    assert fen["horizon"] == "a_l_occasion" and fen["raison_occasion"] == "apres_autres"
+    assert _seule(house, "menuiseries")["temps_retour_ans"] <= settings.audit_horizon_retour_max_ans
+
+
+def test_seules_les_actions_a_l_occasion_ont_une_raison():
+    for house in maisons_lot5().values():
+        for a in run_audit(house, aujourd_hui=AUJOURD_HUI)["priorites"]:
+            attendu = a["horizon"] == "a_l_occasion" and a["categorie"] == "chauffage"
+            assert ("raison_occasion" in a) is attendu, a["action"]
+            assert not any(k.startswith("_") for k in a), a["action"]
