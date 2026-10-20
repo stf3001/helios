@@ -324,17 +324,30 @@ def conseils_equipements(house: House, p: dict, t: _Trace) -> list[dict]:
     return conseils
 
 
-def gestes_gratuits(p: dict) -> list[dict]:
-    return [{"cle": g["cle"], "texte": g["texte"]} for g in ref.GESTES_GRATUITS
-            if g["si_chauffage"] is None or p["chauffage"] in g["si_chauffage"]]
+def _geste_applicable(g: dict, house: House, p: dict) -> bool:
+    if g.get("si_chauffage") is not None and p["chauffage"] not in g["si_chauffage"]:
+        return False
+    if p["chauffage"] in g.get("sauf_chauffage", ()):
+        return False
+    if g.get("si_ecs") is not None and house.ecs not in g["si_ecs"]:
+        return False  # eau chaude déclarée seulement : pas de geste sur un ballon supposé
+    if g.get("si_clim") and not house.clim:
+        return False
+    return True
 
 
-def confort_ete(p: dict, actions: list[dict]) -> dict | None:
+def gestes_gratuits(house: House, p: dict) -> list[dict]:
+    gestes = [{"cle": g["cle"], "texte": g["texte"]} for g in ref.GESTES_GRATUITS if _geste_applicable(g, house, p)]
+    return gestes[:ref.GESTES_MAX]
+
+
+def confort_ete(house: House, p: dict, actions: list[dict]) -> dict | None:
     if p["zone"] not in ref.ZONES_CONFORT_ETE:
         return None
     combles = next((a for a in actions if a["action"] == "isolation_combles"), None)
     note = ref.CONFORT_ETE_COMBLES if combles and combles["horizon"] == "a_l_occasion" else None
-    return {"conseils": list(ref.CONFORT_ETE), "note_combles": note}
+    return {"conseils": list(ref.CONFORT_ETE), "note_combles": note,
+            "note_clim": ref.CONFORT_ETE_CLIM_EXISTANTE if house.clim else None}
 
 
 # --- Solaire --------------------------------------------------------------------------------
@@ -795,7 +808,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
                        "retour_max_ans": settings.audit_horizon_retour_max_ans}, "horizons")
     t.hyp("incertitude", settings.audit_incertitude, "incertitude")
 
-    gestes = gestes_gratuits(p)
+    gestes = gestes_gratuits(house, p)
     conseils = conseils_equipements(house, p, t)
     cout_actuel = c["conso_chauffage_retenue_kwh_an"] * c["prix_energie_eur_kwh"]
     eco_chauffage = cout_actuel - cout_final
@@ -827,7 +840,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
         "priorites": actions,
         "gestes": gestes,
         "conseils_equipements": conseils,
-        "confort_ete": confort_ete(p, actions),
+        "confort_ete": confort_ete(house, p, actions),
         "solaire": solaire,
         "synthese": {
             "nb_actions": len(actions),

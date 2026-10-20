@@ -292,18 +292,43 @@ CONSEIL_AGE_PAC = " Au remplacement, une PAC récente consomme généralement mo
 APPOINT_HORS_FACTURE = {"autre", "bois", "gaz", "fioul", "reseau"}
 
 # Gestes gratuits, horizon « maintenant ». Des CONSEILS, sans chiffre d'économie, hors
-# synthèse financière. `si_chauffage` : None = toujours, sinon les systèmes concernés.
+# synthèse financière. Conditions : `si_chauffage` / `si_ecs` (None = toujours, sinon les
+# valeurs concernées), `sauf_chauffage`, `si_clim`.
+#
+# v2.4 : fusion avec les gestes par équipement de `kb/gestes_equipements.md` (textes
+# recopiés mot pour mot, `fiche` renseignée). Un geste qui disait la même chose est remplacé
+# par la version de la fiche, pas doublé : avec une PAC air/air, le geste `pac_air_air`
+# (consigne stable, baisse modérée, filtres) prend la place de la consigne, de la
+# programmation et des filtres.
 GESTES_GRATUITS: tuple[dict, ...] = (
     {"cle": "consigne_19", "texte": "Réglez la consigne à 19 °C dans les pièces de vie, moins "
-                                     "dans les chambres et la nuit.", "si_chauffage": None},
+                                     "dans les chambres et la nuit.", "sauf_chauffage": {"PAC_air_air"}},
+    {"cle": "pac_air_air", "fiche": "gestes_equipements",
+     "texte": "Mode chauffage plutôt qu'auto, consigne stable autour de 19-20 °C, baisse modérée la nuit plutôt qu'un arrêt, filtres nettoyés chaque mois.",
+     "si_chauffage": {"PAC_air_air"}},
     {"cle": "programmation", "texte": "Programmez le chauffage selon votre présence : il baisse "
-                                       "quand la maison est vide.", "si_chauffage": None},
+                                       "quand la maison est vide.", "sauf_chauffage": {"PAC_air_air"}},
     {"cle": "filtres_pac", "texte": "Nettoyez régulièrement les filtres de la pompe à chaleur et "
-                                     "faites-la entretenir.", "si_chauffage": {"PAC_air_air", "PAC_air_eau"}},
+                                     "faites-la entretenir.", "si_chauffage": {"PAC_air_eau"}},
     {"cle": "entretien_chaudiere", "texte": "Faites entretenir la chaudière chaque année (obligatoire).",
      "si_chauffage": {"gaz", "fioul", "bois"}},
-    {"cle": "volets_nuit", "texte": "Fermez volets et rideaux la nuit en hiver.", "si_chauffage": None},
+    {"cle": "clim", "fiche": "gestes_equipements",
+     "texte": "Consigne à 26 °C, un brasseur d'air pour gagner 2 °C de confort, volets fermés côté soleil dès le matin.",
+     "si_clim": True},
+    {"cle": "ballon_elec", "fiche": "gestes_equipements",
+     "texte": "Ballon réglé à 55 °C et contacteur sur « auto » si vous êtes en heures creuses.",
+     "si_ecs": {"ballon_elec"}},
+    {"cle": "ballon_thermo", "fiche": "gestes_equipements",
+     "texte": "Mode éco plutôt que boost permanent.", "si_ecs": {"thermodynamique"}},
+    {"cle": "eau_chaude_tous", "fiche": "gestes_equipements",
+     "texte": "Mousseurs et douchette économe : quelques euros, et l'eau chaude dure plus longtemps."},
+    {"cle": "volets_nuit", "texte": "Fermez volets et rideaux la nuit en hiver."},
 )
+# L'ordre d'affichage est celui de la table ; au-delà de GESTES_MAX, les derniers tombent.
+GESTES_MAX = 6
+# Confort d'été quand la maison est déjà climatisée (kb/gestes_equipements.md).
+CONFORT_ETE_CLIM_EXISTANTE = ("Avant d'ajouter de la climatisation : protections solaires extérieures, "
+                              "ventilation nocturne et brasseurs d'air.")
 
 # Confort d'été, zones H2 et H3 : qualitatif, sans chiffre.
 ZONES_CONFORT_ETE = {"H2", "H3"}

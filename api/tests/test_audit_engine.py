@@ -502,7 +502,7 @@ def test_aide_pac_en_euros_selon_la_base():
 
 def test_gestes_gratuits_presents_et_sans_chiffre(ref_sans_etude):
     gestes = ref_sans_etude["gestes"]
-    assert gestes and "filtres_pac" in {g["cle"] for g in gestes}
+    assert gestes and "pac_air_air" in {g["cle"] for g in gestes}  # v2.4 : remplace filtres_pac
     assert all(set(g) == {"cle", "texte"} for g in gestes)
 
 
@@ -715,7 +715,7 @@ def test_le_pdf_de_reference_se_lit(pdf_dans_tmp, caplog):
     with caplog.at_level(logging.WARNING, logger="fpdf"):
         pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
     texte = " ".join(pages)
-    assert len(pages) <= 4
+    assert len(pages) <= 5  # v2.4 : le plan explique chaque action
     # « Votre plan » et « Comprendre votre maison » ouvrent leur page ; les hypothèses suivent.
     assert pages[1].split("\n")[1:2] == ["Votre plan"]
     assert any(p.split("\n")[1:2] == ["Comprendre votre maison"] for p in pages)
@@ -765,12 +765,13 @@ def test_le_chat_recoit_le_plan_recommande(ref_sans_etude):
 
 @pytest.mark.parametrize("nom", ["reference", "fioul"])
 def test_le_plan_tient_avec_son_resume_et_sa_note(pdf_dans_tmp, nom):
-    """4 pages au plus ; « En résumé » et la note d'aide commune restent avec le tableau
+    """5 pages au plus ; « En résumé » et la note d'aide commune restent avec le tableau
     « À l'occasion de… » au lieu de tomber seuls sur une page presque vide."""
     r = run_audit(_maisons()[nom], aujourd_hui=AUJOURD_HUI)
     pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
-    assert len(pages) <= 4
-    page = next(p for p in pages if "À l'occasion de…" in p and "Action" in p)
+    assert len(pages) <= 5  # v2.4 : le plan explique chaque action
+    # Le titre de section suivi de son compte, pas l'étiquette de la frise.
+    page = next(p for p in pages if re.search(r"À l'occasion de… \d+ action", p))
     assert "En résumé" in page
     assert "ne finance plus ces travaux" in page
     # Une seule fois : la note n'est plus répétée sous chaque action.

@@ -275,6 +275,17 @@ def _titre_page(pdf: FPDF, titre: str, sous_titre: str | None = None):
     pdf.ln(1.5)
 
 
+def _ensemble(pdf: FPDF, dessiner):
+    """Dessine `dessiner(pdf)` d'un seul tenant : s'il ne tient pas dans la fin de la page,
+    il commence sur la suivante (rendu d'essai `offset_rendering`, rien n'est dessiné deux
+    fois). Un ensemble plus haut qu'une page se coupe normalement."""
+    with pdf.offset_rendering() as essai:
+        dessiner(essai)
+    if essai.page_break_triggered and pdf.get_y() > pdf.t_margin + 30:
+        pdf.add_page()
+    dessiner(pdf)
+
+
 def _section(pdf: FPDF, titre: str, compte: str | None = None):
     _place(pdf, 22)
     pdf.ln(1.5)
@@ -760,22 +771,27 @@ def _page_plan(pdf: FPDF, audit: dict):
     else:
         _para(pdf, "Aucun investissement ne se justifie à court terme : les gestes ci-dessus suffisent pour l'instant.")
 
-    _section(pdf, "À l'occasion de…", _compte(len(par["a_l_occasion"]), "action"))
-    if par["a_l_occasion"]:
-        if sy.get("message_sans_isolation"):
-            _para(pdf, sy["message_sans_isolation"], taille=9)
-            pdf.ln(1)
-        _table_actions(pdf, par["a_l_occasion"], avec_occasion=True)
-    else:
-        _para(pdf, "Rien à prévoir pour l'instant.")
+    def occasion(pdf):
+        _section(pdf, "À l'occasion de…", _compte(len(par["a_l_occasion"]), "action"))
+        if par["a_l_occasion"]:
+            if sy.get("message_sans_isolation"):
+                _para(pdf, sy["message_sans_isolation"], taille=9)
+                pdf.ln(1)
+            _table_actions(pdf, par["a_l_occasion"], avec_occasion=True)
+        else:
+            _para(pdf, "Rien à prévoir pour l'instant.")
 
-    if sol:
-        _section(pdf, "Pour aller plus loin")
-        _solaire(pdf, sol)
+    def fin(pdf):
+        if sol:
+            _section(pdf, "Pour aller plus loin")
+            _solaire(pdf, sol)
+        pdf.ln(1)
+        _en_resume(pdf, sy)
+        _notes_aides(pdf, audit, travaux)
 
-    pdf.ln(1)
-    _en_resume(pdf, sy)
-    _notes_aides(pdf, audit, travaux)
+    # « À l'occasion de… », « En résumé » et la note d'aide commune restent ensemble : la
+    # note explique les « aucune » du tableau, le résumé en donne le total.
+    _ensemble(pdf, lambda pdf: (occasion(pdf), fin(pdf)))
 
 
 def _phrase_bloc(bloc: dict) -> str:

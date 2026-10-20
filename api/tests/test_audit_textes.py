@@ -105,3 +105,32 @@ def test_le_fioul_dit_que_sa_chaleur_coute_cher():
 def test_convecteurs_et_pac_air_eau_la_note_du_circuit_d_eau():
     pac = _action(run_audit(maison_type(chauffage_principal="elec_direct"), aujourd_hui=AUJOURD_HUI), "pac_air_eau")
     assert "pas de circuit d'eau" in pac["pourquoi"]
+
+
+# --- Étape 2 : les gestes par équipement ----------------------------------------------------
+
+def test_les_gestes_de_fiche_sont_ceux_de_la_fiche():
+    section = _section_preaudit("gestes_equipements")
+    gestes = [g for g in ref.GESTES_GRATUITS if g.get("fiche")]
+    assert {g["cle"] for g in gestes} == {"pac_air_air", "clim", "ballon_elec", "ballon_thermo", "eau_chaude_tous"}
+    for g in gestes:
+        assert g["texte"] == _phrase(section, g["cle"]), g["cle"]
+    assert ref.CONFORT_ETE_CLIM_EXISTANTE == _phrase(section, "confort_ete_clim_existante")
+
+
+def test_reference_gestes_propres_aux_equipements(ref_audit):
+    cles = [g["cle"] for g in ref_audit["gestes"]]
+    assert {"pac_air_air", "clim", "ballon_elec", "eau_chaude_tous"} <= set(cles)
+    assert len(cles) <= ref.GESTES_MAX
+    # Le geste de la fiche remplace ceux qui disaient la même chose : pas de doublon.
+    assert not {"consigne_19", "programmation", "filtres_pac"} & set(cles)
+    assert ref_audit["confort_ete"]["note_clim"] == ref.CONFORT_ETE_CLIM_EXISTANTE
+
+
+def test_gestes_d_une_maison_au_gaz_sans_clim():
+    r = run_audit(maison_type(chauffage_principal="gaz", ecs="thermodynamique"), aujourd_hui=AUJOURD_HUI)
+    cles = [g["cle"] for g in r["gestes"]]
+    assert cles[:3] == ["consigne_19", "programmation", "entretien_chaudiere"]
+    assert "ballon_thermo" in cles and "clim" not in cles and "ballon_elec" not in cles
+    assert len(cles) <= ref.GESTES_MAX
+    assert r["confort_ete"]["note_clim"] is None
