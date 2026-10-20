@@ -134,3 +134,104 @@ def test_gestes_d_une_maison_au_gaz_sans_clim():
     assert "ballon_thermo" in cles and "clim" not in cles and "ballon_elec" not in cles
     assert len(cles) <= ref.GESTES_MAX
     assert r["confort_ete"]["note_clim"] is None
+
+
+# --- Étape 3 : les leviers du contrat --------------------------------------------------------
+
+def test_les_leviers_sont_ceux_de_la_fiche():
+    section = _section_preaudit(ref.FICHE_CONTRAT)
+    for cle, texte in ref.LEVIERS_CONTRAT.items():
+        assert texte == _phrase(section, cle), cle
+
+
+def _leviers(**kw) -> set[str]:
+    return {x["cle"] for x in run_audit(reference_complete(**kw), aujourd_hui=AUJOURD_HUI)["contrat"]}
+
+
+def test_aucun_levier_sans_le_champ_renseigne(ref_audit):
+    assert ref_audit["contrat"] == []  # ni puissance, ni option, ni prix bloqué dans la fiche
+
+
+@pytest.mark.parametrize("kw, attendu", [
+    ({"puissance_souscrite": "12"}, True),    # PAC : 9 kVA habituels
+    ({"puissance_souscrite": "9"}, False),
+])
+def test_puissance_a_verifier(kw, attendu):
+    assert ("puissance_a_verifier" in _leviers(**kw)) is attendu
+
+
+def test_puissance_habituelle_plus_basse_sans_chauffage_electrique():
+    r = run_audit(maison_type(puissance_souscrite="9"), aujourd_hui=AUJOURD_HUI)  # fioul : 6 kVA
+    levier = next(x for x in r["contrat"] if x["cle"] == "puissance_a_verifier")
+    assert levier["texte"].startswith("Votre abonnement est de 9 kVA.")
+
+
+def test_heures_creuses_et_base_avec_ballon():
+    assert "hphc_ballon" in _leviers(option_tarifaire="HPHC")
+    assert "hphc_ballon" not in _leviers(option_tarifaire="HPHC", ecs="thermodynamique")
+    assert "base_avec_ballon" in _leviers(option_tarifaire="base")
+    assert not {"hphc_ballon", "base_avec_ballon"} & _leviers(option_tarifaire="tempo")
+    avec_etude = run_audit(reference_complete(option_tarifaire="base"), etude_simulateur=etude(),
+                           aujourd_hui=AUJOURD_HUI)
+    assert avec_etude["contrat"] == []
+
+
+@pytest.mark.parametrize("kw, attendu", [
+    ({"tarif_bloque": "oui", "tarif_bloque_mois_restants": 2}, True),
+    ({"tarif_bloque": "oui", "tarif_bloque_mois_restants": 3}, True),
+    ({"tarif_bloque": "oui", "tarif_bloque_mois_restants": 4}, False),
+    ({"tarif_bloque": "oui"}, False),
+    ({"tarif_bloque": "non", "tarif_bloque_mois_restants": 2}, False),
+])
+def test_fin_du_prix_bloque(kw, attendu):
+    assert ("tarif_bloque_fin" in _leviers(**kw)) is attendu
+
+
+def test_le_prix_bloque_cite_ses_mois():
+    r = run_audit(reference_complete(tarif_bloque="oui", tarif_bloque_mois_restants=2), aujourd_hui=AUJOURD_HUI)
+    assert r["contrat"][0]["texte"].startswith("Votre prix bloqué se termine dans 2 mois")
+
+
+# --- Étape 4 : les conseils de parcours ------------------------------------------------------
+
+def test_les_textes_de_parcours_sont_ceux_des_fiches():
+    assert ref.DPE_ELECTRIQUE_2026 == _phrase(_section_preaudit(ref.FICHE_DPE), "dpe_electrique_2026")
+    section = _section_preaudit(ref.FICHE_AMPLEUR)
+    assert ref.PISTE_AMPLEUR == _phrase(section, "piste_ampleur")
+    assert list(ref.VIGILANCE_AMPLEUR) == _items(section, "vigilance")
+    corps = (KB / f"{ref.FICHE_AMPLEUR}.md").read_text(encoding="utf-8").replace("**", "")
+    assert ref.FOSSILE_AMPLEUR in corps
+
+
+def test_dpe_electrique_d_avant_2026():
+    r = run_audit(reference_complete(dpe_annee=2024), aujourd_hui=AUJOURD_HUI)
+    assert r["dpe_attestation"]["texte"] == ref.DPE_ELECTRIQUE_2026
+    assert not re.search(r"\b[A-G]\b", r["dpe_attestation"]["texte"])  # jamais de lettre estimée
+    assert run_audit(reference_complete(dpe_annee=2026), aujourd_hui=AUJOURD_HUI)["dpe_attestation"] is None
+    assert run_audit(reference_complete(dpe_annee=2024, chauffage_principal="gaz"),
+                     aujourd_hui=AUJOURD_HUI)["dpe_attestation"] is None
+    assert run_audit(reference_complete(), aujourd_hui=AUJOURD_HUI)["dpe_attestation"] is None  # année inconnue
+
+
+def test_maison_f_au_fioul_mal_isolee_voit_la_renovation_d_ampleur():
+    r = run_audit(maison_type(type_logement="maison", dpe_lettre="F"), aujourd_hui=AUJOURD_HUI)
+    amp = r["renovation_ampleur"]
+    assert amp["texte"].startswith("Votre maison est classée F")
+    assert amp["fossile"] == ref.FOSSILE_AMPLEUR
+    assert not re.search(r"\d", amp["texte"].replace("France Rénov'", ""))  # aucun chiffre
+
+
+@pytest.mark.parametrize("kw", [
+    {"type_logement": "appartement", "dpe_lettre": "F"},
+    {"type_logement": "maison", "dpe_lettre": "D"},
+    {"type_logement": "maison", "dpe_lettre": "F", "statut": "locataire"},
+    {"type_logement": "maison", "dpe_lettre": "F", "isolation_murs": "bonne", "menuiseries": "double"},
+])
+def test_pas_de_piste_d_ampleur_hors_cible(kw):
+    assert run_audit(maison_type(**kw), aujourd_hui=AUJOURD_HUI)["renovation_ampleur"] is None
+
+
+def test_ampleur_sans_chaudiere_fossile_pas_de_phrase_fossile():
+    r = run_audit(maison_type(type_logement="maison", dpe_lettre="G", chauffage_principal="elec_direct"),
+                  aujourd_hui=AUJOURD_HUI)
+    assert r["renovation_ampleur"]["fossile"] is None

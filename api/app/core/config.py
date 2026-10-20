@@ -169,6 +169,13 @@ class Settings(BaseSettings):
     audit_solaire_conso_min_kwh: int = 4000
     # Au-delà, une étude du simulateur citée par l'audit est signalée « à mettre à jour ».
     audit_etude_simulateur_max_mois: int = 6
+    # v2.4 (20/10/2026) — leviers du contrat, sans chiffre (kb/action_contrat.md).
+    # Puissance habituelle d'un foyer selon son chauffage (kVA) : au-dessus, l'audit invite à
+    # VÉRIFIER la puissance atteinte au compteur, sans jamais affirmer qu'elle est trop
+    # haute. A VALIDER PAR STÉPHANE.
+    audit_kva_habituel: tuple[tuple[str, int], ...] = (("non_electrique", 6), ("electrique", 9))
+    # Prix bloqué : alerte quand il reste au plus ce nombre de mois. A VALIDER PAR STÉPHANE.
+    audit_tarif_bloque_alerte_mois: int = 3
 
     # --- Espace énergie / SOBRY (doc 09 §2) ---
     sobry_spot_api_url: str = ""                 # API publique SOBRY (prix spot quart-horaire) — vide = courbe de démo

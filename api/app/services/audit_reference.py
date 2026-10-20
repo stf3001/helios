@@ -582,3 +582,45 @@ TEXTES_ACTIONS: dict[str, dict] = {
 }
 # Champs de texte d'une action, dans l'ordre d'affichage.
 TEXTES_LISTES = ("benefices", "vigilance", "devis")
+
+# Leviers du contrat (kb/action_contrat.md), horizon « maintenant », sans chiffre. Les
+# déclencheurs et leurs seuils sont dans `config.py` (`audit_kva_habituel`,
+# `audit_tarif_bloque_alerte_mois`). Aucun fournisseur nommé : le seul renvoi est le
+# comparateur public du médiateur de l'énergie, déjà dans le texte de la fiche.
+FICHE_CONTRAT = "action_contrat"
+LEVIERS_CONTRAT: dict[str, str] = {
+    "puissance_a_verifier": "Votre abonnement est de {kva} kVA. Vérifiez sur votre compteur la puissance maximale atteinte : si elle reste nettement en dessous, un cran de moins réduit votre abonnement sans rien changer à votre confort.",
+    "hphc_ballon": "Vous êtes en heures creuses avec un ballon électrique : vérifiez au tableau que son contacteur est bien sur « auto ».",
+    "base_avec_ballon": "Vous êtes en option base avec un ballon électrique : les heures creuses peuvent être intéressantes. Comparez avec votre consommation réelle.",
+    "tarif_bloque_fin": "Votre prix bloqué se termine dans {mois} mois : comparez les offres avant la date, avec le comparateur public du médiateur de l'énergie.",
+}
+
+# Conseils de parcours, sans chiffre.
+# DPE établi avant la réforme du coefficient de l'électricité (kb/lire_son_dpe.md). La
+# lettre qu'aurait l'attestation n'est pas connue : elle n'est JAMAIS affichée.
+FICHE_DPE = "lire_son_dpe"
+DPE_ELECTRIQUE_2026 = ("Votre DPE date d'avant 2026 et votre chauffage est électrique : une attestation mise à "
+                       "jour peut afficher une meilleure lettre. Elle s'obtient sur l'observatoire DPE de l'ADEME.")
+DPE_REFORME_ANNEE = 2026
+CHAUFFAGES_ELECTRIQUES = {"elec_direct", "PAC_air_air", "PAC_air_eau"}
+# Rénovation d'ampleur (kb/renovation_ampleur.md), « Pour aller plus loin ».
+FICHE_AMPLEUR = "renovation_ampleur"
+PISTE_AMPLEUR = ("Votre maison est classée {dpe} : une rénovation d'ampleur (au moins deux classes gagnées, "
+                 "accompagnateur obligatoire) peut financer une grande partie d'un projet global. Premier pas : "
+                 "un rendez-vous gratuit avec un conseiller France Rénov'.")
+VIGILANCE_AMPLEUR = ("jamais de démarchage", "ne rien commencer avant l'accord",
+                     "aucune chaudière fossile conservée dans une maison")
+# Phrase du corps de la fiche (« Quels pièges éviter en rénovation d'ampleur ? »), sans son gras.
+FOSSILE_AMPLEUR = ("Garder une chaudière fossile dans une maison : depuis le 1er septembre 2026, cela fait "
+                   "échouer le projet.")
+DPE_AMPLEUR = {"E", "F", "G"}
+CHAUFFAGES_FOSSILES = {"gaz", "fioul"}
+AMPLEUR_POSTES_MIN = 2
+# Un poste d'isolation « à traiter » pour la rénovation d'ampleur. Les fenêtres n'ont pas
+# d'état « aucune » ou « partielle » dans la fiche : le simple vitrage en tient lieu.
+AMPLEUR_POSTES_A_TRAITER = (
+    ("isolation_combles", {"aucune", "partielle"}),
+    ("isolation_murs", {"aucune", "partielle"}),
+    ("isolation_plancher", {"aucune", "partielle"}),
+    ("menuiseries", {"simple"}),
+)

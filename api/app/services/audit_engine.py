@@ -704,6 +704,48 @@ def textes_actions(actions: list[dict], variables: dict, avec_etude: bool, chauf
         a["fiche_question"] = textes["question"]
 
 
+def leviers_contrat(house: House, p: dict, variables: dict, avec_etude: bool) -> list[dict]:
+    """Les leviers du contrat d'électricité, déclenchés par les seuls champs RENSEIGNÉS de la
+    fiche. Une invitation à vérifier, jamais une affirmation, et sans chiffre."""
+    habituel = _grille(settings.audit_kva_habituel,
+                       "electrique" if p["energie"] == "electricite" else "non_electrique")
+    ballon = house.ecs == "ballon_elec"
+    declencheurs = {
+        "puissance_a_verifier": bool(house.puissance_souscrite) and int(house.puissance_souscrite) > habituel,
+        "hphc_ballon": house.option_tarifaire == "HPHC" and ballon,
+        "base_avec_ballon": house.option_tarifaire == "base" and ballon and not avec_etude,
+        "tarif_bloque_fin": (house.tarif_bloque == "oui" and house.tarif_bloque_mois_restants is not None
+                             and house.tarif_bloque_mois_restants <= settings.audit_tarif_bloque_alerte_mois),
+    }
+    leviers = []
+    for cle, actif in declencheurs.items():
+        texte = _remplir(ref.LEVIERS_CONTRAT[cle], variables) if actif else None
+        if texte:
+            leviers.append({"cle": cle, "texte": texte})
+    return leviers
+
+
+def dpe_attestation(house: House, variables: dict) -> dict | None:
+    """DPE d'avant 2026 et chauffage électrique : l'attestation mise à jour peut changer la
+    lettre. Celle qu'elle afficherait n'est pas connue, et n'est donc jamais donnée."""
+    if (variables["dpe"] and house.dpe_annee and house.dpe_annee < ref.DPE_REFORME_ANNEE
+            and house.chauffage_principal in ref.CHAUFFAGES_ELECTRIQUES):
+        return {"texte": ref.DPE_ELECTRIQUE_2026, "fiche": ref.FICHE_DPE}
+    return None
+
+
+def renovation_ampleur(house: House, p: dict, variables: dict) -> dict | None:
+    """Maison E, F ou G (déclaré) avec au moins deux postes d'isolation à traiter : la piste
+    de la rénovation d'ampleur, sans aucun chiffre (il relève de l'audit réglementaire)."""
+    a_traiter = sum(getattr(house, champ) in etats for champ, etats in ref.AMPLEUR_POSTES_A_TRAITER)
+    if (house.type_logement != "maison" or variables["dpe"] not in ref.DPE_AMPLEUR
+            or a_traiter < ref.AMPLEUR_POSTES_MIN or house.statut not in (None, "proprietaire")):
+        return None
+    return {"texte": _remplir(ref.PISTE_AMPLEUR, variables), "vigilance": list(ref.VIGILANCE_AMPLEUR),
+            "fossile": ref.FOSSILE_AMPLEUR if p["chauffage"] in ref.CHAUFFAGES_FOSSILES else None,
+            "fiche": ref.FICHE_AMPLEUR}
+
+
 # --- Synthèse -------------------------------------------------------------------------------
 
 def _decompte(nb: dict) -> str:
@@ -841,6 +883,11 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
         "gestes": gestes,
         "conseils_equipements": conseils,
         "confort_ete": confort_ete(house, p, actions),
+        # v2.4 : sans chiffre — le contrat et le DPE dans « Maintenant », la rénovation
+        # d'ampleur dans « Pour aller plus loin ».
+        "contrat": leviers_contrat(house, p, variables, etude_simulateur is not None),
+        "dpe_attestation": dpe_attestation(house, variables),
+        "renovation_ampleur": renovation_ampleur(house, p, variables),
         "solaire": solaire,
         "synthese": {
             "nb_actions": len(actions),
