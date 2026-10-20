@@ -125,6 +125,30 @@ SOURCES: list[SourceSpec] = [
     # Verifier l'entreprise qui pose (05/10/2026), meme lot. Complete sans les redire la fiche
     # « Quelles questions poser a un installateur » (terrain) et la verification RGE (vigilance).
     SourceSpec(name="choisir_installateur", kind="faq_markdown", location="helios/kb/choisir_installateur.md"),
+    # Fiches « action » du pré-audit (20/10/2026, lot A) : une source par action ou conseil
+    # du moteur, rédigées par Stéphane. Structure fixe — rentable dans quel cas, diagnostic,
+    # bénéfices hors euros, vigilance, devis, aides — et AUCUN chiffre universel de
+    # rentabilité : les conditions sont ici, le chiffre est dans le pré-audit. La section
+    # « Pour le pré-audit », après le dernier `---`, n'est pas ingérée (textes du lot 4).
+    SourceSpec(name="action_combles", kind="faq_markdown", location="helios/kb/action_combles.md"),
+    SourceSpec(name="action_murs", kind="faq_markdown", location="helios/kb/action_murs.md"),
+    SourceSpec(name="action_plancher", kind="faq_markdown", location="helios/kb/action_plancher.md"),
+    SourceSpec(name="action_menuiseries", kind="faq_markdown", location="helios/kb/action_menuiseries.md"),
+    SourceSpec(name="action_ventilation", kind="faq_markdown", location="helios/kb/action_ventilation.md"),
+    SourceSpec(name="action_regulation", kind="faq_markdown", location="helios/kb/action_regulation.md"),
+    SourceSpec(name="action_pac_remplacement", kind="faq_markdown",
+               location="helios/kb/action_pac_remplacement.md"),
+    SourceSpec(name="action_pac_air_air_renouvellement", kind="faq_markdown",
+               location="helios/kb/action_pac_air_air_renouvellement.md"),
+    SourceSpec(name="action_ballon_thermodynamique", kind="faq_markdown",
+               location="helios/kb/action_ballon_thermodynamique.md"),
+    SourceSpec(name="action_contrat", kind="faq_markdown", location="helios/kb/action_contrat.md"),
+    SourceSpec(name="gestes_equipements", kind="faq_markdown", location="helios/kb/gestes_equipements.md"),
+    # Taux et plafonds de la rénovation d'ampleur relevés le 20/10/2026 : barèmes datés,
+    # re-vérifiés plus souvent que les autres.
+    SourceSpec(name="renovation_ampleur", kind="faq_markdown", location="helios/kb/renovation_ampleur.md",
+               validite_mois=6),
+    SourceSpec(name="lire_son_dpe", kind="faq_markdown", location="helios/kb/lire_son_dpe.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
