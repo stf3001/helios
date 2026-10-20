@@ -818,21 +818,7 @@ def _confort_ete(pdf: FPDF, ete: dict, titre: str):
         _para(pdf, ete["note_combles"], taille=9, couleur=TEXTE_2)
 
 
-def _nouvelle_partie(pdf: FPDF, place_min: float):
-    """Une partie commence sur une nouvelle page, sauf s'il reste `place_min` mm : le plan peut
-    déborder d'un tiers de page, et forcer un saut ferait une page presque vide de plus."""
-    if pdf.get_y() + place_min > pdf.h - pdf.b_margin:
-        pdf.add_page()
-    else:
-        pdf.ln(8)
-        pdf.set_draw_color(*BORD)
-        pdf.set_line_width(0.3)
-        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
-        pdf.ln(6)
-
-
 def _page_comprendre(pdf: FPDF, audit: dict):
-    _nouvelle_partie(pdf, 110)
     _titre_page(pdf, "Comprendre votre maison")
     _section(pdf, "Où part la chaleur")
     _deperditions(pdf, audit)
@@ -867,7 +853,6 @@ def _hypotheses_fiche(audit: dict) -> list[str]:
 
 
 def _page_hypotheses(pdf: FPDF, audit: dict):
-    _nouvelle_partie(pdf, 90)
     _titre_page(pdf, "Hypothèses et méthode")
 
     supposes = champs_supposes(audit.get("entrees", []))
@@ -887,7 +872,7 @@ def _page_hypotheses(pdf: FPDF, audit: dict):
         for h in refs:
             date_src = f", {date.fromisoformat(h['date']).strftime('%d/%m/%Y')}" if h.get("date") else ""
             _para(pdf, f"{h['cle']} : {_valeur_lisible(h['valeur'])} — {h['source']}{date_src}.",
-                  taille=7, couleur=TEXTE_2, h=3.3)
+                  taille=7.5, couleur=TEXTE_2, h=3.6)
 
     pdf.ln(3)
     _para(pdf, _STATUTS, taille=8, couleur=TEXTE_2)
@@ -1055,7 +1040,9 @@ def build_pdf(audit: dict, house_label: str | None = None, fonts_dir: Path | Non
         _page_en_bref(pdf, audit, house_label)
         pdf.add_page()
         _page_plan(pdf, audit)
+        pdf.add_page()
         _page_comprendre(pdf, audit)
+        pdf.add_page()
         _page_hypotheses(pdf, audit)
     else:
         _document_ancien(pdf, audit, house_label)

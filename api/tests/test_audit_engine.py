@@ -713,7 +713,11 @@ def test_le_pdf_de_reference_se_lit(pdf_dans_tmp, caplog):
     with caplog.at_level(logging.WARNING, logger="fpdf"):
         pages = _pages_pdf(pdf_audit.build_pdf(r, house_label="Maison · 83000"))
     texte = " ".join(pages)
-    assert len(pages) <= 4
+    # Chaque partie commence sa page ; le nombre de pages suit le contenu, il n'est pas plafonné.
+    assert pages[0].count("Votre maison en bref") and "Votre plan" in pages[1]
+    # Le titre de partie suit directement l'en-tête de page : la partie ouvre sa page.
+    assert any(p.split("\n")[1:2] == ["Comprendre votre maison"] for p in pages)
+    assert "Hypothèses et méthode" in pages[-1]
     for attendu in ("€", "Votre maison en bref", "Surcoût", "> 30 ans", "m²"):
         assert attendu in texte, attendu
     assert "votre première étape" in texte.lower()
