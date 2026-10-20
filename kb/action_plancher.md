@@ -40,6 +40,8 @@ R: Depuis le 1er janvier 2026, l'isolation du plancher bas **n'est plus aidée p
 
 - **pourquoi_rentable** : « Avec {chauffage}, un plancher froid sur cave ou vide sanitaire se traite vite et pour pas cher. »
 - **pourquoi_peu_rentable** : « Le plancher pèse peu dans vos pertes, et votre chauffage vous coûte peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols. »
+- **pourquoi_apres_autres** : « Après {avant}, le plancher ne pèsera plus grand-chose dans votre facture. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols. »
+- **pourquoi_trop_cher** : « Le plancher pèse peu dans vos pertes : même avec {chauffage}, l'isoler rapporterait peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols. »
 - **benefices** : un sol moins froid · un rez-de-chaussée plus homogène · moins d'humidité ressentie
 - **vigilance** : garder la ventilation du vide sanitaire · traiter l'humidité d'abord · réseaux accessibles et calorifugés
 - **devis** : R ≥ 3 · surface mesurée · mode de fixation

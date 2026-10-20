@@ -50,8 +50,13 @@ R: La pompe à chaleur air/eau (et géothermique) fait partie des rares gestes *
 <!-- À recopier dans audit_reference.py au lot 4, avec la référence « kb/action_pac_remplacement.md ». -->
 
 - **pourquoi_rentable** : « Avec {chauffage}, chaque kWh de chaleur vous coûte cher. Une pompe à chaleur en produit environ trois pour un kWh d'électricité : c'est votre plus gros levier. »
-- **pourquoi_peu_rentable** : « Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Préparez son remplacement à la fin de vie de votre chaudière. »
+- **pourquoi_peu_rentable** : « Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Prévoyez-la pour la fin de vie de votre chauffage actuel. »
+- **pourquoi_apres_autres** : « Après {avant}, votre maison demandera beaucoup moins de chaleur : la pompe à chaleur se décidera au remplacement de votre chauffage actuel, et elle pourra être plus petite. »
+- **pourquoi_trop_cher** : « Avec {chauffage}, une pompe à chaleur ferait baisser la facture, mais son prix ne se rembourse pas avant la fin de sa vie. Prévoyez-la au remplacement de votre chauffage actuel. »
 - **benefices** : sortie du fioul ou du gaz · une énergie qui peut venir de vos panneaux · beaucoup moins de CO₂
 - **vigilance** : isoler avant pour une machine plus petite · emplacement de l'unité extérieure (bruit) · puissance justifiée par vos factures
 - **devis** : puissance justifiée · désembouage et filtre · mise en service et réglage de la loi d'eau
 - **note_convecteurs** : « Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste. »
+- **pourquoi_rentable_convecteurs** : « Avec des convecteurs, chaque kWh de chaleur se paie au prix de l'électricité. Une pompe à chaleur air/air en produit environ trois pour un, sans créer de circuit d'eau. »
+- **benefices_convecteurs** : environ trois fois moins d'électricité pour la même chaleur · le rafraîchissement d'été avec le même appareil · une énergie qui peut venir de vos panneaux
+- **devis_convecteurs** : une unité par pièce principale, puissance justifiée · niveau sonore des unités intérieures et extérieure · évacuation des condensats et ligne électrique dédiée

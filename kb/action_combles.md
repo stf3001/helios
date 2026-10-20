@@ -92,6 +92,8 @@ Si votre chauffage vous coûte déjà peu, gardez l'isolation des combles pour l
 
 - **pourquoi_rentable** : « Avec {chauffage}, chaque kWh perdu par le toit vous coûte cher. Le toit est votre premier poste de pertes, c'est donc le premier à traiter. »
 - **pourquoi_peu_rentable** : « Votre toit perd beaucoup de chaleur, mais cette chaleur vous coûte peu : {chauffage}, climat {zone}, environ {cout_chauffage} €/an de chauffage. L'économie ne rembourse pas vite les travaux. Gardez-les pour une réfection de toiture ou l'aménagement des combles. »
+- **pourquoi_apres_autres** : « Après {avant}, il restera peu à gagner sur le toit. Gardez son isolation pour une réfection de toiture ou l'aménagement des combles. »
+- **pourquoi_trop_cher** : « Même avec {chauffage}, isoler votre toit coûte cher au regard de ce que ça rapporterait. Gardez-le pour une réfection de toiture ou l'aménagement des combles, quand l'accès est déjà ouvert. »
 - **benefices** : confort d'été sous le toit · plafonds moins froids · meilleure étiquette DPE
 - **vigilance** : écart au feu des conduits · spots et boîtiers protégés · ventilation vérifiée après les travaux
 - **devis** : R et épaisseur posée · surface mesurée lors d'une visite · entreprise RGE

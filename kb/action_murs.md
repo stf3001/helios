@@ -82,6 +82,8 @@ R: Le meilleur moment pour isoler par l'extérieur, c'est le ravalement. L'écha
 
 - **pourquoi_rentable** : « Avec {chauffage}, vos murs nus vous coûtent cher chaque hiver. Si un ravalement approche, c'est le moment d'isoler. »
 - **pourquoi_peu_rentable** : « Isoler les murs coûte cher au m², et votre chauffage vous coûte peu ({cout_chauffage} €/an). Sur l'énergie seule, ça ne se rembourse pas : faites-le au ravalement, quand l'échafaudage est déjà payé. »
+- **pourquoi_apres_autres** : « Après {avant}, il restera peu à gagner sur les murs : leur isolation ne se rembourserait pas sur l'énergie. Faites-la au ravalement, quand l'échafaudage est déjà payé. »
+- **pourquoi_trop_cher** : « Isoler les murs coûte cher au m² : même avec {chauffage}, l'économie ne rembourse pas les travaux. Faites-le au ravalement, quand l'échafaudage est déjà payé. »
 - **benefices** : fin de l'effet paroi froide · moins de condensation dans les angles · meilleure étiquette DPE
 - **vigilance** : déclaration préalable en mairie (par l'extérieur) · mur ancien : isolant perméable et chaux · ventilation à vérifier
 - **devis** : technique et R ≥ 3,7 · points singuliers traités · surfaces mesurées par façade

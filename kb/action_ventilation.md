@@ -50,7 +50,7 @@ R: Pour tout dossier déposé **depuis le 1er septembre 2026**, la VMC double fl
 <!-- À recopier dans audit_reference.py au lot 4, avec la référence « kb/action_ventilation.md ». -->
 
 - **pourquoi_rentable** : « Votre maison est étanche et vous chauffez cher : une double flux récupère une bonne part de la chaleur de l'air extrait. »
-- **pourquoi_peu_rentable** : « Une double flux coûte cher pour une économie modeste dans votre climat. Une simple flux hygroréglable bien réglée assure l'essentiel : un air sain. »
+- **pourquoi_occasion** : « Une double flux coûte cher pour l'économie qu'elle apporterait chez vous. Une simple flux hygroréglable bien réglée assure l'essentiel : un air sain. »
 - **benefices** : un air sain · moins de buée et de moisissures · une maison qui garde sa santé après les travaux
 - **vigilance** : ne jamais couper la VMC · bouches à nettoyer tous les trois mois · compatibilité avec les appareils à combustion
 - **devis** : type de VMC et débits mesurés · entrées d'air · gaines isolées en combles

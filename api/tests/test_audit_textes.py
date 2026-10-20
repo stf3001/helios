@@ -44,11 +44,7 @@ def test_les_textes_des_actions_sont_ceux_de_la_fiche(action):
         if cle in ("fiche", "question"):
             continue
         if isinstance(valeur, tuple):
-            fiche = _items(section, cle)
-            if action == "pac_air_air":  # trois éléments retirés, aucun réécrit, ordre gardé
-                assert [x for x in fiche if x in valeur] == list(valeur), (action, cle)
-            else:
-                assert list(valeur) == fiche, (action, cle)
+            assert list(valeur) == _items(section, cle), (action, cle)
         else:
             assert valeur == _phrase(section, cle), (action, cle)
     # La question mène à la page de la fiche dans la FAQ : elle doit exister telle quelle.
@@ -110,8 +106,8 @@ def test_convecteurs_la_pac_air_air_porte_la_note_du_circuit_d_eau():
     pac = _action(run_audit(maison_type(chauffage_principal="elec_direct"), aujourd_hui=AUJOURD_HUI), "pac_air_air")
     assert pac["contexte"] == ref.TEXTES_ACTIONS["pac_air_air"]["note_convecteurs"]
     assert "pas de circuit d'eau" not in (pac["pourquoi"] or "")  # dite une fois, en contexte
-    assert "sortie du fioul ou du gaz" not in pac["benefices"]
-    assert pac["devis"] == ["puissance justifiée"]
+    assert pac["benefices"] == list(ref.TEXTES_ACTIONS["pac_air_air"]["benefices_convecteurs"])
+    assert pac["devis"] == list(ref.TEXTES_ACTIONS["pac_air_air"]["devis_convecteurs"])
 
 
 @pytest.mark.parametrize("surface, unites", [(20, 1), (100, 4), (300, 6), (None, 1)])
@@ -436,3 +432,67 @@ def test_seules_les_actions_a_l_occasion_ont_une_raison():
             attendu = a["horizon"] == "a_l_occasion" and a["categorie"] == "chauffage"
             assert ("raison_occasion" in a) is attendu, a["action"]
             assert not any(k.startswith("_") for k in a), a["action"]
+
+
+# --- Lot 5, étape 2 : le texte de la vraie raison -------------------------------------------
+
+def test_les_nouvelles_cles_sont_couvertes_par_la_source_unique():
+    cles = {c for t in ref.TEXTES_ACTIONS.values() for c in t}
+    assert {"pourquoi_apres_autres", "pourquoi_trop_cher", "pourquoi_occasion", "pourquoi_rentable_inconnu",
+            "pourquoi_rentable_convecteurs", "benefices_convecteurs", "devis_convecteurs",
+            "vigilance_si_pac"} <= cles
+    assert set(ref.LIBELLE_AVANT) == {k for k in ref.ACTIONS if k != "ballon_thermodynamique"}
+
+
+def test_apres_autres_cite_les_actions_d_avant():
+    fen = _action(run_audit(maison_type(), aujourd_hui=AUJOURD_HUI), "menuiseries")
+    assert fen["raison_occasion"] == "apres_autres"
+    assert fen["pourquoi"] is None or "Après" not in fen["pourquoi"]  # fenêtres : pas de texte « après »
+    pac = _action(run_audit(maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=None),
+                            aujourd_hui=AUJOURD_HUI), "pac_air_air")
+    assert pac["raison_occasion"] == "apres_autres"
+    assert pac["pourquoi"].startswith("Après la régulation et l'isolation du toit, votre maison")
+
+
+def test_trop_cher_ne_dit_jamais_que_le_chauffage_coute_peu():
+    murs = _action(run_audit(maison_type(), aujourd_hui=AUJOURD_HUI), "isolation_murs")
+    assert murs["pourquoi"].startswith("Isoler les murs coûte cher au m² : même avec une chaudière fioul")
+
+
+@pytest.mark.parametrize("nom", ["reference", "fioul", "fioul_F", "convecteurs"])
+def test_garde_fou_aucun_chauffage_cher_ne_lit_vous_coute_peu(nom):
+    r = run_audit(maisons_lot5()[nom], aujourd_hui=AUJOURD_HUI)
+    textes = " ".join(a.get("pourquoi") or "" for a in r["priorites"])
+    if r["consommation"]["cout_chauffage_actuel_eur"] > settings.audit_chauffage_peu_cher_eur:
+        assert "vous coûte peu" not in textes and "chauffe peu" not in textes
+    assert not re.search(r"\{[a-z_]+\}", repr(r))
+
+
+def test_la_pac_des_convecteurs_parle_d_electricite():
+    r = run_audit(maison_type(chauffage_principal="elec_direct"), aujourd_hui=AUJOURD_HUI)
+    pac = _action(r, "pac_air_air")
+    texte = " ".join([pac.get("pourquoi") or "", *pac["benefices"], *pac["vigilance"], *pac["devis"]])
+    for interdit in ("chaudière", "CO₂", "désembouage", "loi d'eau"):
+        assert interdit not in texte, interdit
+    # Classée « maintenant » ou « prioritaire », elle dit son texte des convecteurs.
+    vite = run_audit(maison_type(chauffage_principal="elec_direct", isolation_combles="bonne", regulation="connecte",
+                                 menuiseries="double", conso_elec_kwh_an=None), aujourd_hui=AUJOURD_HUI)
+    pac = _action(vite, "pac_air_air")
+    if pac["horizon"] != "a_l_occasion":
+        assert pac["pourquoi"] == ref.TEXTES_ACTIONS["pac_air_air"]["pourquoi_rentable_convecteurs"]
+
+
+@pytest.mark.parametrize("chauffage, pac", [("fioul", False), ("gaz", False), ("elec_direct", False),
+                                              ("PAC_air_air", True), ("PAC_air_eau", True)])
+def test_la_regulation_ne_parle_de_pac_qu_aux_pac(chauffage, pac):
+    reg = _action(run_audit(maison_type(chauffage_principal=chauffage), aujourd_hui=AUJOURD_HUI), "regulation")
+    assert ("pompe à chaleur" in " ".join(reg["vigilance"])) is pac
+
+
+def test_des_fenetres_inconnues_ne_sont_pas_du_simple_vitrage():
+    r = run_audit(maison_type(menuiseries=None, regulation="connecte", isolation_combles="bonne"),
+                  aujourd_hui=AUJOURD_HUI)
+    fen = _action(r, "menuiseries")
+    assert not (fen["pourquoi"] or "").startswith("Du simple vitrage")
+    if fen["horizon"] != "a_l_occasion":
+        assert fen["pourquoi"].startswith("Vos fenêtres ne sont pas renseignées")

@@ -734,33 +734,50 @@ def variables_textes(house: House, p: dict, c: dict) -> dict:
     }
 
 
-def _pourquoi(a: dict, textes: dict, variables: dict, avec_etude: bool, chauffage: str) -> str | None:
+def _texte(textes: dict, cle: str):
+    """La clé `_convecteurs` d'une fiche remplace sa clé de base (PAC air/air)."""
+    return textes.get(f"{cle}_convecteurs", textes.get(cle))
+
+
+def _enumerer(mots: list[str]) -> str | None:
+    if not mots:
+        return None
+    return mots[0] if len(mots) == 1 else f"{', '.join(mots[:-1])} et {mots[-1]}"
+
+
+def _pourquoi(a: dict, textes: dict, variables: dict, avec_etude: bool, house: House) -> str | None:
+    """Règle de choix en tête de `audit_reference.TEXTES_ACTIONS`."""
     if a["action"] == "ballon_thermodynamique":
         cle = "pourquoi_au_remplacement" if a.get("base_cout") == "surcout" else "pourquoi_sinon"
         phrases = [_remplir(textes.get(cle), variables)]
         if avec_etude:
             phrases.append(textes.get("avec_solaire"))
-    else:
-        cle = "pourquoi_peu_rentable" if a["horizon"] == "a_l_occasion" else "pourquoi_rentable"
-        phrases = [_remplir(textes.get(cle), variables)]
-        if a["action"] == "pac_air_eau" and chauffage == "elec_direct":
-            phrases.append(textes.get("note_convecteurs"))
-    phrases = [x for x in phrases if x]
-    return " ".join(phrases) or None
+        return " ".join(x for x in phrases if x) or None
+    if a["horizon"] != "a_l_occasion":
+        if a["action"] == "menuiseries" and house.menuiseries is None:
+            return _remplir(textes.get("pourquoi_rentable_inconnu"), variables)
+        return _remplir(_texte(textes, "pourquoi_rentable"), variables)
+    propre = ref.POURQUOI_PAR_RAISON.get(a.get("raison_occasion"))
+    return _remplir(textes.get(propre), variables) or _remplir(textes.get("pourquoi_occasion"), variables)
 
 
-def textes_actions(actions: list[dict], variables: dict, avec_etude: bool, chauffage: str):
+def textes_actions(actions: list[dict], variables: dict, avec_etude: bool, house: House, chauffage: str):
     """Pose sur chaque action le « pourquoi » et les listes de sa fiche — des textes, aucun
     chiffre ajouté. Une action sans fiche (le solaire, cité d'une étude) n'en reçoit pas."""
+    avant: list[str] = []  # actions de chauffage du plan recommandé déjà passées, dans l'ordre
     for a in actions:
         textes = ref.TEXTES_ACTIONS.get(a["action"])
-        if not textes:
-            continue
-        a["pourquoi"] = _pourquoi(a, textes, variables, avec_etude, chauffage)
-        for cle in ref.TEXTES_LISTES:
-            a[cle] = list(textes.get(cle, ()))
-        a["fiche"] = textes["fiche"]
-        a["fiche_question"] = textes["question"]
+        if textes:
+            libelles = list(dict.fromkeys(avant))  # deux PAC n'apparaissent jamais ensemble
+            a["pourquoi"] = _pourquoi(a, textes, {**variables, "avant": _enumerer(libelles)}, avec_etude, house)
+            for cle in ref.TEXTES_LISTES:
+                a[cle] = list(_texte(textes, cle) or ())
+            if chauffage in ref.CHAUFFAGES_PAC:
+                a["vigilance"] += list(textes.get("vigilance_si_pac", ()))
+            a["fiche"] = textes["fiche"]
+            a["fiche_question"] = textes["question"]
+        if a["action"] in ref.LIBELLE_AVANT and a["horizon"] in ("maintenant", "prioritaire"):
+            avant.append(ref.LIBELLE_AVANT[a["action"]])
 
 
 def leviers_contrat(house: House, p: dict, variables: dict, avec_etude: bool) -> list[dict]:
@@ -994,7 +1011,7 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
     premiere, premiere_type = _premiere_etape(actions, solaire, gestes)
 
     variables = variables_textes(house, p, c)
-    textes_actions(actions, variables, etude_simulateur is not None, p["chauffage"])
+    textes_actions(actions, variables, etude_simulateur is not None, house, p["chauffage"])
     for a in actions:
         a["categorie"] = {"eau_chaude": "eau_chaude", "solaire": "production"}.get(a.pop("_type", None), "chauffage")
     plan = [a for a in travaux if a["horizon"] in ("maintenant", "prioritaire")]

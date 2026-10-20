@@ -521,6 +521,17 @@ SOURCES: dict[str, tuple[str, str]] = {
 #
 # `fiche` : la source de la base ; `question` : sa première question, qui donne l'adresse de
 # la fiche dans la FAQ (`/faq/<slug>`, `frontend/src/lib/faqSlug.js`).
+#
+# Choix du « pourquoi » (v2.5). Action « maintenant » ou « prioritaire » : `pourquoi_rentable`
+# (`pourquoi_rentable_inconnu` pour des fenêtres non renseignées ; `pourquoi_rentable_convecteurs`
+# pour la PAC air/air). Action « à l'occasion », selon `raison_occasion` du moteur :
+#   1. la clé de sa raison — `pourquoi_peu_rentable` (chauffage_peu_cher),
+#      `pourquoi_apres_autres` (apres_autres), `pourquoi_trop_cher` (trop_cher) ;
+#   2. à défaut, `pourquoi_occasion` (valable quelle que soit la raison) ;
+#   3. à défaut, RIEN. Jamais `pourquoi_peu_rentable` pour une autre raison que la sienne.
+# {avant} : les actions de chauffage « maintenant » ou « prioritaire » placées avant elle
+# (`LIBELLE_AVANT`) ; liste vide = variable manquante, on passe à l'étape 2.
+# Les clés `*_convecteurs` remplacent leur clé de base pour la PAC air/air (fiche PAC).
 
 ARTICLE_CHAUFFAGE: dict[str, str] = {
     "elec_direct": "des convecteurs électriques",
@@ -540,6 +551,8 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "question": "Isoler mes combles est-il rentable dans mon cas ?",
         "pourquoi_rentable": "Avec {chauffage}, chaque kWh perdu par le toit vous coûte cher. Le toit est votre premier poste de pertes, c'est donc le premier à traiter.",
         "pourquoi_peu_rentable": "Votre toit perd beaucoup de chaleur, mais cette chaleur vous coûte peu : {chauffage}, climat {zone}, environ {cout_chauffage} €/an de chauffage. L'économie ne rembourse pas vite les travaux. Gardez-les pour une réfection de toiture ou l'aménagement des combles.",
+        "pourquoi_apres_autres": "Après {avant}, il restera peu à gagner sur le toit. Gardez son isolation pour une réfection de toiture ou l'aménagement des combles.",
+        "pourquoi_trop_cher": "Même avec {chauffage}, isoler votre toit coûte cher au regard de ce que ça rapporterait. Gardez-le pour une réfection de toiture ou l'aménagement des combles, quand l'accès est déjà ouvert.",
         "benefices": ("confort d'été sous le toit", "plafonds moins froids", "meilleure étiquette DPE"),
         "vigilance": ("écart au feu des conduits", "spots et boîtiers protégés", "ventilation vérifiée après les travaux"),
         "devis": ("R et épaisseur posée", "surface mesurée lors d'une visite", "entreprise RGE"),
@@ -549,6 +562,8 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "question": "Isoler mes murs est-il rentable dans mon cas ?",
         "pourquoi_rentable": "Avec {chauffage}, vos murs nus vous coûtent cher chaque hiver. Si un ravalement approche, c'est le moment d'isoler.",
         "pourquoi_peu_rentable": "Isoler les murs coûte cher au m², et votre chauffage vous coûte peu ({cout_chauffage} €/an). Sur l'énergie seule, ça ne se rembourse pas : faites-le au ravalement, quand l'échafaudage est déjà payé.",
+        "pourquoi_apres_autres": "Après {avant}, il restera peu à gagner sur les murs : leur isolation ne se rembourserait pas sur l'énergie. Faites-la au ravalement, quand l'échafaudage est déjà payé.",
+        "pourquoi_trop_cher": "Isoler les murs coûte cher au m² : même avec {chauffage}, l'économie ne rembourse pas les travaux. Faites-le au ravalement, quand l'échafaudage est déjà payé.",
         "benefices": ("fin de l'effet paroi froide", "moins de condensation dans les angles", "meilleure étiquette DPE"),
         "vigilance": ("déclaration préalable en mairie (par l'extérieur)", "mur ancien : isolant perméable et chaux", "ventilation à vérifier"),
         "devis": ("technique et R ≥ 3,7", "points singuliers traités", "surfaces mesurées par façade"),
@@ -558,6 +573,8 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "question": "Isoler mon plancher bas est-il rentable dans mon cas ?",
         "pourquoi_rentable": "Avec {chauffage}, un plancher froid sur cave ou vide sanitaire se traite vite et pour pas cher.",
         "pourquoi_peu_rentable": "Le plancher pèse peu dans vos pertes, et votre chauffage vous coûte peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols.",
+        "pourquoi_apres_autres": "Après {avant}, le plancher ne pèsera plus grand-chose dans votre facture. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols.",
+        "pourquoi_trop_cher": "Le plancher pèse peu dans vos pertes : même avec {chauffage}, l'isoler rapporterait peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols.",
         "benefices": ("un sol moins froid", "un rez-de-chaussée plus homogène", "moins d'humidité ressentie"),
         "vigilance": ("garder la ventilation du vide sanitaire", "traiter l'humidité d'abord", "réseaux accessibles et calorifugés"),
         "devis": ("R ≥ 3", "surface mesurée", "mode de fixation"),
@@ -566,7 +583,8 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "fiche": "action_menuiseries",
         "question": "Remplacer mes fenêtres est-il rentable dans mon cas ?",
         "pourquoi_rentable": "Du simple vitrage avec {chauffage} : vos fenêtres vous coûtent cher, et le confort y gagnera autant que la facture.",
-        "pourquoi_peu_rentable": "Vos fenêtres pèsent peu dans vos pertes : les changer ne se rembourse pas sur l'énergie. Faites-le en fin de vie, ou pour le bruit et le confort. En attendant, des joints neufs font déjà beaucoup.",
+        "pourquoi_rentable_inconnu": "Vos fenêtres ne sont pas renseignées dans votre fiche. Si ce sont des simples vitrages, avec {chauffage}, elles vous coûtent cher : vérifiez-les, le pré-audit sera plus juste.",
+        "pourquoi_occasion": "Vos fenêtres pèsent peu dans vos pertes : les changer ne se rembourse pas sur l'énergie. Faites-le en fin de vie, ou pour le bruit et le confort. En attendant, des joints neufs font déjà beaucoup.",
         "benefices": ("moins de bruit", "plus de sensation de froid près des vitres", "fin de la condensation (avec une ventilation adaptée)"),
         "vigilance": ("ventilation à vérifier", "pose en rénovation = moins de lumière", "déclaration préalable si l'aspect change"),
         "devis": ("Uw ≤ 1,3", "type de pose", "entrées d'air et calfeutrement"),
@@ -575,7 +593,7 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "fiche": "action_ventilation",
         "question": "Une VMC double flux est-elle rentable dans mon cas ?",
         "pourquoi_rentable": "Votre maison est étanche et vous chauffez cher : une double flux récupère une bonne part de la chaleur de l'air extrait.",
-        "pourquoi_peu_rentable": "Une double flux coûte cher pour une économie modeste dans votre climat. Une simple flux hygroréglable bien réglée assure l'essentiel : un air sain.",
+        "pourquoi_occasion": "Une double flux coûte cher pour l'économie qu'elle apporterait chez vous. Une simple flux hygroréglable bien réglée assure l'essentiel : un air sain.",
         "benefices": ("un air sain", "moins de buée et de moisissures", "une maison qui garde sa santé après les travaux"),
         "vigilance": ("ne jamais couper la VMC", "bouches à nettoyer tous les trois mois", "compatibilité avec les appareils à combustion"),
         "devis": ("type de VMC et débits mesurés", "entrées d'air", "gaines isolées en combles"),
@@ -584,24 +602,26 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "fiche": "action_pac_remplacement",
         "question": "Remplacer mon chauffage par une pompe à chaleur est-il rentable dans mon cas ?",
         "pourquoi_rentable": "Avec {chauffage}, chaque kWh de chaleur vous coûte cher. Une pompe à chaleur en produit environ trois pour un kWh d'électricité : c'est votre plus gros levier.",
-        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Préparez son remplacement à la fin de vie de votre chaudière.",
+        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Prévoyez-la pour la fin de vie de votre chauffage actuel.",
+        "pourquoi_apres_autres": "Après {avant}, votre maison demandera beaucoup moins de chaleur : la pompe à chaleur se décidera au remplacement de votre chauffage actuel, et elle pourra être plus petite.",
+        "pourquoi_trop_cher": "Avec {chauffage}, une pompe à chaleur ferait baisser la facture, mais son prix ne se rembourse pas avant la fin de sa vie. Prévoyez-la au remplacement de votre chauffage actuel.",
         "benefices": ("sortie du fioul ou du gaz", "une énergie qui peut venir de vos panneaux", "beaucoup moins de CO₂"),
         "vigilance": ("isoler avant pour une machine plus petite", "emplacement de l'unité extérieure (bruit)", "puissance justifiée par vos factures"),
         "devis": ("puissance justifiée", "désembouage et filtre", "mise en service et réglage de la loi d'eau"),
-        "note_convecteurs": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
     },
-    # Les textes de la PAC (action_pac_remplacement). Trois éléments qui ne valent que pour
-    # une PAC air/eau ou une sortie du fossile sont laissés de côté — retirés, jamais
-    # réécrits : « sortie du fioul ou du gaz », « désembouage et filtre », « loi d'eau ».
-    # La note des convecteurs devient le contexte de l'action.
+    # Les textes de la PAC (action_pac_remplacement) : les clés `_convecteurs` de la fiche
+    # remplacent pourquoi_rentable, benefices et devis. La note des convecteurs devient le
+    # contexte de l'action.
     "pac_air_air": {
         "fiche": "action_pac_remplacement",
         "question": "J'ai des convecteurs électriques : pompe à chaleur air/eau ou air/air ?",
-        "pourquoi_rentable": "Avec {chauffage}, chaque kWh de chaleur vous coûte cher. Une pompe à chaleur en produit environ trois pour un kWh d'électricité : c'est votre plus gros levier.",
-        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Préparez son remplacement à la fin de vie de votre chaudière.",
-        "benefices": ("une énergie qui peut venir de vos panneaux", "beaucoup moins de CO₂"),
+        "pourquoi_rentable_convecteurs": "Avec des convecteurs, chaque kWh de chaleur se paie au prix de l'électricité. Une pompe à chaleur air/air en produit environ trois pour un, sans créer de circuit d'eau.",
+        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Prévoyez-la pour la fin de vie de votre chauffage actuel.",
+        "pourquoi_apres_autres": "Après {avant}, votre maison demandera beaucoup moins de chaleur : la pompe à chaleur se décidera au remplacement de votre chauffage actuel, et elle pourra être plus petite.",
+        "pourquoi_trop_cher": "Avec {chauffage}, une pompe à chaleur ferait baisser la facture, mais son prix ne se rembourse pas avant la fin de sa vie. Prévoyez-la au remplacement de votre chauffage actuel.",
+        "benefices_convecteurs": ("environ trois fois moins d'électricité pour la même chaleur", "le rafraîchissement d'été avec le même appareil", "une énergie qui peut venir de vos panneaux"),
         "vigilance": ("isoler avant pour une machine plus petite", "emplacement de l'unité extérieure (bruit)", "puissance justifiée par vos factures"),
-        "devis": ("puissance justifiée",),
+        "devis_convecteurs": ("une unité par pièce principale, puissance justifiée", "niveau sonore des unités intérieures et extérieure", "évacuation des condensats et ligne électrique dédiée"),
         "note_convecteurs": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
     },
     "regulation": {
@@ -610,7 +630,8 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "pourquoi_rentable": "Votre chauffage tourne sans programmation : baisser la nuit et en absence est le geste le plus rentable de votre plan.",
         "pourquoi_peu_rentable": "Vous avez déjà une régulation : un modèle plus récent apporte du confort, peu d'économies. Vérifiez d'abord vos réglages.",
         "benefices": ("un confort maîtrisé", "une maison chaude au bon moment", "une facture qui baisse sans travaux"),
-        "vigilance": ("sonde loin des sources de chaleur", "baisses modérées avec une PAC", "programmation ajustée au ressenti"),
+        "vigilance": ("sonde loin des sources de chaleur", "consigne stable plutôt que poussée à fond", "programmation ajustée au ressenti"),
+        "vigilance_si_pac": ("baisses modérées (2 à 3 °C) avec une pompe à chaleur",),
         "devis": ("type de régulation adapté au chauffage", "emplacement de la sonde", "mise en service et réglages expliqués"),
     },
     "ballon_thermodynamique": {
@@ -626,6 +647,21 @@ TEXTES_ACTIONS: dict[str, dict] = {
 }
 # Champs de texte d'une action, dans l'ordre d'affichage.
 TEXTES_LISTES = ("benefices", "vigilance", "devis")
+# Clé du « pourquoi » selon la raison d'un « à l'occasion » (`raison_occasion` du moteur).
+POURQUOI_PAR_RAISON = {"chauffage_peu_cher": "pourquoi_peu_rentable", "apres_autres": "pourquoi_apres_autres",
+                       "trop_cher": "pourquoi_trop_cher"}
+CHAUFFAGES_PAC = {"PAC_air_air", "PAC_air_eau"}
+# {avant} : une entrée par clé d'ACTIONS de chauffage, avec son article.
+LIBELLE_AVANT: dict[str, str] = {
+    "regulation": "la régulation",
+    "isolation_combles": "l'isolation du toit",
+    "isolation_murs": "l'isolation des murs",
+    "isolation_plancher": "l'isolation du plancher",
+    "menuiseries": "le changement des fenêtres",
+    "ventilation_double_flux": "la VMC double flux",
+    "pac_air_eau": "la pompe à chaleur",
+    "pac_air_air": "la pompe à chaleur",
+}
 
 # Leviers du contrat (kb/action_contrat.md), horizon « maintenant », sans chiffre. Les
 # déclencheurs et leurs seuils sont dans `config.py` (`audit_kva_habituel`,

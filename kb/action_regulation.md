@@ -37,5 +37,6 @@ R: MaPrimeRénov' ne finance pas un thermostat seul. Des **primes CEE** existent
 - **pourquoi_rentable** : « Votre chauffage tourne sans programmation : baisser la nuit et en absence est le geste le plus rentable de votre plan. »
 - **pourquoi_peu_rentable** : « Vous avez déjà une régulation : un modèle plus récent apporte du confort, peu d'économies. Vérifiez d'abord vos réglages. »
 - **benefices** : un confort maîtrisé · une maison chaude au bon moment · une facture qui baisse sans travaux
-- **vigilance** : sonde loin des sources de chaleur · baisses modérées avec une PAC · programmation ajustée au ressenti
+- **vigilance** : sonde loin des sources de chaleur · consigne stable plutôt que poussée à fond · programmation ajustée au ressenti
+- **vigilance_si_pac** : baisses modérées (2 à 3 °C) avec une pompe à chaleur
 - **devis** : type de régulation adapté au chauffage · emplacement de la sonde · mise en service et réglages expliqués
