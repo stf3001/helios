@@ -356,6 +356,16 @@ def build_solar_context(study) -> dict:
     }
 
 
+# v2.4 : en tête du bloc d'audit, pour qu'un ordre de grandeur général de la base ne vienne
+# pas contredire le chiffre de CETTE maison. Passe par le contexte, pas par la constitution.
+CONSIGNE_AUDIT_PRIME = (
+    "Les chiffres de ce pré-audit sont ceux de la maison de l'utilisateur et priment sur les ordres "
+    "de grandeur généraux de la base. Ne les recalcule pas. Si une fiche générale donne un autre ordre "
+    "de grandeur, explique l'écart par les conditions de la maison (chauffage, climat, état) au lieu "
+    "de le contredire."
+)
+
+
 def build_audit_context(audit) -> dict:
     """Résumé du dernier pré-audit déterministe du foyer (déperditions, priorités chiffrées) —
     Helios doit s'appuyer sur ce diagnostic déjà fait plutôt que de re-décrire la méthode en général.
@@ -368,9 +378,10 @@ def build_audit_context(audit) -> dict:
     date_audit = audit.created_at.isoformat() if hasattr(audit.created_at, "isoformat") else str(audit.created_at)
     r = audit.json_result or {}
     if "conso_chauffage_estimee_kwh_an" not in r.get("consommation", {}):
-        return {"date_audit": date_audit, "resultat": r}
+        return {"consigne_prioritaire": CONSIGNE_AUDIT_PRIME, "date_audit": date_audit, "resultat": r}
     c = r["consommation"]
     return {
+        "consigne_prioritaire": CONSIGNE_AUDIT_PRIME,
         "date_audit": date_audit,
         "version": r.get("version_helios"),
         "consigne": (
@@ -389,13 +400,21 @@ def build_audit_context(audit) -> dict:
         "priorites": [{k: a.get(k) for k in (
             "rang", "label", "categorie", "horizon", "libelle_occasion", "contexte", "cout_eur",
             "aide_estimee_eur", "aide_note", "reste_a_charge_eur", "aides_statut", "economie_annuelle_eur",
-            "temps_retour_ans", "source", "mention", "statuts") if k in a}
+            "temps_retour_ans", "source", "mention", "statuts", "pourquoi", "vigilance") if k in a}
             for a in r.get("priorites", [])],
         "synthese": r.get("synthese"),
         # v2.1 : conseils sans chiffre, et le solaire CITÉ d'une étude ou proposé comme piste.
         "premiere_etape": (r.get("synthese") or {}).get("premiere_action"),
         "gestes_gratuits": [g["texte"] for g in r.get("gestes", [])] or None,
         "conseils_equipements": [c["texte"] for c in r.get("conseils_equipements", [])] or None,
+        # v2.4 : l'économie au remplacement d'une PAC air/air âgée (un conseil, pas une action).
+        "economie_remplacement_pac": next((c["economie_au_remplacement_eur"] for c in r.get("conseils_equipements", [])
+                                           if c.get("economie_au_remplacement_eur")), None),
+        "contrat": [x["texte"] for x in r.get("contrat") or []] or None,
+        "dpe_attestation": (r.get("dpe_attestation") or {}).get("texte"),
+        "renovation_ampleur": r.get("renovation_ampleur"),
+        "climat": r.get("climat"),
+        "couts": r.get("couts"),
         "confort_ete": r.get("confort_ete"),
         "solaire": r.get("solaire"),
         "alertes": r.get("alertes"),

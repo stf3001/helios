@@ -53,6 +53,7 @@ DPE_COULEURS = {"A": (0, 156, 109), "B": (82, 177, 83), "C": (120, 189, 118), "D
 DPE_LETTRE_ENCRE = {"C", "D", "E"}
 
 NBSP = " "  # entre les milliers et devant €, %, kWh : un montant ne se coupe jamais
+_ESPACE_MONTANT = re.compile(r"(?<=\d) (?=\d{3}\b|€|%|kWh|kVA|kg|ans\b|°C)")
 
 _POSTE_LABEL = {
     "toiture": "Toiture / combles",
@@ -203,6 +204,9 @@ class _AuditPDF(FPDF):
         return super().multi_cell(*args, **kwargs)
 
     def normalize_text(self, text):
+        # Les textes du moteur (fiches, conseils) s'écrivent avec des espaces simples : un
+        # montant ne doit pas se couper pour autant (« 146 » en fin de ligne, « €/an » dessous).
+        text = _ESPACE_MONTANT.sub(NBSP, text or "")
         return super().normalize_text(text if self.unicode else _s(text))
 
     def police(self, role: str = "sans", style: str = "", taille: float = 10):
@@ -415,6 +419,48 @@ def _ligne_action(a: dict, avec_occasion: bool) -> list[str]:
 
 def _table_actions(pdf: FPDF, actions: list[dict], avec_occasion: bool = False):
     _tableau(pdf, _ENTETES, _LARGEURS, [_ligne_action(a, avec_occasion) for a in actions], _ALIGNS)
+    _explications(pdf, actions)
+
+
+# v2.4 : ce que chaque action explique, en lignes courtes, après son tableau. Les textes
+# viennent des fiches kb/action_* (via le moteur) : le PDF ne fait que les poser.
+_EXPLICATIONS = (("pourquoi", "Pourquoi"), ("benefices", "Ce que ça apporte"),
+                 ("vigilance", "À surveiller"), ("devis", "Sur le devis"))
+_EXPLICATIONS_OCCASION = ("pourquoi", "benefices")
+
+
+def _lignes_explication(a: dict) -> list[str]:
+    cles = _EXPLICATIONS_OCCASION if a.get("horizon") == "a_l_occasion" else [c for c, _ in _EXPLICATIONS]
+    lignes = []
+    for cle, libelle in _EXPLICATIONS:
+        valeur = a.get(cle)
+        if cle not in cles or not valeur:
+            continue
+        texte = valeur if isinstance(valeur, str) else " · ".join(valeur)
+        lignes.append(f"**{libelle} :** {_md(texte)}")
+    return lignes
+
+
+def _explications(pdf: FPDF, actions: list[dict]):
+    for a in actions:
+        lignes = _lignes_explication(a)
+        if not lignes:
+            continue
+
+        def bloc(pdf, a=a, lignes=lignes):
+            pdf.set_x(pdf.l_margin)
+            pdf.police("sans", "B", 8.8)
+            pdf.set_text_color(*INK)
+            pdf.multi_cell(_largeur(pdf), 4.3, a["label"], new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.police("sans", "", 8.3)
+            pdf.set_text_color(*TEXTE_2)
+            for ligne in lignes:
+                pdf.set_x(pdf.l_margin + 3)
+                pdf.multi_cell(_largeur(pdf) - 3, 3.9, ligne, markdown=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_text_color(*INK)
+            pdf.ln(1.6)
+
+        _ensemble(pdf, bloc)
 
 
 def _aide_nulle(a: dict) -> bool:
@@ -584,8 +630,11 @@ def _cartes(pdf: FPDF, audit: dict):
     plan = sy["plan_recommande"]
     energie = _ENERGIE.get(c.get("energie_chauffage"), c.get("energie_chauffage"))
     facture = c.get("base_economies") == "declaree"
-    cartes = [("Votre chauffage", f"{_eur(c['cout_chauffage_actuel_eur'])} par an",
-               f"{energie.capitalize()}, " + ("d'après votre facture" if facture else "estimé (pas de relevé)"))]
+    note = f"{energie.capitalize()}, " + ("d'après votre facture" if facture else "estimé (pas de relevé)")
+    eau = (audit.get("couts") or {}).get("eau_chaude_eur_an")
+    if eau:  # v2.4
+        note += f", et environ {_eur(round(eau, -1))} par an pour l'eau chaude"
+    cartes = [("Votre chauffage", f"{_eur(c['cout_chauffage_actuel_eur'])} par an", note)]
     if plan["nb"]:
         cartes.append(("Le plan recommandé", f"{_plage_txt(plan['economie_annuelle_eur'])} par an",
                        f"d'économie, pour {_plage_txt(plan['reste_a_charge_eur'])} de reste à charge"))
@@ -618,7 +667,9 @@ def _premiere_etape(pdf: FPDF, audit: dict):
                        and a.get("horizon") in ("maintenant", "prioritaire")), None)
     blocs.append(("serif", "", 16, sy.get("premiere_action") or "", INK))
     if action:
-        if action.get("contexte"):
+        if action.get("pourquoi"):  # v2.4 : la raison, qui dit déjà le contexte
+            blocs.append(("sans", "", 9.5, action["pourquoi"], TEXTE_2))
+        elif action.get("contexte"):
             blocs.append(("sans", "", 9.5, action["contexte"][0].upper() + action["contexte"][1:] + ".", TEXTE_2))
         cout = ("Surcoût" if action.get("base_cout") == "surcout" else "Coût") + f" : {_plage_txt(action['cout_eur'])}"
         aide = action["aide_estimee_eur"]
@@ -742,6 +793,29 @@ def _solaire(pdf: FPDF, sol: dict):
           taille=8.5, couleur=TEXTE_2)
 
 
+def _ampleur(pdf: FPDF, amp: dict):
+    """La piste de la rénovation d'ampleur, sans chiffre (kb/renovation_ampleur.md)."""
+    if amp.get("texte"):
+        pdf.ln(0.8)
+        _para(pdf, amp["texte"])
+    if amp.get("fossile"):
+        _para(pdf, amp["fossile"], style="B", taille=9)
+    if amp.get("vigilance"):
+        pdf.set_x(pdf.l_margin)
+        pdf.police("sans", "", 8.3)
+        pdf.set_text_color(*TEXTE_2)
+        pdf.multi_cell(_largeur(pdf), 3.9, f"**À surveiller :** {_md(' · '.join(amp['vigilance']))}",
+                       markdown=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_text_color(*INK)
+    pdf.ln(1)
+
+
+def _intertitre(pdf: FPDF, titre: str):
+    _place(pdf, 14)
+    pdf.ln(0.8)
+    _para(pdf, titre, taille=9.5, style="B", h=5)
+
+
 def _compte(n: int, mot: str = "élément") -> str:
     return f"{n} {mot}{'s' if n > 1 else ''}"
 
@@ -751,17 +825,25 @@ def _page_plan(pdf: FPDF, audit: dict):
     travaux = [a for a in audit.get("priorites", []) if a.get("categorie") != "production"]
     par = {h: [a for a in travaux if a.get("horizon") == h] for h in ref.HORIZONS}
     gestes, conseils, sol = audit.get("gestes", []), audit.get("conseils_equipements", []), audit.get("solaire")
-    n_maintenant = len(gestes) + len(conseils) + len(par["maintenant"])
+    contrat, dpe, ampleur = audit.get("contrat") or [], audit.get("dpe_attestation"), audit.get("renovation_ampleur")
+    n_maintenant = len(gestes) + len(conseils) + len(par["maintenant"]) + len(contrat) + (1 if dpe else 0)
+    n_loin = (1 if sol else 0) + (1 if ampleur else 0)
 
     _titre_page(pdf, "Votre plan")
     _frise(pdf, [("Maintenant", n_maintenant), ("Cette année", len(par["prioritaire"])),
-                 ("À l'occasion de…", len(par["a_l_occasion"])), ("Pour aller plus loin", 1 if sol else 0)])
+                 ("À l'occasion de…", len(par["a_l_occasion"])), ("Pour aller plus loin", n_loin)])
 
     _section(pdf, "Maintenant", _compte(n_maintenant))
     for g in gestes:
         _puce(pdf, g["texte"], couleur=VERT)
     for c in conseils:
         _puce(pdf, c["texte"], couleur=ACCENT)
+    if dpe:
+        _puce(pdf, dpe["texte"], couleur=ACCENT)
+    if contrat:
+        _intertitre(pdf, "Votre contrat")
+        for levier in contrat:
+            _puce(pdf, levier["texte"], couleur=VERT)
     if par["maintenant"]:
         _table_actions(pdf, par["maintenant"])
 
@@ -782,9 +864,12 @@ def _page_plan(pdf: FPDF, audit: dict):
             _para(pdf, "Rien à prévoir pour l'instant.")
 
     def fin(pdf):
-        if sol:
+        if sol or ampleur:
             _section(pdf, "Pour aller plus loin")
+        if sol:
             _solaire(pdf, sol)
+        if ampleur:
+            _ampleur(pdf, ampleur)
         pdf.ln(1)
         _en_resume(pdf, sy)
         _notes_aides(pdf, audit, travaux)
@@ -864,10 +949,30 @@ def _consommation_v2(pdf: FPDF, audit: dict, encadre: bool = False):
           f"{_eur(c['cout_chauffage_actuel_eur'])} par an.")
 
 
+def _dans_le_temps(pdf: FPDF, audit: dict):
+    """v2.4 : le coût sur 10 ans et les émissions, une ligne chacun, sans pictogramme."""
+    co, cl = audit.get("couts"), audit.get("climat")
+    if co:
+        quoi = ("votre chauffage et votre eau chaude vous coûteraient" if co.get("eau_chaude_eur_an")
+                else "votre chauffage vous coûterait")
+        hausse = _dec(float(co["hausse_pct_an"])).removesuffix(",0")
+        phrase = f"Sur 10 ans, à +{hausse}{NBSP}%/an, {quoi} environ {_eur(co['chauffage_et_eau_chaude_10_ans_eur'])}"
+        if co.get("economie_10_ans_plan_recommande_eur"):
+            phrase += f" ; le plan recommandé en économiserait environ {_eur(co['economie_10_ans_plan_recommande_eur'])}"
+        pdf.ln(1)
+        _para(pdf, phrase + ".")
+    if cl:
+        aujourd_hui = cl["chauffage_kg_an"] + (cl.get("eau_chaude_kg_an") or 0)
+        _para(pdf, f"Émissions de CO₂ : environ {_milliers(aujourd_hui)}{NBSP}kg/an aujourd'hui, "
+                   f"{_milliers(cl['apres_plan_recommande_kg_an'])}{NBSP}kg/an après le plan recommandé.")
+
+
 def _confort_ete(pdf: FPDF, ete: dict, titre: str):
     _section(pdf, titre)
     for conseil in ete["conseils"]:
         _puce(pdf, conseil, couleur=VERT)
+    if ete.get("note_clim"):
+        _puce(pdf, ete["note_clim"], couleur=VERT)
     if ete.get("note_combles"):
         _para(pdf, ete["note_combles"], taille=9, couleur=TEXTE_2)
 
@@ -884,6 +989,7 @@ def _page_comprendre(pdf: FPDF, audit: dict):
     _para(pdf, phrase, taille=8.5, couleur=TEXTE_2)
     _section(pdf, "Votre consommation")
     _consommation_v2(pdf, audit, encadre=True)
+    _dans_le_temps(pdf, audit)
     if audit.get("confort_ete"):
         _confort_ete(pdf, audit["confort_ete"], "Confort d'été")
 

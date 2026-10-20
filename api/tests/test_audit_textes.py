@@ -300,3 +300,65 @@ def test_reference_couts_sur_10_ans(ref_audit):
     eco = ref_audit["synthese"]["plan_recommande"]["economie_annuelle_eur"]["central"]
     assert co["economie_10_ans_plan_recommande_eur"] == round(eco * facteur, -1)
     assert "hausse_prix_pct_an" in {h["cle"] for h in ref_audit["hypotheses"]}
+
+
+# --- Étape 9 : le chat et le PDF -------------------------------------------------------------
+
+from datetime import datetime  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+
+from app.services import pdf_audit  # noqa: E402
+from app.services.rag import CONSIGNE_AUDIT_PRIME, build_audit_context  # noqa: E402
+
+
+def test_le_chat_recoit_le_raisonnement(ref_audit):
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 20), json_result=ref_audit))
+    assert next(iter(ctx)) == "consigne_prioritaire" and ctx["consigne_prioritaire"] == CONSIGNE_AUDIT_PRIME
+    combles = next(a for a in ctx["priorites"] if a["label"].startswith("Isolation des combles"))
+    assert combles["pourquoi"] and combles["vigilance"]
+    assert ctx["economie_remplacement_pac"] == {"bas": 108, "haut": 146}
+    assert ctx["climat"]["chauffage_kg_an"] == 170 and ctx["couts"]["hausse_pct_an"] == 2.0
+    assert ctx["contrat"] is None and ctx["dpe_attestation"] is None
+
+
+@pytest.fixture
+def pdf_tmp(tmp_path, monkeypatch):
+    monkeypatch.setattr(pdf_audit, "PDF_DIR", tmp_path)
+
+
+def _pages(audit: dict) -> list[str]:
+    from pypdf import PdfReader
+    chemin = pdf_audit.build_pdf(audit, house_label="Maison · 83000")
+    return [p.extract_text().replace(" ", " ") for p in PdfReader(chemin).pages]
+
+
+@pytest.mark.parametrize("house", [reference_complete(), maison_type(),
+                                   maison_type(type_logement="maison", dpe_lettre="F", puissance_souscrite="9",
+                                               option_tarifaire="HPHC", ecs="ballon_elec")],
+                         ids=["reference", "fioul", "fioul_F"])
+def test_le_pdf_explique(pdf_tmp, house):
+    pages = _pages(run_audit(house, aujourd_hui=AUJOURD_HUI))
+    texte = " ".join(pages)
+    assert len(pages) <= 5
+    for attendu in ("Pourquoi", "À surveiller", "Ce que ça apporte", "kg/an", "Sur 10 ans"):
+        assert attendu in texte, attendu
+    assert not re.search(r"\{[a-z_]+\}", texte)
+
+
+def test_le_pdf_du_fioul_f_porte_contrat_et_ampleur(pdf_tmp):
+    house = maison_type(type_logement="maison", dpe_lettre="F", puissance_souscrite="9",
+                        option_tarifaire="HPHC", ecs="ballon_elec")
+    texte = " ".join(_pages(run_audit(house, aujourd_hui=AUJOURD_HUI)))
+    assert "Votre contrat" in texte and "Votre abonnement est de 9 kVA" in texte
+    assert "rénovation d'ampleur (au moins deux classes" in texte
+    assert "cela fait échouer le projet" in texte
+
+
+@pytest.mark.parametrize("nom", ["audit_v21.json", "audit_v22.json", "audit_v23.json"])
+def test_les_audits_stockes_se_lisent_encore(pdf_tmp, nom):
+    import json
+    audit = json.loads((Path(__file__).parent / "fixtures" / nom).read_text(encoding="utf-8"))
+    texte = " ".join(_pages(audit))
+    assert "Pourquoi :" not in texte and "kg/an" not in texte  # rien d'inventé pour un ancien audit
+    ctx = build_audit_context(SimpleNamespace(created_at=datetime(2026, 10, 19), json_result=audit))
+    assert ctx["climat"] is None and ctx["contrat"] is None

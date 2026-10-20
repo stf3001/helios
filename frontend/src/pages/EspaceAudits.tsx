@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { FileText, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import ApiError from '../components/ApiError'
+import Depliant from '../components/Depliant'
+import { faqSlug } from '../lib/faqSlug'
 
 interface Fourchette { bas: number; haut: number; central: number }
 interface Plage { bas: number; haut: number }
@@ -26,6 +28,13 @@ interface Priorite {
   base_cout?: 'surcout' | 'cout_complet'
   source?: string
   mention?: string | null
+  // v2.4 : textes des fiches kb/action_* (aucun chiffre ajouté)
+  pourquoi?: string | null
+  benefices?: string[]
+  vigilance?: string[]
+  devis?: string[]
+  fiche?: string
+  fiche_question?: string
 }
 interface Solaire {
   type: 'piste' | 'etude'
@@ -87,9 +96,18 @@ interface AuditResult {
   // v2.1 : conseils sans chiffre et solaire (absents des audits plus anciens)
   gestes?: { cle: string; texte: string }[]
   conseils_equipements?: { equipement: string; texte: string }[]
-  confort_ete?: { conseils: string[]; note_combles: string | null } | null
+  confort_ete?: { conseils: string[]; note_combles: string | null; note_clim?: string | null } | null
   solaire?: Solaire | null
   hypotheses?: { cle: string; valeur: unknown; source: string }[]
+  // v2.4
+  contrat?: { cle: string; texte: string }[]
+  dpe_attestation?: { texte: string; fiche: string } | null
+  renovation_ampleur?: { texte: string | null; vigilance: string[]; fossile: string | null; fiche: string } | null
+  climat?: { chauffage_kg_an: number; eau_chaude_kg_an: number | null; apres_plan_recommande_kg_an: number } | null
+  couts?: {
+    eau_chaude_eur_an: number | null; hausse_pct_an: number
+    chauffage_et_eau_chaude_10_ans_eur: number; economie_10_ans_plan_recommande_eur: number
+  } | null
   avertissement: string
 }
 interface AuditRow { id: string; created_at: string; result: AuditResult }
@@ -145,6 +163,40 @@ function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) 
       {p.contexte && <div className="text-xs text-gray-500 mt-2">À faire {p.contexte}.</div>}
       {p.libelle_occasion && <div className="text-xs text-gray-500 mt-2">À faire {p.libelle_occasion}.</div>}
       {p.aide_note && <div className="text-xs text-gray-500 mt-1">Aide : {p.aide_note}.</div>}
+      <Explications p={p} />
+    </div>
+  )
+}
+
+const point = (l: string[]) => l.join(' · ')
+
+/** v2.4 : le pourquoi en clair, le reste replié — mêmes blocs, même ordre que le PDF
+ *  (une action « à l'occasion » ne garde que le pourquoi et ce qu'elle apporte). */
+function Explications({ p }: { p: Priorite }) {
+  const occasion = p.horizon === 'a_l_occasion'
+  const listes: [string, string[] | undefined][] = [
+    ['Ce que ça apporte', p.benefices],
+    ...(occasion ? [] : ([['À surveiller', p.vigilance], ['Sur le devis', p.devis]] as [string, string[] | undefined][])),
+  ]
+  const pleines = listes.filter(([, l]) => l && l.length > 0) as [string, string[]][]
+  if (!p.pourquoi && !pleines.length) return null
+  return (
+    <div className="mt-3 space-y-2">
+      {p.pourquoi && <p className="text-sm text-gray-700"><strong>Pourquoi :</strong> {p.pourquoi}</p>}
+      {pleines.length > 0 && (
+        <Depliant titre="En détail" resume={pleines.map(([t]) => t.toLowerCase()).join(', ')}>
+          <dl className="text-sm text-gray-700 space-y-2">
+            {pleines.map(([t, l]) => (
+              <div key={t}><dt className="font-semibold">{t}</dt><dd>{point(l)}</dd></div>
+            ))}
+          </dl>
+          {p.fiche_question && (
+            <Link to={`/faq/${faqSlug(p.fiche_question)}`} className="inline-block text-sm text-primary font-semibold hover:underline">
+              En savoir plus
+            </Link>
+          )}
+        </Depliant>
+      )}
     </div>
   )
 }
@@ -171,7 +223,16 @@ function PlanV21({ r }: { r: AuditResult }) {
         <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
           {(r.gestes ?? []).map((g) => <li key={g.cle}>{g.texte}</li>)}
           {(r.conseils_equipements ?? []).map((c) => <li key={c.equipement}>{c.texte}</li>)}
+          {r.dpe_attestation && <li>{r.dpe_attestation.texte}</li>}
         </ul>
+        {r.contrat && r.contrat.length > 0 && (
+          <>
+            <p className="text-sm font-semibold text-gray-800 mt-3 mb-1">Votre contrat</p>
+            <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+              {r.contrat.map((c) => <li key={c.cle}>{c.texte}</li>)}
+            </ul>
+          </>
+        )}
         <div className="space-y-3 mt-3">{par('maintenant').map((p) => <CartePriorite key={p.rang} p={p} numero={false} />)}</div>
 
         <Titre>Cette année</Titre>
@@ -188,9 +249,9 @@ function PlanV21({ r }: { r: AuditResult }) {
           <p className="text-sm text-gray-600">Rien à prévoir pour l'instant.</p>
         )}
 
+        {(sol || r.renovation_ampleur) && <Titre>Pour aller plus loin</Titre>}
         {sol && (
           <>
-            <Titre>Pour aller plus loin</Titre>
             {sol.type === 'piste' ? (
               <p className="text-sm text-gray-700">
                 {sol.texte}{' '}
@@ -210,6 +271,15 @@ function PlanV21({ r }: { r: AuditResult }) {
             )}
           </>
         )}
+        {r.renovation_ampleur && (
+          <div className="text-sm text-gray-700 space-y-1 mt-3">
+            {r.renovation_ampleur.texte && <p>{r.renovation_ampleur.texte}</p>}
+            {r.renovation_ampleur.fossile && <p className="font-semibold">{r.renovation_ampleur.fossile}</p>}
+            {r.renovation_ampleur.vigilance.length > 0 && (
+              <p className="text-gray-600"><strong>À surveiller :</strong> {point(r.renovation_ampleur.vigilance)}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {r.confort_ete && (
@@ -217,6 +287,7 @@ function PlanV21({ r }: { r: AuditResult }) {
           <h2 className="font-semibold text-lg mb-2">Confort d'été</h2>
           <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
             {r.confort_ete.conseils.map((c) => <li key={c}>{c}</li>)}
+            {r.confort_ete.note_clim && <li>{r.confort_ete.note_clim}</li>}
           </ul>
           {r.confort_ete.note_combles && <p className="text-sm text-gray-700 mt-2">{r.confort_ete.note_combles}</p>}
         </div>
@@ -446,6 +517,17 @@ export default function EspaceAudits() {
                         {r.consommation.conso_elec_declaree_kwh_an && (
                           <> Conso déclarée : {r.consommation.conso_elec_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an.</>
                         )}
+                      </p>
+                    )}
+                    {r.couts && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        Sur 10 ans, à +{dec(r.couts.hausse_pct_an)} %/an, {r.couts.eau_chaude_eur_an ? 'votre chauffage et votre eau chaude vous coûteraient' : 'votre chauffage vous coûterait'} environ {eur(r.couts.chauffage_et_eau_chaude_10_ans_eur)}
+                        {r.couts.economie_10_ans_plan_recommande_eur > 0 && <> ; le plan recommandé en économiserait environ {eur(r.couts.economie_10_ans_plan_recommande_eur)}</>}.
+                      </p>
+                    )}
+                    {r.climat && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Émissions de CO₂ : environ {(r.climat.chauffage_kg_an + (r.climat.eau_chaude_kg_an ?? 0)).toLocaleString('fr-FR')} kg/an aujourd'hui, {r.climat.apres_plan_recommande_kg_an.toLocaleString('fr-FR')} kg/an après le plan recommandé.
                       </p>
                     )}
                   </div>
