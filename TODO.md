@@ -931,6 +931,24 @@ contrôle. Une redirection 301 sera à prévoir si la page a déjà été publi�
 Trois autres paires proches (0,73) entre une fiche du lot et `faq_maison`, sans conflit
 mesuré : plancher bas, ballon électrique ancien, thermostat programmable.
 
+### [ ] 33. Pré-audit v2.4 : des textes de fiche qui se trompent selon la maison
+
+Trouvé le 20/10/2026 en relisant les PDF du lot 4. Les textes sont recopiés tels quels
+(`audit_reference.TEXTES_ACTIONS`) : **c'est la fiche qu'il faut corriger**, puis recopier.
+
+- **`pourquoi_peu_rentable` suppose un chauffage bon marché.** Or une action passe « à
+  l'occasion » aussi quand les actions d'avant ont déjà pris le gain. Maison F au fioul
+  (5 130 €/an de chauffage) : les murs affichent « votre chauffage vous coûte peu
+  (5 130 €/an) ». Touche murs, combles, plancher et PAC (`action_*.md`).
+- **PAC, `pourquoi_peu_rentable`** : « à la fin de vie de votre chaudière » s'affiche pour
+  des convecteurs (`action_pac_remplacement.md`).
+- **PAC air/air sur convecteurs** : « beaucoup moins de CO₂ » est vrai en kWh, mais
+  l'électricité reste l'électricité ; trois éléments propres à l'air/eau ou au fossile sont
+  déjà retirés côté code (« sortie du fioul ou du gaz », désembouage, loi d'eau).
+- **Régulation, « baisses modérées avec une PAC »** s'affiche aussi au fioul ou au gaz.
+- **Menuiseries, `pourquoi_rentable`** dit « Du simple vitrage » alors que l'action est
+  aussi proposée quand les fenêtres sont inconnues.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

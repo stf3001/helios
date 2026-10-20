@@ -1324,3 +1324,5 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - PDF v2.3 en quatre parties (en bref, plan, comprendre, hypothèses) : polices TTF de `api/app/assets/fonts/` (repli Helvetica testé), couleurs copiées de `frontend/src/index.css` — les deux se tiennent à jour ENSEMBLE.
 - Le document annonce `synthese.plan_recommande`, jamais le total qui additionne ce qui attend une occasion ; `a_preciser` suit `CHAMPS_A_PRECISER`.
 - `audit_retour_affichage_max_ans` (30, affichage seul) est recopié dans `EspaceAudits.tsx`.
+- v2.4 : les textes affichés (pourquoi, gestes, contrat, parcours) sont recopiés MOT POUR MOT des sections « Pour le pré-audit » des fiches dans `audit_reference.py` ; `tests/test_audit_textes.py` le vérifie. Changer la fiche, puis recopier — jamais réécrire côté code.
+- Climat et coût sur 10 ans rejouent les économies déjà calculées ; facteurs CO₂ de la méthode DPE en config (`audit_facteurs_co2_kg_kwh`).
