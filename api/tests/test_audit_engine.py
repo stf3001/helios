@@ -60,7 +60,7 @@ def test_les_hypotheses_du_calcul_a_la_main_tiennent():
     assert dict(settings.audit_coef_zone)["H3"] == 0.55
     assert ref.ANNEE_BESOIN_UTILE_KWH_M2_AN["1975_1988"] == 180
     assert settings.audit_incertitude == 0.15
-    assert settings.audit_version == "v2.1"
+    assert settings.audit_version == "v2.2"
 
 
 # --- Couverture du schéma : aucun repli silencieux -----------------------------------------
@@ -165,9 +165,9 @@ def test_les_deux_premieres_actions_a_la_main():
     """Régulation d'abord (sobriété) : 11 647,06 × 10 % × 0,19 = 221 €/an, retour 325 / 221,3 = 1,5 an.
 
     Puis les combles, sur ce qui reste : 10 482,35 × 25 % = 2 620,6 kWh × 0,19 = 498 €/an.
-    Coût 100 m² × 25-70 € = 2 500-7 000, central 4 750 ; aides 0-25 €/m² → 0-2 500 ;
-    reste bas max(0, 2 500 − 2 500) = 0, haut 7 000 − 0 = 7 000 ;
-    reste central 4 750 − 1 250 = 3 500 → retour 3 500 / 497,9 = 7,0 ans → prioritaire.
+    Coût 100 m² × 25-70 € = 2 500-7 000, central 4 750 ; aucune aide MaPrimeRénov' par geste
+    depuis le 01/09/2026 → reste = coût, 2 500-7 000 ;
+    retour 4 750 / 497,9 = 9,5 ans → prioritaire.
     """
     p = run_audit(maison_type())["priorites"]
     assert [a["action"] for a in p[:2]] == ["regulation", "isolation_combles"]
@@ -178,11 +178,11 @@ def test_les_deux_premieres_actions_a_la_main():
     assert combles["horizon"] == "prioritaire"
     assert combles["economie_annuelle_kwh"] == 2621
     assert combles["economie_annuelle_eur"]["central"] == 498
-    assert combles["aide_estimee_eur"] == {"bas": 0, "haut": 2500}
-    assert combles["reste_a_charge_eur"] == {"bas": 0, "haut": 7000}
+    assert combles["aide_estimee_eur"] == {"bas": 0, "haut": 0}
+    assert combles["reste_a_charge_eur"] == {"bas": 2500, "haut": 7000}
     assert combles["aides_statut"] == "base_connaissances"
     assert "CEE" in combles["aide_note"]
-    assert combles["temps_retour_ans"] == 7.0
+    assert combles["temps_retour_ans"] == 9.5
 
 
 def test_combinaison_sequentielle():
@@ -444,17 +444,17 @@ def test_reference_conseils_d_age(ref_sans_etude):
 
 def test_reference_ballon_thermodynamique(ref_sans_etude):
     """(800 − 280) × 4 = 2 080 kWh × 0,2001 = 416 €/an. Ballon en fin de vie : surcoût
-    1 500-2 500, central 2 000 ; aide 0-30 % (à vérifier) → 0-600 ; reste central 1 700 ;
-    retour 1 700 / 416,2 = 4,1 ans → prioritaire."""
+    1 500-2 500, central 2 000 ; aucune aide MaPrimeRénov' par geste depuis le 01/09/2026 ;
+    retour 2 000 / 416,2 = 4,8 ans → prioritaire."""
     b = next(a for a in ref_sans_etude["priorites"] if a["action"] == "ballon_thermodynamique")
     assert b["horizon"] == "prioritaire"
     assert b["base_cout"] == "surcout"
     assert b["cout_eur"] == {"bas": 1500, "haut": 2500}
     assert b["economie_annuelle_kwh"] == 2080
     assert b["economie_annuelle_eur"]["central"] == 416
-    assert b["temps_retour_ans"] == 4.1
+    assert b["temps_retour_ans"] == 4.8
     assert b["contexte"] == "au remplacement de votre ballon, qui approche de sa fin de vie"
-    assert b["aides_statut"] == "a_verifier"
+    assert b["aides_statut"] == "base_connaissances"
     assert b["categorie"] == "eau_chaude"
 
 

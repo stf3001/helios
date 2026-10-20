@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2.1"                    # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.2"                    # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 
@@ -147,9 +147,9 @@ class Settings(BaseSettings):
     # Surface de murs = surface habitable x ratio, selon le nombre de niveaux (le dernier
     # vaut au-delà). A CALIBRER — une maison mitoyenne en a moins.
     audit_ratio_murs_par_niveaux: tuple[tuple[int, float], ...] = ((1, 0.90), (2, 0.85), (3, 0.80))
-    # Les fourchettes d'aides (`aide_pct_bas/haut` dans `audit_reference.ACTIONS`) n'ont PAS
-    # été revérifiées depuis juillet 2026 : affichées « à vérifier ».
-    audit_aides_date_reference: str = "2026-07-18"
+    # Date du relevé des aides de `audit_reference.ACTIONS` (kb/baremes_aides.md), affichée
+    # sous le tableau du PDF. Mise à jour le 20/10/2026 pour la réforme du 01/09/2026.
+    audit_aides_date_reference: str = "2026-10-20"
     # Durée de vie typique des équipements (ans), A CALIBRER. Un équipement qui a atteint
     # `audit_age_alerte_pct` % de la sienne reçoit un conseil (entretien, remplacement préparé).
     audit_duree_vie_chauffage: tuple[tuple[str, int], ...] = (

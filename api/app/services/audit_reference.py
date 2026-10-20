@@ -127,8 +127,9 @@ CHAUFFAGE_A_REMPLACER = {"elec_direct", "gaz", "fioul"}
 # `aide` : fourchette du revenu le plus élevé (bas) au plus modeste (haut), de trois formes :
 #   ("pct", bas, haut)    part du coût central — valeurs v1, A VÉRIFIER ;
 #   ("eur_m2", bas, haut) euros par m² traité ; ("eur", bas, haut) forfait en euros.
-#   `aide_source` renvoie à la fiche de `kb/baremes_aides.md` (relevé du 22/07/2026) quand
-#   elle existe ; sans elle, l'aide est affichée « à vérifier ». `aide_note` s'affiche avec.
+#   `aide_source` renvoie à la fiche de `kb/baremes_aides.md` (relevé du 22/07/2026, mis à
+#   jour le 20/10/2026 pour la réforme du 1er septembre 2026, décret n° 2026-822) quand elle
+#   existe ; sans elle, l'aide est affichée « à vérifier ». `aide_note` s'affiche avec.
 # `gain_pct_chauffage` : économie sur la CONSO DE CHAUFFAGE quand le poste est nu, modulée
 #   ensuite par son état (QUALITE_*). A CALIBRER.
 # `duree_vie_ans` : au-delà, un temps de retour n'a plus de sens. A CALIBRER.
@@ -139,11 +140,12 @@ ACTIONS: dict[str, dict] = {
         "label": "Isolation des combles / toiture",
         "cout_bas": 25, "cout_haut": 70, "unit": "m2_emprise",
         # kb/baremes_aides.md, « Quel montant MaPrimeRénov' pour l'isolation des combles ou de
-        # la toiture en 2026 ? » : ~25 / 20 / 15 €/m² (très modeste / modeste / intermédiaire),
-        # rien pour les revenus supérieurs. Toiture-terrasse plus aidée : non distinguée ici.
-        "aide": ("eur_m2", 0, 25),
-        "aide_source": "kb/baremes_aides.md (22/07/2026)",
-        "aide_note": "+ CEE possibles, montant variable selon le fournisseur",
+        # la toiture en 2026 ? » : sortie du parcours par geste pour tout dossier déposé depuis
+        # le 01/09/2026 (décret n° 2026-822). Les CEE restent, sans barème national.
+        "aide": ("eur_m2", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("plus aidée par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE "
+                      "possibles (montant variable) ; finançable en rénovation d'ampleur"),
         "gain_pct_chauffage": 0.25,
         "duree_vie_ans": 30,
         "libelle_occasion": "lors d'une réfection de la toiture ou de l'aménagement des combles",
@@ -156,7 +158,7 @@ ACTIONS: dict[str, dict] = {
         # kb/baremes_aides.md, « Peut-on encore isoler ses murs avec MaPrimeRénov' en 2026 ? » :
         # plus aidée par geste depuis le 01/01/2026 (décret du 08/09/2025).
         "aide": ("eur", 0, 0),
-        "aide_source": "kb/baremes_aides.md (22/07/2026)",
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
         "aide_note": ("finançable uniquement en rénovation d'ampleur (bouquet de travaux visant au "
                       "moins 2 classes de DPE, accompagnateur agréé)"),
         "gain_pct_chauffage": 0.20,
@@ -168,7 +170,11 @@ ACTIONS: dict[str, dict] = {
         "poste": "plancher",
         "label": "Isolation du plancher bas",
         "cout_bas": 30, "cout_haut": 60, "unit": "m2_emprise",
-        "aide": ("pct", 0.15, 0.35),
+        # Plus aidée par geste depuis le 01/01/2026, comme les murs.
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("plus aidée par MaPrimeRénov' par geste depuis le 01/01/2026 ; primes CEE "
+                      "possibles ; finançable en rénovation d'ampleur"),
         "gain_pct_chauffage": 0.08,
         "duree_vie_ans": 40,
         "libelle_occasion": "lors d'une réfection des sols ou si le vide sanitaire est accessible",
@@ -178,7 +184,10 @@ ACTIONS: dict[str, dict] = {
         "poste": "menuiseries",
         "label": "Remplacement des menuiseries (double/triple vitrage)",
         "cout_bas": 500, "cout_haut": 800, "unit": "fenetre",
-        "aide": ("pct", 0.05, 0.25),
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("plus aidées par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE "
+                      "possibles ; finançables en rénovation d'ampleur"),
         "gain_pct_chauffage": 0.12,
         "duree_vie_ans": 30,
         "libelle_occasion": "au remplacement des fenêtres en fin de vie",
@@ -188,7 +197,10 @@ ACTIONS: dict[str, dict] = {
         "poste": "air_ventilation",
         "label": "Ventilation VMC double flux",
         "cout_bas": 4000, "cout_haut": 7000, "unit": "forfait",
-        "aide": ("pct", 0.10, 0.30),
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("plus aidée par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE "
+                      "possibles ; finançable en rénovation d'ampleur"),
         "gain_pct_chauffage": 0.12,
         "duree_vie_ans": 20,
         "libelle_occasion": "lors d'une rénovation globale, une fois l'enveloppe étanche",
@@ -201,8 +213,9 @@ ACTIONS: dict[str, dict] = {
         # kb/baremes_aides.md, « Quel montant MaPrimeRénov' pour une pompe à chaleur en 2026 ? » :
         # air/eau ~5 000 / 4 000 / 3 000 € (très modeste / modeste / intermédiaire), 0 au-delà.
         "aide": ("eur", 0, 5000),
-        "aide_source": "kb/baremes_aides.md (22/07/2026)",
-        "aide_note": "+ CEE possibles, montant variable selon le fournisseur",
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("+ CEE possibles, montant variable selon le fournisseur ; le projet de loi de "
+                      "finances 2027 pourrait modifier cette aide"),
         # Pas de pourcentage : l'économie se calcule par changement d'énergie (moteur).
         "duree_vie_ans": 17,
         "libelle_occasion": "au remplacement du système actuel en fin de vie",
@@ -213,6 +226,8 @@ ACTIONS: dict[str, dict] = {
         "label": "Thermostat programmable / régulation",
         "cout_bas": 150, "cout_haut": 500, "unit": "forfait",
         "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": "primes CEE possibles pour une régulation posée par un professionnel",
         "gain_pct_chauffage": 0.10,
         "duree_vie_ans": 10,
         "libelle_occasion": "au prochain remplacement du thermostat",
@@ -225,7 +240,10 @@ ACTIONS: dict[str, dict] = {
         "poste": "eau_chaude",
         "label": "Ballon d'eau chaude thermodynamique",
         "unit": "forfait",
-        "aide": ("pct", 0.0, 0.30),  # absent de la base : A VÉRIFIER
+        "aide": ("eur", 0, 0),
+        "aide_source": "kb/baremes_aides.md (20/10/2026)",
+        "aide_note": ("plus aidé par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE "
+                      "possibles (montant variable)"),
         "duree_vie_ans": 15,
         "libelle_occasion": "au remplacement du ballon",
         "libelle_fin_de_vie": "au remplacement de votre ballon, qui approche de sa fin de vie",

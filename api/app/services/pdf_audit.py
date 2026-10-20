@@ -227,6 +227,21 @@ def _plage(f: dict) -> str:
     return f"{_eur(f['bas'])[:-4]}-{_eur(f['haut'])[:-4]}"
 
 
+def _plage_aide(f: dict) -> str:
+    """Une aide nulle s'écrit « aucune » : « 0-0 » se lit comme un oubli."""
+    return "aucune" if not f["bas"] and not f["haut"] else _plage(f)
+
+
+def _date_aides(audit: dict) -> str:
+    """Date du relevé des aides de CET audit, au format JJ/MM/AAAA.
+
+    Les audits antérieurs à la v2.2 ne la portent pas : leurs aides venaient du relevé du
+    22/07/2026, c'est donc la date qu'ils affichaient et qu'ils gardent.
+    """
+    iso = audit.get("aides_date_reference")
+    return date.fromisoformat(iso).strftime("%d/%m/%Y") if iso else "22/07/2026"
+
+
 def _retour(a: dict) -> str:
     return f"{_dec(float(a['temps_retour_ans']))} ans" if a.get("temps_retour_ans") is not None else "-"
 
@@ -323,7 +338,7 @@ def _puces(pdf: FPDF, lignes: list[str]):
 def _table_actions(pdf: FPDF, actions: list[dict]):
     cols = [("Action", 62), ("Cout", 28), ("Aide*", 26), ("Reste", 28), ("Eco/an", 22), ("Retour", 20)]
     _tableau(pdf, cols, [[
-        a["label"], _plage(a["cout_eur"]), _plage(a["aide_estimee_eur"]), _plage(a["reste_a_charge_eur"]),
+        a["label"], _plage(a["cout_eur"]), _plage_aide(a["aide_estimee_eur"]), _plage(a["reste_a_charge_eur"]),
         _eur(a["economie_annuelle_eur"]["central"])[:-4], _retour(a),
     ] for a in actions])
     notes = [f"{a['label']} : {a['contexte']}." for a in actions if a.get("contexte")]
@@ -365,9 +380,10 @@ def _plan_v21(pdf: FPDF, audit: dict):
     else:
         _para(pdf, "Rien à prévoir pour l'instant.")
     pdf.set_font("Helvetica", "I", 8)
-    _para(pdf, "Montants en EUR. * Aides selon vos revenus, du plus élevé au plus modeste : barèmes 2026 "
-               "de notre base (relevé du 22/07/2026) ou à vérifier. L'économie de chauffage de chaque "
-               "action tient compte de celles qui la précèdent ; l'eau chaude se compte à part.")
+    _para(pdf, "Montants en EUR. * Aides MaPrimeRénov' selon vos revenus, du plus élevé au plus modeste : "
+               f"barèmes 2026 de notre base (relevé du {_date_aides(audit)}) ou à vérifier. L'économie de "
+               "chauffage de chaque action tient compte de celles qui la précèdent ; l'eau chaude se "
+               "compte à part.")
     pdf.set_font("Helvetica", "", 10)
 
     sol = audit.get("solaire")

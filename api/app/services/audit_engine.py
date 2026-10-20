@@ -1,4 +1,4 @@
-"""Moteur déterministe de pré-audit — doc 07 §6, version v2.1.
+"""Moteur déterministe de pré-audit — doc 07 §6, version v2.2.
 
 Pipeline : fiche Maison → consommation de CHAUFFAGE en énergie finale (DPE ou année de
 construction, corrigée du climat) → calage sur la facture quand le chauffage est électrique
@@ -708,6 +708,9 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
 
     return {
         "version_helios": settings.audit_version,
+        # Date du relevé des aides appliquées : le PDF l'affiche, et un audit stocké garde la
+        # sienne même quand les barèmes changent.
+        "aides_date_reference": settings.audit_aides_date_reference,
         "completeness_score": score,
         "niveau": niveau_for_score(score),
         "entrees": t.entrees,
