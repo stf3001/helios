@@ -401,6 +401,11 @@ def build_audit_context(audit) -> dict:
         "alertes": r.get("alertes"),
         "hypotheses": [{"cle": h["cle"], "valeur": h["valeur"]} for h in r.get("hypotheses", [])],
         "entrees_supposees": [e for e in r.get("entrees", []) if e.get("statut") == "suppose"],
+        # v2.3 : le plan RECOMMANDÉ séparé de ce qui attend une occasion. C'est le premier qu'il
+        # faut citer comme budget conseillé, jamais le total de la synthèse qui additionne tout.
+        "plan_recommande": (r.get("synthese") or {}).get("plan_recommande"),
+        "a_l_occasion": (r.get("synthese") or {}).get("a_l_occasion"),
+        "a_preciser": r.get("a_preciser"),
     }
 
 

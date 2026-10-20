@@ -23,6 +23,7 @@ interface Priorite {
   categorie?: 'chauffage' | 'eau_chaude' | 'production'
   contexte?: string | null
   aide_note?: string | null
+  base_cout?: 'surcout' | 'cout_complet'
   source?: string
   mention?: string | null
 }
@@ -37,6 +38,14 @@ interface Solaire {
     economie_1re_annee_eur: number | null; temps_retour_ans: number | null
     gain_net_25_ans_eur: number | null; autonomie_pct: number | null
   }
+}
+// v2.3 : un groupe d'actions chiffrées (plan recommandé, ou à prévoir à l'occasion).
+interface BlocPlan {
+  nb: number
+  investissement_eur: Plage
+  aides_estimees_eur: Plage
+  reste_a_charge_eur: Plage
+  economie_annuelle_eur: Fourchette
 }
 interface AuditResult {
   version_helios: string
@@ -70,7 +79,11 @@ interface AuditResult {
     economie_chauffage_eur?: Fourchette | null
     economie_eau_chaude_eur?: Fourchette | null
     message_sans_isolation?: string | null
+    // v2.3
+    plan_recommande?: BlocPlan
+    a_l_occasion?: BlocPlan
   }
+  a_preciser?: { champ: string; libelle: string; hypothese: string }[]
   // v2.1 : conseils sans chiffre et solaire (absents des audits plus anciens)
   gestes?: { cle: string; texte: string }[]
   conseils_equipements?: { equipement: string; texte: string }[]
@@ -94,6 +107,19 @@ const HORIZON: Record<string, string> = {
   maintenant: 'Maintenant', prioritaire: 'Prioritaire', a_l_occasion: "À l'occasion",
 }
 const dec = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+// Même seuil que `audit_retour_affichage_max_ans` (api/app/core/config.py) : au-delà, un
+// temps de retour ne veut plus rien dire pour le lecteur. Les deux se tiennent à jour ENSEMBLE.
+const RETOUR_MAX_ANS = 30
+const retour = (n: number) => (n > RETOUR_MAX_ANS ? `> ${RETOUR_MAX_ANS} ans` : `~${dec(n)} ans`)
+const aide = (v: number | Plage) => ((typeof v === 'number' ? v === 0 : v.bas === 0 && v.haut === 0) ? 'aucune' : montant(v))
+const plage = (p: Plage) => (p.bas === p.haut ? eur(p.bas) : `${eur(p.bas)} à ${eur(p.haut)}`)
+
+function phraseBloc(b: BlocPlan) {
+  const aides = b.aides_estimees_eur.bas || b.aides_estimees_eur.haut
+    ? `aides ${plage(b.aides_estimees_eur)} selon vos revenus` : "aucune aide MaPrimeRénov'"
+  return `coût ${plage(b.investissement_eur)}, ${aides}, reste à charge ${plage(b.reste_a_charge_eur)}, économie ${plage(b.economie_annuelle_eur)} par an`
+}
+const actions = (n: number) => `${n} action${n > 1 ? 's' : ''}`
 
 function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) {
   return (
@@ -104,12 +130,15 @@ function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) 
           {numero && p.horizon && <span className="ml-2 text-xs text-gray-500">· {HORIZON[p.horizon]}</span>}
         </div>
         {p.temps_retour_ans !== null && (
-          <div className="text-xs text-gray-500 shrink-0">retour ~{dec(p.temps_retour_ans)} ans</div>
+          <div className="text-xs text-gray-500 shrink-0">
+            retour {retour(p.temps_retour_ans)}
+            {p.temps_retour_ans > RETOUR_MAX_ANS && <span className="block text-right">non rentable sur l'énergie seule</span>}
+          </div>
         )}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
-        <div>Coût : {eur(p.cout_eur.bas)}–{eur(p.cout_eur.haut)}</div>
-        <div>Aide : {montant(p.aide_estimee_eur)}</div>
+        <div>{p.base_cout === 'surcout' ? 'Surcoût' : 'Coût'} : {eur(p.cout_eur.bas)}–{eur(p.cout_eur.haut)}</div>
+        <div>Aide : {aide(p.aide_estimee_eur)}</div>
         <div>Reste : {montant(p.reste_a_charge_eur)}</div>
         <div>Éco/an : {eur(p.economie_annuelle_eur.bas)}–{eur(p.economie_annuelle_eur.haut)}</div>
       </div>
@@ -194,19 +223,48 @@ function PlanV21({ r }: { r: AuditResult }) {
       )}
 
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5">
-        <h2 className="font-semibold text-lg mb-2">Synthèse</h2>
-        <p className="text-sm text-gray-700">
-          {r.synthese.decompte}.{' '}
-          {r.synthese.nb_actions > 0 && r.synthese.reste_a_charge_eur && (
-            <>Travaux chiffrés : {eur(r.synthese.investissement_eur.bas)}–{eur(r.synthese.investissement_eur.haut)}, aides {montant(r.synthese.aides_estimees_eur)} selon vos revenus, reste à charge {montant(r.synthese.reste_a_charge_eur)}.</>
-          )}
-          {r.synthese.economie_chauffage_eur && <> Économie de chauffage : {eur(r.synthese.economie_chauffage_eur.bas)}–{eur(r.synthese.economie_chauffage_eur.haut)}/an.</>}
-          {r.synthese.economie_eau_chaude_eur && <> Économie d'eau chaude : {eur(r.synthese.economie_eau_chaude_eur.bas)}–{eur(r.synthese.economie_eau_chaude_eur.haut)}/an.</>}
-        </p>
+        <h2 className="font-semibold text-lg mb-2">En résumé</h2>
+        {r.synthese.plan_recommande && r.synthese.a_l_occasion ? (
+          // v2.3 : le plan recommandé d'abord, ce qui attend une occasion à part — le total de
+          // la synthèse additionne les deux, ce qu'on prendrait pour le budget conseillé.
+          <>
+            <p className="text-sm text-gray-800 font-medium">
+              {r.synthese.plan_recommande.nb > 0
+                ? <>Le plan recommandé ({actions(r.synthese.plan_recommande.nb)}) : {phraseBloc(r.synthese.plan_recommande)}.</>
+                : <>Pas de travaux rentables à court terme : les gestes gratuits sont votre plan pour l'instant.</>}
+            </p>
+            {r.synthese.a_l_occasion.nb > 0 && (
+              <p className="text-sm text-gray-600 mt-2">
+                Si vous faites aussi les travaux à prévoir à l'occasion ({actions(r.synthese.a_l_occasion.nb)}) : {phraseBloc(r.synthese.a_l_occasion)}.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-gray-700">
+            {r.synthese.decompte}.{' '}
+            {r.synthese.nb_actions > 0 && r.synthese.reste_a_charge_eur && (
+              <>Tous travaux confondus : {eur(r.synthese.investissement_eur.bas)}–{eur(r.synthese.investissement_eur.haut)}, aides {montant(r.synthese.aides_estimees_eur)} selon vos revenus, reste à charge {montant(r.synthese.reste_a_charge_eur)}.</>
+            )}
+            {r.synthese.economie_chauffage_eur && <> Économie de chauffage : {eur(r.synthese.economie_chauffage_eur.bas)}–{eur(r.synthese.economie_chauffage_eur.haut)}/an.</>}
+            {r.synthese.economie_eau_chaude_eur && <> Économie d'eau chaude : {eur(r.synthese.economie_eau_chaude_eur.bas)}–{eur(r.synthese.economie_eau_chaude_eur.haut)}/an.</>}
+          </p>
+        )}
         <p className="text-sm text-gray-700 mt-2">
-          Première étape conseillée : <strong>{r.synthese.premiere_action}</strong> — l'esprit colibri, on commence petit.
+          Première étape conseillée : <strong>{r.synthese.premiere_action}</strong>.
         </p>
       </div>
+
+      {r.a_preciser && r.a_preciser.length > 0 && (
+        <div>
+          <h2 className="font-semibold text-lg mb-2">Pour un pré-audit plus précis</h2>
+          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+            {r.a_preciser.map((a) => <li key={a.champ}>{a.libelle} — {a.hypothese}.</li>)}
+          </ul>
+          <Link to="/mon-espace" className="inline-block text-sm text-primary font-semibold hover:underline mt-2">
+            Compléter ma fiche Maison
+          </Link>
+        </div>
+      )}
 
       {defauts.length > 0 && (
         <div>
@@ -414,7 +472,7 @@ export default function EspaceAudits() {
                     </p>
                     {r.synthese.premiere_action && (
                       <p className="text-sm text-gray-700 mt-2">
-                        Première étape conseillée : <strong>{r.synthese.premiere_action}</strong> — l'esprit colibri, on commence petit.
+                        Première étape conseillée : <strong>{r.synthese.premiere_action}</strong>.
                       </p>
                     )}
                   </div>
