@@ -368,7 +368,11 @@ def _geste_applicable(g: dict, house: House, p: dict) -> bool:
 
 
 def gestes_gratuits(house: House, p: dict) -> list[dict]:
-    gestes = [{"cle": g["cle"], "texte": g["texte"]} for g in ref.GESTES_GRATUITS if _geste_applicable(g, house, p)]
+    gestes = []
+    for g in ref.GESTES_GRATUITS:
+        if _geste_applicable(g, house, p):
+            lien = {"fiche": g["fiche"], "fiche_question": g["question"]} if g.get("fiche") else {}
+            gestes.append({"cle": g["cle"], "texte": g["texte"], **lien})
     return gestes[:ref.GESTES_MAX]
 
 
@@ -803,7 +807,8 @@ def leviers_contrat(house: House, p: dict, variables: dict, avec_etude: bool) ->
     for cle, actif in declencheurs.items():
         texte = _remplir(ref.LEVIERS_CONTRAT[cle], variables) if actif else None
         if texte:
-            leviers.append({"cle": cle, "texte": texte})
+            leviers.append({"cle": cle, "texte": texte, "fiche": ref.FICHE_CONTRAT,
+                            "fiche_question": ref.QUESTION_LEVIER[cle]})
     return leviers
 
 
@@ -812,7 +817,7 @@ def dpe_attestation(house: House, variables: dict) -> dict | None:
     lettre. Celle qu'elle afficherait n'est pas connue, et n'est donc jamais donnée."""
     if (variables["dpe"] and house.dpe_annee and house.dpe_annee < ref.DPE_REFORME_ANNEE
             and house.chauffage_principal in ref.CHAUFFAGES_ELECTRIQUES):
-        return {"texte": ref.DPE_ELECTRIQUE_2026, "fiche": ref.FICHE_DPE}
+        return {"texte": ref.DPE_ELECTRIQUE_2026, "fiche": ref.FICHE_DPE, "fiche_question": ref.QUESTION_DPE}
     return None
 
 
@@ -825,7 +830,7 @@ def renovation_ampleur(house: House, p: dict, variables: dict) -> dict | None:
         return None
     return {"texte": _remplir(ref.PISTE_AMPLEUR, variables), "vigilance": list(ref.VIGILANCE_AMPLEUR),
             "fossile": ref.FOSSILE_AMPLEUR if p["chauffage"] in ref.CHAUFFAGES_FOSSILES else None,
-            "fiche": ref.FICHE_AMPLEUR}
+            "fiche": ref.FICHE_AMPLEUR, "fiche_question": ref.QUESTION_AMPLEUR}
 
 
 # --- Climat et coût dans le temps (v2.4) ----------------------------------------------------

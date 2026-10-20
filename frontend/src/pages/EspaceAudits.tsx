@@ -94,15 +94,17 @@ interface AuditResult {
   }
   a_preciser?: { champ: string; libelle: string; hypothese: string }[]
   // v2.1 : conseils sans chiffre et solaire (absents des audits plus anciens)
-  gestes?: { cle: string; texte: string }[]
+  gestes?: { cle: string; texte: string; fiche?: string; fiche_question?: string }[]
   conseils_equipements?: { equipement: string; texte: string }[]
   confort_ete?: { conseils: string[]; note_combles: string | null; note_clim?: string | null } | null
   solaire?: Solaire | null
   hypotheses?: { cle: string; valeur: unknown; source: string }[]
   // v2.4
-  contrat?: { cle: string; texte: string }[]
-  dpe_attestation?: { texte: string; fiche: string } | null
-  renovation_ampleur?: { texte: string | null; vigilance: string[]; fossile: string | null; fiche: string } | null
+  contrat?: { cle: string; texte: string; fiche?: string; fiche_question?: string }[]
+  dpe_attestation?: { texte: string; fiche: string; fiche_question?: string } | null
+  renovation_ampleur?: {
+    texte: string | null; vigilance: string[]; fossile: string | null; fiche: string; fiche_question?: string
+  } | null
   climat?: { chauffage_kg_an: number; eau_chaude_kg_an: number | null; apres_plan_recommande_kg_an: number } | null
   couts?: {
     eau_chaude_eur_an: number | null; hausse_pct_an: number
@@ -174,6 +176,19 @@ function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) 
 
 const point = (l: string[]) => l.join(' · ')
 
+/** Lien vers la question de la fiche dans la FAQ (v2.5 : gestes, contrat, parcours). */
+function EnSavoirPlus({ question }: { question?: string }) {
+  if (!question) return null
+  return (
+    <>
+      {' '}
+      <Link to={`/faq/${faqSlug(question)}`} className="text-primary font-semibold hover:underline whitespace-nowrap">
+        En savoir plus
+      </Link>
+    </>
+  )
+}
+
 /** v2.4 : le pourquoi en clair, le reste replié — mêmes blocs, même ordre que le PDF
  *  (une action « à l'occasion » ne garde que le pourquoi et ce qu'elle apporte). */
 function Explications({ p }: { p: Priorite }) {
@@ -225,15 +240,15 @@ function PlanV21({ r }: { r: AuditResult }) {
 
         <Titre>Maintenant</Titre>
         <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-          {(r.gestes ?? []).map((g) => <li key={g.cle}>{g.texte}</li>)}
+          {(r.gestes ?? []).map((g) => <li key={g.cle}>{g.texte}<EnSavoirPlus question={g.fiche_question} /></li>)}
           {(r.conseils_equipements ?? []).map((c) => <li key={c.equipement}>{c.texte}</li>)}
-          {r.dpe_attestation && <li>{r.dpe_attestation.texte}</li>}
+          {r.dpe_attestation && <li>{r.dpe_attestation.texte}<EnSavoirPlus question={r.dpe_attestation.fiche_question} /></li>}
         </ul>
         {r.contrat && r.contrat.length > 0 && (
           <>
             <p className="text-sm font-semibold text-gray-800 mt-3 mb-1">Votre contrat</p>
             <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-              {r.contrat.map((c) => <li key={c.cle}>{c.texte}</li>)}
+              {r.contrat.map((c) => <li key={c.cle}>{c.texte}<EnSavoirPlus question={c.fiche_question} /></li>)}
             </ul>
           </>
         )}
@@ -277,7 +292,7 @@ function PlanV21({ r }: { r: AuditResult }) {
         )}
         {r.renovation_ampleur && (
           <div className="text-sm text-gray-700 space-y-1 mt-3">
-            {r.renovation_ampleur.texte && <p>{r.renovation_ampleur.texte}</p>}
+            {r.renovation_ampleur.texte && <p>{r.renovation_ampleur.texte}<EnSavoirPlus question={r.renovation_ampleur.fiche_question} /></p>}
             {r.renovation_ampleur.fossile && <p className="font-semibold">{r.renovation_ampleur.fossile}</p>}
             {r.renovation_ampleur.vigilance.length > 0 && (
               <p className="text-gray-600"><strong>À surveiller :</strong> {point(r.renovation_ampleur.vigilance)}</p>

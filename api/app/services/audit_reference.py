@@ -326,7 +326,7 @@ APPOINT_HORS_FACTURE = {"autre", "bois", "gaz", "fioul", "reseau"}
 GESTES_GRATUITS: tuple[dict, ...] = (
     {"cle": "consigne_19", "texte": "Réglez la consigne à 19 °C dans les pièces de vie, moins "
                                      "dans les chambres et la nuit.", "sauf_chauffage": {"PAC_air_air"}},
-    {"cle": "pac_air_air", "fiche": "gestes_equipements",
+    {"cle": "pac_air_air", "fiche": "gestes_equipements", "question": "Quels gestes pour bien chauffer avec une pompe à chaleur air/air ?",
      "texte": "Mode chauffage plutôt qu'auto, consigne stable autour de 19-20 °C, baisse modérée la nuit plutôt qu'un arrêt, filtres nettoyés chaque mois.",
      "si_chauffage": {"PAC_air_air"}},
     {"cle": "programmation", "texte": "Programmez le chauffage selon votre présence : il baisse "
@@ -335,15 +335,15 @@ GESTES_GRATUITS: tuple[dict, ...] = (
                                      "faites-la entretenir.", "si_chauffage": {"PAC_air_eau"}},
     {"cle": "entretien_chaudiere", "texte": "Faites entretenir la chaudière chaque année (obligatoire).",
      "si_chauffage": {"gaz", "fioul", "bois"}},
-    {"cle": "clim", "fiche": "gestes_equipements",
+    {"cle": "clim", "fiche": "gestes_equipements", "question": "Comment faire consommer moins sa climatisation l'été ?",
      "texte": "Consigne à 26 °C, un brasseur d'air pour gagner 2 °C de confort, volets fermés côté soleil dès le matin.",
      "si_clim": True},
-    {"cle": "ballon_elec", "fiche": "gestes_equipements",
+    {"cle": "ballon_elec", "fiche": "gestes_equipements", "question": "Quels gestes pour l'eau chaude, selon mon équipement ?",
      "texte": "Ballon réglé à 55 °C et contacteur sur « auto » si vous êtes en heures creuses.",
      "si_ecs": {"ballon_elec"}},
-    {"cle": "ballon_thermo", "fiche": "gestes_equipements",
+    {"cle": "ballon_thermo", "fiche": "gestes_equipements", "question": "Quels gestes pour l'eau chaude, selon mon équipement ?",
      "texte": "Mode éco plutôt que boost permanent.", "si_ecs": {"thermodynamique"}},
-    {"cle": "eau_chaude_tous", "fiche": "gestes_equipements",
+    {"cle": "eau_chaude_tous", "fiche": "gestes_equipements", "question": "Quels gestes pour l'eau chaude, selon mon équipement ?",
      "texte": "Mousseurs et douchette économe : quelques euros, et l'eau chaude dure plus longtemps."},
     {"cle": "volets_nuit", "texte": "Fermez volets et rideaux la nuit en hiver."},
 )
@@ -668,6 +668,13 @@ LIBELLE_AVANT: dict[str, str] = {
 # `audit_tarif_bloque_alerte_mois`). Aucun fournisseur nommé : le seul renvoi est le
 # comparateur public du médiateur de l'énergie, déjà dans le texte de la fiche.
 FICHE_CONTRAT = "action_contrat"
+# La question de la fiche que chaque levier ouvre dans la FAQ (lien « En savoir plus »).
+QUESTION_LEVIER: dict[str, str] = {
+    "puissance_a_verifier": "Mon contrat d'électricité est-il adapté à ma maison ?",
+    "hphc_ballon": "Mon ballon d'eau chaude chauffe-t-il bien aux heures creuses ?",
+    "base_avec_ballon": "Mon ballon d'eau chaude chauffe-t-il bien aux heures creuses ?",
+    "tarif_bloque_fin": "Mon prix bloqué arrive à échéance : que vérifier ?",
+}
 LEVIERS_CONTRAT: dict[str, str] = {
     "puissance_a_verifier": "Votre abonnement est de {kva} kVA. Vérifiez sur votre compteur la puissance maximale atteinte : si elle reste nettement en dessous, un cran de moins réduit votre abonnement sans rien changer à votre confort.",
     "hphc_ballon": "Vous êtes en heures creuses avec un ballon électrique : vérifiez au tableau que son contacteur est bien sur « auto ».",
@@ -679,12 +686,14 @@ LEVIERS_CONTRAT: dict[str, str] = {
 # DPE établi avant la réforme du coefficient de l'électricité (kb/lire_son_dpe.md). La
 # lettre qu'aurait l'attestation n'est pas connue : elle n'est JAMAIS affichée.
 FICHE_DPE = "lire_son_dpe"
+QUESTION_DPE = "Le calcul du DPE a changé en 2026 : mon étiquette aussi ?"
 DPE_ELECTRIQUE_2026 = ("Votre DPE date d'avant 2026 et votre chauffage est électrique : une attestation mise à "
                        "jour peut afficher une meilleure lettre. Elle s'obtient sur l'observatoire DPE de l'ADEME.")
 DPE_REFORME_ANNEE = 2026
 CHAUFFAGES_ELECTRIQUES = {"elec_direct", "PAC_air_air", "PAC_air_eau"}
 # Rénovation d'ampleur (kb/renovation_ampleur.md), « Pour aller plus loin ».
 FICHE_AMPLEUR = "renovation_ampleur"
+QUESTION_AMPLEUR = "Qu'est-ce que la rénovation d'ampleur, et suis-je concerné ?"
 PISTE_AMPLEUR = ("Votre maison est classée {dpe} : une rénovation d'ampleur (au moins deux classes gagnées, "
                  "accompagnateur obligatoire) peut financer une grande partie d'un projet global. Premier pas : "
                  "un rendez-vous gratuit avec un conseiller France Rénov'.")

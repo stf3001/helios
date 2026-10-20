@@ -512,3 +512,30 @@ def test_un_seul_arrondi_pour_le_cout_cite():
     assert f"environ {cout} €/an de chauffage" in combles["pourquoi"]
     montants = set(re.findall(r"(\d[\d ]*) €/an", message + " " + combles["pourquoi"]))
     assert montants == {cout}
+
+
+# --- Lot 5, étape 5 : chaque conseil mène à sa fiche ----------------------------------------
+
+def _questions(fiche: str) -> set[str]:
+    return set(re.findall(r"^### Q: (.*?)\s*$", (KB / f"{fiche}.md").read_text(encoding="utf-8"), re.M))
+
+
+def test_chaque_question_exposee_existe_dans_sa_fiche():
+    liens = [(g["fiche"], g["question"]) for g in ref.GESTES_GRATUITS if g.get("fiche")]
+    liens += [(ref.FICHE_CONTRAT, q) for q in ref.QUESTION_LEVIER.values()]
+    liens += [(ref.FICHE_DPE, ref.QUESTION_DPE), (ref.FICHE_AMPLEUR, ref.QUESTION_AMPLEUR)]
+    liens += [(t["fiche"], t["question"]) for t in ref.TEXTES_ACTIONS.values()]
+    assert set(ref.QUESTION_LEVIER) == set(ref.LEVIERS_CONTRAT)
+    for fiche, question in liens:
+        assert question in _questions(fiche), (fiche, question)
+
+
+def test_les_liens_sont_dans_le_json():
+    house = maison_type(type_logement="maison", dpe_lettre="F", dpe_annee=2024, chauffage_principal="elec_direct",
+                        ecs="ballon_elec", option_tarifaire="HPHC", puissance_souscrite="12")
+    r = run_audit(house, aujourd_hui=AUJOURD_HUI)
+    elements = [g for g in r["gestes"] if g["cle"] in ("ballon_elec", "eau_chaude_tous")]
+    elements += r["contrat"] + [r["dpe_attestation"], r["renovation_ampleur"]]
+    assert len(elements) == 6
+    for x in elements:
+        assert x["fiche_question"] in _questions(x["fiche"]), x

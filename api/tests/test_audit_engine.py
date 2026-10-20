@@ -514,7 +514,8 @@ def test_aide_pac_en_euros_selon_la_base():
 def test_gestes_gratuits_presents_et_sans_chiffre(ref_sans_etude):
     gestes = ref_sans_etude["gestes"]
     assert gestes and "pac_air_air" in {g["cle"] for g in gestes}  # v2.4 : remplace filtres_pac
-    assert all(set(g) == {"cle", "texte"} for g in gestes)
+    # v2.5 : un geste de fiche porte aussi son lien vers la FAQ — jamais de chiffre.
+    assert all({"cle", "texte"} <= set(g) <= {"cle", "texte", "fiche", "fiche_question"} for g in gestes)
 
 
 def test_premiere_etape_jamais_vide():
