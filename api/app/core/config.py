@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2.3"                    # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.4"                   # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 

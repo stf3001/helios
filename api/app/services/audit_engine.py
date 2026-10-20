@@ -635,6 +635,62 @@ def planifier(actions: list[dict], c: dict, p: dict, objectifs: list[str] | None
     return cout_final
 
 
+# --- Textes des fiches (v2.4) ---------------------------------------------------------------
+
+def _remplir(texte: str | None, variables: dict) -> str | None:
+    """Remplit les {variables} d'un texte de fiche. Une variable inconnue ou vide : None, la
+    phrase ne s'affiche pas (jamais de texte inventé pour combler)."""
+    if not texte:
+        return None
+    try:
+        return texte.format_map({k: v for k, v in variables.items() if v is not None})
+    except KeyError:
+        return None
+
+
+def variables_textes(house: House, p: dict, c: dict) -> dict:
+    """Les valeurs que les textes des fiches peuvent citer, toutes tirées du calcul ou de la fiche."""
+    kva = house.puissance_souscrite
+    return {
+        "chauffage": ref.ARTICLE_CHAUFFAGE.get(p["chauffage"]),
+        "zone": ref.LIBELLE_ZONE.get(p["zone"]),
+        "cout_chauffage": _fr_int(round(c["cout_chauffage_actuel_eur"], -1)),
+        "age": _age(house.ecs_annee, p["aujourd_hui"]),
+        "kva": int(kva) if kva else None,
+        "mois": house.tarif_bloque_mois_restants,
+        "dpe": (house.dpe_lettre or "").upper() or None,
+    }
+
+
+def _pourquoi(a: dict, textes: dict, variables: dict, avec_etude: bool, chauffage: str) -> str | None:
+    if a["action"] == "ballon_thermodynamique":
+        cle = "pourquoi_au_remplacement" if a.get("base_cout") == "surcout" else "pourquoi_sinon"
+        phrases = [_remplir(textes.get(cle), variables)]
+        if avec_etude:
+            phrases.append(textes.get("avec_solaire"))
+    else:
+        cle = "pourquoi_peu_rentable" if a["horizon"] == "a_l_occasion" else "pourquoi_rentable"
+        phrases = [_remplir(textes.get(cle), variables)]
+        if a["action"] == "pac_air_eau" and chauffage == "elec_direct":
+            phrases.append(textes.get("note_convecteurs"))
+    phrases = [x for x in phrases if x]
+    return " ".join(phrases) or None
+
+
+def textes_actions(actions: list[dict], variables: dict, avec_etude: bool, chauffage: str):
+    """Pose sur chaque action le « pourquoi » et les listes de sa fiche — des textes, aucun
+    chiffre ajouté. Une action sans fiche (le solaire, cité d'une étude) n'en reçoit pas."""
+    for a in actions:
+        textes = ref.TEXTES_ACTIONS.get(a["action"])
+        if not textes:
+            continue
+        a["pourquoi"] = _pourquoi(a, textes, variables, avec_etude, chauffage)
+        for cle in ref.TEXTES_LISTES:
+            a[cle] = list(textes.get(cle, ()))
+        a["fiche"] = textes["fiche"]
+        a["fiche_question"] = textes["question"]
+
+
 # --- Synthèse -------------------------------------------------------------------------------
 
 def _decompte(nb: dict) -> str:
@@ -749,6 +805,8 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
     nb = {h: sum(a["horizon"] == h for a in actions) for h in ref.HORIZONS}
     premiere, premiere_type = _premiere_etape(actions, solaire, gestes)
 
+    variables = variables_textes(house, p, c)
+    textes_actions(actions, variables, etude_simulateur is not None, p["chauffage"])
     for a in actions:
         a["categorie"] = {"eau_chaude": "eau_chaude", "solaire": "production"}.get(a.pop("_type", None), "chauffage")
     plan = [a for a in travaux if a["horizon"] in ("maintenant", "prioritaire")]

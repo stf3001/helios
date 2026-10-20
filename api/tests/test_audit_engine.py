@@ -60,7 +60,7 @@ def test_les_hypotheses_du_calcul_a_la_main_tiennent():
     assert dict(settings.audit_coef_zone)["H3"] == 0.55
     assert ref.ANNEE_BESOIN_UTILE_KWH_M2_AN["1975_1988"] == 180
     assert settings.audit_incertitude == 0.15
-    assert settings.audit_version == "v2.3"
+    assert settings.audit_version == "v2.4"
 
 
 # --- Couverture du schéma : aucun repli silencieux -----------------------------------------

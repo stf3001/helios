@@ -452,3 +452,108 @@ SOURCES: dict[str, tuple[str, str]] = {
     "ratio_murs": ("Surface de murs / surface habitable, à calibrer", "2026-10-19"),
     "incertitude": ("Demi-largeur des fourchettes", "2026-07-18"),
 }
+
+# --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------
+#
+# Recopiés MOT POUR MOT de la section « Pour le pré-audit (textes courts, non ingérés) » de
+# chaque fiche : c'est Stéphane qui les écrit, et la fiche reste la source. Un test
+# (`tests/test_audit_textes.py`) vérifie que chaque texte d'ici y figure à l'identique : si
+# une fiche change, il casse, et on recopie ici. Ne JAMAIS réécrire un texte dans ce fichier.
+#
+# Variables remplies par le moteur : {chauffage} (`ARTICLE_CHAUFFAGE`), {zone}
+# (`LIBELLE_ZONE`), {cout_chauffage} (€/an, arrondi à la dizaine), {age}, {kva}, {mois},
+# {dpe}. Une phrase dont une variable manque ne s'affiche pas : jamais de texte de remplacement.
+#
+# `fiche` : la source de la base ; `question` : sa première question, qui donne l'adresse de
+# la fiche dans la FAQ (`/faq/<slug>`, `frontend/src/lib/faqSlug.js`).
+
+ARTICLE_CHAUFFAGE: dict[str, str] = {
+    "elec_direct": "des convecteurs électriques",
+    "PAC_air_air": "une pompe à chaleur air/air",
+    "PAC_air_eau": "une pompe à chaleur air/eau",
+    "gaz": "une chaudière gaz",
+    "fioul": "une chaudière fioul",
+    "bois": "un chauffage au bois",
+    "reseau": "un réseau de chaleur",
+    "autre": "votre chauffage actuel",
+}
+LIBELLE_ZONE: dict[str, str] = {"H1": "froid (H1)", "H2": "tempéré (H2)", "H3": "doux (H3)"}
+
+TEXTES_ACTIONS: dict[str, dict] = {
+    "isolation_combles": {
+        "fiche": "action_combles",
+        "question": "Isoler mes combles est-il rentable dans mon cas ?",
+        "pourquoi_rentable": "Avec {chauffage}, chaque kWh perdu par le toit vous coûte cher. Le toit est votre premier poste de pertes, c'est donc le premier à traiter.",
+        "pourquoi_peu_rentable": "Votre toit perd beaucoup de chaleur, mais cette chaleur vous coûte peu : {chauffage}, climat {zone}, environ {cout_chauffage} €/an de chauffage. L'économie ne rembourse pas vite les travaux. Gardez-les pour une réfection de toiture ou l'aménagement des combles.",
+        "benefices": ("confort d'été sous le toit", "plafonds moins froids", "meilleure étiquette DPE"),
+        "vigilance": ("écart au feu des conduits", "spots et boîtiers protégés", "ventilation vérifiée après les travaux"),
+        "devis": ("R et épaisseur posée", "surface mesurée lors d'une visite", "entreprise RGE"),
+    },
+    "isolation_murs": {
+        "fiche": "action_murs",
+        "question": "Isoler mes murs est-il rentable dans mon cas ?",
+        "pourquoi_rentable": "Avec {chauffage}, vos murs nus vous coûtent cher chaque hiver. Si un ravalement approche, c'est le moment d'isoler.",
+        "pourquoi_peu_rentable": "Isoler les murs coûte cher au m², et votre chauffage vous coûte peu ({cout_chauffage} €/an). Sur l'énergie seule, ça ne se rembourse pas : faites-le au ravalement, quand l'échafaudage est déjà payé.",
+        "benefices": ("fin de l'effet paroi froide", "moins de condensation dans les angles", "meilleure étiquette DPE"),
+        "vigilance": ("déclaration préalable en mairie (par l'extérieur)", "mur ancien : isolant perméable et chaux", "ventilation à vérifier"),
+        "devis": ("technique et R ≥ 3,7", "points singuliers traités", "surfaces mesurées par façade"),
+    },
+    "isolation_plancher": {
+        "fiche": "action_plancher",
+        "question": "Isoler mon plancher bas est-il rentable dans mon cas ?",
+        "pourquoi_rentable": "Avec {chauffage}, un plancher froid sur cave ou vide sanitaire se traite vite et pour pas cher.",
+        "pourquoi_peu_rentable": "Le plancher pèse peu dans vos pertes, et votre chauffage vous coûte peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols.",
+        "benefices": ("un sol moins froid", "un rez-de-chaussée plus homogène", "moins d'humidité ressentie"),
+        "vigilance": ("garder la ventilation du vide sanitaire", "traiter l'humidité d'abord", "réseaux accessibles et calorifugés"),
+        "devis": ("R ≥ 3", "surface mesurée", "mode de fixation"),
+    },
+    "menuiseries": {
+        "fiche": "action_menuiseries",
+        "question": "Remplacer mes fenêtres est-il rentable dans mon cas ?",
+        "pourquoi_rentable": "Du simple vitrage avec {chauffage} : vos fenêtres vous coûtent cher, et le confort y gagnera autant que la facture.",
+        "pourquoi_peu_rentable": "Vos fenêtres pèsent peu dans vos pertes : les changer ne se rembourse pas sur l'énergie. Faites-le en fin de vie, ou pour le bruit et le confort. En attendant, des joints neufs font déjà beaucoup.",
+        "benefices": ("moins de bruit", "plus de sensation de froid près des vitres", "fin de la condensation (avec une ventilation adaptée)"),
+        "vigilance": ("ventilation à vérifier", "pose en rénovation = moins de lumière", "déclaration préalable si l'aspect change"),
+        "devis": ("Uw ≤ 1,3", "type de pose", "entrées d'air et calfeutrement"),
+    },
+    "ventilation_double_flux": {
+        "fiche": "action_ventilation",
+        "question": "Une VMC double flux est-elle rentable dans mon cas ?",
+        "pourquoi_rentable": "Votre maison est étanche et vous chauffez cher : une double flux récupère une bonne part de la chaleur de l'air extrait.",
+        "pourquoi_peu_rentable": "Une double flux coûte cher pour une économie modeste dans votre climat. Une simple flux hygroréglable bien réglée assure l'essentiel : un air sain.",
+        "benefices": ("un air sain", "moins de buée et de moisissures", "une maison qui garde sa santé après les travaux"),
+        "vigilance": ("ne jamais couper la VMC", "bouches à nettoyer tous les trois mois", "compatibilité avec les appareils à combustion"),
+        "devis": ("type de VMC et débits mesurés", "entrées d'air", "gaines isolées en combles"),
+    },
+    "pac_air_eau": {
+        "fiche": "action_pac_remplacement",
+        "question": "Remplacer mon chauffage par une pompe à chaleur est-il rentable dans mon cas ?",
+        "pourquoi_rentable": "Avec {chauffage}, chaque kWh de chaleur vous coûte cher. Une pompe à chaleur en produit environ trois pour un kWh d'électricité : c'est votre plus gros levier.",
+        "pourquoi_peu_rentable": "Votre maison chauffe peu ({cout_chauffage} €/an) : une pompe à chaleur rapporterait peu en euros. Préparez son remplacement à la fin de vie de votre chaudière.",
+        "benefices": ("sortie du fioul ou du gaz", "une énergie qui peut venir de vos panneaux", "beaucoup moins de CO₂"),
+        "vigilance": ("isoler avant pour une machine plus petite", "emplacement de l'unité extérieure (bruit)", "puissance justifiée par vos factures"),
+        "devis": ("puissance justifiée", "désembouage et filtre", "mise en service et réglage de la loi d'eau"),
+        "note_convecteurs": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
+    },
+    "regulation": {
+        "fiche": "action_regulation",
+        "question": "Un thermostat ou une programmation sont-ils rentables dans mon cas ?",
+        "pourquoi_rentable": "Votre chauffage tourne sans programmation : baisser la nuit et en absence est le geste le plus rentable de votre plan.",
+        "pourquoi_peu_rentable": "Vous avez déjà une régulation : un modèle plus récent apporte du confort, peu d'économies. Vérifiez d'abord vos réglages.",
+        "benefices": ("un confort maîtrisé", "une maison chaude au bon moment", "une facture qui baisse sans travaux"),
+        "vigilance": ("sonde loin des sources de chaleur", "baisses modérées avec une PAC", "programmation ajustée au ressenti"),
+        "devis": ("type de régulation adapté au chauffage", "emplacement de la sonde", "mise en service et réglages expliqués"),
+    },
+    "ballon_thermodynamique": {
+        "fiche": "action_ballon_thermodynamique",
+        "question": "Passer à un ballon thermodynamique est-il rentable dans mon cas ?",
+        "pourquoi_au_remplacement": "Votre ballon a {age} ans : au moment de le changer, le thermodynamique ne coûte que la différence avec un ballon neuf, et consomme deux à trois fois moins.",
+        "pourquoi_sinon": "Votre ballon fonctionne : le remplacer maintenant coûte le prix complet. Préparez le choix pour sa fin de vie.",
+        "avec_solaire": "Avec des panneaux, un ballon électrique piloté sur la production fait déjà une grande partie du travail : comparez les deux au moment du remplacement.",
+        "benefices": ("deux à trois fois moins d'électricité pour l'eau chaude", "un remplacement choisi, pas subi"),
+        "vigilance": ("local non chauffé ou version gainée", "taille adaptée au foyer", "eau calcaire = plus d'entretien"),
+        "devis": ("volume et prise d'air", "COP et ses conditions", "dépose de l'ancien ballon"),
+    },
+}
+# Champs de texte d'une action, dans l'ordre d'affichage.
+TEXTES_LISTES = ("benefices", "vigilance", "devis")
