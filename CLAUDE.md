@@ -1327,3 +1327,7 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - v2.4 : les textes affichés (pourquoi, gestes, contrat, parcours) sont recopiés MOT POUR MOT des sections « Pour le pré-audit » des fiches dans `audit_reference.py` ; `tests/test_audit_textes.py` le vérifie. Changer la fiche, puis recopier — jamais réécrire côté code.
 - Climat et coût sur 10 ans rejouent les économies déjà calculées ; facteurs CO₂ de la méthode DPE en config (`audit_facteurs_co2_kg_kwh`).
 - v2.5 : une action « à l'occasion » porte `raison_occasion` (apres_autres / chauffage_peu_cher / trop_cher) et reçoit le texte de SA raison, sinon `pourquoi_occasion`, sinon rien — jamais `pourquoi_peu_rentable` pour une autre raison (règle en tête de `TEXTES_ACTIONS`).
+
+## Carnet de maison
+- `equipements` et `travaux` (0024) ; âge et garanties calculés à la lecture (`services/garanties.py`, pur), jamais stockés ; numéro de série et notes jamais transmis au chat. Les codes de `TYPES_PAR_CATEGORIE` (`models/equipement.py`) et `components/carnet/libelles.ts` se tiennent à jour ENSEMBLE.
+- Le carnet ne modifie jamais la fiche : l'année de la fiche et celle de l'équipement coexistent (point 35 de `TODO.md`).

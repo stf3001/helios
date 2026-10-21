@@ -956,6 +956,26 @@ Trouvé le 20/10/2026 en relisant les PDF du lot 4. Les textes sont recopiés te
 - **Menuiseries, `pourquoi_rentable`** dit « Du simple vitrage » alors que l'action est
   aussi proposée quand les fenêtres sont inconnues.
 
+### [x] 34. Carnet, lot 1 : équipements datés et garanties — fait le 21/10/2026
+
+**Vérifié à l'écran** (compte de démo, 375 px puis bureau) : trois équipements ajoutés
+dont deux depuis les suggestions de la fiche, qui disparaissent aussitôt ; mise hors
+service puis remise en service (la suggestion revient tant que l'équipement est déposé) ;
+modification ; un chantier réceptionné affiche ses trois garanties, leurs dates de fin et
+leur statut ; « En savoir plus » ouvre la fiche `kb/garanties_travaux.md`. Commits
+`25f59af` → `d994f87`. L'accès entre foyers est tenu par `api/tests/test_carnet_api.py`
+(contre la vraie base, sauté sans elle). La fiche de connaissance est `verif: a_verifier` :
+**à relire par Stéphane**.
+
+### [ ] 35. Réconcilier la fiche Maison et le carnet d'équipements
+
+Depuis le lot 1, l'année du chauffage vit à deux endroits : `houses.chauffage_principal_annee`
+(lue par le pré-audit et le score de complétude) et `equipements.annee_pose` / `date_pose`.
+Le lot 1 ne synchronise rien, volontairement : le carnet affiche seulement « Votre fiche
+indique 2016 » quand les deux diffèrent. Il faudra un jour **une seule source** — sans
+doute l'équipement en service portant `origine_fiche`, la fiche en devenant la lecture —
+et décider qui gagne en cas d'écart. Même question pour l'ECS, la clim et la ventilation.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
