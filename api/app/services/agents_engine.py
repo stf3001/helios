@@ -149,6 +149,9 @@ SOURCES: list[SourceSpec] = [
     SourceSpec(name="renovation_ampleur", kind="faq_markdown", location="helios/kb/renovation_ampleur.md",
                validite_mois=6),
     SourceSpec(name="lire_son_dpe", kind="faq_markdown", location="helios/kb/lire_son_dpe.md"),
+    # Garanties après travaux (21/10/2026, carnet de maison lot 1) : l'écran « Travaux et
+    # garanties » y renvoie au lieu d'écrire du juridique dans le code. À relire.
+    SourceSpec(name="garanties_travaux", kind="faq_markdown", location="helios/kb/garanties_travaux.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
