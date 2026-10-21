@@ -36,9 +36,14 @@ def _table(tmp_path, *taches) -> Path:
 
 # ---------------------------------------------------------------- chargeur
 
-def test_la_table_livree_est_vide_et_valide():
+def test_la_vraie_table_se_charge_en_mode_strict():
+    """La table relue par Stéphane (lot 3 bis) : 18 tâches, aucune écartée par le chargeur."""
     table = charger_table(CHEMIN_TABLE, strict=True)
-    assert table["taches"] == [] and table["version"]
+    assert len(table["taches"]) == 18 and table["version"] == "2026-10-20"
+    obligations = [t for t in table["taches"] if t["nature"] == "obligation"]
+    assert {t["id"] for t in obligations} == {
+        "chaudiere-entretien", "pac-entretien", "poele-entretien", "ramonage", "spanc-controle", "debroussaillement"}
+    assert all(t["source"]["type"] == "officiel" and t["source"]["url"] for t in obligations)
 
 
 def test_la_table_d_exemple_se_charge_en_mode_strict():

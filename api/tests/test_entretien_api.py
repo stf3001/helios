@@ -31,13 +31,16 @@ def ctx():
             client.portal.call(engine.dispose)
 
 
-def test_table_livree_vide(ctx):
+def test_vraie_table_maison_sans_equipement(ctx):
+    """Une maison sans équipement : le détecteur de fumée, et la question du débroussaillement."""
     c, h = ctx
     r = c.get("/api/houses/me/entretien", headers=h)
     assert r.status_code == 200, r.text
     corps = r.json()
-    assert corps["table_vide"] is True and corps["echeances"] == [] and corps["taches_validees"] == 0
-    assert corps["version"]
+    assert corps["table_vide"] is False and corps["taches_validees"] == 18
+    assert [e["tache_id"] for e in corps["echeances"]] == ["detecteur-fumee-test"]
+    assert [(v["tache_id"], v["lien"]) for v in corps["verifications"]] == [
+        ("debroussaillement", "https://www.service-public.gouv.fr/particuliers/vosdroits/F33298")]
 
 
 def test_sans_compte_refuse():
