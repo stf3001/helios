@@ -15,6 +15,7 @@ from sqlalchemy import delete
 from app.core.db import async_session, engine
 from app.core.security import create_access_token
 from app.main import app
+from app.models.moderation import AdminAccessLog
 from app.models.rendez_vous import RendezVous
 from app.models.user import User
 from app.services import rdv_admin
@@ -81,6 +82,7 @@ async def _admin_et_rdvs():
 async def _nettoyer(admin_id, rdv_ids):
     async with async_session() as s:
         await s.execute(delete(RendezVous).where(RendezVous.id.in_(rdv_ids)))
+        await s.execute(delete(AdminAccessLog).where(AdminAccessLog.admin_email.like("carnet-admin-%")))
         await s.execute(delete(User).where(User.id == admin_id))
         await s.commit()
 
@@ -156,3 +158,15 @@ def test_un_creneau_annule_redevient_reservable(ctx):
     assert r.status_code == 409 and "repris" in r.json()["detail"]
     tableau = c.get("/api/admin/dashboard", headers=h).json()
     assert {"a_venir", "prochain", "a_qualifier"} <= set(tableau["rendez_vous"])
+
+
+
+def test_consultation_et_modification_tracees(ctx):
+    c, h, rid = ctx["c"], ctx["admin"], ctx["rdv_ids"][1]
+    c.get("/api/admin/rendez-vous?periode=passes", headers=h)
+    c.patch(f"/api/admin/rendez-vous/{rid}", headers=h, json={"statut": "honore", "note_interne": "Rappelé"})
+    journal = c.get("/api/admin/journal-acces", headers=h).json()
+    actions = [(j["action"], j["cible"]) for j in journal[:5]]
+    assert ("rendez_vous_consultes", "passés") in actions
+    assert any(a == "rendez_vous_modifie" and "Test Passé" in cible and "statut honore, note" in cible
+               for a, cible in actions)

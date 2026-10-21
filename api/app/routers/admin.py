@@ -379,15 +379,18 @@ def _rdv_out(r: RendezVous, foyer_email: str | None) -> dict:
 @router.get("/rendez-vous")
 async def rendez_vous(
     periode: str = "a_venir",
-    _: User | None = Depends(require_admin_access),
+    admin: User | None = Depends(require_admin_access),
     db: AsyncSession = Depends(get_db),
 ):
-    """Les appels à passer (à venir, du plus proche au plus lointain), ou les 60 derniers jours."""
+    """Les appels à passer (à venir, du plus proche au plus lointain), ou les 60 derniers jours.
+
+    Noms et téléphones : la consultation est tracée, comme la lecture d'une conversation."""
     if periode not in ("a_venir", "passes"):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Période invalide (attendu : a_venir ou passes)")
     rdvs = rdv_admin.filtrer(list(await db.scalars(select(RendezVous))), periode, datetime.now(timezone.utc))
     emails = {u.id: u.email for u in await db.scalars(
         select(User).where(User.id.in_([r.user_id for r in rdvs if r.user_id])))} if rdvs else {}
+    await _tracer(db, admin, "rendez_vous_consultes", "à venir" if periode == "a_venir" else "passés")
     return [_rdv_out(r, emails.get(r.user_id)) for r in rdvs]
 
 
@@ -395,10 +398,10 @@ async def rendez_vous(
 async def suivre_rendez_vous(
     rdv_id: uuid.UUID,
     payload: SuiviRendezVous,
-    _: User | None = Depends(require_admin_access),
+    admin: User | None = Depends(require_admin_access),
     db: AsyncSession = Depends(get_db),
 ):
-    """Statut et/ou note interne. Un créneau annulé redevient réservable (index partiel, 0029)."""
+    """Statut et/ou note interne — modification tracée (qui a marqué « absent », et quand). Un créneau annulé redevient réservable (index partiel, 0029)."""
     r = await db.get(RendezVous, rdv_id)
     if r is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Rendez-vous introuvable")
@@ -416,5 +419,8 @@ async def suivre_rendez_vous(
         await db.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT,
                             "Ce créneau a été repris par une autre réservation : impossible de le réactiver.")
+    quoi = ", ".join(f"statut {r.statut}" if c == "statut" else "note" for c in champs) or "rien"
+    await _tracer(db, admin, "rendez_vous_modifie",
+                  f"{r.nom} — {heure_de_paris(r.debut).strftime('%d/%m/%Y %H:%M')} ({quoi})")
     foyer = await db.get(User, r.user_id) if r.user_id else None
     return _rdv_out(r, foyer.email if foyer else None)
