@@ -44,6 +44,7 @@ import AdminConversations from './pages/admin/AdminConversations'
 import AdminConnaissances from './pages/admin/AdminConnaissances'
 import AdminSignalements from './pages/admin/AdminSignalements'
 import AdminFoyers from './pages/admin/AdminFoyers'
+import AdminRendezVous from './pages/admin/AdminRendezVous'
 
 /** Le back-office a sa propre coquille (fond sombre, pas de header/footer public) :
  * il est donc monté AVANT le site public, en dehors de sa mise en page. */
@@ -58,6 +59,7 @@ function AdminRoutes() {
       <Route path="/partenaires" element={<AdminRoute><AdminPartenaires /></AdminRoute>} />
       <Route path="/services" element={<AdminRoute><AdminServices /></AdminRoute>} />
       <Route path="/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
+      <Route path="/rendez-vous" element={<AdminRoute><AdminRendezVous /></AdminRoute>} />
     </Routes>
   )
 }

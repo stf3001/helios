@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Activity, BookOpen, ExternalLink, Flag, HeartPulse, LogOut, MessagesSquare, ShieldCheck, Users2 } from 'lucide-react'
+import { Activity, BookOpen, ExternalLink, Flag, HeartPulse, LogOut, MessagesSquare, ShieldCheck, Users2, PhoneCall } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import MarqueHelios from '../MarqueHelios'
 
@@ -21,6 +21,7 @@ import MarqueHelios from '../MarqueHelios'
 /** La marque EST l'entrée « Tableau de bord » (fusionnées le 08/10/2026) : deux boutons
  *  voisins menant tous les deux à /admin se faisaient concurrence pour rien. */
 const NAV = [
+  { to: '/admin/rendez-vous', label: 'Rendez-vous', Icon: PhoneCall },
   { to: '/admin/conversations', label: 'Conversations', Icon: MessagesSquare },
   { to: '/admin/connaissances', label: 'Connaissances', Icon: BookOpen },
   { to: '/admin/signalements', label: 'Signalements', Icon: Flag },

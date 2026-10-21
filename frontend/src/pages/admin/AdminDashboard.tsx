@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCircle2, Info, Wrench } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Attente, Erreur, Section, StatCard, TitrePage, useAdminData } from '../../components/admin/AdminLayout'
 import { useTitle } from '../../hooks/useTitle'
 
@@ -24,6 +25,7 @@ interface Dashboard {
     fiches_actives: number; fiches_obsoletes: number; par_source: Record<string, number>; sources: number
   }
   alertes: { niveau: string; texte: string }[]
+  rendez_vous: { a_venir: number; prochain: string | null; a_qualifier: number }
 }
 
 const VOIE_LABEL: Record<string, string> = {
@@ -75,6 +77,19 @@ export default function AdminDashboard() {
           })}
         </div>
       )}
+
+      <Section title="Rendez-vous téléphoniques" action={
+        <Link to="/admin/rendez-vous" className="text-sm font-semibold text-primary hover:underline">Voir les rendez-vous</Link>}>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Rendez-vous à venir" value={data.rendez_vous.a_venir}
+            hint={data.rendez_vous.prochain
+              ? `Prochain : ${new Date(data.rendez_vous.prochain).toLocaleString('fr-FR', {
+                timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`
+              : 'Aucun créneau réservé'} />
+          <StatCard label="Passés à qualifier" value={data.rendez_vous.a_qualifier}
+            hint="Honoré, absent ou annulé ?" accent={data.rendez_vous.a_qualifier ? 'warn' : 'ok'} />
+        </div>
+      </Section>
 
       <Section title="Foyers">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
