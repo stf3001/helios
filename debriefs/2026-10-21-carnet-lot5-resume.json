@@ -1,0 +1,81 @@
+{
+  "equipements": [
+    {
+      "categorie": "chauffage",
+      "type": "PAC_air_eau",
+      "marque": "Atlantic",
+      "age_ans": 10,
+      "statut": "calcule"
+    },
+    {
+      "categorie": "ecs",
+      "type": "thermodynamique",
+      "marque": "Thermor",
+      "age_ans": 7,
+      "statut": "suppose"
+    },
+    {
+      "categorie": "production_electricite",
+      "type": "panneaux_pv",
+      "marque": "DualSun",
+      "age_ans": 3,
+      "statut": "calcule"
+    }
+  ],
+  "echeances": [
+    {
+      "tache": "Dégager l'unité extérieure et vérifier l'évacuation des condensats",
+      "pour": "PAC_air_eau",
+      "date": "2017-10-12",
+      "statut": "en_retard",
+      "nature": "recommande",
+      "qui": "soi",
+      "donnees": "calcule"
+    },
+    {
+      "tache": "Manœuvrer le levier du groupe de sécurité",
+      "pour": "thermodynamique",
+      "date": "2019-08-01",
+      "statut": "en_retard",
+      "nature": "recommande",
+      "qui": "soi",
+      "donnees": "suppose"
+    },
+    {
+      "tache": "Regarder la production du mois et la comparer à l'an passé",
+      "pour": "panneaux_pv",
+      "date": "2023-06-15",
+      "statut": "en_retard",
+      "nature": "recommande",
+      "qui": "soi",
+      "donnees": "calcule"
+    },
+    {
+      "tache": "Inspecter les panneaux depuis le sol",
+      "pour": "panneaux_pv",
+      "date": "2025-04-01",
+      "statut": "en_retard",
+      "nature": "recommande",
+      "qui": "soi",
+      "donnees": "calcule"
+    }
+  ],
+  "garanties": [
+    {
+      "objet": "isolation",
+      "statut": "calcule",
+      "fin": {
+        "parfait_achevement": "2026-12-21",
+        "bon_fonctionnement": "2027-12-21",
+        "decennale": "2035-12-21"
+      }
+    },
+    {
+      "objet": "panneaux_pv",
+      "statut": "declare",
+      "fin": {
+        "fabricant": "2048-05-15"
+      }
+    }
+  ]
+}

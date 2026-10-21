@@ -1045,6 +1045,18 @@ tel quel. C'est exactement le piège décrit plus bas (« Une erreur de validati
 renvoie `detail` sous forme de LISTE »). Correctif : reprendre `messageErreur` de
 `components/carnet/Formulaires.tsx`, qui lit les deux formes.
 
+### [ ] 42. Carnet, lot 5 : Helios lit le carnet — code fait, vérification Ollama DÉFAILLANTE
+
+Commits `9d4a80f` et `7bf3742`. Le résumé du carnet part bien au chat (anonyme, ≤ 1 500
+caractères, aucune donnée interdite — testé), mais sur les cinq questions du brief
+(`debriefs/2026-10-21-carnet-lot5-reponses-ollama.json`) `llama3.2:3b` donne un âge faux
+(« 4 ans » pour un ballon de 7), invente une garantie « jusqu'en 2029 », se trompe sur
+l'entretien de la PAC et ignore le journal. Seule la question du coût de remplacement est
+juste (aucun chiffre). **Non coché : trois décisions attendent Stéphane**, détaillées dans
+`debriefs/2026-10-21-carnet-lot5.md` — le modèle (route API ou modèle local plus gros), le
+plafond face aux cinq échéances (le journal ne tient jamais à 1 500), et la réponse
+instantanée qui passe devant le carnet.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

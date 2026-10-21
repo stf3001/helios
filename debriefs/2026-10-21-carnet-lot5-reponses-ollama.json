@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-21",
+  "modele": "llama3.2:3b (Ollama local, aucune clé d'API)",
+  "maison": "PAC air/eau Atlantic posée le 12/10/2016 (8 kW) ; ballon thermodynamique Thermor 2019 (année seule) ; PV DualSun 15/05/2023 ; isolation des combles réceptionnée le 21/12/2025 ; journal : entretien PAC 18/03/2026, détartrage ballon 02/06/2026, réparation thermostat 08/11/2025",
+  "plafond_1500_conforme_au_brief": [
+    {
+      "question": "Quand dois-je faire entretenir ma pompe à chaleur ?",
+      "force_llm": false,
+      "instant": true,
+      "simplified": false,
+      "duree_s": 3.1,
+      "reponse": "Oui. Les pompes à chaleur et climatisations d'une certaine puissance sont soumises à un entretien périodique obligatoire (de l'ordre de tous les deux ans pour la plupart des installations résidentielles), et les systèmes contenant une quantité importante de fluide frigorigène font l'objet d'un contrôle d'étanchéité spécifique. L'entretien vérifie les pressions, le fluide, les filtres et le bon fonctionnement — essentiel car une PAC encrassée ou mal chargée perd beaucoup de rendement, donc coûte plus cher à faire tourner. Un contrat d'entretien annuel est souvent proposé par l'installateur."
+    },
+    {
+      "question": "Quand dois-je faire entretenir ma pompe à chaleur ?",
+      "force_llm": true,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 76.7,
+      "reponse": "Tu veux bien connaître quand faire les entretenements ? Il y a deux types d'entretenements : \n\n1.  **Les révisions de l'unité extérieure** : ils s'effectuent tous les deux ans. Le calcul sera au profit de l'entrepreneur.\n2.  **Les vérifications des panneaux** : tu devais te mettre en rapport avec l'entrepreneur."
+    },
+    {
+      "question": "Quel âge a mon chauffe-eau ?",
+      "force_llm": false,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 78.8,
+      "reponse": "D'après votre carnet, votre chauffe-eau thermodynamique a été installé depuis **2019**, donc elle a **4 ans**."
+    },
+    {
+      "question": "Est-ce que mes travaux sont encore sous garantie ?",
+      "force_llm": false,
+      "instant": true,
+      "simplified": false,
+      "duree_s": 0.9,
+      "reponse": "Trois garanties s'enchaînent, toutes comptées à partir de la réception des travaux. La garantie de parfait achèvement dure un an (article 1792-6 du Code civil) : l'entreprise doit réparer les désordres que vous avez signalés, soit dans les réserves écrites à la réception, soit par écrit pendant l'année qui suit. La garantie de bon fonctionnement dure au moins deux ans (article 1792-3) : elle vise les éléments d'équipement qu'on peut démonter ou remplacer sans abîmer l'ouvrage. La garantie décennale dure dix ans (articles 1792 et 1792-4-1) : elle vise les dommages qui compromettent la solidité de l'ouvrage ou le rendent impropre à sa destination, y compris ceux qui touchent un équipement indissociable du bâti. Le classement d'un désordre dans l'une ou l'autre dépend des faits, pas seulement du type de travaux : en cas de doute, c'est votre contrat et l'attestation d'assurance de l'entreprise qui font foi, et un juriste ou une association de consommateurs peut trancher. La garantie fabricant d'un appareil est une autre chose : elle dépend du fabricant, de ses conditions et souvent d'un entretien régulier."
+    },
+    {
+      "question": "Est-ce que mes travaux sont encore sous garantie ?",
+      "force_llm": true,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 76.7,
+      "reponse": "D'après votre carnet, la garantie PAC-air-eau d'Atlantic est supposée avoir une durée d'usure de 10 ans. C'est-à-dire qu'elle devrait durer jusqu'en 2029. Cependant, elle n'est plus dans de bon état ; il n'est donc pas recommandé de continuer à utiliser l'unité sans les soins et l'entretien de vos mains."
+    },
+    {
+      "question": "Qu'est-ce que j'ai fait comme entretien cette année ?",
+      "force_llm": false,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 115.6,
+      "reponse": "Bonjour ! D'après votre carnet, je ne vois aucun équipement à réviser ou à remplacer cette année. Vous n'avez pas répertorié d'échéances d'entretien pour les équipements du foyer. Puisqu'il n'y a pas de demande d'intervention, je peux vous conseiller une pause de réglage, une vérification de l'évacuation des condensats et une inspection du système de chauffage pour vous assurer qu'il fonctionne correctement."
+    },
+    {
+      "question": "Combien va me coûter le remplacement de ma PAC ?",
+      "force_llm": false,
+      "instant": true,
+      "simplified": false,
+      "duree_s": 0.9,
+      "reponse": "Ordre de grandeur : 10 000–18 000 € pose comprise selon puissance et ECS intégrée ou non. En remplacement d'un fioul ou d'un électrique direct, la facture de chauffage peut être divisée par 2 à 3. Aides possibles : MaPrimeRénov' selon revenus + CEE « Coup de pouce » en remplacement d'une chaudière fossile. Avec des convecteurs électriques, il n'existe pas de circuit d'eau : il faut le créer, ce qui change tout le budget. Une PAC air/air est alors souvent plus réaliste."
+    },
+    {
+      "question": "Combien va me coûter le remplacement de ma PAC ?",
+      "force_llm": true,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 92.3,
+      "reponse": "Je ne peux pas vous donner un coût précis, sans connaître vos besoins et vos contraintes. N'oubliez pas de réfléchir à votre consommation de chaleur, à votre économie, à vos préférences et à votre budget. Je peux vous donner des conseils sur la PAC, des exemples d'économies et de cas pratiques, mais je ne peux pas vous calculer un coût précis."
+    }
+  ],
+  "essai_hors_depot_plafond_2000": [
+    {
+      "question": "Qu'est-ce que j'ai fait comme entretien cette année ?",
+      "force_llm": true,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 52.3,
+      "reponse": "Bonjour ! D'après votre carnet, j'ai trouvé quelques entretiens effectués cette année. Vous avez mentionné les 8 et 15 mars : ils ont concerné la vérification des conditions de sécurité du système de chauffage principal (PAC-air-eau). Vous avez également mentionné un entretien le 18 mars, mais sans préciser le type d'entretien effectué. Enfin, le 21 décembre dernier, vous avez mentionné avoir fait un entretien lié à la réparation d'un équipement (PAC-air-eau)."
+    },
+    {
+      "question": "Quel âge a mon chauffe-eau ?",
+      "force_llm": true,
+      "instant": false,
+      "simplified": false,
+      "duree_s": 121.0,
+      "reponse": "La fiche du foyer indique que le chauffe-eau est de l'ancienne technologie PAC_air_eau, et que le remplacement est prévu avant la fuite. Puisque le chauffe-eau est déjà de 10 ans, il est probablement en fin de vie.\n\nVoici une estimation de l'âge estimé du chauffe-eau en fonction de la technologie PAC_air_eau :\n\n* Pour un PAC d'origine, l'âge de la fuite est généralement de 10 à 15 ans.\n* Pour un PAC d'origine avec un groupe de sécurité récent, l'âge de la fuite pourrait être de 12 à 18 ans.\n* Pour un PAC d'origine avec un groupe de sécurité plus ancien, l'âge de la fuite pourrait être de 15 à 20 ans.\n\nEn fonction de ces estimations, il est possible que votre chauffe-eau soit en fin de vie dans les 1 à 3 ans. Cependant, cela dépend de plusieurs facteurs tels que l'utilisation, la qualité de l'eau, la température et l'entretien. Il est recommandé de consulter un professionnel pour une analyse détaillée et une estimation plus précise de l'âge de la fuite."
+    }
+  ]
+}
