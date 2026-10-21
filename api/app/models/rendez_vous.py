@@ -9,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 
+#: `reserve` à la réservation ; l'équipe passe ensuite à `honore`, `absent` ou `annule`.
+STATUTS_RDV = ("reserve", "honore", "absent", "annule")
+
 
 class RendezVous(Base):
     __tablename__ = "rendez_vous"
@@ -24,4 +27,6 @@ class RendezVous(Base):
     debut: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     duree_min: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
     statut: Mapped[str] = mapped_column(String(20), nullable=False, default="reserve")
+    #: Note libre de l'équipe (0028), visible seulement en administration.
+    note_interne: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
