@@ -976,6 +976,23 @@ indique 2016 » quand les deux diffèrent. Il faudra un jour **une seule source*
 doute l'équipement en service portant `origine_fiche`, la fiche en devenant la lecture —
 et décider qui gagne en cas d'écart. Même question pour l'ECS, la clim et la ventilation.
 
+### [x] 36. Carnet, lot 2 : les pièces et leurs émetteurs — fait le 21/10/2026
+
+**Vérifié à l'écran** (compte de démo, 375 px) : démarrage rapide (6 pièces en un clic),
+émetteur ajouté et relié à la PAC depuis l'écran, surface modifiée et résumé recalculé,
+deux photos de pièce en vignette, rangées à part dans « Papiers » (compteur resté à 0 / 6),
+écart signalé avec la fiche (75,5 m² contre 200 m²) sans la modifier. Commits `ce218ae` →
+`d8509f1`. Photos hors limite, remplacement, cascade et accès entre foyers tenus par
+`api/tests/test_pieces_api.py` (contre la vraie base).
+
+### [ ] 37. Brancher les pièces et émetteurs dans le pré-audit et le dimensionnement PAC/clim
+
+Le lot 2 ne fait que SAISIR : aucun moteur ne lit `pieces` ni `emetteurs`. À faire dans un
+lot à venir, **après validation par Stéphane des règles de calcul** (puissance par pièce,
+place des radiateurs à eau basse température pour une PAC air/eau, nombre d'unités d'un
+multisplit). À savoir : la somme des pièces exclut le garage, et la fiche n'est jamais
+corrigée — décider laquelle des deux surfaces le moteur doit croire quand elles divergent.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

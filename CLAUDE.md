@@ -1331,3 +1331,5 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 ## Carnet de maison
 - `equipements` et `travaux` (0024) ; âge et garanties calculés à la lecture (`services/garanties.py`, pur), jamais stockés ; numéro de série et notes jamais transmis au chat. Les codes de `TYPES_PAR_CATEGORIE` (`models/equipement.py`) et `components/carnet/libelles.ts` se tiennent à jour ENSEMBLE.
 - Le carnet ne modifie jamais la fiche : l'année de la fiche et celle de l'équipement coexistent (point 35 de `TODO.md`).
+- Pièces et émetteurs (0025) : saisie seule, aucun moteur ne les lit encore (point 37) ; `resume_pieces` (pur) signale les écarts avec la fiche sans jamais la corriger. Codes : `models/piece.py` et `components/carnet/libellesPieces.ts` ENSEMBLE.
+- La photo d'une pièce est un `house_documents` avec `piece_id` : hors limite des 6, une seule par pièce (la nouvelle remplace l'ancienne), gardée dans les papiers si la pièce disparaît.
