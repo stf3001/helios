@@ -21,10 +21,8 @@ que c'est vide. Les valeurs vont dans le `.env` du serveur, jamais dans git.
 
 ## Les décisions à prendre (pas techniques)
 
-- **Rendez-vous** : qui décroche, et sur quelles heures. Les plages de `config.py`
-  (`rdv_plages_horaires` : 9 h-12 h 30 et 14 h-18 h, lundi-vendredi) sont inventées (point 2).
-- **Un créneau annulé** reste bloqué par l'index unique sur `debut` : le rendre réservable
-  demande une décision (voir le débrief des rendez-vous admin).
+- **Rendez-vous** : qui reçoit, qui décroche, et sur quelles heures. Les plages de `config.py`
+  (`rdv_plages_horaires` : 9 h-12 h 30 et 14 h-18 h, lundi-vendredi) sont inventées (point 45).
 - **Le fournisseur d'e-mail** : Resend ou Brevo.
 
 ## Les vérifications le jour J
