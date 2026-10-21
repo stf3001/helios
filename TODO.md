@@ -53,9 +53,12 @@ Le visiteur choisit son créneau de 30 minutes, la ligne s'écrit en base, et
 - [ ] **Notification** : PRÉPARÉE, pas active — `email.send_rdv_notification` est appelée à
   chaque réservation et n'envoie rien tant que `EMAIL_API_KEY` et `RDV_NOTIFICATION_EMAIL`
   sont vides (voir `deploy/A-FOURNIR-A-LA-MIGRATION.md`).
-- [ ] **Un créneau annulé reste bloqué** : l'index unique sur `debut` couvre aussi les
-  annulés. La grille le remontre comme libre, mais le réserver échoue (« Ce créneau vient
-  d'être pris »). Décision à prendre, règle inchangée (testé dans `test_rdv_admin.py`).
+- [x] **Un créneau annulé redevient réservable** — décision de Stéphane, faite le 21/10/2026
+  (commit `3af05f3`, migration 0029, index unique partiel). Deux rendez-vous actifs au même
+  instant restent impossibles ; réactiver un annulé dont le créneau a été repris répond 409.
+- [x] **Consultation et modification tracées** dans le journal des accès admin (« Foyers &
+  RGPD »), comme la lecture d'une conversation : la liste contient noms et téléphones.
+- [ ] **EN ATTENTE DE DÉCISION — qui reçoit les rendez-vous, et sur quelles heures** (point 45).
 - **Corrigé au passage** : le fuseau était +2 en dur, faux tout l'hiver (bascule le 25/10).
 
 **Décisions à prendre par Stéphane, elles ne sont pas techniques :**
@@ -1048,7 +1051,10 @@ proposé puis accepté (ancien hors service, formulaire du nouveau pré-rempli) 
 « Ajoutez vos équipements » et « Rien à faire ce mois-ci » sur un compte jetable.
 Commits `48c9ef2` → `8b6d5aa`.
 
-### [ ] 41. La page de connexion affiche « [object Object] »
+### [x] 41. La page de connexion affiche « [object Object] » — corrigé le 21/10/2026 (`fd1d610`)
+
+Vérifié à l'écran : la même adresse affiche maintenant « Adresse e-mail invalide. ». Constat
+d'origine :
 
 Trouvé le 21/10/2026 en testant le lot 4 : une adresse refusée par la validation (ici en
 `.invalid`) renvoie un 422 dont `detail` est une LISTE, et `AuthContext.tsx:23` l'affiche
@@ -1090,6 +1096,18 @@ importées, pas extraites. Commits `59829a2` → fin du lot.
 2. **La liste des rubriques du carnet d'information du logement** est à confirmer sur le
    texte officiel avant de parler de « rubriques du CIL » où que ce soit. Le document ne dit
    jamais « conforme », « certifié » ni « officiel » (testé).
+
+### [ ] 45. Rendez-vous : qui reçoit, et sur quelles heures — EN ATTENTE DE DÉCISION
+
+Décision de Stéphane (21/10/2026) : en attente. Tant qu'elle n'est pas prise :
+- **personne n'est prévenu** d'une réservation : `RDV_NOTIFICATION_EMAIL` reste vide, la
+  notification préparée n'envoie rien (voir `deploy/A-FOURNIR-A-LA-MIGRATION.md`) ; les
+  rendez-vous se lisent dans le back-office, page « Rendez-vous » ;
+- **les heures proposées restent inventées** : `rdv_plages_horaires` de `config.py`
+  (9 h-12 h 30 et 14 h-18 h, lundi-vendredi). Un créneau proposé engage quelqu'un à appeler.
+
+Ce qu'il faudra donner : l'adresse (ou les adresses) qui reçoit, les jours et heures où
+quelqu'un décroche. Le reste est prêt : une valeur dans `.env`, une ligne dans `config.py`.
 
 ## Le piège à ne pas réintroduire
 
