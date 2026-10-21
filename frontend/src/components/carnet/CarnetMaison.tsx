@@ -6,6 +6,9 @@ import ApiError from '../ApiError'
 import Depliant from '../Depliant'
 import { faqSlug } from '../../lib/faqSlug'
 import MesPieces from './MesPieces'
+import Calendrier from './Calendrier'
+import Journal from './Journal'
+import { signalerMaj, useMaj } from './commun'
 import type { Draft } from '../fiche/types'
 import {
   type Chantier, type Doc, type Equipement, type Garantie, FormChantier, FormEquipement, messageErreur,
@@ -140,13 +143,16 @@ export default function CarnetMaison() {
     }).catch(() => setErreur(true))
   }, [authFetch])
   useEffect(charger, [charger])
+  // Le bloc « À faire », le calendrier et le journal écrivent aussi (« C'est fait »,
+  // remplacement) : tout le carnet se recharge au même signal.
+  useMaj(charger)
 
   async function ecrire(url: string, method: string, corps?: object): Promise<string | null> {
     const res = await authFetch(url, {
       method, headers: { 'Content-Type': 'application/json' }, body: corps ? JSON.stringify(corps) : undefined,
     })
     if (!res.ok) return messageErreur(res)
-    charger()
+    signalerMaj()
     return null
   }
 
@@ -188,7 +194,7 @@ export default function CarnetMaison() {
   return (
     <div className="space-y-4">
       {/* — Mes équipements — */}
-      <section className="rounded-xl border border-ink/10 bg-white p-4">
+      <section id="mes-equipements" className="scroll-mt-20 rounded-xl border border-ink/10 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-xl text-ink">
             <Wrench className="h-5 w-5 text-primary" /> Mes équipements
@@ -249,6 +255,9 @@ export default function CarnetMaison() {
           </div>
         )}
       </section>
+
+      {/* — Calendrier d'entretien (lot 4) : la cible de « Tout voir » du bloc « À faire » — */}
+      <Calendrier equipements={equipements} documents={documents} />
 
       {/* — Mes pièces (lot 2) : sous les équipements, qui alimentent ses émetteurs — */}
       <MesPieces equipements={enService} />
@@ -340,7 +349,17 @@ export default function CarnetMaison() {
           </ul>
         )}
       </section>
+
+      {/* — Journal de la maison (lot 4) — */}
+      <Journal equipements={equipements} documents={documents}
+        onRemplacer={(ancien, date) => {
+          setFormCh(null)
+          // L'origine « fiche » passe au nouvel appareil : sinon la suggestion de la fiche
+          // reviendrait, l'ancien étant désormais hors service.
+          const origine = equipements.find((e) => e.id === ancien.id)?.origine_fiche ?? null
+          setFormEq({ categorie: ancien.categorie, type: ancien.type, date_pose: date, origine_fiche: origine })
+          document.getElementById('mes-equipements')?.scrollIntoView({ behavior: 'smooth' })
+        }} />
     </div>
   )
 }
-

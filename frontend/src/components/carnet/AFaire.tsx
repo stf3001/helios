@@ -1,0 +1,143 @@
+import { useCallback, useEffect, useState } from 'react'
+import { CalendarCheck, Check, ShieldCheck } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import type { Doc } from './Formulaires'
+import FormFait from './FormFait'
+import {
+  type Echeance, type EquipementNom, QUI, dateLongue, echeanceRelative, nomEquipement, useMaj,
+} from './commun'
+
+/**
+ * « À faire ce mois-ci » (carnet, lot 4), en tête de l'espace, au-dessus des onglets.
+ *
+ * Le contenu est choisi côté serveur (`services/a_faire.py`) : tâches en retard et du mois,
+ * jusqu'à 3 « bientôt », garanties qui expirent ; 6 lignes au plus. Replié en UNE ligne
+ * quand il n'y a rien à faire — un bloc vide en tête de page ferait du bruit tous les jours.
+ */
+
+type Ligne = (Echeance & { kind: 'tache' }) | {
+  kind: 'garantie'; libelle: string; fin: string; statut: string; provenance: string; mention: string | null
+}
+type Bloc = {
+  lignes: Ligne[]; masquees: number; table_vide: boolean; rien_d_urgent: boolean; sans_equipement: boolean
+  prochaine: { libelle: string; echeance: string; equipement_id: string | null } | null
+}
+
+function Pastille({ nature }: { nature: string }) {
+  return nature === 'obligation'
+    ? <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Obligation</span>
+    : <span className="shrink-0 rounded-full bg-leaf/10 px-2 py-0.5 text-xs font-semibold text-leaf">Conseil</span>
+}
+
+export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () => void; onToutVoir: () => void }) {
+  const { authFetch } = useAuth()
+  const [bloc, setBloc] = useState<Bloc | null>(null)
+  const [equipements, setEquipements] = useState<EquipementNom[]>([])
+  const [documents, setDocuments] = useState<Doc[]>([])
+  const [ouvert, setOuvert] = useState<string | null>(null)
+
+  const charger = useCallback(() => {
+    const json = (url: string) => authFetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+    Promise.all([json('/api/houses/me/a-faire'), json('/api/houses/me/equipements'), json('/api/houses/me/documents')])
+      .then(([b, eq, docs]) => { setBloc(b); setEquipements(eq); setDocuments(docs) })
+      .catch(() => setBloc(null))  // le bloc se tait plutôt que d'encombrer l'espace d'une erreur
+  }, [authFetch])
+  useEffect(charger, [charger])
+  useMaj(charger)
+
+  if (!bloc) return null
+  const parId = Object.fromEntries(equipements.map((e) => [e.id, e]))
+
+  const entete = (
+    <span className="flex items-center gap-2 font-display text-lg text-ink">
+      <CalendarCheck className="h-5 w-5 text-primary" /> À faire ce mois-ci
+    </span>
+  )
+
+  // Rien à faire : une seule ligne, discrète.
+  if (bloc.rien_d_urgent) {
+    let message: React.ReactNode
+    if (bloc.sans_equipement) {
+      message = <>Ajoutez vos équipements pour recevoir votre calendrier d'entretien.{' '}
+        <button onClick={onVoirMaison} className="font-semibold text-primary hover:underline">Ma maison</button></>
+    } else if (bloc.table_vide) {
+      message = "Le calendrier d'entretien est en préparation : il sera relu avant d'être publié."
+    } else {
+      message = <>Rien à faire ce mois-ci.{bloc.prochaine && ` Prochaine échéance : ${bloc.prochaine.libelle.toLowerCase()}, ${dateLongue(bloc.prochaine.echeance)}.`}{' '}
+        <button onClick={onToutVoir} className="font-semibold text-primary hover:underline">Tout voir</button></>
+    }
+    return (
+      <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-bord bg-white px-4 py-2.5">
+        <CalendarCheck className="h-4 w-4 shrink-0 text-primary" />
+        <p className="min-w-0 flex-1 text-sm text-dark/70">{message}</p>
+      </div>
+    )
+  }
+
+  return (
+    <section className="mb-4 rounded-xl border border-bord bg-white p-4" aria-label="À faire ce mois-ci">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        {entete}
+        <button onClick={onToutVoir} className="text-sm font-semibold text-primary hover:underline">Tout voir</button>
+      </div>
+      {bloc.table_vide && (
+        <p className="mb-2 text-sm text-dark/60">Le calendrier d'entretien est en préparation : il sera relu avant d'être publié.</p>
+      )}
+      {bloc.sans_equipement && !bloc.table_vide && (
+        <p className="mb-2 text-sm text-dark/60">
+          Ajoutez vos équipements pour recevoir votre calendrier d'entretien.{' '}
+          <button onClick={onVoirMaison} className="font-semibold text-primary hover:underline">Ma maison</button>
+        </p>
+      )}
+      <ul className="divide-y divide-bord">
+        {bloc.lignes.map((l, i) => {
+          if (l.kind === 'garantie') {
+            return (
+              <li key={`g${i}`} className="flex items-start gap-3 py-2.5">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-terra" />
+                <span className="min-w-0 flex-1 text-sm">
+                  <span className="block text-ink">{l.libelle}</span>
+                  <span className="block text-xs text-dark/60">se termine le {dateLongue(l.fin)}{l.mention ? ' · à vérifier sur votre contrat' : ''}</span>
+                </span>
+              </li>
+            )
+          }
+          const cle = `${l.tache_id}|${l.equipement_id ?? ''}`
+          return (
+            <li key={cle} className="py-2.5">
+              <div className="flex items-start gap-3">
+                <span className="min-w-0 flex-1 text-sm">
+                  <span className="block text-ink">{l.libelle}</span>
+                  <span className="block text-xs text-dark/60">
+                    {nomEquipement(l.equipement_id ? parId[l.equipement_id] : undefined)} ·{' '}
+                    <span className={l.statut === 'en_retard' ? 'font-semibold text-terra' : ''}>{echeanceRelative(l.echeance)}</span>
+                    {' '}· {QUI[l.qui] ?? l.qui}
+                  </span>
+                  {l.mention_puissance && <span className="block text-xs text-dark/50">{l.mention_puissance}</span>}
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+                  <Pastille nature={l.nature} />
+                  {ouvert !== cle && (
+                    <button onClick={() => setOuvert(cle)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-primary px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5">
+                      <Check className="h-3.5 w-3.5" /> C'est fait
+                    </button>
+                  )}
+                </span>
+              </div>
+              {ouvert === cle && (
+                <FormFait tacheId={l.tache_id} equipementId={l.equipement_id} documents={documents}
+                  onFini={() => setOuvert(null)} />
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {bloc.masquees > 0 && (
+        <button onClick={onToutVoir} className="mt-1 text-xs text-dark/60 hover:text-primary hover:underline">
+          Et {bloc.masquees} autre{bloc.masquees > 1 ? 's' : ''} : tout voir
+        </button>
+      )}
+    </section>
+  )
+}

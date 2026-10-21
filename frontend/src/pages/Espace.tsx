@@ -10,6 +10,7 @@ import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
 import CarnetMaison from '../components/carnet/CarnetMaison'
+import AFaire from '../components/carnet/AFaire'
 import BlocHelios from '../components/chat/BlocHelios'
 import MarqueHelios from '../components/MarqueHelios'
 import { RailOnglets, BandeOnglets, type OngletRail } from '../components/RailOnglets'
@@ -66,6 +67,19 @@ function Tuile({ to, icon: Icon, title, desc }: {
       </span>
     </Link>
   )
+}
+
+/** Le calendrier n'existe qu'une fois l'onglet ouvert ET le carnet chargé, et les blocs du
+    dessus (équipements, pièces) poussent encore la mise en page en arrivant : on attend
+    qu'il soit là, puis on recale une fois, sans quoi on s'arrête au milieu des équipements. */
+function allerAuCalendrier(essai = 0) {
+  const cible = document.getElementById('calendrier-entretien')
+  if (!cible) {
+    if (essai < 40) setTimeout(() => allerAuCalendrier(essai + 1), 100)
+    return
+  }
+  cible.scrollIntoView()
+  setTimeout(() => cible.scrollIntoView(), 500)
 }
 
 export default function Espace() {
@@ -139,6 +153,13 @@ export default function Espace() {
         <ApiError retry={load} />
       ) : (
         <>
+          {/* « À faire ce mois-ci » (carnet, lot 4) : AU-DESSUS des onglets, pour être vu
+              quel que soit l'onglet ouvert. Sans fiche, il n'a rien à dire. */}
+          {house && (
+            <AFaire onVoirMaison={() => setSection('maison')}
+              onToutVoir={() => { setSection('maison'); allerAuCalendrier() }} />
+          )}
+
           <BandeOnglets onglets={ONGLETS} actif={section} onChoisir={setSection}
             ariaLabel="Sections de mon espace" />
 
