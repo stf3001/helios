@@ -99,15 +99,23 @@ pas**, pour que le trou ne se reforme pas en silence.
 **Vérifié en base le 06/10/2026** : 5 actifs (AD Solar, Energiesto, Ensol, Eolia,
 Hydrolia), 92 en attente. Le seed relancé est idempotent et ne réactive rien.
 
-### [ ] 4. Les quatre experts sont des personnes inventées
+### [x] 4. Les quatre experts étaient des personnes inventées — fait le 21/10/2026 (`5a369a6`, `e3c6154`)
 
 `frontend/src/pages/HeliosIA.tsx` (constante `EQUIPE`) et `AvatarExpert.tsx` :
 nom, âge, secteur, parcours, années de conseil en ENR. Les avatars sont des
 dessins, ça se voit ; **les biographies, non**. Un visiteur réserve un appel
 « avec Camille, 8 ans d'expérience ».
 
-À remplacer par l'équipe réelle, ou à réduire à une présentation sans personnes
-nommées.
+**Fait** : `EQUIPE` est remplacée par `QUI_REPOND`. Stéphane, « expert transversal
+de l'habitat », porte l'étiquette « Personne réelle » et un monogramme en attendant
+une vraie photo. Léna, Cora et Lenny sont annoncés « Assistant IA », sans âge, région
+ni parcours. La réservation annonce un appel avec Stéphane. Vérifié : plus aucun des
+quatre anciens prénoms dans `frontend/src`, build vert, rendu relu en version bureau
+et à 375 px. Texte de Stéphane validé par lui.
+
+**Reste, hors de ce point** : `RendezVousTel.tsx` dit encore « Un conseiller vous
+appellera » après réservation (laissé tel quel à la demande de Stéphane), et le
+rendez-vous lui-même n'arrive nulle part tant que les points 2 et 45 sont ouverts.
 
 ---
 
