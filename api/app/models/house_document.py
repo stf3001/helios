@@ -21,4 +21,8 @@ class HouseDocument(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False)  # nom d'origine (affichage)
     path: Mapped[str] = mapped_column(String(255), nullable=False)      # chemin de stockage sur le serveur
     size: Mapped[int | None] = mapped_column(Integer)
+    # La photo d'une pièce (carnet, lot 2) : une seule par pièce, hors limite des 6 documents.
+    piece_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("pieces.id", ondelete="SET NULL")
+    )
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
