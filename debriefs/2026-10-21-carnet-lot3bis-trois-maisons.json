@@ -1,0 +1,477 @@
+{
+  "date": "2026-10-21",
+  "maisons": {
+    "1. Chaudière gaz + VMC": {
+      "fiche": {
+        "type_logement": "maison"
+      },
+      "equipements": [
+        {
+          "categorie": "chauffage",
+          "type": "chaudiere_gaz",
+          "marque": "Saunier Duval",
+          "date_pose": "2018-11-05",
+          "puissance": 24,
+          "unite": "kW"
+        },
+        {
+          "categorie": "ventilation",
+          "type": "VMC_simple",
+          "annee_pose": 2018
+        }
+      ],
+      "echeances": [
+        {
+          "tache_id": "vmc-bouches",
+          "libelle": "Nettoyer les bouches et les entrées d'air",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "guide",
+            "titre": "Fiche Mon Accompagnateur Rénov', Ordre des architectes, janvier 2025",
+            "url": "https://www.novabuild.fr/wp-content/uploads/2025/02/CNOA-Fiche-MAR-apres-travaux_-fevrier-2025.pdf"
+          },
+          "fiche_kb": null,
+          "note": null,
+          "regle": "mois",
+          "date_reference": "2018-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2019-01-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "VMC_simple"
+        },
+        {
+          "tache_id": "vmc-caisson",
+          "libelle": "Dépoussiérer le caisson de la VMC",
+          "qui": "soi_ou_pro",
+          "nature": "recommande",
+          "source": {
+            "type": "guide",
+            "titre": "Fiche Mon Accompagnateur Rénov', Ordre des architectes, janvier 2025",
+            "url": "https://www.novabuild.fr/wp-content/uploads/2025/02/CNOA-Fiche-MAR-apres-travaux_-fevrier-2025.pdf"
+          },
+          "fiche_kb": null,
+          "note": null,
+          "regle": "mois",
+          "date_reference": "2018-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2019-07-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "VMC_simple"
+        },
+        {
+          "tache_id": "chaudiere-entretien",
+          "libelle": "Entretien annuel de la chaudière par un professionnel",
+          "qui": "pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de l'environnement, art. R224-41-4 à R224-41-9 ; arrêté du 15 septembre 2009",
+            "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F20760"
+          },
+          "fiche_kb": null,
+          "note": "Attestation remise sous 15 jours, à conserver 2 ans. Le chauffagiste contrôle l'évacuation des fumées ; un conduit maçonné raccordé au gaz se ramone selon les règles locales.",
+          "regle": "annee_civile",
+          "date_reference": "2018-11-05",
+          "provenance": "date_pose",
+          "reference_supposee": false,
+          "echeance": "2019-12-31",
+          "statut": "en_retard",
+          "periode_conseillee": [
+            9,
+            10
+          ],
+          "mention_puissance": null,
+          "equipement": "chaudiere_gaz"
+        },
+        {
+          "tache_id": "detecteur-fumee-test",
+          "libelle": "Tester le détecteur de fumée",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de la construction et de l'habitation, art. L142-1 à L142-4 et R142-1 à R142-5 (entretien par l'occupant)",
+            "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F19950"
+          },
+          "fiche_kb": null,
+          "note": "Fréquence proposée par Hélios : la loi n'en fixe pas.",
+          "regle": "mois",
+          "date_reference": null,
+          "provenance": "inconnue",
+          "reference_supposee": false,
+          "echeance": null,
+          "statut": "a_planifier",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": null
+        }
+      ],
+      "verifications": [
+        {
+          "tache_id": "debroussaillement",
+          "champ": "zone_old",
+          "libelle": "Vérifiez si votre terrain est concerné",
+          "tache_libelle": "Débroussaillement autour de la maison et des accès",
+          "nature": "obligation",
+          "lien": "https://www.service-public.gouv.fr/particuliers/vosdroits/F33298"
+        }
+      ]
+    },
+    "2. PAC air/eau + ballon thermodynamique + PV": {
+      "fiche": {
+        "type_logement": "maison"
+      },
+      "equipements": [
+        {
+          "categorie": "chauffage",
+          "type": "PAC_air_eau",
+          "marque": "Atlantic",
+          "date_pose": "2022-04-12",
+          "puissance": 9,
+          "unite": "kW"
+        },
+        {
+          "categorie": "ecs",
+          "type": "thermodynamique",
+          "annee_pose": 2022
+        },
+        {
+          "categorie": "production_electricite",
+          "type": "panneaux_pv",
+          "date_pose": "2024-03-20",
+          "puissance": 6,
+          "unite": "kWc"
+        }
+      ],
+      "echeances": [
+        {
+          "tache_id": "ballon-groupe-securite",
+          "libelle": "Manœuvrer le levier du groupe de sécurité",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "fabricant",
+            "titre": "Thermor, détartrage et entretien du ballon",
+            "url": "https://www.thermor.fr/nos-conseils/detartrage-ballon-eau-chaude"
+          },
+          "fiche_kb": null,
+          "note": null,
+          "regle": "mois",
+          "date_reference": "2022-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2022-08-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "thermodynamique"
+        },
+        {
+          "tache_id": "pac-unite-exterieure",
+          "libelle": "Dégager l'unité extérieure et vérifier l'évacuation des condensats",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "guide",
+            "titre": "Fiche Hélios « Bien utiliser ses équipements » ; notice du fabricant",
+            "url": null
+          },
+          "fiche_kb": "gestes_equipements",
+          "note": null,
+          "regle": "mois",
+          "date_reference": "2022-04-12",
+          "provenance": "date_pose",
+          "reference_supposee": false,
+          "echeance": "2023-10-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "PAC_air_eau"
+        },
+        {
+          "tache_id": "pv-suivi-production",
+          "libelle": "Regarder la production du mois et la comparer à l'an passé",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "expertise",
+            "titre": "Conseil de Stéphane Aldrighettoni, installateur photovoltaïque",
+            "url": null
+          },
+          "fiche_kb": null,
+          "note": null,
+          "regle": "mois",
+          "date_reference": "2024-03-20",
+          "provenance": "date_pose",
+          "reference_supposee": false,
+          "echeance": "2024-04-20",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "panneaux_pv"
+        },
+        {
+          "tache_id": "ballon-detartrage",
+          "libelle": "Détartrer le ballon et contrôler l'anode",
+          "qui": "soi_ou_pro",
+          "nature": "recommande",
+          "source": {
+            "type": "fabricant",
+            "titre": "Thermor, détartrage et entretien du ballon",
+            "url": "https://www.thermor.fr/nos-conseils/detartrage-ballon-eau-chaude"
+          },
+          "fiche_kb": null,
+          "note": "24 mois en eau dure, 36 mois en eau douce.",
+          "regle": "mois",
+          "date_reference": "2022-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2024-07-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "thermodynamique"
+        },
+        {
+          "tache_id": "pac-entretien",
+          "libelle": "Entretien de la pompe à chaleur ou de la climatisation par un professionnel",
+          "qui": "pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de l'environnement, art. R224-44 à R224-44-5 (décret 2020-912)",
+            "url": "https://www.ecologie.gouv.fr/politiques-publiques/entretien-inspection-systemes-chauffage-climatisation"
+          },
+          "fiche_kb": null,
+          "note": "Attestation remise sous 15 jours, à conserver 2 ans. Chauffe-eau thermodynamique exclu.",
+          "regle": "annee_civile",
+          "date_reference": "2022-04-12",
+          "provenance": "date_pose",
+          "reference_supposee": false,
+          "echeance": "2024-12-31",
+          "statut": "en_retard",
+          "periode_conseillee": [
+            9,
+            10
+          ],
+          "mention_puissance": null,
+          "equipement": "PAC_air_eau"
+        },
+        {
+          "tache_id": "pv-inspection-visuelle",
+          "libelle": "Inspecter les panneaux depuis le sol",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "expertise",
+            "titre": "Conseil de Stéphane Aldrighettoni, installateur photovoltaïque",
+            "url": null
+          },
+          "fiche_kb": null,
+          "note": "Ne jamais monter sur le toit.",
+          "regle": "mois",
+          "date_reference": "2024-03-20",
+          "provenance": "date_pose",
+          "reference_supposee": false,
+          "echeance": "2025-04-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "panneaux_pv"
+        },
+        {
+          "tache_id": "detecteur-fumee-test",
+          "libelle": "Tester le détecteur de fumée",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de la construction et de l'habitation, art. L142-1 à L142-4 et R142-1 à R142-5 (entretien par l'occupant)",
+            "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F19950"
+          },
+          "fiche_kb": null,
+          "note": "Fréquence proposée par Hélios : la loi n'en fixe pas.",
+          "regle": "mois",
+          "date_reference": null,
+          "provenance": "inconnue",
+          "reference_supposee": false,
+          "echeance": null,
+          "statut": "a_planifier",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": null
+        }
+      ],
+      "verifications": [
+        {
+          "tache_id": "debroussaillement",
+          "champ": "zone_old",
+          "libelle": "Vérifiez si votre terrain est concerné",
+          "tache_libelle": "Débroussaillement autour de la maison et des accès",
+          "nature": "obligation",
+          "lien": "https://www.service-public.gouv.fr/particuliers/vosdroits/F33298"
+        }
+      ]
+    },
+    "3. Poêle à bois + fosse septique, en zone de débroussaillement": {
+      "fiche": {
+        "type_logement": "maison",
+        "zone_old": "oui"
+      },
+      "equipements": [
+        {
+          "categorie": "chauffage",
+          "type": "poele_bois",
+          "annee_pose": 2019
+        },
+        {
+          "categorie": "eau",
+          "type": "fosse_septique",
+          "annee_pose": 2005
+        }
+      ],
+      "echeances": [
+        {
+          "tache_id": "fosse-niveau-boues",
+          "libelle": "Contrôler le niveau de boues de la fosse",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "guide",
+            "titre": "SPANC de la Métropole Aix-Marseille-Provence",
+            "url": "https://ampmetropole.fr/wp-content/uploads/2022/08/SPANC-diag-periodique.pdf"
+          },
+          "fiche_kb": null,
+          "note": "Vidange par une entreprise agréée quand les boues dépassent la moitié du volume.",
+          "regle": "mois",
+          "date_reference": "2005-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2006-07-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "fosse_septique"
+        },
+        {
+          "tache_id": "spanc-controle",
+          "libelle": "Contrôle périodique par le SPANC",
+          "qui": "pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Arrêté du 27 avril 2012 (contrôle de l'assainissement non collectif)",
+            "url": "https://ampmetropole.fr/wp-content/uploads/2022/08/SPANC-diag-periodique.pdf"
+          },
+          "fiche_kb": null,
+          "note": "À l'initiative du SPANC, fréquence fixée par la commune. Garder le rapport : il est exigé à la vente.",
+          "regle": "mois",
+          "date_reference": "2005-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2015-07-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "fosse_septique"
+        },
+        {
+          "tache_id": "poele-entretien",
+          "libelle": "Entretien du poêle ou de l'insert par un professionnel",
+          "qui": "pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de la santé publique, art. R1331-68",
+            "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047947027/"
+          },
+          "fiche_kb": null,
+          "note": "Dispense si l'appareil n'a pas servi pendant 12 mois ; entretien avant de le rallumer.",
+          "regle": "mois",
+          "date_reference": "2019-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2020-09-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "poele_bois"
+        },
+        {
+          "tache_id": "ramonage",
+          "libelle": "Ramonage du conduit de fumée",
+          "qui": "pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de la santé publique, art. R1331-71 et R1331-75",
+            "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047947047/"
+          },
+          "fiche_kb": null,
+          "note": "Attestation sous 15 jours ouvrés, à conserver 2 ans. Si le bois est votre chauffage principal, un second ramonage en cours de saison est conseillé ; un arrêté local peut l'imposer.",
+          "regle": "mois",
+          "date_reference": "2019-07-01",
+          "provenance": "annee_pose",
+          "reference_supposee": true,
+          "echeance": "2020-09-01",
+          "statut": "en_retard",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": "poele_bois"
+        },
+        {
+          "tache_id": "debroussaillement",
+          "libelle": "Débroussaillement autour de la maison et des accès",
+          "qui": "soi_ou_pro",
+          "nature": "obligation",
+          "source": {
+            "type": "officiel",
+            "titre": "Code forestier, art. L134-5 à L134-18 ; arrêté préfectoral du Var du 30 mars 2015",
+            "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F33298"
+          },
+          "fiche_kb": null,
+          "note": "Maintien permanent ; entretien au printemps, jamais en période de sécheresse.",
+          "regle": "mois",
+          "date_reference": null,
+          "provenance": "inconnue",
+          "reference_supposee": false,
+          "echeance": null,
+          "statut": "a_planifier",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": null
+        },
+        {
+          "tache_id": "detecteur-fumee-test",
+          "libelle": "Tester le détecteur de fumée",
+          "qui": "soi",
+          "nature": "recommande",
+          "source": {
+            "type": "officiel",
+            "titre": "Code de la construction et de l'habitation, art. L142-1 à L142-4 et R142-1 à R142-5 (entretien par l'occupant)",
+            "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F19950"
+          },
+          "fiche_kb": null,
+          "note": "Fréquence proposée par Hélios : la loi n'en fixe pas.",
+          "regle": "mois",
+          "date_reference": null,
+          "provenance": "inconnue",
+          "reference_supposee": false,
+          "echeance": null,
+          "statut": "a_planifier",
+          "periode_conseillee": null,
+          "mention_puissance": null,
+          "equipement": null
+        }
+      ],
+      "verifications": []
+    }
+  }
+}

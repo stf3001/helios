@@ -1003,7 +1003,16 @@ Les extensions de la section 1 de `briefs/KB-entretien-table.md` sont dans le mo
 18 tâches de sa section 6 passent le chargeur strict. Commits `a0eb8b0` → `b9b3ca3`.
 Pas d'écran ici : c'est le lot 4.
 
-### [ ] 39. Lot 3 bis — intégrer la table d'entretien relue par Stéphane
+### [x] 39. Lot 3 bis — intégrer la table d'entretien relue par Stéphane — fait le 21/10/2026
+
+**Vérifié** : `taches.json` = la section 6 de `briefs/KB-entretien-table.md`, identique à
+l'octet près (18 tâches, version 2026-10-20) ; `zone_old` dans la fiche (visible pour une
+maison, masqué pour un appartement, à l'écran) ; réponse « Oui » enregistrée depuis la
+fiche → le débroussaillement entre dans les échéances ; score de complétude inchangé (90 %
+pour les trois réponses). Sortie de l'API sur les trois maisons de la section 7 dans
+`debriefs/2026-10-21-carnet-lot3bis-trois-maisons.json`. Commits `7a92e61` → `e990bdc`.
+**Le bloc « À faire ce mois-ci » n'existe pas encore (lot 4)** : sa vérification sur ces
+trois maisons reste à faire au lot 4. Constat d'origine, gardé :
 
 Suivre la section 7 de `briefs/KB-entretien-table.md` : recopier sa section 6 dans
 `api/data/entretien/taches.json` sans rien changer, et ajouter le champ de fiche
