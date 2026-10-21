@@ -1,6 +1,8 @@
-# Briefs Claude Code — carnet de maison (20/10/2026)
+# Briefs Claude Code — carnet de maison
 
-Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans cet ordre ; chaque lot s'arrête et attend la validation de Stéphane.
+Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans l'ordre ; chaque lot s'arrête et attend la validation de Stéphane.
+
+## Série 1 (20/10/2026) — faite le 21/10/2026
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
@@ -12,6 +14,19 @@ Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans ce
 | 6 | `BRIEF-carnet-lot4-journal.md` | lots 1 et 3 |
 | 7 | `BRIEF-carnet-lot5-chat.md` | lots 1, 3 et 4 |
 | 8 | `BRIEF-carnet-lot6-dossier-pdf.md` | lots 1, 3 et 4 |
+
+## Série 2 (21/10/2026) — fin de la phase 1
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-site-voix-helios.md` (point 4, experts inventés) | aucun |
+| 2 | `BRIEF-carnet-lot7-fiche-equipements.md` (point 35) | aucun |
+| 3 | `BRIEF-carnet-lot8-statuts.md` | lot 7 |
+| 4 | `BRIEF-carnet-lot11-contenu-cil.md` (point 44) | aucun |
+| 5 | `BRIEF-carnet-lot9-projets.md` | lots 8 et 11 |
+| 6 | `BRIEF-carnet-lot10-cout-maison.md` | lot 8 |
+
+## Références
 
 `KB-entretien-table.md` est la table d'entretien validée le 20/10/2026 (obligations sourcées, recommandations) : elle n'est intégrée dans `api/data/entretien/taches.json` qu'au lot 3 bis.
 
