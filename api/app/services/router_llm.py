@@ -25,9 +25,15 @@ Route = Literal["local", "api"]
 _NIVEAUX_ELIGIBLES_API = {"prediagnostic_qualitatif", "preaudit_chiffre"}
 
 
-def choose_route(*, mode: str, niveau: str | None, message: str, has_recent_audit: bool = False) -> Route:
+def choose_route(*, mode: str, niveau: str | None, message: str, has_recent_audit: bool = False,
+                 question_carnet: bool = False) -> Route:
     if mode != "connecte":
         return "local"
+    # Une question sur le carnet du foyer va à l'API quel que soit le niveau de la fiche
+    # (décision du 21/10/2026, lot 5) : le modèle local recalculait des âges et inventait des
+    # garanties. Quota et plafonds de coût s'appliquent toujours (`generate_route`).
+    if question_carnet:
+        return "api"
     if niveau not in _NIVEAUX_ELIGIBLES_API:
         return "local"
     is_long = len(message) > settings.rag_api_long_message_chars
@@ -82,6 +88,7 @@ async def generate_route(
     user_id: uuid.UUID | None,
     user_content: str,
     has_recent_audit: bool = False,
+    question_carnet: bool = False,
 ) -> tuple[Route, bool, AsyncIterator[str]]:
     """Décide local vs API et renvoie (route utilisée, mode_simplifie, flux de tokens).
 
@@ -89,7 +96,8 @@ async def generate_route(
     l'envoie à part en `system` avec `cache_control` (mise en cache des prompts) ; le chemin local
     (Ollama, pas de séparation system/user) la reconcatène ici via `rag.build_prompt`.
     """
-    route = choose_route(mode=mode, niveau=niveau, message=message, has_recent_audit=has_recent_audit)
+    route = choose_route(mode=mode, niveau=niveau, message=message, has_recent_audit=has_recent_audit,
+                         question_carnet=question_carnet)
     local_prompt = f"{rag.constitution_text}\n\n---\n{user_content}"
 
     if route == "api" and user_id is not None and await daily_quota_exceeded(db, user_id):

@@ -9,7 +9,9 @@ from types import SimpleNamespace
 from app.routers import chat
 from app.services import rag
 from app.services.a_faire import journal_fusionne
-from app.services.carnet_contexte import PLAFOND_CARACTERES, carnet_contexte, taille
+from app.services.carnet_contexte import (
+    PLAFOND_CARACTERES, carnet_contexte, choisir_echeances, parle_du_carnet, taille,
+)
 from app.services.entretien import charger_taches, echeances
 from app.services.garanties import age_ans, garanties_maison
 from app.services.pieces import resume_pieces
@@ -111,7 +113,7 @@ def test_le_journal_part_avant_les_pieces_et_les_equipements():
     entrees = [_entree(i, 10 + i, document_id="doc") for i in range(5)]
     sans = carnet_contexte(equipements, [], [], journal_fusionne(entrees, []), _pieces(), AUJ)
     assert taille(sans) <= PLAFOND_CARACTERES and len(sans["journal"]) == 5
-    gros = [dict(e, marque="Une marque au nom très très long " * 6) for e in equipements]
+    gros = [dict(e, marque="Une marque au nom très très long " * 12) for e in equipements]
     coupe = carnet_contexte(gros, [], [], journal_fusionne(entrees, []), _pieces(), AUJ)
     assert taille(coupe) <= PLAFOND_CARACTERES
     assert len(coupe.get("journal", [])) < 5 and "pieces" in coupe and len(coupe["equipements"]) == 3
@@ -164,3 +166,28 @@ def test_trois_phrases_dans_le_bloc_connecte():
     assert "dis \"d'après votre carnet\" quand tu t'en sers" in contenu
     assert "Ne calcule aucun coût, aucune durée de vie restante ni aucune économie" in contenu
     assert "carnet" not in rag.build_user_content("Ma PAC ?", [])  # visiteur : rien
+
+
+def test_une_echeance_par_equipement_les_obligations_d_abord():
+    def e(eq, nature, statut, tache):
+        return {"equipement_id": eq, "nature": nature, "statut": statut, "tache_id": tache}
+    moteur = [  # déjà trié par le moteur : en retard d'abord
+        e("pac", "recommande", "en_retard", "pac-unite-exterieure"),
+        e("ballon", "recommande", "en_retard", "ballon-groupe-securite"),
+        e("ballon", "recommande", "en_retard", "ballon-detartrage"),
+        e(None, "recommande", "a_planifier", "detecteur"),
+        e("pac", "obligation", "plus_tard", "pac-entretien"),
+    ]
+    assert [x["tache_id"] for x in choisir_echeances(moteur)] == [
+        "ballon-groupe-securite", "detecteur", "pac-entretien"]
+
+
+def test_reconnaitre_une_question_sur_le_carnet():
+    for q in ("Quand dois-je faire entretenir ma pompe à chaleur ?", "Quel âge a mon chauffe-eau ?",
+              "Est-ce que mes travaux sont encore sous garantie ?",
+              "Qu'est-ce que j'ai fait comme entretien cette année ?",
+              "Combien va me coûter le remplacement de ma PAC ?"):
+        assert parle_du_carnet(q), q
+    for q in ("Comment fonctionne une pompe à chaleur ?", "Par quoi commencer pour isoler ma maison ?",
+              "Les aides pour une PAC en 2026 ?", "Quel isolant choisir pour mes combles ?"):
+        assert not parle_du_carnet(q), q

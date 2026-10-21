@@ -32,7 +32,7 @@ from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
 from app.services import civilites, ollama_client, rag, regions, router_llm
 from app.services.a_faire import derniers_faits, journal_fusionne
-from app.services.carnet_contexte import carnet_contexte
+from app.services.carnet_contexte import carnet_contexte, parle_du_carnet
 from app.services.entretien import echeances, table_courante
 from app.services.garanties import age_ans, garanties_maison
 from app.services.pieces import resume_pieces
@@ -248,9 +248,14 @@ async def send_message(
     chunks_used = [str(r["chunk"].id) for r in results]
     conversation_id = conversation.id
 
+    # Question sur le carnet de CE foyer (« ma PAC », « mes travaux ») : elle va à Claude,
+    # qui lit le carnet. Une fiche générale servie telle quelle répondrait à côté.
+    question_carnet = bool(house_context and house_context.get("carnet") and parle_du_carnet(payload.content))
+
     # Réponse instantanée (doc 07 §5) : fiche Q/R quasi identique → on la sert sans LLM.
-    # `force_llm` (bouton « développer » du widget) désactive le court-circuit.
-    if not payload.force_llm:
+    # `force_llm` (bouton « développer » du widget) désactive le court-circuit, comme une
+    # question sur le carnet.
+    if not payload.force_llm and not question_carnet:
         instant = rag.instant_answer(results, relance=relance)
         if instant is not None:
             instant_citations = citations[:1]
@@ -324,6 +329,7 @@ async def send_message(
         user_id=user.id if user else None,
         user_content=user_content,
         has_recent_audit=audit_context is not None,
+        question_carnet=question_carnet,
     )
 
     async def stream():

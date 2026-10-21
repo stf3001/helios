@@ -117,3 +117,11 @@ def test_estimation_du_cout():
     assert router_llm.estimate_cost_eur(None) is None
     assert router_llm.estimate_cost_eur(0) == 0.0
     assert router_llm.estimate_cost_eur(1000) == pytest.approx(settings.llm_price_per_1k_tokens_eur)
+
+
+def test_une_question_sur_le_carnet_va_a_l_api_quel_que_soit_le_niveau():
+    assert choose_route(mode="connecte", niveau="conseils_generaux", message="Quel âge a mon chauffe-eau ?",
+                        question_carnet=True) == "api"
+    # Le visiteur anonyme n'a pas de carnet : toujours local.
+    assert choose_route(mode="public", niveau=None, message="Quel âge a mon chauffe-eau ?",
+                        question_carnet=True) == "local"

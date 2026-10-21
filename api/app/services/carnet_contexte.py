@@ -14,7 +14,9 @@ import json
 import re
 from datetime import date
 
-PLAFOND_CARACTERES = 1500
+# 2 000 caractères (décision du 21/10/2026, lot 5) : à 1 500, les cinq échéances seules en
+# prenaient 940 et le journal ne tenait sur aucune maison réelle.
+PLAFOND_CARACTERES = 2000
 MAX_EQUIPEMENTS = 12
 MAX_ECHEANCES = 5
 MAX_GARANTIES = 5
@@ -38,6 +40,22 @@ _CATEGORIES_TRAVAUX = tuple((code, re.compile(motif)) for code, motif in (
 ))
 
 
+# Une question « sur le carnet » parle de CE foyer (« ma PAC », « mes travaux », « j'ai fait »)
+# ET d'un sujet que le carnet connaît. Ces questions vont à la route API (décision de
+# Stéphane, 21/10/2026) : le modèle local s'y trompait (lot 5, réponses archivées).
+_POSSESSIF = re.compile(r"\b(mon|ma|mes|notre|nos)\b|\bj'ai\b|\bchez moi\b", re.IGNORECASE)
+_SUJET_CARNET = re.compile(
+    r"entretien|entretenir|garantie|\bâge\b|\bage\b|journal|travaux|chantier|remplace|r[ée]vision|ramonage"
+    r"|[ée]ch[ée]ance|\bpac\b|pompe [àa] chaleur|chaudi[eè]re|ballon|chauffe[- ]eau|panneaux?|onduleur"
+    r"|\bvmc\b|clim|po[eê]le|insert|fosse|micro[- ]station|batterie|borne|[ée]quipement|appareil",
+    re.IGNORECASE,
+)
+
+
+def parle_du_carnet(question: str) -> bool:
+    return bool(_POSSESSIF.search(question) and _SUJET_CARNET.search(question))
+
+
 def _champ(obj, nom):
     return obj.get(nom) if isinstance(obj, dict) else getattr(obj, nom, None)
 
@@ -52,6 +70,25 @@ def categorie_travaux(nature: str | None) -> str:
 
 def _iso(d) -> str | None:
     return d.isoformat() if hasattr(d, "isoformat") else d
+
+
+def choisir_echeances(echeances: list[dict]) -> list[dict]:
+    """Au plus une échéance par équipement (et une pour la maison), les OBLIGATIONS d'abord.
+
+    Décision du 21/10/2026 (lot 5) : en prenant simplement les 5 plus urgentes, les tâches
+    mensuelles « en retard » faute de journal occupaient toutes les places, et l'entretien
+    légal d'une PAC fait en mars (prochaine échéance dans deux ans) n'y entrait jamais. Le
+    résultat garde l'ordre d'urgence du moteur.
+    """
+    choisies, vus = [], set()
+    for nature in ("obligation", "recommande"):
+        for i, e in enumerate(echeances):
+            cle = e["equipement_id"] or "maison"
+            if e["nature"] != nature or cle in vus or len(choisies) == MAX_ECHEANCES:
+                continue
+            vus.add(cle)
+            choisies.append((i, e))
+    return [e for _, e in sorted(choisies, key=lambda c: c[0])]
 
 
 def taille(carnet: dict) -> int:
@@ -90,7 +127,7 @@ def carnet_contexte(equipements, echeances, garanties, journal, resume_pieces=No
         eqs.append(ligne)
 
     echs = []
-    for e in echeances[:MAX_ECHEANCES]:
+    for e in choisir_echeances(echeances):
         ligne = {
             "tache": e["libelle"],  # texte de la table d'entretien, relu — pas une saisie du foyer
             "pour": type_par_id.get(e["equipement_id"], "maison") if e["equipement_id"] else "maison",
@@ -152,7 +189,7 @@ def carnet_contexte(equipements, echeances, garanties, journal, resume_pieces=No
 
 
 def _plafonner(carnet: dict) -> dict:
-    """Sous 1 500 caractères, en coupant dans l'ordre décidé : le journal (du plus ancien au plus
+    """Sous le plafond, en coupant dans l'ordre décidé : le journal (du plus ancien au plus
     récent), les pièces, puis les équipements de FAIBLE priorité — ceux qui suivent les trois
     premiers (chauffage, eau chaude, clim passent en tête). Si cela ne suffit pas, on réduit
     garanties et échéances sans les vider, et ce n'est qu'en dernier recours que les
