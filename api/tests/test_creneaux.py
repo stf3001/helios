@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.services import creneaux
 
 # Un lundi, en milieu de matinee.
-LUNDI = datetime(2026, 9, 28, 10, 0, tzinfo=creneaux.FUSEAU)
+LUNDI = creneaux.a_paris(2026, 9, 28, 10, 0)
 
 
 def test_aucun_creneau_le_week_end():
@@ -62,11 +62,11 @@ def test_un_creneau_reserve_ne_ressort_pas_des_disponibilites():
 
 
 @pytest.mark.parametrize("hors_grille", [
-    datetime(2026, 9, 29, 3, 0, tzinfo=creneaux.FUSEAU),     # la nuit
-    datetime(2026, 10, 3, 10, 0, tzinfo=creneaux.FUSEAU),    # un samedi
-    datetime(2026, 9, 29, 10, 7, tzinfo=creneaux.FUSEAU),    # pas sur le pas de 30 min
-    datetime(2027, 3, 1, 10, 0, tzinfo=creneaux.FUSEAU),     # bien au-dela de l'horizon
-    datetime(2026, 9, 28, 11, 0, tzinfo=creneaux.FUSEAU),    # avant le delai de prevenance
+    creneaux.a_paris(2026, 9, 29, 3, 0),     # la nuit
+    creneaux.a_paris(2026, 10, 3, 10, 0),    # un samedi
+    creneaux.a_paris(2026, 9, 29, 10, 7),    # pas sur le pas de 30 min
+    creneaux.a_paris(2027, 3, 1, 10, 0),     # bien au-dela de l'horizon
+    creneaux.a_paris(2026, 9, 28, 11, 0),    # avant le delai de prevenance
 ])
 def test_le_serveur_refuse_un_creneau_hors_grille(hors_grille):
     """C'est le serveur qui decide de ses heures, jamais le client.
@@ -78,3 +78,22 @@ def test_le_serveur_refuse_un_creneau_hors_grille(hors_grille):
 
 def test_un_creneau_de_la_grille_est_accepte():
     assert creneaux.est_proposable(creneaux.proposables(LUNDI)[0], LUNDI)
+
+
+
+def test_heure_de_paris_ete_comme_hiver():
+    """Le +2 en dur décalait tout l'hiver d'une heure. Bascules 2026 : 29/03 et 25/10."""
+    from datetime import timezone as tz
+    assert creneaux.a_paris(2026, 10, 23, 9, 0).astimezone(tz.utc).hour == 7   # été : UTC+2
+    assert creneaux.a_paris(2026, 10, 26, 9, 0).astimezone(tz.utc).hour == 8   # hiver : UTC+1
+    assert creneaux.a_paris(2027, 3, 26, 9, 0).astimezone(tz.utc).hour == 8
+    assert creneaux.a_paris(2027, 3, 29, 9, 0).astimezone(tz.utc).hour == 7
+    # La nuit de la bascule d'octobre : 00:59 UTC encore en été, 01:00 UTC déjà en hiver.
+    assert creneaux.fuseau_paris(datetime(2026, 10, 25, 0, 59, tzinfo=tz.utc)).utcoffset(None).seconds == 7200
+    assert creneaux.fuseau_paris(datetime(2026, 10, 25, 1, 0, tzinfo=tz.utc)).utcoffset(None).seconds == 3600
+
+
+def test_la_grille_d_hiver_commence_a_9_h_heure_de_paris():
+    lundi_hiver = creneaux.a_paris(2026, 11, 2, 8, 0)
+    premiers = [c for c in creneaux.proposables(lundi_hiver) if c.date().isoformat() == "2026-11-03"]
+    assert premiers[0].hour == 9 and premiers[0].utcoffset().seconds == 3600

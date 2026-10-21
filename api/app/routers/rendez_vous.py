@@ -57,7 +57,7 @@ async def reserver(
         telephone=payload.telephone.strip(),
         email=str(payload.email) if payload.email else None,
         sujet=payload.sujet,
-        debut=payload.debut.astimezone(creneaux.FUSEAU),
+        debut=creneaux.heure_de_paris(payload.debut),
         duree_min=settings.rdv_duree_min,
     )
     db.add(rdv)
