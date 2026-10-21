@@ -17,11 +17,13 @@ from app.core.deps import get_current_user
 from app.models.audit import Audit
 from app.models.conversation import Conversation, Message
 from app.models.energy import EnergyStudy
+from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.house_document import HouseDocument
 from app.models.partner import Lead, Review
 from app.models.refresh_token import RefreshToken
 from app.models.solar import SolarStudy
+from app.models.travaux import Travaux
 from app.models.user import User
 
 router = APIRouter(prefix="/account", tags=["account"])
@@ -46,6 +48,11 @@ async def export_data(user: User = Depends(get_current_user), db: AsyncSession =
         data["energy_studies"] = [_serialize(e) for e in await db.scalars(
             select(EnergyStudy).where(EnergyStudy.house_id == house.id))]
         data["leads"] = [_serialize(l) for l in await db.scalars(select(Lead).where(Lead.house_id == house.id))]
+        # Carnet de maison (lot 1) : effacé avec la maison par la cascade de 0024.
+        data["equipements"] = [_serialize(e) for e in await db.scalars(
+            select(Equipement).where(Equipement.house_id == house.id))]
+        data["travaux"] = [_serialize(t) for t in await db.scalars(
+            select(Travaux).where(Travaux.house_id == house.id))]
     convs = list(await db.scalars(select(Conversation).where(Conversation.user_id == user.id)))
     data["conversations"] = [_serialize(c) for c in convs]
     return data
