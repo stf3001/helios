@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import async_session, get_db
@@ -397,8 +398,7 @@ async def suivre_rendez_vous(
     _: User | None = Depends(require_admin_access),
     db: AsyncSession = Depends(get_db),
 ):
-    """Statut et/ou note interne. L'index unique sur `debut` n'est pas touché : un créneau
-    annulé reste pris en base (voir le débrief du lot)."""
+    """Statut et/ou note interne. Un créneau annulé redevient réservable (index partiel, 0029)."""
     r = await db.get(RendezVous, rdv_id)
     if r is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Rendez-vous introuvable")
@@ -409,6 +409,12 @@ async def suivre_rendez_vous(
         r.statut = champs["statut"]
     if "note_interne" in champs:
         r.note_interne = (champs["note_interne"] or "").strip()[:4000] or None
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Un rendez-vous annulé qu'on réactive alors que son créneau a été repris entre-temps.
+        await db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT,
+                            "Ce créneau a été repris par une autre réservation : impossible de le réactiver.")
     foyer = await db.get(User, r.user_id) if r.user_id else None
     return _rdv_out(r, foyer.email if foyer else None)

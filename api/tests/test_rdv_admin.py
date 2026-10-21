@@ -92,12 +92,13 @@ def ctx():
             pytest.skip("Postgres de développement absent")
         admin_id, rdv_ids, debut_avenir = client.portal.call(_admin_et_rdvs)
         foyer = client.portal.call(_creer_foyer)
+        contexte = {"c": client, "rdv_ids": [str(i) for i in rdv_ids], "debut_avenir": debut_avenir}
         try:
-            yield {"c": client, "rdv_ids": [str(i) for i in rdv_ids], "debut_avenir": debut_avenir,
-                   "admin": {"Authorization": f"Bearer {create_access_token(str(admin_id))}"},
-                   "foyer": {"Authorization": f"Bearer {create_access_token(str(foyer[0]))}"}}
+            yield contexte | {
+                "admin": {"Authorization": f"Bearer {create_access_token(str(admin_id))}"},
+                "foyer": {"Authorization": f"Bearer {create_access_token(str(foyer[0]))}"}}
         finally:
-            client.portal.call(lambda: _nettoyer(admin_id, rdv_ids))
+            client.portal.call(lambda: _nettoyer(admin_id, [uuid.UUID(i) for i in contexte["rdv_ids"]]))
             client.portal.call(lambda: _effacer([foyer[0]]))
             client.portal.call(engine.dispose)
 
@@ -131,22 +132,27 @@ def test_statut_et_note_persistes(ctx):
     assert c.patch(f"/api/admin/rendez-vous/{uuid.uuid4()}", headers=h, json={"statut": "honore"}).status_code == 404
 
 
-def test_un_creneau_annule_reste_bloque_par_l_unicite(ctx):
-    """Constat à faire trancher par Stéphane, pas une règle voulue : l'index unique sur `debut`
-    couvre aussi les annulés. Le créneau n'est plus « pris » pour la grille, mais une nouvelle
-    réservation au même instant échouerait en base."""
+def test_un_creneau_annule_redevient_reservable(ctx):
+    """Décision du 21/10/2026 : l'index unique ne couvre plus les annulés (0029). Mais deux
+    rendez-vous ACTIFS sur le même instant restent impossibles, et réactiver un annulé dont le
+    créneau a été repris est refusé proprement (409)."""
     c, h, rid = ctx["c"], ctx["admin"], ctx["rdv_ids"][0]
-    c.patch(f"/api/admin/rendez-vous/{rid}", headers=h, json={"statut": "annule"})
+    assert c.patch(f"/api/admin/rendez-vous/{rid}", headers=h, json={"statut": "annule"}).status_code == 200
 
-    async def doublon():
+    async def reserver(nom):
         async with async_session() as s:
-            s.add(RendezVous(nom="Doublon", telephone="0600000003", debut=ctx["debut_avenir"]))
+            r = RendezVous(nom=nom, telephone="0600000003", debut=ctx["debut_avenir"])
+            s.add(r)
             try:
                 await s.commit()
+                ctx["rdv_ids"].append(str(r.id))
                 return "accepté"
             except Exception:
                 await s.rollback()
                 return "refusé"
-    assert c.portal.call(doublon) == "refusé"
+    assert c.portal.call(lambda: reserver("Reprise")) == "accepté"
+    assert c.portal.call(lambda: reserver("Doublon actif")) == "refusé"
+    r = c.patch(f"/api/admin/rendez-vous/{rid}", headers=h, json={"statut": "reserve"})
+    assert r.status_code == 409 and "repris" in r.json()["detail"]
     tableau = c.get("/api/admin/dashboard", headers=h).json()
     assert {"a_venir", "prochain", "a_qualifier"} <= set(tableau["rendez_vous"])

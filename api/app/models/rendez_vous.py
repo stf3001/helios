@@ -23,7 +23,8 @@ class RendezVous(Base):
     telephone: Mapped[str] = mapped_column(String(30), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255))
     sujet: Mapped[str | None] = mapped_column(Text)
-    #: Debut du creneau. UNIQUE en base : c'est ce qui empeche deux reservations.
+    #: Debut du creneau. UNIQUE en base parmi les rendez-vous NON annulés (index partiel, 0029) :
+    #: c'est ce qui empêche deux réservations, et un créneau annulé redevient réservable.
     debut: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     duree_min: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
     statut: Mapped[str] = mapped_column(String(20), nullable=False, default="reserve")
