@@ -44,8 +44,8 @@ import { useTitle } from '../hooks/useTitle'
  */
 const QUI_REPOND = [
   {
-    prenom: 'Stéphane', role: 'Fondateur d’Hélios', reel: true,
-    texte: 'Stéphane a fondé Hélios. Il a passé vingt-quatre ans dans la restauration avant de consacrer cinq ans au conseil en énergie solaire chez les particuliers. C’est lui qui vous rappelle quand vous réservez un appel.',
+    prenom: 'Stéphane', role: 'Expert transversal de l’habitat', reel: true,
+    texte: 'Stéphane regarde la maison dans son ensemble : énergie, travaux, aides, entretien. C’est lui qui vous rappelle quand vous réservez un appel.',
   },
   {
     prenom: 'Léna', role: 'Voix énergie de l’assistant', reel: false,
@@ -252,7 +252,7 @@ export default function HeliosIA() {
             il vous oriente vers un <strong>DPE</strong> réalisé par un diagnostiqueur
             certifié, et vous indique des professionnels si vous n’en connaissez pas. Et
             quand la question demande une vraie conversation, vous prenez trente minutes
-            au téléphone avec Stéphane, le fondateur.
+            au téléphone avec Stéphane.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
