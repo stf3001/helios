@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from app.core.config import settings
 from app.core.ratelimit import limiter
 from app.routers import (
     account, admin, audits, auth, chat, documents, dossier, energy, entretien, equipements, faq, houses, jardin, journal, leads,
@@ -24,7 +25,9 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # front dev — restreindre en prod
+    # L'adresse du site, depuis FRONTEND_URL (localhost:5173 en local) : en dur, elle aurait
+    # bloqué tout appel du front le jour de la mise en ligne.
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

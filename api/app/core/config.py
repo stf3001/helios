@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     email_verify_ttl_hours: int = 48
     frontend_url: str = "http://localhost:5173"
     email_api_key: str = ""  # Resend/Brevo — vide en dev : le lien est loggé au lieu d'être envoyé
+    # Qui reçoit l'annonce d'un rendez-vous réservé (point 2 de TODO.md). VIDE en local : rien
+    # n'est envoyé tant que ce destinataire ET `email_api_key` ne sont pas tous deux renseignés.
+    rdv_notification_email: str = ""
     cookie_secure: bool = False  # True en prod (HTTPS) — cf. deploy/
 
     embed_dimensions: int = 1024  # bge-m3 (doc 10 §1)

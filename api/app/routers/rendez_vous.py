@@ -4,6 +4,7 @@ Reservable SANS COMPTE : c'est une porte d'entree, pas une recompense pour inscr
 le visiteur est connecte, on rattache quand meme le rendez-vous a son compte.
 """
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -18,7 +19,7 @@ from app.core.ratelimit import limiter
 from app.models.rendez_vous import RendezVous
 from app.models.user import User
 from app.schemas.rendez_vous import RendezVousIn, RendezVousOut
-from app.services import creneaux
+from app.services import creneaux, email
 
 router = APIRouter(prefix="/rendez-vous", tags=["rendez-vous"])
 
@@ -70,5 +71,14 @@ async def reserver(
         await db.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT,
                             "Ce créneau vient d'être pris. Choisissez-en un autre.")
+
+    # Préparé pour la migration : sans fournisseur ni destinataire, une ligne de journal et
+    # rien d'autre. Une notification ratée ne doit jamais annuler une réservation enregistrée.
+    try:
+        await email.send_rdv_notification(
+            settings.rdv_notification_email, creneaux.heure_de_paris(rdv.debut).strftime("%d/%m/%Y à %H:%M"),
+            rdv.nom, rdv.telephone, rdv.sujet)
+    except Exception:
+        logging.getLogger("helios.rendez_vous").exception("Notification de rendez-vous impossible")
 
     return RendezVousOut(id=str(rdv.id), debut=rdv.debut, duree_min=rdv.duree_min)
