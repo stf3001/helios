@@ -30,6 +30,13 @@ Trois promesses tombent d'un coup :
 **Un seul branchement (Resend ou Brevo) débloque les trois.** C'est pour ça que
 ce point est le premier.
 
+**Et un quatrième depuis le carnet, lot 4 (21/10/2026) : les rappels d'entretien par
+e-mail.** Le contenu existe déjà : c'est `a_faire_de_la_maison(db, house)` dans
+`api/app/routers/entretien.py`, exactement ce qu'affiche le bloc « À faire ce mois-ci ».
+Il manquera une tâche planifiée (mensuelle) qui le calcule pour chaque maison et envoie
+les lignes `en_retard` et `ce_mois` par `services/email.py`, avec un lien de
+désinscription. Décision de Stéphane : rappels par e-mail ET bloc dans l'espace.
+
 ### [ ] 2. Un rendez-vous réservé n'arrive nulle part
 
 Le visiteur choisit son créneau de 30 minutes, la ligne s'écrit en base, et
@@ -1019,6 +1026,24 @@ Suivre la section 7 de `briefs/KB-entretien-table.md` : recopier sa section 6 da
 `zone_old` (`oui` / `non` / `ne_sais_pas`, migration, hors score, demandé aux maisons
 seulement) avec la ligne « Vérifiez si votre terrain est concerné » pour `ne_sais_pas`.
 Le moteur, lui, est prêt : sans `zone_old`, le débroussaillement est simplement absent.
+
+### [x] 40. Carnet, lot 4 : le journal et « À faire ce mois-ci » — fait le 21/10/2026
+
+**Vérifié à l'écran** (375 px) avec la vraie table : bloc en tête de l'espace (tâches en
+retard + garantie qui expire, « Et 1 autre : tout voir ») ; « C'est fait » → la ligne
+disparaît et l'échéance repart de la date saisie ; « Tout voir » ouvre le calendrier
+complet ; journal de cinq entrées (dont un chantier et une entrée justifiée) ; remplacement
+proposé puis accepté (ancien hors service, formulaire du nouveau pré-rempli) ; bloc replié
+« Ajoutez vos équipements » et « Rien à faire ce mois-ci » sur un compte jetable.
+Commits `48c9ef2` → `8b6d5aa`.
+
+### [ ] 41. La page de connexion affiche « [object Object] »
+
+Trouvé le 21/10/2026 en testant le lot 4 : une adresse refusée par la validation (ici en
+`.invalid`) renvoie un 422 dont `detail` est une LISTE, et `AuthContext.tsx:23` l'affiche
+tel quel. C'est exactement le piège décrit plus bas (« Une erreur de validation de FastAPI
+renvoie `detail` sous forme de LISTE »). Correctif : reprendre `messageErreur` de
+`components/carnet/Formulaires.tsx`, qui lit les deux formes.
 
 ## Le piège à ne pas réintroduire
 
