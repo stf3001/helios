@@ -1064,6 +1064,22 @@ le crédit rechargé (Plans & Billing de la console Anthropic). À trancher auss
 sur le carnet saute désormais la réponse instantanée, et le quota de 3 questions API par
 client et par jour renvoie la 4ᵉ au modèle local.
 
+### [x] 43. Carnet, lot 6 : le « Dossier de la maison » en PDF — fait le 21/10/2026
+
+**Vérifié à l'œil** sur trois maisons rendues en image (code postal seul : 1 page ; moyenne :
+2 pages ; complète, 8 équipements, 2 chantiers, 6 pièces, 15 entrées de journal : 4 pages),
+puis sur le compte de démo par la vraie route (`POST /houses/me/dossier`, 3 pages). Panneau
+d'export vérifié à l'écran (375 px). `pdf_audit.py` n'a pas changé d'un octet : ses briques sont
+importées, pas extraites. Commits `59829a2` → fin du lot.
+
+### [ ] 44. Le dossier de la maison : deux relectures avant toute communication
+
+1. **La mention de pied de première page**, recopiée telle quelle du brief, est à faire
+   relire par Stéphane (`pdf_dossier.MENTION`).
+2. **La liste des rubriques du carnet d'information du logement** est à confirmer sur le
+   texte officiel avant de parler de « rubriques du CIL » où que ce soit. Le document ne dit
+   jamais « conforme », « certifié » ni « officiel » (testé).
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
