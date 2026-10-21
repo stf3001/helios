@@ -35,5 +35,5 @@ que c'est vide. Les valeurs vont dans le `.env` du serveur, jamais dans git.
   l'horloge du serveur peut rester en UTC.
 - Un premier rendez-vous de test, pour voir arriver l'e-mail et la ligne dans le back-office.
 - La journalisation : uvicorn n'affiche pas le niveau INFO des journaux `helios.*` (liens de
-  vérification et notifications « non envoyées » en mode dev, repli API → local). Configurer
-  le niveau de journalisation du serveur pour les voir.
+  vérification et notifications « non envoyées » en mode dev). Configurer le niveau de
+  journalisation du serveur pour les voir. Le repli API → local, lui, journalise en WARNING.
