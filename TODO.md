@@ -46,6 +46,17 @@ Le visiteur choisit son créneau de 30 minutes, la ligne s'écrit en base, et
 - Côté écran : `frontend/src/components/RendezVousTel.tsx`.
 - Il manque : la notification (point 1) **et** un écran d'administration qui
   liste les réservations à venir.
+- [x] **Écran d'administration — fait le 21/10/2026** (commits `dccf658` → `6e366cc`) : page
+  « Rendez-vous » du back-office (à venir / passés sur 60 jours, numéro cliquable, statut
+  réservé / honoré / absent / annulé, note interne) et tuile du tableau de bord (nombre,
+  prochain créneau, passés à qualifier). Vérifié à l'écran avec trois réservations réelles.
+- [ ] **Notification** : PRÉPARÉE, pas active — `email.send_rdv_notification` est appelée à
+  chaque réservation et n'envoie rien tant que `EMAIL_API_KEY` et `RDV_NOTIFICATION_EMAIL`
+  sont vides (voir `deploy/A-FOURNIR-A-LA-MIGRATION.md`).
+- [ ] **Un créneau annulé reste bloqué** : l'index unique sur `debut` couvre aussi les
+  annulés. La grille le remontre comme libre, mais le réserver échoue (« Ce créneau vient
+  d'être pris »). Décision à prendre, règle inchangée (testé dans `test_rdv_admin.py`).
+- **Corrigé au passage** : le fuseau était +2 en dur, faux tout l'hiver (bascule le 25/10).
 
 **Décisions à prendre par Stéphane, elles ne sont pas techniques :**
 qui reçoit les réservations, et sur quelles heures. Les plages inscrites dans
