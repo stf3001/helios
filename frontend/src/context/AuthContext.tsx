@@ -18,9 +18,19 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** Une erreur de validation de FastAPI renvoie `detail` sous forme de LISTE : affichée telle
+ *  quelle, elle donnait « [object Object] » (point 41 de TODO.md). */
 async function readError(res: Response): Promise<string> {
   const body = await res.json().catch(() => null)
-  return body?.detail || "Une erreur est survenue, réessayez."
+  const detail = body?.detail
+  if (typeof detail === 'string' && detail) return detail
+  if (Array.isArray(detail) && detail.length) {
+    const champ = detail[0]?.loc?.[detail[0].loc.length - 1]
+    if (champ === 'email') return 'Adresse e-mail invalide.'
+    if (champ === 'password') return 'Mot de passe invalide.'
+    return 'Vérifiez les informations saisies.'
+  }
+  return "Une erreur est survenue, réessayez."
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
