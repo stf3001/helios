@@ -17,6 +17,7 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.house import House
 from app.models.house_document import DOC_TYPES, HouseDocument
+from app.models.piece import Piece
 from app.models.user import User
 
 router = APIRouter(prefix="/houses/me/documents", tags=["documents"])
@@ -24,7 +25,7 @@ router = APIRouter(prefix="/houses/me/documents", tags=["documents"])
 DOCS_DIR = Path(__file__).resolve().parents[2] / "generated" / "house_docs"
 MAX_SIZE = 10 * 1024 * 1024  # 10 Mo
 ALLOWED_CT = {"application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"}
-MAX_DOCUMENTS_PAR_MAISON = 6  # limite volontaire, à revoir plus tard (doc produit)
+MAX_DOCUMENTS_PAR_MAISON = 6  # limite volontaire, à revoir plus tard (doc produit) — hors photos de pièce
 MAX_EXTRACT_CHARS = 6000  # texte transmis à Helios pour son avis — assez pour un devis, pas plus
 
 
@@ -35,6 +36,11 @@ async def _own_house(db: AsyncSession, user_id) -> House:
     return house
 
 
+def _out(d: HouseDocument) -> dict:
+    return {"id": d.id, "type": d.type, "filename": d.filename, "size": d.size,
+            "uploaded_at": d.uploaded_at, "piece_id": d.piece_id}
+
+
 @router.get("")
 async def list_documents(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     house = await db.scalar(select(House).where(House.user_id == user.id))
@@ -43,19 +49,21 @@ async def list_documents(user: User = Depends(get_current_user), db: AsyncSessio
     rows = await db.scalars(
         select(HouseDocument).where(HouseDocument.house_id == house.id).order_by(HouseDocument.uploaded_at.desc())
     )
-    return [
-        {"id": d.id, "type": d.type, "filename": d.filename, "size": d.size, "uploaded_at": d.uploaded_at}
-        for d in rows
-    ]
+    return [_out(d) for d in rows]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def upload_document(
-    type: str = Form(...),
+    type: str = Form("autre"),
     file: UploadFile = File(...),
+    piece_id: uuid.UUID | None = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Avec `piece_id`, c'est LA photo de cette pièce (carnet, lot 2) : type forcé à `photo`,
+    hors limite des 6 documents, et une nouvelle photo remplace l'ancienne (fichier compris)."""
+    if piece_id is not None:
+        type = "photo"
     if type not in DOC_TYPES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Type invalide (attendu : {', '.join(DOC_TYPES)})")
     if file.content_type not in ALLOWED_CT:
@@ -66,10 +74,19 @@ async def upload_document(
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Fichier trop volumineux (max 10 Mo)")
 
     house = await _own_house(db, user.id)
+    ancienne = None
+    if piece_id is not None:
+        piece = await db.get(Piece, piece_id)
+        if piece is None or piece.house_id != house.id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Pièce introuvable")
+        if not (file.content_type or "").startswith("image/"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "La photo d'une pièce doit être une image")
+        ancienne = await db.scalar(select(HouseDocument).where(HouseDocument.piece_id == piece_id))
     nb_documents = await db.scalar(
-        select(func.count()).select_from(HouseDocument).where(HouseDocument.house_id == house.id)
+        select(func.count()).select_from(HouseDocument)
+        .where(HouseDocument.house_id == house.id, HouseDocument.piece_id.is_(None))
     )
-    if nb_documents >= MAX_DOCUMENTS_PAR_MAISON:
+    if piece_id is None and nb_documents >= MAX_DOCUMENTS_PAR_MAISON:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"Limite de {MAX_DOCUMENTS_PAR_MAISON} documents atteinte — supprimez-en un pour en ajouter un nouveau.",
@@ -81,12 +98,16 @@ async def upload_document(
     stored.write_bytes(content)
 
     doc = HouseDocument(
-        house_id=house.id, type=type, filename=file.filename or stored.name, path=str(stored), size=len(content)
+        house_id=house.id, type=type, filename=file.filename or stored.name, path=str(stored), size=len(content),
+        piece_id=piece_id,
     )
+    if ancienne is not None:
+        Path(ancienne.path).unlink(missing_ok=True)
+        await db.delete(ancienne)
     db.add(doc)
     await db.commit()
     await db.refresh(doc)
-    return {"id": doc.id, "type": doc.type, "filename": doc.filename, "size": doc.size, "uploaded_at": doc.uploaded_at}
+    return _out(doc)
 
 
 async def _own_document(db: AsyncSession, user_id, doc_id) -> HouseDocument:

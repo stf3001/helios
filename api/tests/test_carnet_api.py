@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import delete, text
 
-from app.core.db import async_session
+from app.core.db import async_session, engine
 from app.core.security import create_access_token
 from app.main import app
 from app.models.house import House
@@ -24,6 +24,10 @@ from app.models.user import User
 
 
 async def _base_prete() -> bool:
+    # Chaque TestClient tourne sur SA boucle d'événements : des connexions laissées dans le
+    # pool par un module précédent y sont inutilisables, et la sonde échouerait — le module
+    # se sauterait alors en silence alors que la base est là. On repart d'un pool vide.
+    await engine.dispose()
     try:
         async with async_session() as s:
             await s.execute(text("SELECT 1 FROM equipements LIMIT 1"))
@@ -81,6 +85,7 @@ def foyers():
             }
         finally:
             client.portal.call(lambda: _effacer([a[0], b[0]]))
+            client.portal.call(engine.dispose)
 
 
 def test_suggestion_puis_equipement_puis_disparition(foyers):
