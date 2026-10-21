@@ -26,10 +26,10 @@ ce que c'est, pourquoi ça compte et où c'est dans le code.
 3. **Y ajouter ce qu'on découvre en passant**, plutôt que de le laisser dans un
    message de commit que personne ne relira.
 4. **Le rappeler à Stéphane** quand une tâche touche un point de la liste, et
-   surtout pour les trois premiers encore ouverts : ils sont bloquants avant une mise
-   en ligne (aucun e-mail ne part, les rendez-vous n'arrivent nulle part, quatre
-   experts inventés). Le quatrième — les partenaires inventés que le chat nommait —
-   est réglé depuis le 06/10/2026.
+   surtout pour les deux premiers encore ouverts : ils sont bloquants avant une mise
+   en ligne (aucun e-mail ne part, les rendez-vous n'arrivent nulle part). Les
+   partenaires inventés que le chat nommait sont réglés depuis le 06/10/2026, les
+   quatre experts inventés de la page Helios depuis le 21/10/2026 (point 4).
 
 Les points « à confirmer » attendent une réponse de Stéphane ou d'un fournisseur :
 **ne pas les trancher à sa place**, et ne pas retirer un `A CONFIRMER` de `config.py`
