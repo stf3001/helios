@@ -1,36 +1,92 @@
-"""Carnet de maison, lot 3 : les échéances d'entretien du foyer connecté.
+"""Carnet de maison, lots 3 et 4 : échéances d'entretien, « C'est fait », bloc « À faire ».
 
-Calcul seul : ni écran, ni rappel, ni e-mail (lot 4 et après). Le journal n'existant pas
-encore, `derniers_faits` est vide — la référence est la date de pose, puis l'année.
+Ni rappel ni e-mail ici : quand le fournisseur sera branché (point 1 de TODO.md), les
+rappels liront `a_faire_de_la_maison` — la même chose que le bloc de l'espace.
+Le journal fournit `derniers_faits` : une tâche cochée fait avancer son échéance.
 """
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.equipement import Equipement
+from app.models.house import House
+from app.models.journal import JournalEntree
+from app.models.travaux import Travaux
 from app.models.user import User
 from app.routers.equipements import _own_house
+from app.routers.journal import cols, verifier_liens, verifier_limite
+from app.schemas.journal import Fait
+from app.services.a_faire import a_faire, derniers_faits
 from app.services.entretien import echeances, table_courante, verifications
+from app.services.garanties import garanties_maison
 
-router = APIRouter(prefix="/houses/me/entretien", tags=["carnet"])
+router = APIRouter(prefix="/houses/me", tags=["carnet"])
 
 
-@router.get("")
-async def get_entretien(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    house = await _own_house(db, user.id)
+async def _calcul(db: AsyncSession, house: House) -> dict:
     table = table_courante()
     equipements = list(await db.scalars(select(Equipement).where(Equipement.house_id == house.id)))
+    entrees = list(await db.scalars(select(JournalEntree).where(JournalEntree.house_id == house.id)))
     return {
-        "version": table["version"],
-        "avertissement": table["avertissement"],
-        "taches_validees": len(table["taches"]),
-        # L'écran du lot 4 en a besoin pour dire « calendrier en préparation » plutôt que « rien à faire ».
-        "table_vide": not table["taches"],
-        "echeances": echeances(equipements, table["taches"], {}, date.today(), maison=house),
-        # Sans date : « Vérifiez si votre terrain est concerné » quand la fiche dit « ne sais pas ».
+        "table": table,
+        "equipements": equipements,
+        "echeances": echeances(equipements, table["taches"], derniers_faits(entrees), date.today(), maison=house),
         "verifications": verifications(table["taches"], house),
     }
+
+
+@router.get("/entretien")
+async def get_entretien(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    house = await _own_house(db, user.id)
+    c = await _calcul(db, house)
+    return {
+        "version": c["table"]["version"],
+        "avertissement": c["table"]["avertissement"],
+        "taches_validees": len(c["table"]["taches"]),
+        # L'écran en a besoin pour dire « calendrier en préparation » plutôt que « rien à faire ».
+        "table_vide": not c["table"]["taches"],
+        "echeances": c["echeances"],
+        # Sans date : « Vérifiez si votre terrain est concerné » quand la fiche dit « ne sais pas ».
+        "verifications": c["verifications"],
+    }
+
+
+async def a_faire_de_la_maison(db: AsyncSession, house: House) -> dict:
+    c = await _calcul(db, house)
+    travaux = list(await db.scalars(select(Travaux).where(Travaux.house_id == house.id)))
+    garanties = garanties_maison(c["equipements"], travaux, date.today())
+    bloc = a_faire(c["echeances"], garanties, date.today(), table_vide=not c["table"]["taches"])
+    bloc["sans_equipement"] = not any(e.en_service for e in c["equipements"])
+    return bloc
+
+
+@router.get("/a-faire")
+async def get_a_faire(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    house = await _own_house(db, user.id)
+    return await a_faire_de_la_maison(db, house)
+
+
+@router.post("/entretien/{tache_id}/fait", status_code=status.HTTP_201_CREATED)
+async def marquer_fait(tache_id: str, payload: Fait, user: User = Depends(get_current_user),
+                       db: AsyncSession = Depends(get_db)):
+    house = await _own_house(db, user.id)
+    tache = next((t for t in table_courante()["taches"] if t["id"] == tache_id), None)
+    if tache is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Tâche d'entretien inconnue")
+    de_maison = "maison" in tache["applique_a"]
+    if de_maison and payload.equipement_id is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cette tâche concerne la maison, pas un équipement")
+    if not de_maison and payload.equipement_id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Précisez l'équipement entretenu")
+    champs = payload.model_dump()
+    await verifier_liens(db, house, champs)
+    await verifier_limite(db, house)
+    e = JournalEntree(house_id=house.id, type="entretien", titre=tache["libelle"][:120], tache_id=tache_id, **champs)
+    db.add(e)
+    await db.commit()
+    await db.refresh(e)
+    return cols(e)
