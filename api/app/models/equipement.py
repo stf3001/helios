@@ -20,8 +20,8 @@ from app.core.db import Base
 # la suggestion « depuis la fiche » n'ait rien à traduire. `autre` vaut dans chaque catégorie.
 TYPES_PAR_CATEGORIE: dict[str, tuple[str, ...]] = {
     "chauffage": (
-        "PAC_air_eau", "PAC_air_air", "chaudiere_gaz", "chaudiere_fioul", "poele_bois",
-        "poele_granules", "convecteurs", "radiateurs_inertie", "autre",
+        "PAC_air_eau", "PAC_air_air", "chaudiere_gaz", "chaudiere_fioul", "chaudiere_bois", "poele_bois",
+        "poele_granules", "insert", "convecteurs", "radiateurs_inertie", "autre",
     ),
     "ecs": ("ballon_elec", "thermodynamique", "gaz", "solaire", "instantane", "autre"),
     "clim": ("split", "multisplit", "gainable", "PAC_air_air", "autre"),
