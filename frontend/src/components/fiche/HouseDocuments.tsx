@@ -11,6 +11,7 @@ interface Doc {
   filename: string
   size: number | null
   uploaded_at: string
+  piece_id: string | null
 }
 
 const TYPES = [
@@ -31,16 +32,22 @@ function humanSize(n: number | null): string {
 export default function HouseDocuments() {
   const { authFetch } = useAuth()
   const navigate = useNavigate()
-  const [docs, setDocs] = useState<Doc[]>([])
+  const [tous, setTous] = useState<Doc[]>([])
+  const [nomsPieces, setNomsPieces] = useState<Record<string, string>>({})
   const [type, setType] = useState('dpe')
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [askingId, setAskingId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // La photo d'une pièce (carnet, lot 2) ne compte pas dans la limite : elle est rangée à part.
+  const docs = tous.filter((d) => !d.piece_id)
+  const photosPieces = tous.filter((d) => d.piece_id)
   const atLimit = docs.length >= MAX_DOCUMENTS
 
   function load() {
-    authFetch('/api/houses/me/documents').then((r) => (r.ok ? r.json() : [])).then(setDocs)
+    authFetch('/api/houses/me/documents').then((r) => (r.ok ? r.json() : [])).then(setTous)
+    authFetch('/api/houses/me/pieces').then((r) => (r.ok ? r.json() : []))
+      .then((ps: { id: string; nom: string }[]) => setNomsPieces(Object.fromEntries(ps.map((p) => [p.id, p.nom]))))
   }
   useEffect(load, [authFetch])
 
@@ -161,6 +168,32 @@ export default function HouseDocuments() {
             </li>
           ))}
         </ul>
+      )}
+
+      {photosPieces.length > 0 && (
+        <div className="mt-5">
+          <h4 className="mb-1 font-semibold">Photos des pièces</h4>
+          <p className="mb-2 text-xs text-gray-500">Une par pièce, ajoutées depuis « Ma maison ». Hors limite des {MAX_DOCUMENTS} documents.</p>
+          <ul className="divide-y divide-gray-200">
+            {photosPieces.map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <span className="text-xs uppercase text-primary mr-2">{nomsPieces[d.piece_id!] ?? 'Pièce'}</span>
+                  <span className="text-gray-700">{d.filename}</span>
+                  <span className="text-gray-400 ml-2">{humanSize(d.size)}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button onClick={() => download(d)} className="text-gray-500 hover:text-primary" title="Télécharger">
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => remove(d)} className="text-gray-400 hover:text-red-500" title="Supprimer">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )

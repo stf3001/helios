@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import ApiError from '../ApiError'
 import Depliant from '../Depliant'
 import { faqSlug } from '../../lib/faqSlug'
+import MesPieces from './MesPieces'
 import type { Draft } from '../fiche/types'
 import {
   type Chantier, type Doc, type Equipement, type Garantie, FormChantier, FormEquipement, messageErreur,
@@ -248,6 +249,9 @@ export default function CarnetMaison() {
           </div>
         )}
       </section>
+
+      {/* — Mes pièces (lot 2) : sous les équipements, qui alimentent ses émetteurs — */}
+      <MesPieces equipements={enService} />
 
       {/* — Travaux et garanties — */}
       <section className="rounded-xl border border-ink/10 bg-white p-4">
