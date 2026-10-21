@@ -11,6 +11,7 @@ import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
 import CarnetMaison from '../components/carnet/CarnetMaison'
 import AFaire from '../components/carnet/AFaire'
+import ExportDossier from '../components/carnet/ExportDossier'
 import BlocHelios from '../components/chat/BlocHelios'
 import MarqueHelios from '../components/MarqueHelios'
 import { RailOnglets, BandeOnglets, type OngletRail } from '../components/RailOnglets'
@@ -244,12 +245,15 @@ export default function Espace() {
               )}
 
               {section === 'documents' && (
+                <>
+                {house && <ExportDossier />}
                 <div className="rounded-xl border border-ink/10 bg-white p-4">
                   <p className="mb-3 text-sm text-dark/70">
                     DPE, factures, devis — Helios peut les relire avec vous.
                   </p>
                   <HouseDocuments />
                 </div>
+                </>
               )}
 
               {section === 'reste' && (

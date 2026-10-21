@@ -77,12 +77,17 @@ _PIECES = {
     "bureau": "Bureau", "entree": "Entrée", "buanderie": "Buanderie", "garage": "Garage", "veranda": "Véranda",
     "combles_amenages": "Combles aménagés", "autre": "Autre",
 }
+# [singulier, pluriel] — « 2 radiateurs à eau » (copie de `libellesPieces.ts`).
 _EMETTEURS = {
-    "radiateur_eau": "radiateur à eau", "convecteur": "convecteur", "panneau_rayonnant": "panneau rayonnant",
-    "radiateur_inertie": "radiateur à inertie", "seche_serviettes": "sèche-serviettes",
-    "plancher_chauffant_eau": "plancher chauffant à eau", "plancher_chauffant_elec": "plancher chauffant électrique",
-    "unite_interieure_clim": "unité de climatisation", "poele_bois": "poêle à bois",
-    "poele_granules": "poêle à granulés", "cheminee": "cheminée", "autre": "autre émetteur",
+    "radiateur_eau": ("radiateur à eau", "radiateurs à eau"), "convecteur": ("convecteur", "convecteurs"),
+    "panneau_rayonnant": ("panneau rayonnant", "panneaux rayonnants"),
+    "radiateur_inertie": ("radiateur à inertie", "radiateurs à inertie"),
+    "seche_serviettes": ("sèche-serviettes", "sèche-serviettes"),
+    "plancher_chauffant_eau": ("plancher chauffant à eau", "planchers chauffants à eau"),
+    "plancher_chauffant_elec": ("plancher chauffant électrique", "planchers chauffants électriques"),
+    "unite_interieure_clim": ("unité de climatisation", "unités de climatisation"),
+    "poele_bois": ("poêle à bois", "poêles à bois"), "poele_granules": ("poêle à granulés", "poêles à granulés"),
+    "cheminee": ("cheminée", "cheminées"), "autre": ("autre émetteur", "autres émetteurs"),
 }
 _JOURNAL = {"entretien": "Entretien", "controle": "Contrôle", "reparation": "Réparation",
             "remplacement": "Remplacement", "amelioration": "Amélioration", "autre": "Autre", "travaux": "Travaux"}
@@ -293,10 +298,15 @@ def _pieces(pdf, pieces, emetteurs, resume):
     lignes = []
     for p in pieces:
         siens = [e for e in emetteurs if _champ(e, "piece_id") == _champ(p, "id")]
-        em = ", ".join(
-            f"{_champ(e, 'nombre')} {_EMETTEURS.get(_champ(e, 'type'), _champ(e, 'type'))}"
-            + (f" ({_nombre(_champ(e, 'puissance_w'), 'W')})" if _champ(e, "puissance_w") else "")
-            for e in siens) or ("Aucun émetteur indiqué" if _champ(p, "chauffee") is not False else "")
+        def emetteur(e):
+            n = _champ(e, "nombre") or 1
+            nom = _EMETTEURS.get(_champ(e, "type"), (_champ(e, "type"),) * 2)[0 if n == 1 else 1]
+            puissance = _champ(e, "puissance_w")
+            detail = f" ({_nombre(puissance, 'W')}{' chacun' if n > 1 else ''})" if puissance else ""
+            return f"{n} {nom}{detail}"
+
+        em = ", ".join(emetteur(e) for e in siens) or (
+            "Aucun émetteur indiqué" if _champ(p, "chauffee") is not False else "")
         details = [_PIECES.get(_champ(p, "type"), ""), _nombre(_champ(p, "surface_m2"), "m²")]
         if _champ(p, "orientation"):
             details.append(_ORIENTATIONS.get(_champ(p, "orientation"), ""))
