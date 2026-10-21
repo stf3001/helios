@@ -33,6 +33,12 @@
      "libelle": "Exemple : maison sous condition de fiche", "regle": "mois", "frequence_mois": 12,
      "qui": "soi_ou_pro", "nature": "obligation",
      "source": {"type": "officiel", "titre": "Texte d'exemple", "url": "https://exemple.invalid/texte"},
+     "valide_le": "2000-01-01"},
+
+    {"id": "exemple-maison-zone", "applique_a": {"maison": {"zone_old": "oui"}},
+     "libelle": "Exemple : obligation selon la zone du terrain", "regle": "mois", "frequence_mois": 12,
+     "qui": "soi_ou_pro", "nature": "obligation",
+     "source": {"type": "officiel", "titre": "Texte d'exemple", "url": "https://exemple.invalid/zone"},
      "valide_le": "2000-01-01"}
   ]
 }

@@ -31,6 +31,11 @@ _CHAMPS = {
     "mois_preferes", "mois_actifs", "source", "fiche_kb", "valide_le", "note",
 }
 
+# Champs de fiche posés aux MAISONS seulement (décision 3 de la table) : pour un appartement,
+# ou un logement de type inconnu, leur réponse ne compte pas — ni pour une obligation, ni
+# pour une vérification. Avec, pour chacun, la phrase dite quand la réponse est « ne sais pas ».
+QUESTIONS_DE_MAISON = {"zone_old": "Vérifiez si votre terrain est concerné"}
+
 # Ordre d'affichage : ce qui presse d'abord ; « à planifier » avant « plus tard », car une
 # date inconnue peut cacher un retard.
 ORDRE_STATUTS = ("en_retard", "ce_mois", "bientot", "a_planifier", "plus_tard")
@@ -248,11 +253,44 @@ def _maison_concernee(tache: dict, maison) -> bool:
     """Toutes les conditions doivent valoir ; un champ que la fiche n'a pas → non concernée."""
     if maison is None:
         return False
-    for champ, attendu in tache["applique_a"]["maison"].items():
-        a_le_champ = champ in maison if isinstance(maison, dict) else hasattr(maison, champ)
-        if not a_le_champ or _champ(maison, champ) != attendu:
-            return False
-    return True
+    return all(_condition(maison, champ, attendu) for champ, attendu in tache["applique_a"]["maison"].items())
+
+
+def _a_le_champ(maison, champ) -> bool:
+    return champ in maison if isinstance(maison, dict) else hasattr(maison, champ)
+
+
+def _condition(maison, champ, attendu) -> bool:
+    if not _a_le_champ(maison, champ):
+        return False
+    if champ in QUESTIONS_DE_MAISON and _champ(maison, "type_logement") != "maison":
+        return False
+    return _champ(maison, champ) == attendu
+
+
+def verifications(taches, maison) -> list[dict]:
+    """Les tâches de maison qu'on ne peut ni afficher ni écarter : le foyer a répondu « ne sais
+    pas » à la question qui en décide. Une ligne sans date, avec le lien de la source pour vérifier.
+    """
+    if maison is None or _champ(maison, "type_logement") != "maison":
+        return []
+    lignes = []
+    for tache in taches:
+        conditions = tache["applique_a"].get("maison")
+        if not conditions:
+            continue
+        inconnues = [c for c in conditions if c in QUESTIONS_DE_MAISON and _champ(maison, c) == "ne_sais_pas"]
+        autres_ok = all(_condition(maison, c, v) for c, v in conditions.items() if c not in inconnues)
+        if inconnues and autres_ok:
+            lignes.append({
+                "tache_id": tache["id"],
+                "champ": inconnues[0],
+                "libelle": QUESTIONS_DE_MAISON[inconnues[0]],
+                "tache_libelle": tache["libelle"],
+                "nature": tache["nature"],
+                "lien": (tache.get("source") or {}).get("url"),
+            })
+    return lignes
 
 
 def _ligne(tache, equipement, reference, provenance, aujourd_hui, mention) -> dict:

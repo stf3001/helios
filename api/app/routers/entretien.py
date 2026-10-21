@@ -14,7 +14,7 @@ from app.core.deps import get_current_user
 from app.models.equipement import Equipement
 from app.models.user import User
 from app.routers.equipements import _own_house
-from app.services.entretien import echeances, table_courante
+from app.services.entretien import echeances, table_courante, verifications
 
 router = APIRouter(prefix="/houses/me/entretien", tags=["carnet"])
 
@@ -31,4 +31,6 @@ async def get_entretien(user: User = Depends(get_current_user), db: AsyncSession
         # L'écran du lot 4 en a besoin pour dire « calendrier en préparation » plutôt que « rien à faire ».
         "table_vide": not table["taches"],
         "echeances": echeances(equipements, table["taches"], {}, date.today(), maison=house),
+        # Sans date : « Vérifiez si votre terrain est concerné » quand la fiche dit « ne sais pas ».
+        "verifications": verifications(table["taches"], house),
     }

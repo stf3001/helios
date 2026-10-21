@@ -53,9 +53,12 @@ def test_avec_la_table_d_exemple(ctx, monkeypatch):
     c.post("/api/houses/me/equipements", headers=h,
            json={"categorie": "ventilation", "type": "VMC_simple", "en_service": False, "annee_pose": 2010})
     corps = c.get("/api/houses/me/entretien", headers=h).json()
-    assert corps["table_vide"] is False and corps["taches_validees"] == 7
+    assert corps["table_vide"] is False and corps["taches_validees"] == 8
     par_tache = {e["tache_id"]: e for e in corps["echeances"]}
     pac = par_tache["exemple-pac-24-mois"]
     assert (pac["echeance"], pac["provenance"], pac["statut"]) == ("2022-03-15", "date_pose", "en_retard")
     assert "exemple-vmc-toute-categorie" not in par_tache   # VMC hors service
     assert "exemple-maison" in par_tache and "exemple-maison-sous-condition" in par_tache  # type_logement=maison
+    # zone_old vaut « ne sais pas » par défaut : pas d'obligation, une vérification.
+    assert "exemple-maison-zone" not in par_tache
+    assert [v["tache_id"] for v in corps["verifications"]] == ["exemple-maison-zone"]

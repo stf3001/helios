@@ -8,7 +8,7 @@ import pytest
 
 from app.services.entretien import (
     CHEMIN_TABLE, TacheInvalide, ajouter_mois, charger_table, charger_taches, echeances,
-    reporter_au_mois_prefere,
+    reporter_au_mois_prefere, verifications,
 )
 
 EXEMPLE = Path(__file__).parent / "fixtures" / "entretien_exemple.json"
@@ -42,7 +42,7 @@ def test_la_table_livree_est_vide_et_valide():
 
 
 def test_la_table_d_exemple_se_charge_en_mode_strict():
-    assert len(TACHES) == 7
+    assert len(TACHES) == 8
 
 
 BASE = {"id": "t", "applique_a": {"categorie": "ecs", "types": []}, "libelle": "L", "frequence_mois": 12,
@@ -230,3 +230,27 @@ def test_tri_statut_puis_date_puis_obligation():
         "exemple-maison-sous-condition", "vmc2", "exemple-maison",
         "clim",
     ]
+
+
+# ------------------------------------------------------------- zone de débroussaillement
+
+def test_zone_old_oui_non_ne_sais_pas():
+    auj = date(2026, 10, 21)
+    t = "exemple-maison-zone"
+    maison = {"type_logement": "maison"}
+    assert _une(None, t, auj, maison={**maison, "zone_old": "oui"})["nature"] == "obligation"
+    assert _une(None, t, auj, maison={**maison, "zone_old": "non"}) is None
+    assert _une(None, t, auj, maison={**maison, "zone_old": "ne_sais_pas"}) is None
+    v = verifications(TACHES, {**maison, "zone_old": "ne_sais_pas"})
+    assert v == [{"tache_id": t, "champ": "zone_old", "libelle": "Vérifiez si votre terrain est concerné",
+                  "tache_libelle": PAR_ID[t]["libelle"], "nature": "obligation", "lien": "https://exemple.invalid/zone"}]
+    assert verifications(TACHES, {**maison, "zone_old": "oui"}) == []
+    assert verifications(TACHES, {**maison, "zone_old": "non"}) == []
+
+
+def test_zone_old_jamais_pour_un_appartement_ni_un_type_inconnu():
+    auj = date(2026, 10, 21)
+    for type_logement in ("appartement", None):
+        fiche = {"type_logement": type_logement, "zone_old": "oui"}
+        assert _une(None, "exemple-maison-zone", auj, maison=fiche) is None
+        assert verifications(TACHES, {**fiche, "zone_old": "ne_sais_pas"}) == []
