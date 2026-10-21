@@ -32,33 +32,32 @@ import RendezVousTel from '../components/RendezVousTel'
 import { useTitle } from '../hooks/useTitle'
 
 /**
- * L'ÉQUIPE — CONTENU PROVISOIRE, À REMPLACER AVANT TOUTE MISE EN LIGNE.
+ * QUI RÉPOND — une personne réelle et trois voix de l'assistant (décision du 21/10/2026).
  *
- * Ces quatre personnes n'existent pas. Stéphane fournira les vraies fiches ; en attendant,
- * ces cartes tiennent la place et montrent la forme. Publier des biographies inventées
- * sous l'étiquette « notre équipe » tromperait le visiteur — et c'est précisément ce que
- * la charte interdit ailleurs sur ce site. Voir le point 4 de TODO.md.
+ * Les quatre conseillers d'origine étaient inventés (point 4 de TODO.md). Chaque carte dit
+ * désormais ce qu'elle est : Stéphane est une personne, joignable au téléphone ; Léna, Cora
+ * et Lenny sont des personnages d'IA, annoncés comme tels. Pour eux, AUCUN âge, région,
+ * ancienneté, diplôme ni parcours — c'est exactement ce qui rendait l'ancienne version
+ * trompeuse. Et aucun ne doit laisser croire qu'on peut l'appeler.
+ *
+ * Stéphane n'a ni photo ni visage dessiné : un monogramme, en attendant une vraie photo.
  */
-const EQUIPE = [
+const QUI_REPOND = [
   {
-    prenom: 'Camille', nom: 'R.', age: 41, secteur: 'Sud-Est',
-    parcours: 'Ancienne conductrice de travaux en rénovation, passée au conseil après dix ans de chantiers.',
-    anciennete: '8 ans de conseil en énergies renouvelables',
+    prenom: 'Stéphane', role: 'Fondateur d’Hélios', reel: true,
+    texte: 'Stéphane a fondé Hélios. Il a passé vingt-quatre ans dans la restauration avant de consacrer cinq ans au conseil en énergie solaire chez les particuliers. C’est lui qui vous rappelle quand vous réservez un appel.',
   },
   {
-    prenom: 'Yanis', nom: 'B.', age: 35, secteur: 'Île-de-France',
-    parcours: 'Thermicien de formation, il a dimensionné des installations solaires avant de les expliquer.',
-    anciennete: '6 ans de conseil en énergies renouvelables',
+    prenom: 'Léna', role: 'Voix énergie de l’assistant', reel: false,
+    texte: 'Léna est la voix d’Hélios pour l’énergie : factures, contrats, solaire, chauffage. C’est une intelligence artificielle : elle s’appuie sur les moteurs de calcul d’Hélios et le dit quand elle n’est pas sûre.',
   },
   {
-    prenom: 'Hélène', nom: 'M.', age: 52, secteur: 'Grand Ouest',
-    parcours: 'Vingt ans en maîtrise d’œuvre. Elle lit un devis comme d’autres lisent le journal.',
-    anciennete: '12 ans de conseil en énergies renouvelables',
+    prenom: 'Cora', role: 'Voix construction et rénovation', reel: false,
+    texte: 'Cora est la voix d’Hélios pour la maison et les travaux : isolation, ventilation, entretien, garanties. C’est une intelligence artificielle : elle ne remplace ni un diagnostic, ni un professionnel sur place.',
   },
   {
-    prenom: 'Karim', nom: 'D.', age: 29, secteur: 'Nord et Est',
-    parcours: 'Venu du dépannage chauffage, il connaît les pannes avant qu’on les décrive.',
-    anciennete: '4 ans de conseil en énergies renouvelables',
+    prenom: 'Lenny', role: 'Voix juridique et jardin', reel: false,
+    texte: 'Lenny est la voix d’Hélios pour les règles et le terrain : urbanisme, obligations d’entretien, débroussaillement, potager. C’est une intelligence artificielle : il cite ses sources et ne donne pas d’avis juridique.',
   },
 ]
 
@@ -253,19 +252,30 @@ export default function HeliosIA() {
             il vous oriente vers un <strong>DPE</strong> réalisé par un diagnostiqueur
             certifié, et vous indique des professionnels si vous n’en connaissez pas. Et
             quand la question demande une vraie conversation, vous prenez trente minutes
-            au téléphone avec quelqu’un de notre équipe.
+            au téléphone avec Stéphane, le fondateur.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {EQUIPE.map((membre, i) => (
+            {QUI_REPOND.map((membre, i) => (
               <div key={membre.prenom} className="rounded-xl border border-ink/10 bg-white p-4">
-                <AvatarExpert variante={i} taille={56} className="rounded-full" />
-                <h3 className="mt-2.5 font-display text-base font-bold text-ink">
-                  {membre.prenom} {membre.nom}
-                </h3>
-                <p className="text-xs text-dark/60">{membre.age} ans · {membre.secteur}</p>
-                <p className="mt-1.5 text-sm text-dark/80">{membre.parcours}</p>
-                <p className="mt-1.5 text-xs font-semibold text-primary">{membre.anciennete}</p>
+                <div className="flex items-start justify-between gap-2">
+                  {membre.reel ? (
+                    <span role="img" aria-label="Monogramme de Stéphane"
+                      className="flex h-14 w-14 items-center justify-center rounded-full bg-ink
+                        font-display text-2xl text-white">
+                      S
+                    </span>
+                  ) : (
+                    <AvatarExpert variante={i - 1} taille={56} className="rounded-full" />
+                  )}
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    membre.reel ? 'bg-leaf/15 text-leaf' : 'bg-sky/15 text-sky'}`}>
+                    {membre.reel ? 'Personne réelle' : 'Assistant IA'}
+                  </span>
+                </div>
+                <h3 className="mt-2.5 font-display text-base font-bold text-ink">{membre.prenom}</h3>
+                <p className="text-xs text-dark/60">{membre.role}</p>
+                <p className="mt-1.5 text-sm text-dark/80">{membre.texte}</p>
               </div>
             ))}
           </div>
@@ -274,8 +284,8 @@ export default function HeliosIA() {
             Réserver trente minutes au téléphone
           </h3>
           <p className="mb-4 mt-1 max-w-[760px] text-dark/75">
-            Gratuit, sans engagement, et avec un être humain. Choisissez le moment qui vous
-            arrange — on vous rappelle.
+            Gratuit, sans engagement, avec Stéphane, au téléphone. Choisissez le moment qui
+            vous arrange : il vous rappelle.
           </p>
           <div className="max-w-[820px]">
             <RendezVousTel />
