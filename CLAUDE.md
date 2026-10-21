@@ -1333,3 +1333,5 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 - Le carnet ne modifie jamais la fiche : l'année de la fiche et celle de l'équipement coexistent (point 35 de `TODO.md`).
 - Pièces et émetteurs (0025) : saisie seule, aucun moteur ne les lit encore (point 37) ; `resume_pieces` (pur) signale les écarts avec la fiche sans jamais la corriger. Codes : `models/piece.py` et `components/carnet/libellesPieces.ts` ENSEMBLE.
 - La photo d'une pièce est un `house_documents` avec `piece_id` : hors limite des 6, une seule par pièce (la nouvelle remplace l'ancienne), gardée dans les papiers si la pièce disparaît.
+- Entretien (lot 3) : `services/entretien.py` (pur) lit `api/data/entretien/taches.json`, livrée VIDE jusqu'au lot 3 bis ; format dans son `LISEZMOI.md`. Aucune tâche sans `valide_le`, aucune obligation sans source officielle ; ne jamais écrire de tâche « évidente » dans la table.
+- Les tests tournent sur `tests/fixtures/entretien_exemple.json`, à ne jamais recopier dans la vraie table. Sans journal, aucun roulement : une échéance passée reste « en retard ».

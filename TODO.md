@@ -993,6 +993,24 @@ place des radiateurs à eau basse température pour une PAC air/eau, nombre d'un
 multisplit). À savoir : la somme des pièces exclut le garage, et la fiche n'est jamais
 corrigée — décider laquelle des deux surfaces le moteur doit croire quand elles divergent.
 
+### [x] 38. Carnet, lot 3 : le moteur d'entretien — fait le 21/10/2026
+
+**Vérifié** : `GET /houses/me/entretien` répond sur le compte de démo (`table_vide: true`,
+aucune échéance), et sur une maison d'exemple avec la table d'exemple substituée (sortie
+dans `debriefs/2026-10-21-carnet-lot3-sortie-exemple.json`). `taches.json` est livré VIDE.
+Les extensions de la section 1 de `briefs/KB-entretien-table.md` sont dans le moteur
+(année civile, plage de puissance, tâches de maison, mois actifs, type de source) ; les
+18 tâches de sa section 6 passent le chargeur strict. Commits `a0eb8b0` → `b9b3ca3`.
+Pas d'écran ici : c'est le lot 4.
+
+### [ ] 39. Lot 3 bis — intégrer la table d'entretien relue par Stéphane
+
+Suivre la section 7 de `briefs/KB-entretien-table.md` : recopier sa section 6 dans
+`api/data/entretien/taches.json` sans rien changer, et ajouter le champ de fiche
+`zone_old` (`oui` / `non` / `ne_sais_pas`, migration, hors score, demandé aux maisons
+seulement) avec la ligne « Vérifiez si votre terrain est concerné » pour `ne_sais_pas`.
+Le moteur, lui, est prêt : sans `zone_old`, le débroussaillement est simplement absent.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
