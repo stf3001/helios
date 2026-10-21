@@ -18,6 +18,11 @@ const IDENTITE_FIELDS: FieldSpec[] = [
   { key: 'type_logement', label: 'Type de logement', type: 'select', options: [
     { value: 'maison', label: 'Maison' }, { value: 'appartement', label: 'Appartement' },
   ] },
+  // Hors score de complétude (lot 3 bis du carnet) : décide si le débroussaillement entre
+  // dans le calendrier d'entretien. Jamais posée à un appartement (décision 3 de la table).
+  { key: 'zone_old', label: 'Votre terrain est-il soumis au débroussaillement obligatoire ?', type: 'select',
+    options: [{ value: 'oui', label: 'Oui' }, { value: 'non', label: 'Non' }, { value: 'ne_sais_pas', label: 'Je ne sais pas' }],
+    help: 'Vérifiez sur service-public.gouv.fr (fiche F33298)', si: { key: 'type_logement', vaut: 'maison' } },
   { key: 'statut', label: 'Statut', type: 'select', options: [
     { value: 'proprietaire', label: 'Propriétaire' }, { value: 'locataire', label: 'Locataire' }, { value: 'en_achat', label: 'En cours d\'achat' },
   ] },

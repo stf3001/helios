@@ -59,6 +59,8 @@ async def update_my_house(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Aucune fiche maison — créez-la d'abord")
 
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "zone_old" and value is None:
+            value = "ne_sais_pas"  # colonne NOT NULL : « non renseigné » veut dire « je ne sais pas »
         setattr(house, field, value)
     house.completeness_score = compute_score(house)
 

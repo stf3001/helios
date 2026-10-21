@@ -83,6 +83,11 @@ class House(Base):
     ombrage: Mapped[str | None] = mapped_column(String(20))  # aucun|partiel|important
     pente: Mapped[int | None] = mapped_column(Integer)
 
+    # Obligation légale de débroussaillement (carnet, lot 3 bis, migration 0026) : oui|non|ne_sais_pas.
+    # Demandée aux maisons seulement, hors score de complétude.
+    zone_old: Mapped[str] = mapped_column(String(12), nullable=False, default="ne_sais_pas",
+                                          server_default="ne_sais_pas")
+
     completeness_score: Mapped[float] = mapped_column(Float, default=0.0)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default="now()", onupdate=lambda: datetime.now(timezone.utc)
