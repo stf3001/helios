@@ -5,7 +5,8 @@ Deux voies d'accès acceptées (cf. `require_admin_access`) :
 - JWT d'un compte `users.is_admin` : pour l'interface du back-office.
 
 Le back-office est en LECTURE SEULE sur les données des foyers ; les seules écritures sont
-les actions explicitement prévues sur les partenaires (activation / suspension).
+les actions explicitement prévues : partenaires (activation / suspension), signalements, et le
+suivi des rendez-vous (statut, note interne).
 """
 import secrets
 import uuid
@@ -24,8 +25,10 @@ from app.routers import account
 from app.models.conversation import Conversation, Message
 from app.models.moderation import STATUTS, AdminAccessLog, MessageReport
 from app.models.partner import Partner
+from app.models.rendez_vous import STATUTS_RDV, RendezVous
 from app.models.user import User
-from app.services import admin_health, admin_stats, admin_supervision, agents_engine
+from app.services import admin_health, admin_stats, admin_supervision, agents_engine, rdv_admin
+from app.services.creneaux import heure_de_paris
 
 
 async def _tracer(db: AsyncSession, admin: User | None, action: str, cible: str | None) -> None:
@@ -53,8 +56,15 @@ async def admin_me(admin: User | None = Depends(require_admin_access)):
 
 @router.get("/dashboard")
 async def dashboard(_: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)):
-    """Tableau de bord : utilisateurs, activité d'Helios, coût IA, business, base de connaissances."""
-    return await admin_stats.dashboard(db)
+    """Tableau de bord : utilisateurs, activité d'Helios, coût IA, business, base de connaissances,
+    rendez-vous à venir."""
+    tableau = await admin_stats.dashboard(db)
+    rdvs = list(await db.scalars(select(RendezVous)))
+    tableau["rendez_vous"] = rdv_admin.resume_a_venir(rdvs, datetime.now(timezone.utc))
+    if tableau["rendez_vous"]["a_qualifier"]:
+        tableau["alertes"].append({"niveau": "action", "texte": (
+            f"{tableau['rendez_vous']['a_qualifier']} rendez-vous passé(s) à qualifier (honoré, absent ou annulé)")})
+    return tableau
 
 
 @router.get("/services")
@@ -347,3 +357,58 @@ async def journal_acces(
     return [
         {"admin": r.admin_email, "action": r.action, "cible": r.cible, "created_at": r.created_at} for r in rows
     ]
+
+
+# --- Rendez-vous téléphoniques ---
+
+
+class SuiviRendezVous(BaseModel):
+    statut: str | None = None
+    note_interne: str | None = None
+
+
+def _rdv_out(r: RendezVous, foyer_email: str | None) -> dict:
+    return {
+        "id": str(r.id), "nom": r.nom, "telephone": r.telephone, "email": r.email, "sujet": r.sujet,
+        "debut": heure_de_paris(r.debut).isoformat(), "duree_min": r.duree_min, "statut": r.statut,
+        "note_interne": r.note_interne, "foyer_email": foyer_email, "created_at": r.created_at,
+    }
+
+
+@router.get("/rendez-vous")
+async def rendez_vous(
+    periode: str = "a_venir",
+    _: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Les appels à passer (à venir, du plus proche au plus lointain), ou les 60 derniers jours."""
+    if periode not in ("a_venir", "passes"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Période invalide (attendu : a_venir ou passes)")
+    rdvs = rdv_admin.filtrer(list(await db.scalars(select(RendezVous))), periode, datetime.now(timezone.utc))
+    emails = {u.id: u.email for u in await db.scalars(
+        select(User).where(User.id.in_([r.user_id for r in rdvs if r.user_id])))} if rdvs else {}
+    return [_rdv_out(r, emails.get(r.user_id)) for r in rdvs]
+
+
+@router.patch("/rendez-vous/{rdv_id}")
+async def suivre_rendez_vous(
+    rdv_id: uuid.UUID,
+    payload: SuiviRendezVous,
+    _: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Statut et/ou note interne. L'index unique sur `debut` n'est pas touché : un créneau
+    annulé reste pris en base (voir le débrief du lot)."""
+    r = await db.get(RendezVous, rdv_id)
+    if r is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Rendez-vous introuvable")
+    champs = payload.model_dump(exclude_unset=True)
+    if "statut" in champs:
+        if champs["statut"] not in STATUTS_RDV:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Statut invalide (attendu : {', '.join(STATUTS_RDV)})")
+        r.statut = champs["statut"]
+    if "note_interne" in champs:
+        r.note_interne = (champs["note_interne"] or "").strip()[:4000] or None
+    await db.commit()
+    foyer = await db.get(User, r.user_id) if r.user_id else None
+    return _rdv_out(r, foyer.email if foyer else None)
