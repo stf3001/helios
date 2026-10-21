@@ -276,7 +276,7 @@ _HOUSE_CONTEXT_EXCLUDE = {
 }
 
 
-def build_house_context(house: House) -> dict:
+def build_house_context(house: House, carnet: dict | None = None) -> dict:
     """Contexte fiche Maison pour le mode connecté (doc 03 §7) — uniquement les champs renseignés,
     hors données personnelles sensibles (PDL exclu, doc 10 sécurité).
 
@@ -289,7 +289,12 @@ def build_house_context(house: House) -> dict:
         if c.name not in _HOUSE_CONTEXT_EXCLUDE and _is_filled(getattr(house, c.name))
     }
     score = compute_score(house)
-    return {"score": score, "niveau": niveau_for_score(score), "profil": profil}
+    contexte = {"score": score, "niveau": niveau_for_score(score), "profil": profil}
+    # Carnet de maison (lot 5) : résumé déjà anonymisé et plafonné par `carnet_contexte` ;
+    # absent (et le contexte inchangé) quand le foyer n'a rien saisi.
+    if carnet:
+        contexte["carnet"] = carnet
+    return contexte
 
 
 def build_pro_context(profile) -> dict:
@@ -492,6 +497,11 @@ def build_user_content(
             "exemple de la base de connaissances, même si un « cas pratique » ressemble à sa situation — "
             "les cas pratiques sont des profils fictifs pédagogiques, jamais CE foyer). Si un champ décisif "
             "pour répondre manque, pose la question ou indique quel champ renseigner plutôt que de deviner (doc 03 §4)."
+            # Carnet de maison, lot 5 : les trois phrases du brief, telles quelles.
+            " La clé \"carnet\" résume les équipements, échéances d'entretien, garanties et travaux de CE foyer."
+            " Ces informations sont déclarées par le foyer sauf mention contraire : dis \"d'après votre carnet\""
+            " quand tu t'en sers."
+            " Ne calcule aucun coût, aucune durée de vie restante ni aucune économie à partir de ces données."
         )
         question_label = "Question de l'utilisateur connecté"
     else:

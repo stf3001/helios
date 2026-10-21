@@ -1,5 +1,7 @@
 import json
+import logging
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -14,19 +16,63 @@ from app.core.ratelimit import limiter
 from app.models.audit import Audit
 from app.models.conversation import Conversation, Message
 from app.models.energy import EnergyStudy
+from app.models.equipement import Equipement
 from app.models.house import House
+from app.models.journal import JournalEntree
 from app.models.moderation import MOTIFS, MessageReport
 from app.models.partner import Partner
+from app.models.piece import Emetteur, Piece
 from app.models.pro import ProProfile
 from app.models.autoconso import AutoconsoStudy
 from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
+from app.models.travaux import Travaux
 from app.models.user import User
 from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
 from app.services import civilites, ollama_client, rag, regions, router_llm
+from app.services.a_faire import derniers_faits, journal_fusionne
+from app.services.carnet_contexte import carnet_contexte
+from app.services.entretien import echeances, table_courante
+from app.services.garanties import age_ans, garanties_maison
+from app.services.pieces import resume_pieces
+
+logger = logging.getLogger("helios.chat")
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+
+async def _carnet_du_foyer(db: AsyncSession, house: House) -> dict | None:
+    """Le résumé du carnet de maison pour le chat (lot 5), ou None.
+
+    NE FAIT JAMAIS ÉCHOUER LE CHAT : une exception ici est journalisée et le contexte part
+    sans carnet. Les moteurs des lots 1 à 4 sont appelés tels quels ; rien n'est recalculé ici.
+    """
+    try:
+        aujourd_hui = date.today()
+        equipements = list(await db.scalars(select(Equipement).where(Equipement.house_id == house.id)))
+        travaux = list(await db.scalars(select(Travaux).where(Travaux.house_id == house.id)))
+        entrees = list(await db.scalars(select(JournalEntree).where(JournalEntree.house_id == house.id)))
+        pieces = list(await db.scalars(select(Piece).where(Piece.house_id == house.id)))
+        emetteurs = list(await db.scalars(
+            select(Emetteur).where(Emetteur.piece_id.in_([p.id for p in pieces])))) if pieces else []
+
+        table = table_courante()
+        echs = echeances(equipements, table["taches"], derniers_faits(entrees), aujourd_hui, maison=house)
+        eqs = []
+        for e in equipements:
+            age, statut = age_ans(e, aujourd_hui)
+            eqs.append({"id": e.id, "categorie": e.categorie, "type": e.type, "marque": e.marque,
+                        "en_service": e.en_service, "contrat_entretien": e.contrat_entretien,
+                        "age_ans": age, "age_statut": statut})
+        carnet = carnet_contexte(
+            eqs, echs, garanties_maison(equipements, travaux, aujourd_hui), journal_fusionne(entrees, travaux),
+            resume_pieces(house, pieces, emetteurs) if pieces else None, aujourd_hui, travaux=travaux,
+        )
+        return carnet or None
+    except Exception:
+        logger.exception("Carnet de maison illisible pour le chat (maison %s) : contexte envoyé sans carnet", house.id)
+        return None
 
 
 def _owner_ok(conversation: Conversation, user: User | None) -> bool:
@@ -74,7 +120,7 @@ async def send_message(
             pro_context = rag.build_pro_context(pro)  # Helios détecte un client pro et adapte
         house = await db.scalar(select(House).where(House.user_id == user.id))
         if house is not None:
-            house_context = rag.build_house_context(house)
+            house_context = rag.build_house_context(house, carnet=await _carnet_du_foyer(db, house))
             niveau = house_context["niveau"]
             departement = regions.departement_du_code_postal(house.code_postal or "")
 
