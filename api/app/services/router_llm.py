@@ -7,6 +7,7 @@ est assez complète (score >= `rag_api_min_niveau`) ET que la question semble co
 forcent un retour en local (« mode simplifié »), tout comme une API indisponible.
 """
 
+import logging
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
@@ -21,6 +22,8 @@ from app.services import anthropic_client, ollama_client, rag
 from app.services.anthropic_client import ApiUnavailable
 
 Route = Literal["local", "api"]
+
+logger = logging.getLogger("helios.router_llm")
 
 _NIVEAUX_ELIGIBLES_API = {"prediagnostic_qualitatif", "preaudit_chiffre"}
 
@@ -112,7 +115,11 @@ async def generate_route(
             # Vérifie que l'API répond avant de s'engager (clé absente -> lève immédiatement) ;
             # on ne tente pas de rebasculer en local après le premier jeton envoyé au client.
             first_chunk = await api_stream.__anext__()
-        except (ApiUnavailable, StopAsyncIteration):
+        except (ApiUnavailable, StopAsyncIteration) as exc:
+            # Le repli reste silencieux pour le visiteur (« mode simplifié »), mais JAMAIS pour
+            # nous : le 21/10/2026, un compte Anthropic sans crédit a fait tomber toutes les
+            # questions sur le modèle local sans une ligne de journal.
+            logger.warning("Route API indisponible, repli sur le modèle local : %s", exc or type(exc).__name__)
             return "local", True, ollama_client.generate_stream(local_prompt)
 
         async def _rechain() -> AsyncIterator[str]:

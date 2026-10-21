@@ -1057,6 +1057,13 @@ juste (aucun chiffre). **Non coché : trois décisions attendent Stéphane**, d�
 plafond face aux cinq échéances (le journal ne tient jamais à 1 500), et la réponse
 instantanée qui passe devant le carnet.
 
+**Mise à jour (commit `348c557`)** : décisions prises — questions sur le carnet → Claude,
+plafond 2 000, une échéance par équipement (obligations d'abord). **Vérification bloquée :
+le compte Anthropic n'a plus de crédit**, le chat retombe sur le modèle local. À refaire dès
+le crédit rechargé (Plans & Billing de la console Anthropic). À trancher aussi : une question
+sur le carnet saute désormais la réponse instantanée, et le quota de 3 questions API par
+client et par jour renvoie la 4ᵉ au modèle local.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

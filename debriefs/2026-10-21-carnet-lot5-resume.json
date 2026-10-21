@@ -24,15 +24,6 @@
   ],
   "echeances": [
     {
-      "tache": "Dégager l'unité extérieure et vérifier l'évacuation des condensats",
-      "pour": "PAC_air_eau",
-      "date": "2017-10-12",
-      "statut": "en_retard",
-      "nature": "recommande",
-      "qui": "soi",
-      "donnees": "calcule"
-    },
-    {
       "tache": "Manœuvrer le levier du groupe de sécurité",
       "pour": "thermodynamique",
       "date": "2019-08-01",
@@ -51,12 +42,20 @@
       "donnees": "calcule"
     },
     {
-      "tache": "Inspecter les panneaux depuis le sol",
-      "pour": "panneaux_pv",
-      "date": "2025-04-01",
-      "statut": "en_retard",
+      "tache": "Tester le détecteur de fumée",
+      "pour": "maison",
+      "statut": "a_planifier",
       "nature": "recommande",
       "qui": "soi",
+      "donnees": "declare"
+    },
+    {
+      "tache": "Entretien de la pompe à chaleur ou de la climatisation par un professionnel",
+      "pour": "PAC_air_eau",
+      "date": "2028-12-31",
+      "statut": "plus_tard",
+      "nature": "obligation",
+      "qui": "pro",
       "donnees": "calcule"
     }
   ],
@@ -76,6 +75,31 @@
       "fin": {
         "fabricant": "2048-05-15"
       }
+    }
+  ],
+  "journal": [
+    {
+      "date": "2026-06-02",
+      "type": "entretien",
+      "justifie": false,
+      "pour": "thermodynamique"
+    },
+    {
+      "date": "2026-03-18",
+      "type": "entretien",
+      "justifie": false,
+      "pour": "PAC_air_eau"
+    },
+    {
+      "date": "2025-12-21",
+      "type": "travaux",
+      "justifie": false
+    },
+    {
+      "date": "2025-11-08",
+      "type": "reparation",
+      "justifie": false,
+      "pour": "PAC_air_eau"
     }
   ]
 }

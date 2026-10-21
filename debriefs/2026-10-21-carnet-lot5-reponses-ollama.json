@@ -85,5 +85,51 @@
       "duree_s": 121.0,
       "reponse": "La fiche du foyer indique que le chauffe-eau est de l'ancienne technologie PAC_air_eau, et que le remplacement est prévu avant la fuite. Puisque le chauffe-eau est déjà de 10 ans, il est probablement en fin de vie.\n\nVoici une estimation de l'âge estimé du chauffe-eau en fonction de la technologie PAC_air_eau :\n\n* Pour un PAC d'origine, l'âge de la fuite est généralement de 10 à 15 ans.\n* Pour un PAC d'origine avec un groupe de sécurité récent, l'âge de la fuite pourrait être de 12 à 18 ans.\n* Pour un PAC d'origine avec un groupe de sécurité plus ancien, l'âge de la fuite pourrait être de 15 à 20 ans.\n\nEn fonction de ces estimations, il est possible que votre chauffe-eau soit en fin de vie dans les 1 à 3 ans. Cependant, cela dépend de plusieurs facteurs tels que l'utilisation, la qualité de l'eau, la température et l'entretien. Il est recommandé de consulter un professionnel pour une analyse détaillée et une estimation plus précise de l'âge de la fuite."
     }
-  ]
+  ],
+  "deuxieme_passage_route_api_mais_credit_anthropic_epuise_donc_repli_local": {
+    "note": "Questions sur le carnet routées vers Claude, plafond 2 000, une échéance par équipement (obligations d'abord). L'API a refusé : 'Your credit balance is too low'. Toutes les réponses viennent donc de llama3.2:3b (mode simplifié).",
+    "taille_carnet": 1711,
+    "reponses": [
+      {
+        "question": "Quand dois-je faire entretenir ma pompe à chaleur ?",
+        "route": null,
+        "instant": false,
+        "mode_simplifie": true,
+        "duree_s": 64.1,
+        "reponse": "D'après votre carnet, l'entretien de votre pompe à chaleur devrait avoir lieu tous les deux ans, au plus tard le 31 décembre 2028."
+      },
+      {
+        "question": "Quel âge a mon chauffe-eau ?",
+        "route": null,
+        "instant": false,
+        "mode_simplifie": true,
+        "duree_s": 78.9,
+        "reponse": "Pouvez-vous me donner le modèle de votre chauffe-eau, et je peux vous donner son âge."
+      },
+      {
+        "question": "Est-ce que mes travaux sont encore sous garantie ?",
+        "route": null,
+        "instant": false,
+        "mode_simplifie": true,
+        "duree_s": 73.5,
+        "reponse": "Oui, et pour quels éléments ?"
+      },
+      {
+        "question": "Qu'est-ce que j'ai fait comme entretien cette année ?",
+        "route": null,
+        "instant": false,
+        "mode_simplifie": true,
+        "duree_s": 60.7,
+        "reponse": "Bonjour ! D'après votre carnet, je vois que vous avez eu un entretien de thermodynamique en mars 2026. D'après votre carnet, je vois aussi que vous aviez un entretien de PAC air eau en décembre 2025. Et enfin, j'ai un entretien de réparation de PAC air eau en novembre 2025. Vous avez également un entretien de travaux en décembre 2025."
+      },
+      {
+        "question": "Combien va me coûter le remplacement de ma PAC ?",
+        "route": null,
+        "instant": false,
+        "mode_simplifie": true,
+        "duree_s": 99.0,
+        "reponse": "Le coût du remplacement d'une PAC dépend des caractéristiques de votre maison, de l'état de vos équipements et de vos besoins énergétiques. Pour avoir une estimation précise, il faut connaître votre consommation de chaleur, l'efficacité de vos équipements et le coût de l'énergie dans votre région. Il est aussi important de considérer les échéances de vos équipements, les garanties et les réductions d'impôts qui pourraient être applicables dans votre cas. Il conviendrait de consulter un professionnel de l'énergie pour une analyse et un devis personnalisés."
+      }
+    ]
+  }
 }
