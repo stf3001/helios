@@ -9,6 +9,7 @@ import { useTitle } from '../hooks/useTitle'
 import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
+import CarnetMaison from '../components/carnet/CarnetMaison'
 import BlocHelios from '../components/chat/BlocHelios'
 import MarqueHelios from '../components/MarqueHelios'
 import { RailOnglets, BandeOnglets, type OngletRail } from '../components/RailOnglets'
@@ -154,6 +155,7 @@ export default function Espace() {
               </div>
 
               {section === 'maison' && (
+                <div className="space-y-4">
                 <div className="rounded-xl border border-ink/10 bg-white p-4">
                   {house ? (
                     <>
@@ -201,6 +203,9 @@ export default function Espace() {
                       </Link>
                     </div>
                   )}
+                </div>
+                {/* Le carnet n'a de sens qu'une fois la maison créée : ses routes en dépendent. */}
+                {house && <CarnetMaison />}
                 </div>
               )}
 

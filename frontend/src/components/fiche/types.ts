@@ -6,10 +6,11 @@ type Condition = { si?: { key: string; vaut: FieldValue } }
 export type FieldSpec = Condition & (
   | { key: string; label: string; type: 'select'; options: FieldOption[]; help?: string }
   | { key: string; label: string; type: 'multiselect'; options: FieldOption[]; help?: string }
-  | { key: string; label: string; type: 'number'; min?: number; max?: number; help?: string }
+  | { key: string; label: string; type: 'number'; min?: number; max?: number; step?: number | 'any'; help?: string }
   | { key: string; label: string; type: 'boolean'; help?: string }
   | { key: string; label: string; type: 'text'; help?: string }
   | { key: string; label: string; type: 'textarea'; help?: string }
+  | { key: string; label: string; type: 'date'; help?: string }
 )
 
 export type FieldValue = string | number | boolean | string[] | null | undefined

@@ -63,6 +63,7 @@ export default function FieldInput({
           className={inputClass}
           min={spec.min}
           max={spec.max}
+          step={spec.step}
           value={value === null || value === undefined ? '' : (value as number)}
           onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         />
@@ -83,6 +84,15 @@ export default function FieldInput({
       {spec.type === 'text' && (
         <input
           type="text"
+          className={inputClass}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+        />
+      )}
+
+      {spec.type === 'date' && (
+        <input
+          type="date"
           className={inputClass}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
