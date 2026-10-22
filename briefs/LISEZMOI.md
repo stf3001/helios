@@ -32,7 +32,7 @@ Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans l'
 |---|---|---|
 | 1 | `BRIEF-finitions-1.md` (points 46, 49, 13, 51 ; fiche fournie : `KB-jardin-hiver.md`) | aucun |
 
-## Série 4 (22/10/2026) — mises en relation à prix fixe
+## Série 4 (22/10/2026) — mises en relation à prix fixe, faite le 22/10/2026
 
 Décisions de Stéphane du 22/10/2026 : 60 € HT tous métiers, dus à la transmission, contestation sous 7 jours ; le foyer choisit parmi trois partenaires tirés au sort ; AD Solar n'est pas partenaire ; Hydrolia et Eolia avec lien d'intérêt affiché.
 
@@ -43,6 +43,14 @@ Décisions de Stéphane du 22/10/2026 : 60 € HT tous métiers, dus à la trans
 | 3 | `BRIEF-mer-lot3-espace-partenaire.md` | lots 1 et 2 |
 | 4 | `BRIEF-mer-lot4-releves.md` | lots 1 et 3 |
 | 5 | `BRIEF-mer-lot5-suivi-foyer.md` | lots 1 à 3 |
+
+## Série 5 (22/10/2026) — fin de la phase 2
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-p2-risques-commune.md` (fiche fournie : `KB-risques-maison.md`) | aucun |
+| 2 | `BRIEF-p2-vigilance-meteo.md` (module dormant sans clé Météo-France) | lot 1 de la série |
+| 3 | `BRIEF-p2-projets-isolation.md` | aucun |
 
 ## Références
 
