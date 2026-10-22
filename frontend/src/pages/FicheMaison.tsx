@@ -95,8 +95,22 @@ const SYSTEMES_FIELDS: FieldSpec[] = [
 
 const ENERGIE_FIELDS: FieldSpec[] = [
   { key: 'conso_elec_kwh_an', label: 'Consommation électrique (kWh/an)', type: 'number', min: 0 },
-  { key: 'conso_autre_energie_type', label: 'Autre énergie (type)', type: 'text' },
-  { key: 'conso_autre_energie_qte', label: 'Autre énergie (quantité/an)', type: 'number', min: 0 },
+  // Pré-audit lot 7 : codes et couples tenus ENSEMBLE avec `schemas/house.py`
+  // (`AutreEnergie`, `UNITES_PAR_AUTRE_ENERGIE`).
+  { key: 'conso_autre_energie_type', label: 'Autre énergie', type: 'select', options: [
+    { value: 'gaz', label: 'Gaz' }, { value: 'fioul', label: 'Fioul' }, { value: 'bois_buches', label: 'Bois (bûches)' },
+    { value: 'granules', label: 'Granulés' }, { value: 'reseau', label: 'Réseau de chaleur' },
+  ] },
+  { key: 'conso_autre_energie_qte', label: 'Autre énergie (quantité par an)', type: 'number', min: 0,
+    help: 'Le total de vos factures ou livraisons sur un an' },
+  { key: 'conso_autre_energie_unite', label: 'Unité', type: 'select', options: [], optionsSelon: {
+    key: 'conso_autre_energie_type', options: {
+      gaz: [{ value: 'kwh', label: 'kWh (sur la facture)' }, { value: 'm3', label: 'm³' }],
+      fioul: [{ value: 'litres', label: 'litres' }, { value: 'kwh', label: 'kWh' }],
+      bois_buches: [{ value: 'steres', label: 'stères' }],
+      granules: [{ value: 'kg', label: 'kg' }],
+      reseau: [{ value: 'kwh', label: 'kWh' }],
+    } } },
   { key: 'puissance_souscrite', label: 'Puissance souscrite (kVA)', type: 'select', options: ['3', '6', '9', '12', '15', '18', '24', '30', '36'].map((v) => ({ value: v, label: `${v} kVA` })) },
   { key: 'option_tarifaire', label: 'Option tarifaire', type: 'select', options: [
     { value: 'base', label: 'Base' }, { value: 'HPHC', label: 'Heures pleines / creuses' }, { value: 'tempo', label: 'Tempo' },

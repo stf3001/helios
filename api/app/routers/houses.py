@@ -9,7 +9,7 @@ from app.core.deps import get_current_user
 from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.user import User
-from app.schemas.house import HouseCreate, HouseOut, HouseUpdate
+from app.schemas.house import UNITES_PAR_AUTRE_ENERGIE, HouseCreate, HouseOut, HouseUpdate
 from datetime import date
 
 from app.models.house_document import HouseDocument
@@ -90,6 +90,12 @@ async def update_my_house(
             select(HouseDocument).where(HouseDocument.house_id == house.id))}
         db.add(JournalEntree(house_id=house.id, **pc.archive(lignes, docs, date.today())))
         house.avant_achat = None
+    # Pré-audit lot 7 : l'unité doit aller avec le type — vérifié sur la fiche telle qu'elle sera.
+    type_ = champs.get("conso_autre_energie_type", house.conso_autre_energie_type)
+    unite = champs.get("conso_autre_energie_unite", house.conso_autre_energie_unite)
+    if unite and unite not in UNITES_PAR_AUTRE_ENERGIE.get(type_, ()):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            "Cette unité ne correspond pas à l'énergie choisie : choisissez-en une de la liste.")
     # Phase 2 : un autre code postal, c'est peut-être une autre commune — elle se rechoisit.
     if "code_postal" in champs and champs["code_postal"] != house.code_postal:
         house.code_insee = house.commune = None

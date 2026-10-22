@@ -55,6 +55,10 @@ _FICHE = {
     "ventilation": {"aucune": "Aucune", "naturelle": "Naturelle", "VMC_simple": "VMC simple flux",
                     "VMC_double": "VMC double flux", "inconnue": "Inconnue"},
     "option_tarifaire": {"base": "Base", "HPHC": "Heures pleines / heures creuses", "tempo": "Tempo"},
+    # Pré-audit lot 7 : recopiés de `FicheMaison.tsx` (à tenir ENSEMBLE).
+    "conso_autre_energie_type": {"gaz": "Gaz", "fioul": "Fioul", "bois_buches": "Bois (bûches)",
+                                 "granules": "Granulés", "reseau": "Réseau de chaleur"},
+    "conso_autre_energie_unite": {"kwh": "kWh", "m3": "m³", "litres": "litres", "steres": "stères", "kg": "kg"},
 }
 _CATEGORIES = {
     "chauffage": "Chauffage", "ecs": "Eau chaude", "clim": "Climatisation", "ventilation": "Ventilation",
@@ -395,9 +399,11 @@ def _entretien(pdf, echeances, journal, noms_equipements, aujourd_hui: date):
 
 
 def _energie(pdf, h):
-    autre = _champ(h, "conso_autre_energie_type") or ""
+    type_ = _champ(h, "conso_autre_energie_type")
+    autre = _FICHE["conso_autre_energie_type"].get(type_, type_ or "")
     if autre and _champ(h, "conso_autre_energie_qte"):
-        autre = f"{autre} : {_nombre(_champ(h, 'conso_autre_energie_qte'))}"
+        unite = _FICHE["conso_autre_energie_unite"].get(_champ(h, "conso_autre_energie_unite"))
+        autre = f"{autre} : {_nombre(_champ(h, 'conso_autre_energie_qte'), f'{unite}/an' if unite else '')}"
     _fiche(pdf, [
         ("Consommation d'électricité", _nombre(_champ(h, "conso_elec_kwh_an"), "kWh/an"), "D"),
         ("Autre énergie", autre, "D"),

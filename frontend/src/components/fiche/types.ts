@@ -4,7 +4,12 @@ export type FieldOption = { value: string; label: string }
 type Condition = { si?: { key: string; vaut: FieldValue } }
 
 export type FieldSpec = Condition & (
-  | { key: string; label: string; type: 'select'; options: FieldOption[]; help?: string }
+  | {
+      key: string; label: string; type: 'select'; options: FieldOption[]; help?: string
+      /** Les choix dépendent d'un autre champ du bloc (l'unité suit l'énergie) : sans valeur de
+       *  ce champ, le champ est masqué ; une valeur devenue invalide est vidée. */
+      optionsSelon?: { key: string; options: Record<string, FieldOption[]> }
+    }
   | { key: string; label: string; type: 'multiselect'; options: FieldOption[]; help?: string }
   | { key: string; label: string; type: 'number'; min?: number; max?: number; step?: number | 'any'; help?: string }
   | { key: string; label: string; type: 'boolean'; help?: string }

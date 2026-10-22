@@ -37,8 +37,24 @@ export default function BlockCard({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Un champ dont les choix suivent un autre (l'unité suit l'énergie) : ses choix du moment.
+  const choix = (f: FieldSpec) => (f.type === 'select' && f.optionsSelon
+    ? f.optionsSelon.options[String(draft[f.optionsSelon.key] ?? '')] ?? [] : null)
   // Un champ conditionnel masqué ne compte ni dans l'affichage ni dans « x / n ».
-  const visibles = fields.filter((f) => !f.si || draft[f.si.key] === f.si.vaut)
+  const visibles = fields
+    .filter((f) => !f.si || draft[f.si.key] === f.si.vaut)
+    .filter((f) => choix(f)?.length !== 0)
+    .map((f) => { const c = choix(f); return c && f.type === 'select' ? { ...f, options: c } : f })
+
+  // Changer l'énergie vide l'unité qui ne lui va plus (jamais une unité devinée à sa place).
+  function changer(key: string, value: FieldValue) {
+    onChange(key, value)
+    for (const f of fields) {
+      if (f.type !== 'select' || f.optionsSelon?.key !== key || draft[f.key] == null) continue
+      const ok = (f.optionsSelon.options[String(value ?? '')] ?? []).some((o) => o.value === draft[f.key])
+      if (!ok) onChange(f.key, null)
+    }
+  }
   const remplis = visibles.filter((f) => estRempli(draft[f.key])).length
   const complet = remplis === visibles.length
 
@@ -83,7 +99,7 @@ export default function BlockCard({
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         {visibles.map((f) => (
-          <FieldInput key={f.key} spec={f} value={draft[f.key]} onChange={(v) => onChange(f.key, v)}
+          <FieldInput key={f.key} spec={f} value={draft[f.key]} onChange={(v) => changer(f.key, v)}
             verrouille={verrouilles?.includes(f.key)} />
         ))}
       </div>

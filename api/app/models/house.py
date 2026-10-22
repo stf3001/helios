@@ -57,6 +57,8 @@ class House(Base):
     conso_elec_kwh_an: Mapped[int | None] = mapped_column(Integer)
     conso_autre_energie_type: Mapped[str | None] = mapped_column(String(50))
     conso_autre_energie_qte: Mapped[int | None] = mapped_column(Integer)
+    # Pré-audit lot 7 (0043) : l'unité de la quantité ; sans elle, la quantité ne sert pas.
+    conso_autre_energie_unite: Mapped[str | None] = mapped_column(String(10))
     puissance_souscrite: Mapped[str | None] = mapped_column(String(10))
     option_tarifaire: Mapped[str | None] = mapped_column(String(10))  # base|HPHC|tempo
     pdl: Mapped[str | None] = mapped_column(String(14))

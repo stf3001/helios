@@ -25,6 +25,15 @@ Horizon = Literal["<6mois", "6-24mois", "reflexion"]
 Ombrage = Literal["aucun", "partiel", "important"]
 ZoneOld = Literal["oui", "non", "ne_sais_pas"]
 ChauffageCollectif = Literal["oui", "non", "ne_sais_pas"]
+# Pré-audit lot 7 : la consommation d'une autre énergie que l'électricité, avec son unité.
+# Le couple type-unité est contrôlé par la route (`routers/houses.py`), qui voit aussi la fiche
+# enregistrée ; `services/autre_energie.py` convertit. Tenu ENSEMBLE avec `FicheMaison.tsx`.
+AutreEnergie = Literal["gaz", "fioul", "bois_buches", "granules", "reseau"]
+UniteAutreEnergie = Literal["kwh", "m3", "litres", "steres", "kg"]
+UNITES_PAR_AUTRE_ENERGIE: dict[str, tuple[str, ...]] = {
+    "gaz": ("kwh", "m3"), "fioul": ("litres", "kwh"), "bois_buches": ("steres",), "granules": ("kg",),
+    "reseau": ("kwh",),
+}
 
 
 class PlageHoraire(BaseModel):
@@ -78,8 +87,9 @@ class HouseUpdate(BaseModel):
     regulation: Regulation | None = None
 
     conso_elec_kwh_an: int | None = Field(default=None, ge=0)
-    conso_autre_energie_type: str | None = Field(default=None, max_length=50)
+    conso_autre_energie_type: AutreEnergie | None = None
     conso_autre_energie_qte: int | None = Field(default=None, ge=0)
+    conso_autre_energie_unite: UniteAutreEnergie | None = None
     puissance_souscrite: PuissanceSouscrite | None = None
     option_tarifaire: OptionTarifaire | None = None
     heures_creuses: list[PlageHoraire] | None = Field(default=None, max_length=2)
