@@ -2,8 +2,10 @@ import { useState, type FormEvent } from 'react'
 import Hero from '../components/Hero'
 import { useTitle } from '../hooks/useTitle'
 
+// Codes de l'annuaire (`regions.METIERS`, `schemas/partner.Metier`) : « solaire » et non plus
+// « pv », sinon un candidat solaire n'est jamais proposé à un foyer.
 const METIERS = [
-  { value: 'pv', label: 'Photovoltaïque' },
+  { value: 'solaire', label: 'Photovoltaïque' },
   { value: 'pac', label: 'Pompe à chaleur' },
   { value: 'isolation', label: 'Isolation' },
   { value: 'menuiseries', label: 'Menuiseries' },

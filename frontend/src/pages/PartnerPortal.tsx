@@ -9,7 +9,7 @@ interface PLead {
   statut: string
   code_postal: string | null
   montant_travaux: number | null
-  commission: number | null
+  prix_ht: number | null
   consent_retire: boolean
   created_at: string
 }
@@ -143,7 +143,7 @@ export default function PartnerPortal() {
               </div>
               <div className="text-xs text-gray-400 mb-2">
                 Reçu le {new Date(l.created_at).toLocaleDateString('fr-FR')}
-                {l.commission != null && <> · commission {l.commission.toLocaleString('fr-FR')} €</>}
+                {l.prix_ht != null && <> · mise en relation {l.prix_ht.toLocaleString('fr-FR')} € HT</>}
                 {l.consent_retire && <span className="text-red-500"> · consentement retiré</span>}
               </div>
               {!l.consent_retire && next[l.statut] && (

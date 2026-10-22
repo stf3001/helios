@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Handshake } from 'lucide-react'
+import { BadgeCheck, Handshake, Shuffle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import ApiError from '../components/ApiError'
 
-interface PartnerCard { id: string; raison_sociale: string; metiers: string[]; note_moyenne: number | null }
+/** Une proposition tirée au sort par le serveur (`services/propositions.py`) : l'écran n'en
+ *  choisit ni le nombre ni l'ordre, et le texte du consentement vient de l'API. */
+interface Proposition {
+  id: string; raison_sociale: string; rge: boolean; note_moyenne: number | null; nb_avis: number
+  lien_interet: string | null; consentement: string
+}
 interface Lead {
   id: string
-  partner: { id: string; raison_sociale: string } | null
+  partner: { id: string; raison_sociale: string; lien_interet: string | null } | null
   type: string
   metier: string | null
   statut: string
   montant_travaux: number | null
-  commission: number | null
   consent_retire_at: string | null
   created_at: string
 }
@@ -25,15 +29,22 @@ const STATUT_STYLE: Record<string, string> = {
   devis: 'bg-amber-100 text-amber-800', signe: 'bg-green-100 text-green-800',
   perdu: 'bg-gray-100 text-gray-500',
 }
+// Les métiers d'une demande : ceux de l'annuaire (`regions.METIERS`, sans le courtage).
+const METIERS: [string, string][] = [
+  ['solaire', 'Panneaux solaires'], ['pac', 'Pompe à chaleur'], ['isolation', 'Isolation'],
+  ['eau', "Machine à eau de l'air"], ['eolien', 'Éolienne'], ['inertie', 'Stockage par inertie'],
+]
+// Pour relire les demandes passées, anciens codes compris.
 const METIER_LABEL: Record<string, string> = {
-  pv: 'Photovoltaïque', pac: 'Pompe à chaleur', isolation: 'Isolation',
-  menuiseries: 'Menuiseries', vmc: 'Ventilation', regulation: 'Régulation',
+  ...Object.fromEntries(METIERS), pv: 'Photovoltaïque', menuiseries: 'Menuiseries', vmc: 'Ventilation',
+  regulation: 'Régulation',
 }
 
 export default function EspaceMisesEnRelation() {
   const { authFetch } = useAuth()
-  const [partners, setPartners] = useState<PartnerCard[]>([])
+  const [propositions, setPropositions] = useState<Proposition[] | null>(null)
   const [leads, setLeads] = useState<Lead[]>([])
+  const [confirmation, setConfirmation] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const [partnerId, setPartnerId] = useState('')
@@ -57,18 +68,28 @@ export default function EspaceMisesEnRelation() {
   const load = useCallback(() => {
     setLoading(true)
     setLoadError(false)
-    Promise.all([
-      fetch('/api/partners').then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))),
-      fetchLeads(),
-    ]).then(([p, l]) => { setPartners(p); setLeads(l) })
-      .catch(() => setLoadError(true)).finally(() => setLoading(false))
+    fetchLeads().then(setLeads).catch(() => setLoadError(true)).finally(() => setLoading(false))
   }, [fetchLeads])
   useEffect(load, [load])
+
+  // Un nouveau tirage à chaque choix de métier : l'ordre est celui du serveur, jamais trié ici.
+  async function choisirMetier(m: string) {
+    setMetier(m); setPartnerId(''); setConsent(false); setError(null); setConfirmation(null); setPropositions(null)
+    if (!m) return
+    const res = await authFetch(`/api/leads/propositions?metier=${m}`)
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      setError(typeof body?.detail === 'string' ? body.detail : 'Propositions indisponibles.')
+      return
+    }
+    setPropositions((await res.json()).propositions)
+  }
 
   async function createLead(e: FormEvent) {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
+    const choisi = propositions?.find((p) => p.id === partnerId)
     try {
       const res = await authFetch('/api/leads', {
         method: 'POST',
@@ -79,7 +100,8 @@ export default function EspaceMisesEnRelation() {
         const body = await res.json().catch(() => null)
         throw new Error(typeof body?.detail === 'string' ? body.detail : 'Mise en relation impossible.')
       }
-      setPartnerId(''); setMetier(''); setConsent(false)
+      setPartnerId(''); setMetier(''); setConsent(false); setPropositions(null)
+      setConfirmation(`Votre demande a été transmise à ${choisi?.raison_sociale ?? 'ce partenaire'}. Il pourra vous contacter au sujet de ce projet.`)
       loadLeads()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
@@ -133,45 +155,57 @@ export default function EspaceMisesEnRelation() {
         <ApiError retry={load} />
       ) : (
         <div className="space-y-10">
-          {/* Nouvelle mise en relation */}
+          {/* Nouvelle mise en relation : métier, puis au plus trois partenaires TIRÉS AU SORT
+              (série 4, lot 1). Hélios est payé le même prix fixe quel que soit le choix. */}
           <form onSubmit={createLead} className="bg-gray-50 rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold">Nouvelle demande</h2>
-            {partners.length === 0 ? (
-              <p className="text-sm text-gray-500">Aucun partenaire disponible pour l'instant.</p>
-            ) : (
+            {confirmation && <p className="rounded-lg bg-leaf/10 px-3 py-2 text-sm text-leaf">{confirmation}</p>}
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="metier-demande">Pour quels travaux ?</label>
+              <select id="metier-demande" value={metier} onChange={(e) => choisirMetier(e.target.value)}
+                className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">— choisir —</option>
+                {METIERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            {propositions && propositions.length === 0 && (
+              <p className="text-sm text-gray-500">Aucun partenaire disponible pour ces travaux dans votre département pour l'instant.</p>
+            )}
+            {propositions && propositions.length > 0 && (
               <>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Partenaire</label>
-                    <select value={partnerId} onChange={(e) => setPartnerId(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                      <option value="">— choisir —</option>
-                      {partners.map((p) => (
-                        <option key={p.id} value={p.id}>{p.raison_sociale}{p.note_moyenne != null ? ` (★ ${p.note_moyenne})` : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Type de travaux</label>
-                    <select value={metier} onChange={(e) => setMetier(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                      <option value="">— indifférent —</option>
-                      {Object.entries(METIER_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
-                  </div>
+                <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Shuffle className="h-3.5 w-3.5" /> Ordre tiré au sort. Choisissez l'entreprise que vous voulez.
+                </p>
+                <div className="space-y-2" role="radiogroup" aria-label="Partenaires proposés">
+                  {propositions.map((p) => (
+                    <label key={p.id} className={'flex items-start gap-3 rounded-xl border bg-white p-3 cursor-pointer '
+                      + (partnerId === p.id ? 'border-primary' : 'border-gray-200')}>
+                      <input type="radio" name="partenaire" value={p.id} checked={partnerId === p.id}
+                        onChange={() => { setPartnerId(p.id); setConsent(false) }} className="mt-1" />
+                      <span className="min-w-0 text-sm">
+                        <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
+                          {p.raison_sociale}
+                          {p.rge && <span className="inline-flex items-center gap-1 text-xs font-normal text-sky"><BadgeCheck className="h-3.5 w-3.5" /> RGE</span>}
+                          {p.note_moyenne != null && <span className="text-xs font-normal text-gray-500">{p.note_moyenne.toFixed(1)}/5 sur {p.nb_avis} avis</span>}
+                        </span>
+                        {p.lien_interet && <span className="block text-xs text-terra">Lien d'intérêt : {p.lien_interet}</span>}
+                      </span>
+                    </label>
+                  ))}
                 </div>
-                <label className="flex items-start gap-2 text-sm text-gray-700">
-                  <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
-                  <span>J'accepte que ma demande et les informations de mon projet (fiche maison, pré-audit)
-                    soient transmises à ce partenaire.</span>
-                </label>
+                {partnerId && (
+                  <label className="flex items-start gap-2 text-sm text-gray-700">
+                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
+                    <span>{propositions.find((p) => p.id === partnerId)?.consentement}</span>
+                  </label>
+                )}
                 <button type="submit" disabled={!partnerId || !consent || submitting}
                   className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 hover:opacity-90 disabled:opacity-40">
                   {submitting ? 'Envoi…' : 'Demander la mise en relation'}
                 </button>
-                {error && <p className="text-sm text-red-600">{error}</p>}
               </>
             )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </form>
 
           {/* Suivi des leads */}
@@ -191,10 +225,8 @@ export default function EspaceMisesEnRelation() {
                         {STATUT_LABEL[lead.statut] ?? lead.statut}
                       </span>
                     </div>
-                    {lead.commission != null && (
-                      <div className="text-xs text-gray-500 mb-2">
-                        Travaux signés : {lead.montant_travaux?.toLocaleString('fr-FR')} € HT — commission HELIOS (payée par le partenaire) : {lead.commission.toLocaleString('fr-FR')} €
-                      </div>
+                    {lead.partner?.lien_interet && (
+                      <div className="text-xs text-terra mb-2">Lien d'intérêt : {lead.partner.lien_interet}</div>
                     )}
                     <div className="flex flex-wrap gap-2 text-xs">
                       {['transmis', 'contacte', 'devis'].includes(lead.statut) && (
