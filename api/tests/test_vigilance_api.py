@@ -18,7 +18,7 @@ from app.models.user import User
 from app.models.vigilance import VigilanceDepartement
 from app.routers.chat import _carnet_du_foyer
 
-DEP = "83"
+DEP = "48"  # absent de la fixture simulée : une collecte de dev chargée ne fausse pas le test
 
 
 async def _base_prete() -> bool:
@@ -40,8 +40,9 @@ def ctx():
 
         async def creer():
             async with async_session() as s:
+                await s.execute(text("DELETE FROM vigilance_departements WHERE departement = :d"), {"d": DEP})
                 ids = {}
-                for cle, cp in (("var", "83990"), ("nord", "59000")):
+                for cle, cp in (("var", "48000"), ("nord", "59000")):
                     u = User(email=f"vigi-{uuid.uuid4().hex[:10]}@test.invalid", password_hash="x")
                     s.add(u)
                     await s.flush()

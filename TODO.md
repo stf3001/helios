@@ -1355,6 +1355,24 @@ Fiche fournie le 22/10/2026, recopiée telle quelle : ses 10 questions sont `ver
 est DÉJÀ publique (FAQ, 10 pages pré-rendues, plan de site 520 URL) et ingérée par le chat, comme le
 voulait le brief. Les cinq questions de vigilance météo servent au lot suivant.
 
+### [x] 75. Phase 2, vigilance météo — fait le 22/10/2026
+
+Vigilance orange ou rouge du département, en une ligne sobre dans « À faire » (pastille, gestes
+repliés tirés de `kb/risques_maison.md`, lien vers la carte officielle) ; « Noter un dégât » pendant
+7 jours après vent ou orages ; phénomène, couleur et fin dans le contexte du chat. Collecte par
+département seulement (`scripts.collecter_vigilance`, table `vigilance_departements`, migration
+0042) ; l'écran ne lit que la base. **Vérifié sur une carte écrite à la main**, pas sur une vraie
+réponse. Débrief : `debriefs/2026-10-22-p2-vigilance.md`.
+
+### [ ] 76. Brancher Météo-France pour de vrai
+
+Sans `METEOFRANCE_API_KEY` le module dort (collecte « dormant », rien ne s'affiche). À faire par
+Stéphane : créer le compte sur portail-api.meteofrance.fr et s'abonner à « Données publiques de
+vigilance ». Puis, à vérifier dans le code : une collecte réelle (format de la carte, identifiants
+de département, codes de phénomène) et remplacer `tests/fixtures/meteofrance/carte_simulee.json`
+par une réponse enregistrée. Au déploiement : la collecte toutes les heures. La neige-verglas n'a
+pas de question dans la fiche : elle s'affiche sans gestes.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
