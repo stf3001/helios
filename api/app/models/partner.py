@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import ARRAY, Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -53,6 +53,16 @@ class Lead(Base):
     commission: Mapped[float | None] = mapped_column(Numeric(10, 2))  # historique : plus calculée sur `travaux`
     # Prix fixe payé par le partenaire, figé à la création (`mer_prix_ht_eur`, 22/10/2026).
     prix_ht: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    # Le dossier transmis (lot 2) : instantané de ce que le foyer a COCHÉ, figé au consentement.
+    # Retirer le consentement efface dossier, coordonnées, message, créneaux et copies de documents.
+    dossier: Mapped[dict | None] = mapped_column(JSONB)
+    score: Mapped[int | None] = mapped_column(Integer)          # 0-100, calculé ; ne change pas le prix
+    score_detail: Mapped[list | None] = mapped_column(JSONB)    # [{critere, points, acquis}]
+    creneaux: Mapped[list | None] = mapped_column(JSONB)        # [{"jour": "lundi", "plage": "matin"}]
+    contact_nom: Mapped[str | None] = mapped_column(String(120))
+    contact_telephone: Mapped[str | None] = mapped_column(String(30))
+    contact_email: Mapped[str | None] = mapped_column(String(255))
+    message: Mapped[str | None] = mapped_column(Text)
     motif_perdu: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 

@@ -314,6 +314,16 @@ class Settings(BaseSettings):
     mer_nb_propositions: int = 3
     # Comptes qui voient les partenaires de démonstration (`partners.demo`, point 60) — et eux seuls.
     mer_comptes_demo: tuple[str, ...] = ("demo@helios.fr",)
+    # Score de qualification d'une mise en relation (lot 2), lu par le partenaire, SANS EFFET sur
+    # le prix, l'ordre des propositions ou l'acces du foyer. Points proposes le 22/10/2026, a
+    # calibrer avec les premiers retours partenaires. Total 100.
+    mer_score_points: tuple[tuple[str, int], ...] = (
+        ("fiche_complete", 20), ("projet_avance", 20), ("etude_recente", 20),
+        ("horizon_court", 15), ("budget_declare", 10), ("telephone", 15),
+    )
+    mer_score_fiche_min_pct: float = 60.0   # « fiche complete » a partir de ce score de completude
+    mer_score_etude_max_mois: int = 6       # « etude recente » : pre-audit ou etude de moins de 6 mois
+    mer_documents_max: int = 5              # documents qu'un foyer peut joindre a une demande
 
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
