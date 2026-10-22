@@ -159,6 +159,10 @@ SOURCES: list[SourceSpec] = [
     # Jardin d'hiver (22/10/2026, point 51) : fiche fournie par Stéphane, recopiée telle quelle
     # de `briefs/KB-jardin-hiver.md`. Le modèle de projet « Jardin d'hiver » en dépend. À relire.
     SourceSpec(name="jardin_hiver", kind="faq_markdown", location="helios/kb/jardin_hiver.md"),
+    # Risques de la commune et vigilance météo (22/10/2026, phase 2) : fiche fournie par Stéphane,
+    # recopiée telle quelle de `briefs/KB-risques-maison.md`. La section « Les risques de ma commune »
+    # renvoie à ses questions. Toutes `verif: a_verifier` : à relire.
+    SourceSpec(name="risques_maison", kind="faq_markdown", location="helios/kb/risques_maison.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
