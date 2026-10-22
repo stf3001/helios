@@ -60,13 +60,21 @@ Décisions de Stéphane du 22/10/2026 : deux calculs de puissance affichés en f
 |---|---|---|
 | 1 | `BRIEF-preaudit-lot6-puissance.md` | aucun |
 
-## Série 7 (22/10/2026) — consommation de fioul, gaz et bois (points 79 et 80)
+## Série 7 (22/10/2026) — consommation de fioul, gaz et bois (points 79 et 80), faite le 22/10/2026
 
 Décisions de Stéphane du 22/10/2026 : réglages de puissance validés en l'état ; appoint hors facture → le volume fait référence ; la consommation des combustibles est saisie avec son unité.
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-preaudit-lot7-conso-combustibles.md` | série 6 |
+
+## Série 8 (22/10/2026) — Hélios lit la puissance (point 81)
+
+Décisions de Stéphane du 22/10/2026 : facteurs de conversion validés en l'état ; le chat reprend la puissance, la plage de PAC, les verdicts des radiateurs et le relevé de combustible.
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-chat-lot1-puissance.md` | série 7 |
 
 ## Références
 
