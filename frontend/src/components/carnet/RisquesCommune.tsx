@@ -3,7 +3,7 @@ import { ExternalLink, Landmark, PenLine } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { faqSlug } from '../../lib/faqSlug'
-import { ouvrirJournal } from './commun'
+import { ouvrirJournal, signalerMaj } from './commun'
 
 /**
  * « Les risques de ma commune » (phase 2), dans « Ma maison ».
@@ -42,7 +42,8 @@ export function ChoixCommune({ onChoisie }: { onChoisie: () => void }) {
     const r = await authFetch('/api/houses/me/commune', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code_insee: choix }),
     })
-    if (r.ok) onChoisie(); else setErreur('Commune non enregistrée : réessayez.')
+    // Le bloc « À faire » relit aussi : le débroussaillement peut y remonter.
+    if (r.ok) { onChoisie(); signalerMaj() } else setErreur('Commune non enregistrée : réessayez.')
   }
 
   if (erreur) return <p className="text-sm text-dark/60">{erreur}</p>

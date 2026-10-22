@@ -90,7 +90,7 @@ function allerA(id: string, essai = 0) {
 /* Les ancres du carnet qu'une autre page peut viser par `?aller=` — la fiche Maison
    renvoie ici pour un champ que tient un équipement (lot 7). Liste FERMÉE : un
    identifiant inconnu dans l'URL ne doit rien ouvrir. */
-const ANCRES_MAISON = ['mes-equipements', 'calendrier-entretien']
+const ANCRES_MAISON = ['mes-equipements', 'calendrier-entretien', 'risques-commune']
 
 export default function Espace() {
   useTitle('Mon espace')

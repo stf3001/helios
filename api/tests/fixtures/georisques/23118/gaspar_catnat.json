@@ -1,0 +1,53 @@
+[
+ {
+  "results": 4,
+  "page": 1,
+  "total_pages": 1,
+  "data": [
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Mouvement de Terrain",
+    "code_insee": "23118",
+    "libelle_commune": "Maisonnisses"
+   },
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "23118",
+    "libelle_commune": "Maisonnisses"
+   },
+   {
+    "code_national_catnat": "NOR19821118",
+    "date_debut_evt": "06/11/1982",
+    "date_fin_evt": "10/11/1982",
+    "date_publication_arrete": "18/11/1982",
+    "date_publication_jo": "19/11/1982",
+    "libelle_risque_jo": "Tempête",
+    "code_insee": "23118",
+    "libelle_commune": "Maisonnisses"
+   },
+   {
+    "code_national_catnat": "NOR19821118",
+    "date_debut_evt": "06/11/1982",
+    "date_fin_evt": "10/11/1982",
+    "date_publication_arrete": "18/11/1982",
+    "date_publication_jo": "19/11/1982",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "23118",
+    "libelle_commune": "Maisonnisses"
+   }
+  ],
+  "response_code": 200,
+  "message": null,
+  "next": null,
+  "previous": null
+ }
+]

@@ -14,6 +14,7 @@ L'échelle reste la COMMUNE : Hélios ne demande jamais l'adresse. Les fonctions
 pures (testées sur des réponses enregistrées) ; `collecter` seul parle au réseau, avec un délai
 court, et lève `GeorisquesIndisponible` au moindre écart — l'appelant journalise et se tait.
 """
+import asyncio
 from datetime import date
 
 import httpx
@@ -98,13 +99,21 @@ def normaliser_pprn(reponse: dict) -> bool | None:
 
 
 async def _get(client: httpx.AsyncClient, route: str, params: dict) -> dict:
-    r = await client.get(f"{BASE}/{route}", params=params)
-    if r.status_code != 200 or not r.text.strip():
-        raise GeorisquesIndisponible(f"{route} : HTTP {r.status_code}")
-    try:
-        return r.json()
-    except ValueError:
-        raise GeorisquesIndisponible(f"{route} : réponse non JSON")
+    """UNE reprise après une seconde : l'API coupe parfois une connexion sans raison (constaté le
+    22/10/2026, une requête sur trois environ depuis le poste de dev). Au-delà, on abandonne."""
+    for essai in (1, 2):
+        try:
+            r = await client.get(f"{BASE}/{route}", params=params)
+            if r.status_code == 200 and r.text.strip():
+                return r.json()
+            erreur = GeorisquesIndisponible(f"{route} : HTTP {r.status_code}")
+        except ValueError:
+            erreur = GeorisquesIndisponible(f"{route} : réponse non JSON")
+        except httpx.HTTPError as e:
+            erreur = GeorisquesIndisponible(f"{route} : réseau {e.__class__.__name__}")
+        if essai == 1:
+            await asyncio.sleep(1)
+    raise erreur
 
 
 async def collecter(code_insee: str, aujourd_hui: date | None = None,
@@ -125,8 +134,6 @@ async def collecter(code_insee: str, aujourd_hui: date | None = None,
         radon = normaliser_radon(await _get(client, "radon", {"code_insee": code_insee}))
         sismique = normaliser_sismique(await _get(client, "zonage_sismique", {"code_insee": code_insee}))
         ppr = normaliser_pprn(await _get(client, "gaspar/pprn", {"codeInsee": code_insee, "page_size": 1}))
-    except httpx.HTTPError as e:
-        raise GeorisquesIndisponible(f"réseau : {e.__class__.__name__}")
     finally:
         if propre:
             await client.aclose()

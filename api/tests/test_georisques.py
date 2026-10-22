@@ -54,6 +54,12 @@ def test_commune_argileuse_et_commune_rurale():
     assert "feux_de_foret" not in ahun["risques"] and "inondation" in ahun["risques"]  # remontée de nappe
 
 
+def test_commune_peu_exposee():
+    r = collecter("23118")
+    assert r["commune"] == "MAISONNISSES"
+    assert r["risques"] == ["inondation", "argiles", "seisme", "radon"]   # remontée de nappe ; ni feux ni industrie
+
+
 def test_catnat_comptees_sur_30_ans_et_toutes_les_pages():
     arretes = [a for page in lire("32013", "gaspar_catnat") for a in page["data"]]
     attendu = sum(1 for a in arretes if gr._date_fr(a["date_debut_evt"]) >= date(1996, 10, 22))
@@ -74,6 +80,6 @@ def test_un_changement_d_api_ou_une_panne_leve_une_erreur_propre():
     with pytest.raises(gr.GeorisquesIndisponible):
         gr.normaliser_rapport({"data": []})
     with pytest.raises(gr.GeorisquesIndisponible, match="radon"):
-        collecter("83063", panne="radon")
+        collecter("83063", panne="radon")   # deux essais, puis abandon
     assert gr.normaliser_radon({"data": [{"classe_potentiel": "?"}]}) is None
     assert gr.normaliser_pprn({}) is None
