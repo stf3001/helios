@@ -27,6 +27,7 @@ from app.models.house import House
 from app.services import audit_reference as ref
 from app.services.completeness import compute_score, niveau_for_score
 from app.services.regions import departement_du_code_postal
+from app.services.autre_energie import ENERGIE_DU_TYPE, facteur, kwh_autre_energie
 from app.services.simu_engine import prix_kwh as prix_electricite_kwh
 
 
@@ -94,6 +95,16 @@ def _age(annee: int | None, aujourd_hui: date) -> int | None:
     return aujourd_hui.year - annee
 
 
+def appoint_hors_facture(house: House, energie: str) -> bool:
+    """L'appoint chauffe-t-il avec une autre énergie que celle du relevé ? Alors une partie du
+    chauffage n'apparaît pas dans ce relevé. Un appoint « autre » l'est toujours : son énergie
+    est inconnue (pour l'électricité, c'est exactement l'ancienne règle `APPOINT_HORS_FACTURE`)."""
+    appoint = house.chauffage_appoint
+    if not appoint:
+        return False
+    return appoint == "autre" or ref.ENERGIE_CHAUFFAGE[appoint] != energie
+
+
 def _profil(house: House, t: _Trace, aujourd_hui: date) -> dict:
     """Valeurs de la fiche utilisées par le moteur, avec leurs hypothèses quand elles manquent."""
     surface = house.surface_habitable or 0
@@ -143,7 +154,7 @@ def _profil(house: House, t: _Trace, aujourd_hui: date) -> dict:
         else:
             t.hyp_fiche("pac_air_air_ete",
                         "rafraîchissement d'été possible non compté, chauffage peut-être surestimé")
-    if energie == "electricite" and house.chauffage_appoint in ref.APPOINT_HORS_FACTURE:
+    if energie == "electricite" and appoint_hors_facture(house, energie):
         t.hyp_fiche("appoint_hors_facture", "une partie du chauffage peut venir de l'appoint et "
                                             "n'apparaît pas dans la facture électrique")
 
@@ -227,6 +238,43 @@ def message_ratio(ratio: float) -> str:
     return settings.audit_ratio_messages[-1][1]
 
 
+def releve_combustible(house: House, p: dict, c: dict, statuts: dict, t: _Trace) -> float | None:
+    """Pré-audit v2.7 : le relevé de fioul, de gaz, de bois ou de réseau de chaleur, en kWh de
+    chauffage (eau chaude déduite quand elle vient du même gaz). None s'il ne sert pas : pas de
+    relevé, pas d'unité, ou relevé d'une autre énergie que celle du chauffage principal."""
+    type_, unite, qte = (house.conso_autre_energie_type, house.conso_autre_energie_unite,
+                         house.conso_autre_energie_qte)
+    if not qte:
+        return None
+    kwh = kwh_autre_energie(type_, unite, qte)
+    if kwh is None:
+        t.hyp_fiche("conso_autre_energie", "non utilisée : la fiche ne précise pas l'unité de la quantité saisie")
+        return None
+    if ENERGIE_DU_TYPE[type_] != p["energie"]:
+        t.hyp_fiche("conso_autre_energie",
+                    "non utilisée : le relevé ne porte pas sur l'énergie de votre chauffage principal")
+        return None
+    t.hyp(f"kwh_par_unite[{unite}]", facteur(type_, unite), "conversion_autre_energie")
+    deduit = None
+    if p["energie"] == "gaz" and p["ecs"] == "gaz":
+        deduit = p["occupants"] * settings.audit_ecs_combustible_kwh_occupant_an
+        t.hyp("ecs_combustible_kwh_occupant_an", settings.audit_ecs_combustible_kwh_occupant_an, "ecs_combustible")
+    else:
+        t.hyp_fiche("eau_chaude_releve", "l'eau chaude peut être comprise dans cette quantité : rien n'en est déduit")
+    declaree = max(0, round(kwh - (deduit or 0)))
+    c.update({"conso_autre_energie_kwh_an": round(kwh), "eau_chaude_deduite_kwh_an": deduit,
+              "conso_chauffage_declaree_kwh_an": declaree,
+              "releve": {"type": type_, "unite": unite, "quantite": qte}})
+    statuts.update({"conso_autre_energie_qte": "declare", "kwh_par_unite": "suppose",
+                    "conso_autre_energie_kwh_an": "calcule", "conso_chauffage_declaree_kwh_an": "calcule"})
+    if deduit is not None:
+        statuts["eau_chaude_deduite_kwh_an"] = "suppose"
+    if appoint_hors_facture(house, p["energie"]):
+        t.hyp_fiche("appoint_hors_releve", "une partie du chauffage peut venir de l'appoint et "
+                                           "n'apparaît pas dans votre relevé")
+    return declaree
+
+
 def consommation(house: House, p: dict, t: _Trace) -> dict:
     """Estimation, puis calage sur la facture électrique quand c'est possible."""
     c = conso_chauffage_estimee(house, p, t)
@@ -257,10 +305,24 @@ def consommation(house: House, p: dict, t: _Trace) -> dict:
             c["message_ratio"] = message_ratio(ratio)
             statuts["ratio_reel_theorique"] = "calcule"
     elif p["energie"] != "electricite":
-        if house.conso_autre_energie_qte:
-            t.hyp_fiche("conso_autre_energie",
-                        "non utilisée : la fiche ne précise pas l'unité de la quantité saisie")
-        t.hyp_fiche("base_economies", "consommation estimée (pas de relevé de cette énergie)")
+        declaree = releve_combustible(house, p, c, statuts, t)
+        if declaree is None:
+            t.hyp_fiche("base_economies", "consommation estimée (pas de relevé de cette énergie)")
+        elif declaree < settings.audit_chauffage_declare_min_kwh:
+            deduit = c.get("eau_chaude_deduite_kwh_an")
+            t.alertes.append(
+                "Incohérence : "
+                + (f"une fois retirée l'eau chaude (~{_fr_int(deduit)} kWh), " if deduit else "")
+                + f"la consommation déclarée ({_fr_int(c['conso_autre_energie_kwh_an'])} kWh) ne laisse presque "
+                "rien pour le chauffage. Les économies sont calculées sur l'estimation, à confirmer avec vos factures."
+            )
+        else:
+            retenue, base = declaree, "declaree"
+        if declaree is not None and estimee:
+            ratio = round(declaree / estimee, 2)
+            c["ratio_reel_theorique"] = ratio
+            c["message_ratio"] = message_ratio(ratio)
+            statuts["ratio_reel_theorique"] = "calcule"
 
     prix = prix_energie(p["energie"], p["kva"])
     t.hyp(f"prix_{p['energie']}_eur_kwh", prix, f"prix_{p['energie']}")
@@ -348,7 +410,10 @@ def puissance_chauffage(house: House, p: dict, c: dict, t: _Trace) -> dict | Non
     h = settings.audit_hauteur_plafond_m
     p_volume = p["surface"] * h * g * ecart / 1000 if p["surface"] else None
 
-    reference = "consommation" if declaree and p_conso else "volume"
+    # Point 80 : un appoint hors du relevé chauffe une partie de la maison que la consommation
+    # ne voit pas ; le volume fait alors référence, la consommation reste affichée.
+    appoint = declaree and appoint_hors_facture(house, p["energie"])
+    reference = "consommation" if declaree and p_conso and not appoint else "volume"
     p_ref = p_conso if reference == "consommation" else p_volume
     if not p_ref:
         return None
@@ -369,6 +434,7 @@ def puissance_chauffage(house: House, p: dict, c: dict, t: _Trace) -> dict | Non
         "p_conso_kw": round(p_conso, 1) if p_conso else None,
         "p_volume_kw": round(p_volume, 1) if p_volume else None,
         "reference": reference,  # consommation | volume
+        "appoint": house.chauffage_appoint if appoint else None,  # v2.7, point 80
         "p_reference_kw": round(p_ref, 1),
         "p_bas_kw": round(min(connues), 1), "p_haut_kw": round(max(connues), 1),
         "pac_air_eau_kw": {"bas": _demi_kw(p_ref * bas_pct / 100), "haut": _demi_kw(p_ref * haut_pct / 100)},
@@ -435,7 +501,11 @@ def textes_puissance(bloc: dict, actions: list[dict]) -> None:
          "p_conso": _kw(bloc["p_conso_kw"]) if bloc["p_conso_kw"] else None,
          "p_volume": _kw(bloc["p_volume_kw"]) if bloc["p_volume_kw"] else None,
          "pac_bas": _kw(bloc["pac_air_eau_kw"]["bas"]), "pac_haut": _kw(bloc["pac_air_eau_kw"]["haut"])}
-    cle = "puissance_declaree" if bloc["reference"] == "consommation" else "puissance_estimee"
+    if bloc.get("appoint"):
+        v["appoint"] = ref.LIBELLE_VALEUR["chauffage_principal"].get(bloc["appoint"])
+        cle = "puissance_appoint"
+    else:
+        cle = "puissance_declaree" if bloc["reference"] == "consommation" else "puissance_estimee"
     bloc["texte"] = _remplir(tx[cle], v)
     complet = bloc["affichage"] == "complet"
     bloc["texte_plage"] = _remplir(tx["plage_pac"], v) if complet else None

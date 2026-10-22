@@ -469,6 +469,9 @@ LIBELLES_HYPOTHESES: dict[str, str] = {
     "puissance_pac_plage_pct": "Puissance d'une PAC air/eau, en % du besoin : {valeur}",
     "radiateurs_regimes": "Températures d'eau testées pour les radiateurs (départ, retour), en °C : {valeur}",
     "radiateurs_exposant": "Exposant des radiateurs (puissance donnée pour 50 °C d'écart) : {valeur}",
+    # v2.7 : la consommation d'une autre énergie, ramenée en kWh.
+    "kwh_par_unite": "Énergie contenue dans une unité ({param}), en kWh : {valeur}",
+    "ecs_combustible_kwh_occupant_an": "Eau chaude au gaz, en kWh par occupant et par an : {valeur}",
 }
 # Mots techniques qui apparaissent dans ces valeurs (clés de dictionnaire, formes d'aide,
 # paramètres). Les actions, postes et équipements ont déjà leurs libellés ailleurs.
@@ -518,6 +521,8 @@ SOURCES: dict[str, tuple[str, str]] = {
     "facteurs_co2": ("Méthode du DPE, arrêté du 31/03/2021 modifié", "2026-10-20"),
     "hausse_prix": ("Hausse annuelle du prix de l'énergie, même hypothèse que le simulateur", "2026-10-20"),
     "puissance": ("Méthode de la fiche « PAC air/eau » (consommation et volume), valeurs à calibrer", "2026-10-22"),
+    "conversion_autre_energie": ("Pouvoir calorifique courant de chaque énergie, à valider", "2026-10-22"),
+    "ecs_combustible": ("Eau chaude au gaz par occupant, ordre de grandeur à valider", "2026-10-22"),
 }
 
 # --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------
@@ -661,11 +666,13 @@ TEXTES_ACTIONS: dict[str, dict] = {
 # v2.6 : la puissance de chauffage et les radiateurs pièce par pièce (point 37). Même règle de
 # source unique que `TEXTES_ACTIONS` : recopiés MOT POUR MOT de la section « Pour le pré-audit »
 # de la fiche, vérifiés par `tests/test_audit_textes.py`. Variables : {t_base}, {p_bas},
-# {p_haut}, {p_conso}, {p_volume}, {pac_bas}, {pac_haut} (kW, virgule décimale), {piece}.
+# {p_haut}, {p_conso}, {p_volume}, {pac_bas}, {pac_haut} (kW, virgule décimale), {piece} ;
+# v2.7 : {appoint} (`LIBELLE_VALEUR["chauffage_principal"]`).
 TEXTES_PUISSANCE: dict[str, str] = {
     "fiche": "action_pac_remplacement",
     "puissance_declaree": "Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage. Le calcul tiré de votre consommation réelle ({p_conso} kW) est le plus juste ; le calcul au volume ({p_volume} kW) sert de repère de prudence.",
     "puissance_estimee": "Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage, selon deux calculs faits sans vos relevés. Avec vos factures de chauffage, ce chiffre serait plus juste, et souvent plus bas.",
+    "puissance_appoint": "Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage. Votre appoint ({appoint}) chauffe une partie de la maison sans passer par vos relevés : le calcul au volume ({p_volume} kW) sert donc de référence.",
     "plage_pac": "Une pompe à chaleur air/eau d'environ {pac_bas} à {pac_haut} kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.",
     "radiateurs_ok_50": "{piece} : vos radiateurs suffisent avec une eau à 50 °C.",
     "radiateurs_ok_55": "{piece} : vos radiateurs suffisent avec une eau à 55 °C.",

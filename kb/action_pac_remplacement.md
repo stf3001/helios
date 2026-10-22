@@ -62,6 +62,7 @@ R: La pompe à chaleur air/eau (et géothermique) fait partie des rares gestes *
 - **devis_convecteurs** : une unité par pièce principale, puissance justifiée · niveau sonore des unités intérieures et extérieure · évacuation des condensats et ligne électrique dédiée
 - **puissance_declaree** : « Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage. Le calcul tiré de votre consommation réelle ({p_conso} kW) est le plus juste ; le calcul au volume ({p_volume} kW) sert de repère de prudence. »
 - **puissance_estimee** : « Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage, selon deux calculs faits sans vos relevés. Avec vos factures de chauffage, ce chiffre serait plus juste, et souvent plus bas. »
+- **puissance_appoint** : « Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage. Votre appoint ({appoint}) chauffe une partie de la maison sans passer par vos relevés : le calcul au volume ({p_volume} kW) sert donc de référence. »
 - **plage_pac** : « Une pompe à chaleur air/eau d'environ {pac_bas} à {pac_haut} kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie. »
 - **radiateurs_ok_50** : « {piece} : vos radiateurs suffisent avec une eau à 50 °C. »
 - **radiateurs_ok_55** : « {piece} : vos radiateurs suffisent avec une eau à 55 °C. »

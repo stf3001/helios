@@ -925,13 +925,28 @@ def _deperditions(pdf: FPDF, audit: dict):
         pdf.ln(6.4)
 
 
+# v2.7 : le relevé d'une autre énergie, tel que la fiche le dit (libellés de `FicheMaison.tsx`).
+_TYPE_RELEVE = {"gaz": "gaz", "fioul": "fioul", "bois_buches": "bois en bûches", "granules": "granulés",
+                "reseau": "chaleur du réseau"}
+_UNITE_RELEVE = {"kwh": "kWh", "m3": "m³", "litres": "litres", "steres": "stères", "kg": "kg"}
+
+
 def _consommation_v2(pdf: FPDF, audit: dict, encadre: bool = False):
     c = audit["consommation"]
     _para(pdf,
           f"Consommation de chauffage estimée : {_kwh(c['conso_chauffage_estimee_kwh_an'])} par an de "
           f"{_ENERGIE.get(c.get('energie_chauffage'), c.get('energie_chauffage'))} "
           f"({_ORIGINE.get(c.get('origine'), c.get('origine'))}, zone climatique {c.get('zone_climatique')}).")
-    if c.get("conso_chauffage_declaree_kwh_an") is not None:
+    if c.get("releve"):  # v2.7 : un relevé de fioul, de gaz, de bois ou de réseau de chaleur
+        r = c["releve"]
+        quantite = f"{_milliers(r['quantite'])}{NBSP}{_UNITE_RELEVE.get(r['unite'], r['unite'])}"
+        eau = (f", dont environ {_kwh(c['eau_chaude_deduite_kwh_an'])} pour l'eau chaude"
+               if c.get("eau_chaude_deduite_kwh_an") else "")
+        _para(pdf,
+              f"D'après votre relevé : {quantite} de {_TYPE_RELEVE.get(r['type'], r['type'])} par an, soit environ "
+              f"{_kwh(c['conso_autre_energie_kwh_an'])}{eau} : il reste "
+              f"{_kwh(c['conso_chauffage_declaree_kwh_an'])} pour le chauffage.")
+    elif c.get("conso_chauffage_declaree_kwh_an") is not None:
         _para(pdf,
               f"D'après votre facture : {_kwh(c['conso_elec_declaree_kwh_an'])} d'électricité par an, dont "
               f"environ {_kwh(c['usages_specifiques_kwh_an'])} pour les usages courants (appareils, eau "
