@@ -1395,14 +1395,22 @@ propriétaire. » Proposée dans le plan du 22/10/2026, acceptée avec lui, écr
 relire par Stéphane. La rubrique proposée pour la ventilation est « aucune » (la liste du brief
 n'en a pas) : à confirmer aussi.
 
-### [ ] 79. Valider les réglages « A VALIDER » de la puissance de chauffage
+### [x] 79. Valider les réglages « A VALIDER » de la puissance de chauffage — validés le 22/10/2026
+
+Validés en l'état par Stéphane (ordres de grandeur, à recaler sur des cas réels) ; `config.py` le dit
+sous `audit_t_int`. Texte d'origine :
 
 `config.py`, sous `audit_t_int` : températures de base par zone (−10 / −7 / −5 °C), degrés-jours
 (2 700 / 2 200 / 1 500), hauteur sous plafond (2,5 m), G (1,6 et plancher 0,6 W/m³.K), régimes des
 radiateurs (50/45 et 55/50 °C), exposant (1,3), plage PAC (80-120 %). Ce sont les propositions du
 brief, appliquées telles quelles ; l'altitude n'est pas prise en compte (comme `coef_zone`).
 
-### [ ] 80. Une facture qui ne voit pas tout le chauffage donne une puissance trop basse
+### [x] 80. Une facture qui ne voit pas tout le chauffage donne une puissance trop basse — réglé le 22/10/2026 (v2.7)
+
+Décision de Stéphane : avec un appoint hors relevé, le calcul au volume fait référence et la
+consommation reste affichée (`audit_engine.appoint_hors_facture`, texte `puissance_appoint`). La
+maison de référence passe de 4,2 à 12,2 kW. Débrief : `debriefs/2026-10-22-preaudit-lot7.md`.
+Texte d'origine :
 
 Trouvé en vérifiant le lot 6. Quand la consommation est déclarée, c'est elle qui fait référence.
 Mais une maison avec un appoint « autre » (bois, par exemple), donc hors facture, ou de gros
@@ -1412,6 +1420,13 @@ même maison en convecteurs ressortait à 1,4 kW. Le moteur signale déjà l'app
 dans ses hypothèses. À trancher par Stéphane : garder la règle, ou faire référence au volume
 quand un appoint hors facture est déclaré, ou quand l'écart entre les deux calculs dépasse un
 seuil. Sans effet sur l'air/eau : elle ne se propose qu'au fioul et au gaz, jamais déclarés.
+
+### [ ] 81. Valider les facteurs de conversion et l'eau chaude au gaz
+
+`config.py` : `audit_kwh_par_unite` (fioul 10 kWh/L, gaz 11 kWh/m³, bûches 1 700 kWh/stère,
+granulés 4,6 kWh/kg) et `audit_ecs_combustible_kwh_occupant_an` (1 100 kWh de gaz par occupant).
+Propositions du brief du lot 7, appliquées telles quelles et marquées « A VALIDER ». Le propane
+n'est pas une énergie du moteur : un foyer au propane ne peut pas encore déclarer son relevé.
 
 ## Le piège à ne pas réintroduire
 
