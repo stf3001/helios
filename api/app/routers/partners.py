@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+import json
+from datetime import date
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from pydantic import ValidationError
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.ratelimit import limiter
 from app.models.partner import Partner
 from app.schemas.partner import PartnerApply
-from app.services import regions
+from app.services import justificatifs, regions
 
 router = APIRouter(prefix="/partners", tags=["partners"])
 
@@ -56,8 +61,25 @@ async def list_partners(
 
 
 @router.post("/apply", status_code=status.HTTP_201_CREATED)
-async def apply(payload: PartnerApply, db: AsyncSession = Depends(get_db)):
-    """Candidature partenaire — crée un partenaire en statut « candidat » (validation manuelle ensuite)."""
+@limiter.limit("5/minute")
+async def apply(
+    request: Request,
+    candidature: str = Form(...),
+    kbis: UploadFile = File(...), kbis_date: date = Form(...),
+    decennale: UploadFile = File(...), decennale_fin: date = Form(...),
+    rge: UploadFile | None = File(None), rge_fin: date | None = Form(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Candidature partenaire — statut « candidat », validation par l'administration ensuite.
+
+    Lot 3 : multipart. `candidature` porte les champs (JSON, schéma `PartnerApply`) ; le Kbis (de
+    moins de 3 mois) et l'attestation décennale sont joints d'office, la qualification RGE aussi si
+    elle est déclarée. Mêmes règles que le dépôt depuis l'espace partenaire (`services/justificatifs`).
+    """
+    try:
+        payload = PartnerApply.model_validate(json.loads(candidature))
+    except (json.JSONDecodeError, ValidationError):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Candidature illisible : vérifiez les champs.")
     # Les zones sont ramenees a des numeros de departement DES L'ECRITURE : `chat.py`
     # compare par egalite stricte au departement du visiteur, donc un partenaire ayant
     # saisi « 69001 » n'etait jamais propose. Le refus nomme la valeur fautive — une
@@ -71,18 +93,37 @@ async def apply(payload: PartnerApply, db: AsyncSession = Depends(get_db)):
             detail=f"Zone « {e.valeur} » non reconnue : indiquez un numero de departement "
                    f"(13, 2A) ou un code postal (13100).",
         )
+    # L'e-mail est l'identifiant de connexion de l'espace partenaire : il doit être unique.
+    if await db.scalar(select(func.count()).select_from(Partner)
+                       .where(func.lower(Partner.email) == payload.email.strip().lower())):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Une candidature existe déjà avec cet e-mail.")
+    if payload.rge and rge is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Joignez votre qualification RGE, ou décochez RGE.")
+
+    aujourd_hui = date.today()
+    pieces = [("kbis", kbis, kbis_date, None), ("decennale", decennale, None, decennale_fin)]
+    if payload.rge:
+        pieces.append(("rge", rge, None, rge_fin))
+    lus = []
+    for type_, fichier, delivrance, fin in pieces:
+        justificatifs.verifier_dates(type_, delivrance, fin, aujourd_hui)
+        lus.append((type_, fichier, await justificatifs.lire_fichier(fichier), delivrance, fin))
 
     partner = Partner(
         raison_sociale=payload.raison_sociale,
         siret=payload.siret,
-        email=payload.email,
+        email=payload.email.strip(),
         rge=payload.rge,
         zones=zones,
         metiers=payload.metiers,
         statut="candidat",
     )
     db.add(partner)
+    await db.flush()
+    for type_, fichier, contenu, delivrance, fin in lus:
+        db.add(justificatifs.ecrire(partner, type_, fichier.filename or "", fichier.content_type, contenu,
+                                    delivrance, fin))
     await db.commit()
     await db.refresh(partner)
     return {"id": partner.id, "statut": partner.statut,
-            "message": "Candidature reçue. Nous revenons vers vous après vérification (RGE, décennale, Kbis…)."}
+            "message": "Candidature reçue. Nous revenons vers vous après vérification de vos justificatifs."}

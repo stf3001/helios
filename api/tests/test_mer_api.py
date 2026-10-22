@@ -13,11 +13,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.core.db import async_session, engine
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_partner_token
 from app.main import app
 from app.models.house import House
 from app.models.partner import Partner
 from app.models.user import User
+from tests.outils_mer import assurer_charte, mettre_en_regle, retirer_charte
 
 PREFIXE = "MER-TEST "
 SIGNEE = datetime(2026, 10, 1, tzinfo=timezone.utc)
@@ -36,6 +37,7 @@ async def _base_prete() -> bool:
 async def _creer() -> dict:
     async with async_session() as s:
         ids = {}
+        ids["charte"] = await assurer_charte(s)
         for nom, statut, charte in [("A", "actif", SIGNEE), ("B", "actif", SIGNEE), ("C", "actif", SIGNEE),
                                     ("D", "actif", SIGNEE), ("Sans charte", "actif", None),
                                     ("Suspendu", "suspendu", SIGNEE)]:
@@ -43,6 +45,10 @@ async def _creer() -> dict:
                         metiers=["isolation"], rge=True)
             s.add(p)
             await s.flush()
+            # Lot 3 : « Sans charte » a ses justificatifs mais n'a pas signé la charte en vigueur.
+            mettre_en_regle(s, p, ids["charte"][0])
+            if charte is None:
+                p.charte_version_signee = p.charte_signee_at = None
             ids[nom] = p.id
         for cle, statut in (("proprio", "proprietaire"), ("locataire", "locataire")):
             u = User(email=f"mer-{uuid.uuid4().hex[:10]}@test.invalid", password_hash="x")
@@ -59,6 +65,7 @@ async def _effacer(ids) -> None:
         await s.execute(text("DELETE FROM leads WHERE partner_id IN (SELECT id FROM partners WHERE raison_sociale LIKE :p)"),
                         {"p": PREFIXE + "%"})
         await s.execute(text("DELETE FROM partners WHERE raison_sociale LIKE :p"), {"p": PREFIXE + "%"})
+        await retirer_charte(s, *ids["charte"])
         for cle in ("proprio", "locataire"):
             await s.execute(text("DELETE FROM houses WHERE user_id = :u"), {"u": ids[cle]})
             await s.execute(text("DELETE FROM users WHERE id = :u"), {"u": ids[cle]})
@@ -152,18 +159,18 @@ def test_creation_garde_fous_et_prix_fige(ctx):
     assert creer("proprio", "D").status_code == 201
 
 
-def test_la_charte_se_date_dans_l_admin_et_rend_le_partenaire_proposable(ctx, monkeypatch):
-    from datetime import date, timedelta
-
-    from app.core.config import settings
+def test_signer_la_charte_dans_l_espace_rend_le_partenaire_proposable(ctx):
     c, ids, h = ctx
-    monkeypatch.setattr(settings, "admin_token", "secret-de-test")
-    admin = {"X-Admin-Token": "secret-de-test"}
-    url = f"/api/admin/partners/{ids['Sans charte']}/charte"
-    assert c.post(url, headers=admin, json={"date": (date.today() + timedelta(days=1)).isoformat()}).status_code == 422
-    assert c.post(url, json={"date": "2026-10-01"}).status_code == 403
-    r = c.post(url, headers=admin, json={"date": "2026-10-01"})
-    assert r.status_code == 200 and r.json()["charte_signee_at"].startswith("2026-10-01")
+    version = ids["charte"][0]
+    hp = {"Authorization": f"Bearer {create_partner_token(str(ids['Sans charte']))}"}
+    moi = c.get("/api/partner/me", headers=hp).json()
+    assert moi["en_regle"] is False and moi["alertes"][0] == f"Signez la charte {version} pour recevoir de nouvelles demandes."
+    assert c.post("/api/partner/charte", headers=hp, json={"version": "v0"}).status_code == 409
+    r = c.post("/api/partner/charte", headers=hp, json={"version": version})
+    assert r.status_code == 200 and r.json()["version_signee"] == version
+    assert c.get("/api/partner/me", headers=hp).json()["en_regle"] is True
     vus = {p["raison_sociale"] for _ in range(60) for p in
            c.get("/api/leads/propositions", headers=h["proprio"], params={"metier": "isolation"}).json()["propositions"]}
     assert PREFIXE + "Sans charte" in vus
+    # La route du lot 1 qui datait la charte à la place du partenaire n'existe plus.
+    assert c.post(f"/api/admin/partners/{ids['Sans charte']}/charte", json={"date": "2026-10-01"}).status_code in (404, 405)

@@ -17,6 +17,7 @@ from app.models.projet import Projet
 from app.models.user import User
 from app.routers.documents import DOCS_DIR
 from app.routers.leads import LEAD_DOCS_DIR
+from tests.outils_mer import assurer_charte, mettre_en_regle, retirer_charte
 
 PREFIXE = "MER2-TEST "
 PDL = "98765432109876"
@@ -37,8 +38,10 @@ async def _creer() -> dict:
         p = Partner(raison_sociale=PREFIXE + "Isol", statut="actif", zones=["83"], metiers=["isolation"], rge=True,
                     charte_signee_at=datetime(2026, 10, 1, tzinfo=timezone.utc))
         u = User(email=f"mer2-{uuid.uuid4().hex[:10]}@test.invalid", password_hash="x", prenom="Camille")
+        charte = await assurer_charte(s)
         s.add_all([p, u])
         await s.flush()
+        mettre_en_regle(s, p, charte[0])
         h = House(user_id=u.id, code_postal="83000", type_logement="maison", statut="proprietaire",
                   surface_habitable=110, horizon="<6mois", budget_envisage="15-30k", completeness_score=75.0,
                   pdl=PDL, travaux_deja_faits="Toiture par Martin Couvreur")
@@ -52,7 +55,7 @@ async def _creer() -> dict:
                     note="Note privée du foyer")
         s.add_all([d, pr])
         await s.commit()
-        return {"partner": p.id, "user": u.id, "house": h.id, "doc": d.id, "fichier": fichier, "projet": pr.id}
+        return {"charte": charte, "partner": p.id, "user": u.id, "house": h.id, "doc": d.id, "fichier": fichier, "projet": pr.id}
 
 
 async def _effacer(ids) -> None:
@@ -61,6 +64,7 @@ async def _effacer(ids) -> None:
         await s.execute(text("DELETE FROM projets WHERE house_id = :h"), {"h": ids["house"]})
         await s.execute(text("DELETE FROM house_documents WHERE house_id = :h"), {"h": ids["house"]})
         await s.execute(text("DELETE FROM partners WHERE raison_sociale LIKE :p"), {"p": PREFIXE + "%"})
+        await retirer_charte(s, *ids["charte"])
         await s.execute(text("DELETE FROM houses WHERE id = :h"), {"h": ids["house"]})
         await s.execute(text("DELETE FROM users WHERE id = :u"), {"u": ids["user"]})
         await s.commit()

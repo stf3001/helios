@@ -25,7 +25,7 @@ class Partner(Base):
     zones: Mapped[list[str] | None] = mapped_column(ARRAY(String))    # codes postaux / départements couverts
     metiers: Mapped[list[str] | None] = mapped_column(ARRAY(String))  # pv, pac, isolation, menuiseries, vmc...
     charte_signee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    statut: Mapped[str] = mapped_column(String(20), nullable=False, default="candidat")  # candidat|actif|suspendu
+    statut: Mapped[str] = mapped_column(String(20), nullable=False, default="candidat")  # candidat|actif|suspendu|refuse
     note_moyenne: Mapped[float | None] = mapped_column(Float)
     # Affiché au foyer à côté du nom (mises en relation, lot 1) : Hydrolia et Eolia sont des
     # sociétés du fondateur d'Hélios. Facultatif.
@@ -34,6 +34,7 @@ class Partner(Base):
     demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     # Version de la charte signée dans l'espace partenaire (lot 3) ; `charte_signee_at` en est l'horodatage.
     charte_version_signee: Mapped[str | None] = mapped_column(String(20))
+    motif_refus: Mapped[str | None] = mapped_column(Text)  # candidature refusée (statut `refuse`)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 

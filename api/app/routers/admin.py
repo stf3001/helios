@@ -7,28 +7,33 @@ Deux voies d'accès acceptées (cf. `require_admin_access`) :
 Le back-office est en LECTURE SEULE sur les données des foyers ; les seules écritures sont
 les actions explicitement prévues : partenaires (activation / suspension), signalements, et le
 suivi des rendez-vous (statut, note interne).
+
+Mises en relation, lot 3 : candidatures (justificatifs, validation avec lien d'activation à
+copier, refus motivé), contestations (accepter ou refuser, avec un motif) et justificatifs à
+échéance. Chaque action est tracée dans le journal des accès (`_tracer`).
 """
-import secrets
 import uuid
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from pydantic import BaseModel
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import async_session, get_db
 from app.core.deps import require_admin_access
-from app.core.security import hash_password
 from app.models.agent_log import AgentLog
 from app.routers import account
 from app.models.conversation import Conversation, Message
 from app.models.moderation import STATUTS, AdminAccessLog, MessageReport
-from app.models.partner import Partner
+from app.models.house import House
+from app.models.partner import Contestation, Lead, Partner, PartnerDocument
 from app.models.rendez_vous import STATUTS_RDV, RendezVous
 from app.models.user import User
-from app.services import admin_health, admin_stats, admin_supervision, agents_engine, rdv_admin
+from app.services import (activation, admin_health, admin_stats, admin_supervision, agents_engine, conformite,
+                          conformite_lecture, contestations, justificatifs, rdv_admin)
 from app.services.creneaux import heure_de_paris
 
 
@@ -169,16 +174,32 @@ async def lancer_agent(
     }
 
 
+async def _partenaire(db: AsyncSession, partner_id) -> Partner:
+    partner = await db.get(Partner, partner_id)
+    if partner is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire introuvable")
+    return partner
+
+
 @router.get("/partners")
 async def list_all_partners(
     _: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
 ):
-    """Tous les partenaires (candidats compris) pour la revue admin."""
-    rows = await db.scalars(select(Partner).order_by(Partner.created_at.desc()))
+    """Tous les partenaires (candidats compris) pour la revue admin, avec leurs justificatifs."""
+    rows = list(await db.scalars(select(Partner).order_by(Partner.created_at.desc())))
+    charte = await conformite_lecture.charte_en_vigueur(db)
+    version = charte.version if charte else None
+    docs = await conformite_lecture.documents_par_partenaire(db, (p.id for p in rows))
+    jour = date.today()
     return [
         {"id": p.id, "raison_sociale": p.raison_sociale, "siret": p.siret, "email": p.email,
-         "rge": p.rge, "zones": p.zones, "metiers": p.metiers, "statut": p.statut,
+         "rge": p.rge, "zones": p.zones, "metiers": p.metiers, "statut": p.statut, "motif_refus": p.motif_refus,
          "note_moyenne": p.note_moyenne, "charte_signee_at": p.charte_signee_at, "demo": p.demo,
+         "charte_version_signee": p.charte_version_signee, "charte_en_vigueur": version,
+         "compte_active": p.password_hash is not None,
+         "en_regle": conformite.en_regle(bool(p.rge), docs[p.id], p.charte_version_signee, version, jour),
+         "justificatifs": {t: e for t, e in conformite.etat_justificatifs(bool(p.rge), docs[p.id], jour).items()},
+         "documents": [justificatifs.sortie(d) for d in sorted(docs[p.id], key=lambda d: d.created_at, reverse=True)],
          "created_at": p.created_at}
         for p in rows
     ]
@@ -186,55 +207,167 @@ async def list_all_partners(
 
 @router.post("/partners/{partner_id}/activate")
 async def activate_partner(
-    partner_id, _: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+    partner_id, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
 ):
-    """Valide une candidature : statut=actif, charte signée, et génère un mot de passe initial
-    (renvoyé UNE seule fois) pour l'accès à l'espace partenaire."""
-    partner = await db.get(Partner, partner_id)
-    if partner is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire introuvable")
-
-    temp_password = secrets.token_urlsafe(9)
-    partner.password_hash = hash_password(temp_password)
+    """Valide une candidature : statut actif, et un LIEN D'ACTIVATION à usage unique (7 jours) que
+    l'administration copie et transmet elle-même — aucun e-mail. Ne signe RIEN à la place du
+    partenaire : la charte se signe dans son espace."""
+    partner = await _partenaire(db, partner_id)
+    if partner.statut == "refuse":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Candidature refusée.")
     partner.statut = "actif"
-    partner.charte_signee_at = datetime.now(timezone.utc)
+    partner.motif_refus = None
+    lien = await activation.creer(db, partner)
     await db.commit()
-    return {
-        "id": partner.id,
-        "statut": partner.statut,
-        "email": partner.email,
-        "mot_de_passe_initial": temp_password,  # à transmettre au partenaire, non stocké en clair
-    }
+    await _tracer(db, admin, "partenaire_valide", partner.raison_sociale)
+    return {"id": partner.id, "statut": partner.statut, "email": partner.email, **lien}
 
 
-class CharteSignee(BaseModel):
-    date: date
+@router.post("/partners/{partner_id}/lien-activation")
+async def nouveau_lien(
+    partner_id, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Un nouveau lien (perdu, expiré, mot de passe oublié) ; les précédents cessent de valoir."""
+    partner = await _partenaire(db, partner_id)
+    if partner.statut != "actif":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Seul un partenaire actif reçoit un lien d'activation.")
+    lien = await activation.creer(db, partner)
+    await db.commit()
+    await _tracer(db, admin, "lien_activation", partner.raison_sociale)
+    return {"id": partner.id, "email": partner.email, **lien}
 
 
-@router.post("/partners/{partner_id}/charte")
-async def enregistrer_charte(
-    partner_id, payload: CharteSignee, _: User | None = Depends(require_admin_access),
+class Motif(BaseModel):
+    motif: str = Field(min_length=3, max_length=1000)
+
+
+@router.post("/partners/{partner_id}/refuser")
+async def refuser_candidature(
+    partner_id, payload: Motif, admin: User | None = Depends(require_admin_access),
     db: AsyncSession = Depends(get_db),
 ):
-    """Date de signature de la charte, saisie par Stéphane (mises en relation, lot 1). Sans elle,
-    un partenaire actif n'est jamais proposé à un foyer (`services/propositions.eligible`)."""
-    partner = await db.get(Partner, partner_id)
-    if partner is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire introuvable")
-    if payload.date > date.today():
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "La date de signature ne peut pas être dans le futur.")
-    partner.charte_signee_at = datetime.combine(payload.date, time(12), tzinfo=timezone.utc)
+    partner = await _partenaire(db, partner_id)
+    if partner.statut != "candidat":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Seule une candidature en attente se refuse.")
+    partner.statut, partner.motif_refus = "refuse", payload.motif.strip()
     await db.commit()
-    return {"id": partner.id, "charte_signee_at": partner.charte_signee_at}
+    await _tracer(db, admin, "candidature_refusee", partner.raison_sociale)
+    return {"id": partner.id, "statut": partner.statut, "motif_refus": partner.motif_refus}
+
+
+@router.get("/partners/{partner_id}/documents/{doc_id}")
+async def document_partenaire(
+    partner_id, doc_id, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    doc = await db.get(PartnerDocument, doc_id)
+    if doc is None or str(doc.partner_id) != str(partner_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
+    await _tracer(db, admin, "justificatif_lu", f"{doc.type} · {doc.filename}")
+    return FileResponse(doc.path, filename=doc.filename)
+
+
+@router.post("/partners/{partner_id}/documents/{doc_id}/refuser")
+async def refuser_document(
+    partner_id, doc_id, payload: Motif, admin: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Un justificatif refusé ne compte plus : le partenaire sort des propositions s'il n'en a pas d'autre."""
+    doc = await db.get(PartnerDocument, doc_id)
+    if doc is None or str(doc.partner_id) != str(partner_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
+    doc.statut, doc.motif_refus = "refuse", payload.motif.strip()
+    await db.commit()
+    await _tracer(db, admin, "justificatif_refuse", f"{doc.type} · {doc.filename}")
+    return justificatifs.sortie(doc)
+
+
+@router.get("/justificatifs/echeances")
+async def echeances(
+    jours: int = 30, _: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Justificatifs retenus des partenaires actifs, expirés ou à échéance dans `jours` jours."""
+    actifs = list(await db.scalars(select(Partner).where(Partner.statut == "actif")))
+    docs = await conformite_lecture.documents_par_partenaire(db, (p.id for p in actifs))
+    jour = date.today()
+    out = []
+    for p in actifs:
+        for t, e in conformite.etat_justificatifs(bool(p.rge), docs[p.id], jour).items():
+            if e["etat"] == "manquant" or (e["date_fin"] and (e["date_fin"] - jour).days <= jours):
+                out.append({"partner_id": p.id, "raison_sociale": p.raison_sociale, "demo": p.demo, "type": t,
+                            "libelle": conformite.LIBELLES[t], "etat": e["etat"], "date_fin": e["date_fin"]})
+    return sorted(out, key=lambda x: (x["date_fin"] or date.min, x["raison_sociale"]))
+
+
+# --- Contestations de mises en relation (lot 3) ---
+
+
+@router.get("/contestations")
+async def liste_contestations(
+    statut: str = "en_attente", admin: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    if statut not in ("en_attente", "acceptee", "refusee"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Statut inconnu")
+    rows = (await db.execute(
+        select(Contestation, Lead, Partner).join(Lead, Contestation.lead_id == Lead.id)
+        .join(Partner, Lead.partner_id == Partner.id).where(Contestation.statut == statut)
+        .order_by(Contestation.created_at)
+    )).all()
+    out = []
+    for c, lead, partner in rows:
+        house = await db.get(House, lead.house_id)
+        # Aide au motif « doublon » : la même maison, le même métier, chez ce partenaire, par Hélios
+        # dans les 12 mois. Un doublon venu « en direct » reste à l'appréciation de l'administration.
+        doublons = await db.scalar(select(func.count()).select_from(Lead).where(
+            Lead.house_id == lead.house_id, Lead.partner_id == lead.partner_id, Lead.metier == lead.metier,
+            Lead.id != lead.id, Lead.consent_client_at < lead.consent_client_at,
+            Lead.consent_client_at >= lead.consent_client_at - timedelta(days=365)))
+        out.append({
+            "id": c.id, "motif": c.motif, "libelle": contestations.MOTIFS.get(c.motif, c.motif),
+            "commentaire": c.commentaire, "essais": c.essais, "statut": c.statut,
+            "decision_motif": c.decision_motif, "decidee_le": c.decidee_le, "created_at": c.created_at,
+            "lead": {"id": lead.id, "metier": lead.metier, "transmis_le": lead.consent_client_at,
+                     "code_postal": house.code_postal if house else None, "creneaux": lead.creneaux or [],
+                     "a_un_telephone": lead.contact_telephone is not None, "facturable": lead.facturable,
+                     "prix_ht": float(lead.prix_ht) if lead.prix_ht is not None else None},
+            "partenaire": {"id": partner.id, "raison_sociale": partner.raison_sociale, "demo": partner.demo},
+            "doublons_helios_12_mois": doublons,
+        })
+    await _tracer(db, admin, "contestations_consultees", statut)
+    return out
+
+
+class Decision(BaseModel):
+    acceptee: bool
+    motif: str = Field(min_length=3, max_length=1000)
+
+
+@router.post("/contestations/{contestation_id}/decision")
+async def decider_contestation(
+    contestation_id, payload: Decision, admin: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Acceptée → la demande n'est plus facturable (`prix_ht` gardé). Refusée → rien ne change."""
+    c = await db.get(Contestation, contestation_id)
+    if c is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Contestation introuvable")
+    if c.statut != "en_attente":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Contestation déjà tranchée.")
+    lead = await db.get(Lead, c.lead_id)
+    c.statut = "acceptee" if payload.acceptee else "refusee"
+    c.decision_motif, c.decidee_le = payload.motif.strip(), datetime.now(timezone.utc)
+    if payload.acceptee:
+        lead.facturable = False
+    await db.commit()
+    await _tracer(db, admin, f"contestation_{c.statut}", str(c.lead_id))
+    return {"id": c.id, "statut": c.statut, "facturable": lead.facturable}
 
 
 @router.post("/partners/{partner_id}/suspend")
 async def suspend_partner(
     partner_id, _: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
 ):
-    partner = await db.get(Partner, partner_id)
-    if partner is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire introuvable")
+    partner = await _partenaire(db, partner_id)
     partner.statut = "suspendu"
     await db.commit()
     return {"id": partner.id, "statut": partner.statut}

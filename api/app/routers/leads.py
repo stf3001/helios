@@ -38,7 +38,7 @@ from app.models.projet import Projet
 from app.models.simulateur import SimulateurStudy
 from app.models.user import User
 from app.schemas.partner import LeadCreate, LeadDossier, LeadStatusUpdate, ReviewCreate
-from app.services import commission, dossier_lead, propositions, regions
+from app.services import commission, conformite_lecture, dossier_lead, propositions, regions
 from app.services.score_lead import score as score_lead
 from app.services.email import send_lead_notification
 
@@ -141,8 +141,9 @@ async def get_propositions(metier: str, user: User = Depends(get_current_user), 
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Métier inconnu")
     departement = regions.departement_du_code_postal(house.code_postal or "")
     voit_demo = propositions.voit_les_demos(user.email)
-    eligibles = [p for p in await db.scalars(select(Partner).where(Partner.statut == "actif"))
-                 if propositions.eligible(p, departement, metier, voit_demo)]
+    actifs = list(await db.scalars(select(Partner).where(Partner.statut == "actif")))
+    en_regle = await conformite_lecture.en_regle(db, actifs)
+    eligibles = [p for p in actifs if propositions.eligible(p, departement, metier, voit_demo, p.id in en_regle)]
     avis = await _nb_avis(db)
     tires = propositions.tirer(eligibles, settings.mer_nb_propositions)
     return {"metier": metier, "ordre": "tire_au_sort",
@@ -195,7 +196,7 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
             Lead.house_id == house.id, Lead.type == "travaux", Lead.statut.in_(propositions.STATUTS_ACTIFS))))
         refus = propositions.refus_creation(
             house.statut, payload.metier, partner, regions.departement_du_code_postal(house.code_postal or ""), actifs,
-            propositions.voit_les_demos(user.email))
+            propositions.voit_les_demos(user.email), partner.id in await conformite_lecture.en_regle(db, [partner]))
         if refus:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, refus)
         prix_ht = settings.mer_prix_ht_eur  # figé : un changement de prix ne touche pas les leads passés
