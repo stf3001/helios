@@ -1,4 +1,5 @@
-"""Carnet, lot 11 : les isolants d'un chantier (rubrique du carnet d'information du logement).
+"""Carnet, lot 11 : les isolants d'un chantier, et « À compléter pour votre carnet
+d'information du logement » (`GET /houses/me/cil`, indicateur sans valeur légale).
 
 Contrôles d'accès comme `travaux.py` : un chantier ou un isolant d'un autre foyer répond 404.
 """
@@ -11,10 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.models.equipement import Equipement
 from app.models.isolant import MAX_ISOLANTS_PAR_MAISON, Isolant
+from app.models.journal import JournalEntree
+from app.models.travaux import Travaux
 from app.models.user import User
 from app.routers.equipements import _own_house
 from app.routers.travaux import _own_travaux
+from app.services.cil import a_completer
 
 router = APIRouter(prefix="/houses/me", tags=["carnet"])
 
@@ -82,3 +87,14 @@ async def delete_isolant(isolant_id: uuid.UUID, user: User = Depends(get_current
     house = await _own_house(db, user.id)
     await db.delete(await _own_isolant(db, house, isolant_id))
     await db.commit()
+
+
+@router.get("/cil")
+async def get_cil(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    house = await _own_house(db, user.id)
+    def de_la_maison(modele):
+        return select(modele).where(modele.house_id == house.id)
+    return a_completer(list(await db.scalars(de_la_maison(Travaux).order_by(Travaux.date_reception))),
+                       list(await db.scalars(de_la_maison(Equipement))),
+                       list(await db.scalars(de_la_maison(Isolant))),
+                       list(await db.scalars(de_la_maison(JournalEntree))))
