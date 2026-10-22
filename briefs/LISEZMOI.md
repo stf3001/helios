@@ -68,13 +68,21 @@ Décisions de Stéphane du 22/10/2026 : réglages de puissance validés en l'ét
 |---|---|---|
 | 1 | `BRIEF-preaudit-lot7-conso-combustibles.md` | série 6 |
 
-## Série 8 (22/10/2026) — Hélios lit la puissance (point 81)
+## Série 8 (22/10/2026) — Hélios lit la puissance (point 81), faite le 22/10/2026
 
 Décisions de Stéphane du 22/10/2026 : facteurs de conversion validés en l'état ; le chat reprend la puissance, la plage de PAC, les verdicts des radiateurs et le relevé de combustible.
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-chat-lot1-puissance.md` | série 7 |
+
+## Série 9 (22/10/2026) — réponse directe du pré-audit dans le chat
+
+Décision de Stéphane du 22/10/2026 : pour la puissance, les radiateurs, le relevé et la puissance d'un devis, Hélios renvoie les phrases du pré-audit, sans LLM (le modèle local en ratait deux sur cinq).
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-chat-lot2-reponse-preaudit.md` | série 8 |
 
 ## Références
 
