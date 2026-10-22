@@ -1246,6 +1246,44 @@ Il est en `outil: "aucun"` depuis le 22/10/2026 : le calculateur d'Hydrolia est 
 mène qu'à une table provisoire (point 14), et le simulateur solaire calcule la production
 ÉLECTRIQUE. Décision de Stéphane : il s'en occupera quand le calculateur sera réparé.
 
+### [x] 59. Mises en relation, lot 1 : prix fixe, choix parmi trois — fait le 22/10/2026
+
+60 € HT figés sur chaque lead `travaux` (`leads.prix_ht`, migration 0035), plus aucune commission
+calculée sur les travaux ; le foyer choisit parmi au plus 3 partenaires tirés au sort
+(`services/propositions.py`), voit les liens d'intérêt et consent avec le texte exact ; AD Solar
+`suspendu` ; textes publics, fiche FAQ et constitution v0.3 au prix fixe. Courtage inchangé.
+**Vérifié** à l'écran avec des partenaires jetables (effacés). Voir `debriefs/2026-10-22-mer-lot1.md`.
+
+### [ ] 60. Dater la charte des partenaires réels — SANS CELA, AUCUNE PROPOSITION
+
+Un partenaire n'est proposé à un foyer que s'il est `actif` ET a une charte signée. Ensol,
+Hydrolia, Eolia et Energiesto sont actifs mais **sans date de charte** (le seed les a activés sans
+passer par l'admin) : aujourd'hui, un foyer ne reçoit aucune proposition, nulle part. À faire par
+Stéphane dans `/admin/partenaires` (« Enregistrer la signature »), pour ceux qui ont réellement signé.
+
+### [ ] 61. Remplacer AD Solar en PACA (solaire et pompe à chaleur)
+
+Depuis le 22/10/2026, aucun partenaire réel ne couvre la PACA en solaire ni en PAC (Ensol couvre
+le reste de la France), et l'annuaire provisoire n'y a plus que deux noms au lieu de trois
+(`tests/test_regions.py` le dit). Un foyer du Var qui demande des panneaux n'a personne.
+
+### [ ] 62. Faire relire par un avocat le contrat partenaire au nouveau modèle
+
+Le doc 08 §5 est écrit pour une commission sur les travaux signés. Le modèle est désormais un prix
+fixe dû à la transmission, avec contestation sous 7 jours (lot 3) : contrat, CGV partenaire et
+mentions à faire relire avant de facturer quiconque.
+
+### [ ] 63. Reporter la constitution v0.3 dans le doc 03 du dossier de cadrage
+
+`prompts/constitution-v0.3.md` dit « payée à prix fixe… » ; sa source de vérité déclarée,
+`03-CONSTITUTION-HELIOS.md` (hors du dépôt), parle encore de commission. À synchroniser.
+
+### [ ] 64. L'annuaire public est encore trié par note
+
+`GET /partners` (`routers/partners.py`) range les partenaires par note moyenne décroissante. Les
+propositions ne le sont jamais (tirage au sort) ; l'annuaire, lui, met toujours les mieux notés en
+tête. À trancher : ordre alphabétique, ou tirage, pour rester cohérent avec le prix fixe.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
