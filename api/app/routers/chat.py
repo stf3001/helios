@@ -19,6 +19,7 @@ from app.models.energy import EnergyStudy
 from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.journal import JournalEntree
+from app.models.risques import RisquesCommune
 from app.models.moderation import MOTIFS, MessageReport
 from app.models.partner import Partner
 from app.models.piece import Emetteur, Piece
@@ -29,7 +30,7 @@ from app.models.solar import SolarStudy
 from app.models.travaux import Travaux
 from app.models.user import User
 from app.schemas.chat import ChatIn
-from app.services import civilites, ollama_client, rag, regions, router_llm
+from app.services import civilites, ollama_client, rag, regions, risques_affichage, router_llm
 from app.services.a_faire import derniers_faits, journal_fusionne
 from app.services.carnet_contexte import carnet_contexte, parle_du_carnet
 from app.services.entretien import echeances, table_courante
@@ -67,6 +68,9 @@ async def _carnet_du_foyer(db: AsyncSession, house: House) -> dict | None:
         carnet = carnet_contexte(
             eqs, echs, garanties_maison(equipements, travaux, aujourd_hui), journal_fusionne(entrees, travaux),
             resume_pieces(house, pieces, emetteurs) if pieces else None, aujourd_hui, travaux=travaux,
+            # Phase 2 : les risques de la commune, relus du cache seulement — jamais d'appel réseau ici.
+            risques=risques_affichage.pour_le_chat(
+                await db.get(RisquesCommune, house.code_insee) if house.code_insee else None),
         )
         return carnet or None
     except Exception:

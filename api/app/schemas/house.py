@@ -112,6 +112,9 @@ class HouseOut(HouseUpdate):
     champs_verrouilles: list[str] = []
     # Le parcours du foyer (lot 8, `services/parcours.py`) : ce que l'espace montre selon le statut.
     parcours: dict = {}
+    # Phase 2 : la commune choisie (route dédiée `PUT /houses/me/commune`, jamais par ce PATCH).
+    code_insee: str | None = None
+    commune: str | None = None
     updated_at: datetime
 
     class Config:

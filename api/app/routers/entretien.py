@@ -16,12 +16,13 @@ from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.journal import JournalEntree
 from app.models.partner import Lead, Partner
+from app.models.risques import RisquesCommune
 from app.models.travaux import Travaux
 from app.models.user import User
 from app.routers.equipements import _own_house
 from app.routers.journal import cols, verifier_liens, verifier_limite
 from app.schemas.journal import Fait
-from app.services import suivi_foyer
+from app.services import risques_affichage, suivi_foyer
 from app.services.a_faire import a_faire, derniers_faits
 from app.services.entretien import echeances, table_courante, verifications
 from app.services.garanties import garanties_maison
@@ -72,7 +73,12 @@ async def a_faire_de_la_maison(db: AsyncSession, house: House) -> dict:
     bloc["questions_contact"] = [
         {"lead_id": l.id, "partenaire": nom, "metier": l.metier, "transmis_le": l.consent_client_at}
         for l, nom in leads if suivi_foyer.question_contact_due(l, date.today())]
-    bloc["rien_d_urgent"] = bloc["rien_d_urgent"] and not bloc["questions_contact"]
+    # Phase 2 : feux de forêt dans la commune et débroussaillement « ne sais pas » → l'invitation
+    # du calendrier remonte ici. Cache seulement : jamais d'appel à Géorisques pour ce bloc.
+    ligne = await db.get(RisquesCommune, house.code_insee) if house.code_insee else None
+    bloc["debroussaillement"] = (risques_affichage.section(ligne, house, c["verifications"])["debroussaillement"]
+                                 if ligne is not None else None)
+    bloc["rien_d_urgent"] = bloc["rien_d_urgent"] and not bloc["questions_contact"] and not bloc["debroussaillement"]
     return bloc
 
 

@@ -90,6 +90,9 @@ async def update_my_house(
             select(HouseDocument).where(HouseDocument.house_id == house.id))}
         db.add(JournalEntree(house_id=house.id, **pc.archive(lignes, docs, date.today())))
         house.avant_achat = None
+    # Phase 2 : un autre code postal, c'est peut-être une autre commune — elle se rechoisit.
+    if "code_postal" in champs and champs["code_postal"] != house.code_postal:
+        house.code_insee = house.commune = None
     for field, value in champs.items():
         if field in ("zone_old", "chauffage_collectif") and value is None:
             value = "ne_sais_pas"  # colonne NOT NULL : « non renseigné » veut dire « je ne sais pas »
