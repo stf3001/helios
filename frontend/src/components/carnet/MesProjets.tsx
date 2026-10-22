@@ -20,7 +20,7 @@ import { dateFr, libelleType } from './libelles'
  */
 
 type Modele = {
-  id: string; titre: string; famille: string; outil: string; outil_lien: string
+  id: string; titre: string; famille: string; outil: string; outil_lien: string | null
   calcul: { type: string; date: string } | null
 }
 type EquipementPropose = { categorie: string; type: string; origine_fiche?: string }
@@ -31,7 +31,7 @@ type Projet = {
   budget_statut: string | null; budget_date: string | null
   economie_annuelle_eur: number | null; economie_source: string | null; economie_statut: string | null
   economie_date: string | null; devis_document_ids: string[] | null; note: string | null; travaux_id: string | null
-  modele: { titre: string; famille: string; outil: string; outil_lien: string; equipements_crees: EquipementPropose[] } | null
+  modele: { titre: string; famille: string; outil: string; outil_lien: string | null; equipements_crees: EquipementPropose[] } | null
   fiches?: { source: string; questions: string[] }[]
 }
 
@@ -45,7 +45,7 @@ const FAMILLES: Record<string, string> = {
 }
 const SOURCES: Record<string, string> = { etude: 'étude du simulateur', audit: 'pré-audit', devis: 'devis' }
 const STATUTS: Record<string, string> = { calcule: 'calculé', suppose: 'supposé', declare: 'déclaré' }
-const CALCULS: Record<string, string> = { simulateur: 'Une étude du simulateur', audit: 'Un pré-audit', eau: 'Une étude de potentiel hydrique' }
+const CALCULS: Record<string, string> = { simulateur: 'Une étude du simulateur', audit: 'Un pré-audit' }
 const POSTES: Record<string, string> = {
   panneaux_eur: 'panneaux', carport_eur: 'carport', batterie_eur: 'batterie', inertie_eur: 'stockage par inertie',
   eolien_eur: 'éolienne',
@@ -56,7 +56,7 @@ const FICHES: Record<string, string> = {
   dimensionnement_pv: 'Bien dimensionner ses panneaux', stockage_contrats: 'Stockage et contrats',
   action_pac_remplacement: 'Passer à la pompe à chaleur', pac_air_eau: 'La PAC air/eau', pac_air_air: 'La PAC air/air',
   action_ballon_thermodynamique: 'Le ballon thermodynamique', supports_securite: 'Supports et carport',
-  eau: "L'eau de l'air", eolien: "L'éolien", baremes_aides: 'Les aides', urbanisme_assurance: 'Urbanisme et assurance',
+  eau: "L'eau de l'air", eolien: "L'éolien", jardin_hiver: "Le jardin d'hiver", baremes_aides: 'Les aides', urbanisme_assurance: 'Urbanisme et assurance',
   financement_projet: 'Financer son projet', choisir_installateur: "Choisir l'entreprise",
   garanties_travaux: 'Les garanties après travaux',
 }
@@ -243,21 +243,23 @@ function FicheProjet({ id, documents, equipements, onFermer }: {
 
       <Chiffres p={p} />
 
-      {!clos && (
+      {/* `outil: "aucun"` (jardin d'hiver ; machine à eau tant que le calculateur d'Hydrolia
+          est en panne) : ni calcul à reprendre, ni outil vers lequel renvoyer. */}
+      {!clos && p.modele?.outil === 'aucun' && (
+        <p className="text-sm text-dark/70">Pas de calculateur pour ce projet : les fiches ci-dessous.</p>
+      )}
+      {!clos && p.modele?.outil !== 'aucun' && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button onClick={() => ecrire(`/api/houses/me/projets/${p.id}/lier-etude`, 'POST')}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
             <RefreshCw className="h-4 w-4" /> Reprendre le dernier calcul
           </button>
-          {p.modele && (
+          {p.modele?.outil_lien && (
             <Link to={p.modele.outil_lien} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
               <Calculator className="h-4 w-4" /> Faire le calcul
             </Link>
           )}
         </div>
-      )}
-      {p.etude_ref?.type === 'eau' && (
-        <p className="text-xs text-dark/60">Étude de potentiel hydrique du {dateFr(p.etude_ref.date)} rattachée : elle chiffre la production, pas le coût.</p>
       )}
 
       {!clos && (
@@ -425,7 +427,8 @@ export default function MesProjets() {
                       className="flex w-full flex-col items-start rounded-lg border border-bord px-3 py-2 text-left hover:border-primary hover:bg-cream">
                       <span className="text-sm font-semibold text-ink">{m.titre}</span>
                       <span className="text-xs text-dark/60">
-                        {m.calcul ? `${CALCULS[m.calcul.type] ?? 'Un calcul'} du ${dateFr(m.calcul.date)} existe` : 'Pas encore de calcul'}
+                        {m.outil === 'aucun' ? 'Pas de calculateur : des fiches à lire'
+                          : m.calcul ? `${CALCULS[m.calcul.type] ?? 'Un calcul'} du ${dateFr(m.calcul.date)} existe` : 'Pas encore de calcul'}
                       </span>
                     </button>
                   </li>

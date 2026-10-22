@@ -156,6 +156,9 @@ SOURCES: list[SourceSpec] = [
     # note au propriétaire recopient les sections finales de ces deux fiches. À relire.
     SourceSpec(name="achat_logement", kind="faq_markdown", location="helios/kb/achat_logement.md"),
     SourceSpec(name="locataire_entretien", kind="faq_markdown", location="helios/kb/locataire_entretien.md"),
+    # Jardin d'hiver (22/10/2026, point 51) : fiche fournie par Stéphane, recopiée telle quelle
+    # de `briefs/KB-jardin-hiver.md`. Le modèle de projet « Jardin d'hiver » en dépend. À relire.
+    SourceSpec(name="jardin_hiver", kind="faq_markdown", location="helios/kb/jardin_hiver.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique

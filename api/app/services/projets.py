@@ -22,7 +22,9 @@ ETAPES = ("idee", "etude", "devis", "decide", "travaux", "termine", "abandonne")
 # qui crée travaux, garanties, équipements et journal.
 ETAPES_LIBRES = tuple(e for e in ETAPES if e != "termine")
 FAMILLES = ("solaire_stockage", "sortie_fossile", "ecosysteme")
-OUTILS = ("simulateur-solaire", "eau", "vent", "jardin")  # plus « pre-audit:<clé d'action> »
+# Plus « pre-audit:<clé d'action> ». `aucun` : pas de calculateur (point 51) — l'écran renvoie aux
+# fiches. L'outil `eau` a été retiré avec le potentiel hydrique (point 13).
+OUTILS = ("simulateur-solaire", "vent", "jardin", "aucun")
 POSTES_SIMULATEUR = ("panneaux_eur", "carport_eur", "batterie_eur", "inertie_eur", "eolien_eur")
 CHAMPS_MASQUE = ("statut", "type_logement", "chauffage_principal")
 MAX_PROJETS_PAR_MAISON = 20
@@ -157,11 +159,6 @@ def depuis_audit(json_result: dict, cle: str, cree_le, audit_id) -> dict | None:
         "economie_statut": (statuts.get("economie_annuelle_eur") or "calcule") if eco is not None else None,
         "economie_date": _jour(cree_le) if eco is not None else None,
     }
-
-
-def depuis_eau(cree_le, etude_id) -> dict:
-    """L'étude de potentiel hydrique ne chiffre ni coût ni économie : elle se rattache seule."""
-    return {"etude_ref": {"type": "eau", "id": str(etude_id), "date": _jour(cree_le)}}
 
 
 def equipements_a_creer(modele: dict, confirmes: list[int]) -> list[dict]:

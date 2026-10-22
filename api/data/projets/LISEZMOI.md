@@ -10,7 +10,9 @@ viennent d'un calcul déjà fait, les explications des fiches `kb/` qu'il nomme.
 - `titre` : ce que le foyer lit.
 - `famille` : `solaire_stockage`, `sortie_fossile` ou `ecosysteme`.
 - `outil` : où se fait le calcul — `simulateur-solaire`, `pre-audit:<clé d'action>` (clés de
-  `ACTIONS` dans `audit_reference.py`), `eau`, `vent` ou `jardin`.
+  `ACTIONS` dans `audit_reference.py`), `vent`, `jardin`, ou `aucun` : pas de calculateur,
+  l'écran renvoie aux fiches et `lier-etude` est refusé (jardin d'hiver ; machine à eau tant
+  que le calculateur d'Hydrolia est en panne).
 - `poste` : pour le simulateur seulement, la ligne de `investissement` qui chiffre ce projet
   (`panneaux_eur`, `carport_eur`, `batterie_eur`, `inertie_eur`, `eolien_eur`).
 - `fiches_kb` : identifiants de SOURCE (`SourceSpec.name` de `agents_engine.py`). **Toutes

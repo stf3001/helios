@@ -25,7 +25,6 @@ from app.models.projet import Projet
 from app.models.simulateur import SimulateurStudy
 from app.models.travaux import MAX_TRAVAUX_PAR_MAISON, Travaux
 from app.models.user import User
-from app.models.water import WaterStudy
 from app.routers.equipements import _own_house, _synchroniser
 from app.routers.journal import verifier_limite
 from app.routers.travaux import _verifier_documents
@@ -35,8 +34,8 @@ from app.services.parcours import parcours
 
 router = APIRouter(prefix="/houses/me/projets", tags=["carnet"])
 
-LIENS_OUTILS = {"simulateur-solaire": "/simulateur-solaire", "eau": "/potentiel-hydrique", "vent": "/le-vent",
-                "jardin": "/espace/jardin", "pre-audit": "/espace/audits"}
+LIENS_OUTILS = {"simulateur-solaire": "/simulateur-solaire", "vent": "/le-vent", "jardin": "/espace/jardin",
+                "pre-audit": "/espace/audits", "aucun": None}
 
 
 class ProjetCreate(BaseModel):
@@ -65,7 +64,7 @@ class Terminer(BaseModel):
     equipements: list[int] = Field(default_factory=list, max_length=10)
 
 
-def _lien(outil: str) -> str:
+def _lien(outil: str) -> str | None:
     return LIENS_OUTILS["pre-audit" if outil.startswith("pre-audit:") else outil]
 
 
@@ -98,11 +97,6 @@ async def _derniere_etude(db: AsyncSession, house: House, modele: dict) -> dict 
             r = pj.depuis_audit(a.json_result or {}, outil.split(":", 1)[1], a.created_at, a.id)
             if r:
                 return r
-    elif outil == "eau":
-        e = await db.scalar(select(WaterStudy).where(WaterStudy.house_id == house.id)
-                            .order_by(WaterStudy.created_at.desc()).limit(1))
-        if e:
-            return pj.depuis_eau(e.created_at, e.id)
     return None
 
 
@@ -224,6 +218,8 @@ async def lier_etude(projet_id: uuid.UUID, user: User = Depends(get_current_user
     if p.etape == "termine":
         raise HTTPException(status.HTTP_409_CONFLICT, "Un projet terminé ne change plus.")
     modele = _modeles().get(p.modele_id)
+    if modele and modele["outil"] == "aucun":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Pas de calculateur pour ce projet : lisez les fiches qui l'accompagnent.")
     etude = await _derniere_etude(db, house, modele) if modele else None
     if etude is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Aucun calcul pour ce projet : faites-le d'abord avec l'outil.")

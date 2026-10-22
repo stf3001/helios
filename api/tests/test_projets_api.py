@@ -90,7 +90,8 @@ def test_modeles_et_calculs_existants(foyers):
     c, _, h = foyers
     r = c.get("/api/houses/me/projets/modeles", headers=h["proprio"]).json()
     par_id = {m["id"]: m for m in r["modeles"]}
-    assert "sortie-gaz-pac-air-eau" not in par_id and "jardin-hiver" not in par_id
+    assert "sortie-gaz-pac-air-eau" not in par_id
+    assert par_id["jardin-hiver"]["outil_lien"] is None and par_id["jardin-hiver"]["calcul"] is None
     assert par_id["sortie-fioul-pac-air-eau"]["calcul"]["type"] == "audit"
     assert par_id["panneaux-solaires"]["calcul"]["type"] == "simulateur"
     assert par_id["batterie"]["calcul"] is None and par_id["batterie"]["outil_lien"] == "/simulateur-solaire"
@@ -166,6 +167,15 @@ def test_lier_sans_calcul_renvoie_vers_l_outil(foyers):
     assert [f["source"] for f in detail["fiches"]] == ["stockage_contrats", "financement_projet",
                                                        "choisir_installateur", "garanties_travaux"]
     assert all(f["questions"] for f in detail["fiches"])
+
+
+def test_sans_calculateur_lier_etude_est_refuse(foyers):
+    c, _, h = foyers
+    p = c.post("/api/houses/me/projets", headers=h["proprio"], json={"modele_id": "jardin-hiver"}).json()
+    r = c.post(f"/api/houses/me/projets/{p['id']}/lier-etude", headers=h["proprio"])
+    assert r.status_code == 409 and "Pas de calculateur" in r.json()["detail"]
+    detail = c.get(f"/api/houses/me/projets/{p['id']}", headers=h["proprio"]).json()
+    assert detail["fiches"][0]["source"] == "jardin_hiver"
 
 
 def test_locataire(foyers):

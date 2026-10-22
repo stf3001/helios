@@ -36,9 +36,10 @@ def test_les_dix_modeles_se_chargent():
 
 
 def test_un_modele_dont_une_fiche_manque_n_est_pas_servi():
-    assert pj.fiches_manquantes(next(m for m in MODELES if m["id"] == "jardin-hiver"), SOURCES_KB) == ["jardin_hiver"]
-    assert "jardin-hiver" not in visibles()
-    assert all(not pj.fiches_manquantes(m, SOURCES_KB) for m in MODELES if m["id"] != "jardin-hiver")
+    # Toutes les fiches existent depuis le point 51 (jardin d'hiver).
+    assert all(not pj.fiches_manquantes(m, SOURCES_KB) for m in MODELES)
+    assert "jardin-hiver" in visibles()
+    assert "jardin-hiver" not in visibles(sources=SOURCES_KB - {"jardin_hiver"})
     # Une fiche retirée de la base fait disparaître ses modèles.
     assert "batterie" not in visibles(sources=SOURCES_KB - {"stockage_contrats"})
 
@@ -49,7 +50,7 @@ def test_le_locataire_ne_voit_pas_les_projets_lourds():
 
 def test_appartement_et_chauffage_actuel():
     assert visibles(maison(type_logement="appartement")) == [
-        "pac-air-air-convecteurs", "ballon-thermodynamique", "machine-eau-air"]
+        "pac-air-air-convecteurs", "ballon-thermodynamique", "machine-eau-air"]  # ni jardin d'hiver
     fioul = visibles(maison(chauffage_principal="fioul"))
     assert "sortie-fioul-pac-air-eau" in fioul and "sortie-gaz-pac-air-eau" not in fioul
     assert "pac-air-air-convecteurs" not in fioul
@@ -120,8 +121,9 @@ def test_depuis_audit_recopie_l_action():
     assert pj.depuis_audit({"actions": []}, "ballon_thermodynamique", LE_12_10, "a1") is None  # format v1
 
 
-def test_l_eau_se_rattache_sans_chiffre():
-    assert pj.depuis_eau(LE_12_10, "w1") == {"etude_ref": {"type": "eau", "id": "w1", "date": "2026-10-12"}}
+def test_sans_calculateur():
+    sans = {m["id"] for m in MODELES if m["outil"] == "aucun"}
+    assert sans == {"jardin-hiver", "machine-eau-air"}
 
 
 def test_seuls_les_equipements_coches_sont_crees():
