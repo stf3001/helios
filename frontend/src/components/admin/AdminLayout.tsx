@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Activity, BookOpen, ExternalLink, Flag, HeartPulse, LogOut, MessagesSquare, Scale, ShieldCheck, Users2, PhoneCall } from 'lucide-react'
+import { Activity, BookOpen, ExternalLink, Flag, HeartPulse, LogOut, MessagesSquare, Receipt, Scale, ShieldCheck, Users2, PhoneCall } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import MarqueHelios from '../MarqueHelios'
 
@@ -28,6 +28,7 @@ const NAV = [
   { to: '/admin/foyers', label: 'Foyers & RGPD', Icon: ShieldCheck },
   { to: '/admin/partenaires', label: 'Partenaires', Icon: Users2 },
   { to: '/admin/contestations', label: 'Contestations', Icon: Scale },
+  { to: '/admin/releves', label: 'Relevés', Icon: Receipt },
   { to: '/admin/services', label: 'Services', Icon: HeartPulse },
   { to: '/admin/agents', label: 'Agents', Icon: Activity },
 ]

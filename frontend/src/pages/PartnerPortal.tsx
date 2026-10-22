@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { AlertTriangle, Building2, CalendarClock, FileText, Flag, Upload } from 'lucide-react'
 import PasswordInput from '../components/PasswordInput'
+import Releve, { MENTION_RELEVE, StatutReleve, euros, nomDuMois, type ReleveMois } from '../components/mer/Releve'
 import Dossier, { Creneaux, Score, type Creneau, type DossierLead, type LigneScore } from '../components/mer/Dossier'
 import {
   ETAT_JUSTIFICATIF, JUSTIFICATIFS, LIBELLE_JUSTIFICATIF, MOTIFS_CONTESTATION, STATUT_CONTESTATION, dateCourte,
@@ -61,7 +62,7 @@ export default function PartnerPortal() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY))
   const [moi, setMoi] = useState<Moi | null>(null)
   const [leads, setLeads] = useState<PLead[]>([])
-  const [onglet, setOnglet] = useState<'demandes' | 'entreprise'>('demandes')
+  const [onglet, setOnglet] = useState<'demandes' | 'releves' | 'entreprise'>('demandes')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -152,7 +153,7 @@ export default function PartnerPortal() {
       )}
 
       <div className="mb-5 flex gap-2 border-b border-bord" role="tablist">
-        {([['demandes', `Mes demandes (${leads.length})`], ['entreprise', 'Mon entreprise']] as const).map(([k, l]) => (
+        {([['demandes', `Mes demandes (${leads.length})`], ['releves', 'Mes relevés'], ['entreprise', 'Mon entreprise']] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={onglet === k} onClick={() => setOnglet(k)}
             className={'-mb-px border-b-2 px-3 py-2 text-sm ' + (onglet === k ? 'border-primary font-semibold text-ink' : 'border-transparent text-dark/60')}>
             {l}
@@ -160,12 +161,59 @@ export default function PartnerPortal() {
         ))}
       </div>
 
-      {onglet === 'demandes'
-        ? (leads.length === 0
-          ? <p className="text-gray-400">Aucune demande reçue pour l'instant.</p>
-          : <div className="space-y-3">{leads.map((l) => <Demande key={l.id} lead={l} pFetch={pFetch} onMaj={charger} />)}</div>)
-        : moi && <Entreprise moi={moi} pFetch={pFetch} onMaj={charger} />}
+      {onglet === 'demandes' && (leads.length === 0
+        ? <p className="text-gray-400">Aucune demande reçue pour l'instant.</p>
+        : <div className="space-y-3">{leads.map((l) => <Demande key={l.id} lead={l} pFetch={pFetch} onMaj={charger} />)}</div>)}
+      {onglet === 'releves' && <MesReleves pFetch={pFetch} />}
+      {onglet === 'entreprise' && moi && <Entreprise moi={moi} pFetch={pFetch} onMaj={charger} />}
     </section>
+  )
+}
+
+/** Mes relevés (lot 4) : un mois par mois, provisoire puis clos. Pas des factures. */
+function MesReleves({ pFetch }: { pFetch: PFetch }) {
+  const [liste, setListe] = useState<ReleveMois[] | null>(null)
+  const [ouvert, setOuvert] = useState<string | null>(null)
+  useEffect(() => {
+    pFetch('/api/partner/releves').then((r) => (r.ok ? r.json() : [])).then((l: ReleveMois[]) => {
+      setListe(l); setOuvert(l[0]?.mois ?? null)
+    })
+  }, [pFetch])
+
+  async function pdf(mois: string) {
+    const r = await pFetch(`/api/partner/releves/${mois}/pdf`)
+    if (!r.ok) return
+    const url = URL.createObjectURL(await r.blob())
+    const a = document.createElement('a')
+    a.href = url; a.download = `releve-${mois}.pdf`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (!liste) return <p className="text-gray-400">Chargement…</p>
+  return (
+    <div className="space-y-3">
+      <p className="rounded-xl border border-bord bg-sable px-3 py-2 text-sm text-ink">{MENTION_RELEVE}</p>
+      <p className="text-xs text-dark/60">
+        Un relevé par mois de transmission (heure de Paris). Il reste provisoire jusqu'à sa clôture, au plus tôt le 8 du
+        mois suivant ; clos, il ne change plus.
+      </p>
+      {liste.length === 0 && <p className="text-gray-400">Aucune mise en relation transmise pour l'instant.</p>}
+      {liste.map((r) => (
+        <div key={r.mois} className="rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => setOuvert(ouvert === r.mois ? null : r.mois)} className="font-medium capitalize text-ink underline-offset-2 hover:underline">
+              {nomDuMois(r.mois)}
+            </button>
+            <StatutReleve statut={r.statut ?? 'provisoire'} />
+            <span className="text-sm text-dark/70">{r.nb_lignes} mise(s) en relation · {euros(r.total_ht)} HT</span>
+            <button onClick={() => pdf(r.mois)} className={btn + ' ml-auto flex items-center gap-1'}>
+              <FileText className="h-3.5 w-3.5" /> PDF
+            </button>
+          </div>
+          {ouvert === r.mois && <div className="mt-3"><Releve r={r} /></div>}
+        </div>
+      ))}
+    </div>
   )
 }
 
