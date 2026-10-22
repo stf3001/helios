@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CalendarCheck, Check, ShieldCheck } from 'lucide-react'
+import { CalendarCheck, Check, PhoneCall, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import type { Doc } from './Formulaires'
 import FormFait from './FormFait'
@@ -21,6 +22,8 @@ type Ligne = (Echeance & { kind: 'tache' }) | {
 type Bloc = {
   lignes: Ligne[]; masquees: number; table_vide: boolean; rien_d_urgent: boolean; sans_equipement: boolean
   prochaine: { libelle: string; echeance: string; equipement_id: string | null } | null
+  // Mises en relation, lot 5 : « L'entreprise vous a-t-elle contacté ? », tant que sans réponse.
+  questions_contact?: { lead_id: string; partenaire: string | null; metier: string | null; transmis_le: string }[]
 }
 
 function Pastille({ nature }: { nature: string }) {
@@ -35,6 +38,7 @@ export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () 
   const [equipements, setEquipements] = useState<EquipementNom[]>([])
   const [documents, setDocuments] = useState<Doc[]>([])
   const [ouvert, setOuvert] = useState<string | null>(null)
+  const [signale, setSignale] = useState(false)
 
   const charger = useCallback(() => {
     const json = (url: string) => authFetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
@@ -46,6 +50,13 @@ export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () 
   useMaj(charger)
 
   if (!bloc) return null
+
+  async function repondre(leadId: string, reponse: 'oui' | 'non') {
+    const r = await authFetch(`/api/leads/${leadId}/contact`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reponse }),
+    })
+    if (r.ok) { if (reponse === 'non') setSignale(true); charger() }
+  }
   const parId = Object.fromEntries(equipements.map((e) => [e.id, e]))
 
   const entete = (
@@ -89,7 +100,24 @@ export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () 
           <button onClick={onVoirMaison} className="font-semibold text-primary hover:underline">Ma maison</button>
         </p>
       )}
+      {signale && (
+        <p className="mb-2 text-sm text-dark/70">C'est noté. Vous pouvez demander une autre entreprise dans{' '}
+          <Link to="/espace/mises-en-relation" className="font-semibold text-primary hover:underline">vos mises en relation</Link>.</p>
+      )}
       <ul className="divide-y divide-bord">
+        {(bloc.questions_contact ?? []).map((q) => (
+          <li key={q.lead_id} className="flex flex-wrap items-center gap-3 py-2.5">
+            <PhoneCall className="h-4 w-4 shrink-0 text-primary" />
+            <span className="min-w-0 flex-1 text-sm text-ink">
+              {q.partenaire ?? "L'entreprise"} vous a-t-elle contacté ?
+              <span className="block text-xs text-dark/60">demande transmise le {new Date(q.transmis_le).toLocaleDateString('fr-FR')}</span>
+            </span>
+            <span className="flex gap-2">
+              <button onClick={() => repondre(q.lead_id, 'oui')} className="rounded-lg border border-bord px-3 py-1 text-xs hover:bg-cream">Oui</button>
+              <button onClick={() => repondre(q.lead_id, 'non')} className="rounded-lg border border-bord px-3 py-1 text-xs hover:bg-cream">Non</button>
+            </span>
+          </li>
+        ))}
         {bloc.lignes.map((l, i) => {
           if (l.kind === 'garantie') {
             return (

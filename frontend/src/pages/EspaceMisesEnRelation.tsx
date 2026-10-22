@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { BadgeCheck, Handshake, Shuffle } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { BadgeCheck, Handshake, PhoneMissed, Shuffle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import ApiError from '../components/ApiError'
 import FormulaireDemande from '../components/mer/FormulaireDemande'
@@ -19,17 +19,25 @@ interface Lead {
   montant_travaux: number | null
   consent_retire_at: string | null
   created_at: string
+  // Suivi (lot 5) : ce que dit le partenaire et ce que dit le foyer restent séparés.
+  contacte_le: string | null
+  contact_foyer: 'oui' | 'non' | null
+  declarations_foyer: { type: string; le: string }[]
+  sans_contact_signale: boolean
+  etape: string
+  question_contact: boolean
+  peut_noter: boolean
 }
 
-const STATUT_LABEL: Record<string, string> = {
-  nouveau: 'Nouveau', transmis: 'Transmis', contacte: 'Contacté',
-  devis: 'Devis reçu', signe: 'Signé', perdu: 'Sans suite',
-}
-const STATUT_STYLE: Record<string, string> = {
-  transmis: 'bg-blue-100 text-blue-800', contacte: 'bg-indigo-100 text-indigo-800',
-  devis: 'bg-amber-100 text-amber-800', signe: 'bg-green-100 text-green-800',
-  perdu: 'bg-gray-100 text-gray-500',
-}
+// L'étape vue du foyer (`services/suivi_foyer.etape`) : la plus avancée des deux déclarations.
+const ETAPES: [string, string][] = [
+  ['transmise', 'Transmise'], ['contactee', 'Contacté'], ['devis', 'Devis'], ['signee', 'Travaux signés'],
+]
+const DECLARE: Record<string, string> = { devis_recu: 'devis reçu', travaux_signes: 'travaux signés', projet_abandonne: 'projet abandonné' }
+const ETAPE_FIN: Record<string, string> = { sans_suite: 'Sans suite', retiree: 'Consentement retiré' }
+const DECLARATIONS: [string, string][] = [
+  ['devis_recu', "J'ai reçu un devis"], ['travaux_signes', "J'ai signé les travaux"], ['projet_abandonne', "J'abandonne le projet"],
+]
 // Les métiers d'une demande : ceux de l'annuaire (`regions.METIERS`, sans le courtage).
 const METIERS: [string, string][] = [
   ['solaire', 'Panneaux solaires'], ['pac', 'Pompe à chaleur'], ['isolation', 'Isolation'],
@@ -51,6 +59,8 @@ export default function EspaceMisesEnRelation() {
   const [partnerId, setPartnerId] = useState('')
   const [metier, setMetier] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [exclu, setExclu] = useState<string | null>(null)
+  const formulaire = useRef<HTMLDivElement>(null)
 
   const [loadError, setLoadError] = useState(false)
 
@@ -72,10 +82,11 @@ export default function EspaceMisesEnRelation() {
   useEffect(load, [load])
 
   // Un nouveau tirage à chaque choix de métier : l'ordre est celui du serveur, jamais trié ici.
-  async function choisirMetier(m: string) {
+  async function choisirMetier(m: string, exclure?: string) {
     setMetier(m); setPartnerId(''); setError(null); setConfirmation(null); setPropositions(null)
+    setExclu(exclure ?? null)
     if (!m) return
-    const res = await authFetch(`/api/leads/propositions?metier=${m}`)
+    const res = await authFetch(`/api/leads/propositions?metier=${m}${exclure ? `&exclure=${exclure}` : ''}`)
     if (!res.ok) {
       const body = await res.json().catch(() => null)
       setError(typeof body?.detail === 'string' ? body.detail : 'Propositions indisponibles.')
@@ -91,17 +102,18 @@ export default function EspaceMisesEnRelation() {
     loadLeads()
   }
 
-  async function reportStatus(lead: Lead, statut: string) {
-    const body: Record<string, unknown> = { statut }
-    if (statut === 'devis' || statut === 'signe') {
-      const montant = Number(prompt('Montant des travaux (HT, en euros) :') || 0)
-      if (!montant) return
-      body.montant_travaux = montant
-    }
-    const res = await authFetch(`/api/leads/${lead.id}/status`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  async function poster(lead: Lead, chemin: string, corps: object) {
+    const res = await authFetch(`/api/leads/${lead.id}/${chemin}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
     })
     if (res.ok) loadLeads()
+  }
+
+  /** « Non » : nouveau tirage SANS ce partenaire, puis le formulaire habituel. */
+  function autreEntreprise(lead: Lead) {
+    if (!lead.metier || !lead.partner) return
+    choisirMetier(lead.metier, lead.partner.id)
+    formulaire.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   async function withdraw(lead: Lead) {
@@ -138,7 +150,7 @@ export default function EspaceMisesEnRelation() {
         <div className="space-y-10">
           {/* Nouvelle mise en relation : métier, puis au plus trois partenaires TIRÉS AU SORT
               (série 4, lot 1). Hélios est payé le même prix fixe quel que soit le choix. */}
-          <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
+          <div ref={formulaire} className="bg-gray-50 rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold">Nouvelle demande</h2>
             {confirmation && <p className="rounded-lg bg-leaf/10 px-3 py-2 text-sm text-leaf">{confirmation}</p>}
             <div>
@@ -156,6 +168,7 @@ export default function EspaceMisesEnRelation() {
               <>
                 <p className="flex items-center gap-1.5 text-xs text-gray-500">
                   <Shuffle className="h-3.5 w-3.5" /> Ordre tiré au sort. Choisissez l'entreprise que vous voulez.
+                  {exclu && " L'entreprise qui ne vous a pas appelé n'est pas proposée."}
                 </p>
                 <div className="space-y-2" role="radiogroup" aria-label="Partenaires proposés">
                   {propositions.map((p) => (
@@ -191,34 +204,9 @@ export default function EspaceMisesEnRelation() {
             ) : (
               <div className="space-y-3">
                 {leads.map((lead) => (
-                  <div key={lead.id} className="border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="font-medium">{lead.partner?.raison_sociale ?? '—'}
-                        {lead.metier && <span className="text-gray-400 font-normal"> · {METIER_LABEL[lead.metier] ?? lead.metier}</span>}
-                      </div>
-                      <span className={'text-xs px-2 py-0.5 rounded-full ' + (STATUT_STYLE[lead.statut] ?? 'bg-gray-100 text-gray-600')}>
-                        {STATUT_LABEL[lead.statut] ?? lead.statut}
-                      </span>
-                    </div>
-                    {lead.partner?.lien_interet && (
-                      <div className="text-xs text-terra mb-2">Lien d'intérêt : {lead.partner.lien_interet}</div>
-                    )}
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      {['transmis', 'contacte', 'devis'].includes(lead.statut) && (
-                        <>
-                          {lead.statut === 'transmis' && (
-                            <button onClick={() => reportStatus(lead, 'contacte')} className="underline text-gray-600">Le partenaire m'a contacté</button>
-                          )}
-                          <button onClick={() => reportStatus(lead, 'devis')} className="underline text-gray-600">J'ai reçu un devis</button>
-                          <button onClick={() => reportStatus(lead, 'signe')} className="underline text-gray-600">J'ai signé</button>
-                          <button onClick={() => withdraw(lead)} className="underline text-red-500">Retirer mon consentement</button>
-                        </>
-                      )}
-                      {lead.statut === 'signe' && (
-                        <button onClick={() => review(lead)} className="underline text-primary">Noter ce partenaire</button>
-                      )}
-                    </div>
-                  </div>
+                  <SuiviDemande key={lead.id} lead={lead} onContact={(rep) => poster(lead, 'contact', { reponse: rep })}
+                    onDeclarer={(type) => poster(lead, 'declaration', { type })} onAutre={() => autreEntreprise(lead)}
+                    onRetirer={() => withdraw(lead)} onNoter={() => review(lead)} />
                 ))}
               </div>
             )}
@@ -226,5 +214,73 @@ export default function EspaceMisesEnRelation() {
         </div>
       )}
     </section>
+  )
+}
+
+function SuiviDemande({ lead, onContact, onDeclarer, onAutre, onRetirer, onNoter }: {
+  lead: Lead; onContact: (r: 'oui' | 'non') => void; onDeclarer: (t: string) => void; onAutre: () => void
+  onRetirer: () => void; onNoter: () => void
+}) {
+  const faites = new Set(lead.declarations_foyer.map((d) => d.type))
+  const indexEtape = ETAPES.findIndex(([k]) => k === lead.etape)
+  const ouverte = !lead.consent_retire_at && lead.type === 'travaux' && !ETAPE_FIN[lead.etape]
+  return (
+    <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="font-medium">{lead.partner?.raison_sociale ?? '—'}
+          {lead.metier && <span className="text-gray-400 font-normal"> · {METIER_LABEL[lead.metier] ?? lead.metier}</span>}
+        </div>
+        <span className="text-xs text-dark/60">transmise le {new Date(lead.created_at).toLocaleDateString('fr-FR')}</span>
+      </div>
+      {lead.partner?.lien_interet && <div className="text-xs text-terra">Lien d'intérêt : {lead.partner.lien_interet}</div>}
+
+      {ETAPE_FIN[lead.etape] ? (
+        <p className="text-sm text-dark/60">{ETAPE_FIN[lead.etape]}</p>
+      ) : (
+        <ol className="flex flex-wrap gap-1 text-xs" aria-label="Étapes de la demande">
+          {ETAPES.map(([k, l], i) => (
+            <li key={k} className={'rounded-full border px-2.5 py-0.5 ' + (i <= indexEtape
+              ? 'border-leaf/40 bg-leaf/10 text-leaf' : 'border-bord text-dark/45')}>{l}</li>
+          ))}
+        </ol>
+      )}
+
+      {lead.question_contact && (
+        <div role="group" aria-label="Question sur le contact" className="rounded-xl border border-sun/50 bg-sun/10 p-3 text-sm">
+          <p className="font-semibold text-ink">L'entreprise vous a-t-elle contacté ?</p>
+          <div className="mt-2 flex gap-2">
+            <button onClick={() => onContact('oui')} className="rounded-lg border border-bord bg-white px-3 py-1.5">Oui</button>
+            <button onClick={() => onContact('non')} className="rounded-lg border border-bord bg-white px-3 py-1.5">Non</button>
+          </div>
+        </div>
+      )}
+      {lead.sans_contact_signale && (
+        <div className="rounded-xl border border-bord bg-cream/60 p-3 text-sm">
+          <p className="flex items-center gap-1.5 text-ink"><PhoneMissed className="h-4 w-4 text-terra" />
+            Vous nous avez signalé ne pas avoir été contacté. Nous le voyons de notre côté.</p>
+          {lead.metier && ouverte && (
+            <button onClick={onAutre} className="mt-2 rounded-xl bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90">
+              Demander une autre entreprise
+            </button>
+          )}
+        </div>
+      )}
+
+      {ouverte && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          {DECLARATIONS.filter(([t]) => !faites.has(t)).map(([t, l]) => (
+            <button key={t} onClick={() => onDeclarer(t)} className="rounded-lg border border-bord bg-white px-3 py-1.5 text-dark/80 hover:bg-cream">{l}</button>
+          ))}
+          {lead.statut !== 'signe' && !faites.has('travaux_signes') && (
+            <button onClick={onRetirer} className="px-1 text-red-500 underline">Retirer mon consentement</button>
+          )}
+        </div>
+      )}
+      {lead.declarations_foyer.length > 0 && (
+        <p className="text-xs text-dark/60">Vous avez déclaré : {lead.declarations_foyer.map((d) =>
+          `${DECLARE[d.type] ?? d.type} (${new Date(d.le).toLocaleDateString('fr-FR')})`).join(' · ')}</p>
+      )}
+      {lead.peut_noter && <button onClick={onNoter} className="text-xs text-primary underline">Noter cette entreprise</button>}
+    </div>
   )
 }
