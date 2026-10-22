@@ -13,10 +13,23 @@ SIGNEE = datetime(2026, 10, 1, tzinfo=timezone.utc)
 
 
 def partenaire(nom, statut="actif", charte=SIGNEE, zones=("83",), metiers=("isolation",), **kw):
+    """`charte=None` : partenaire PAS en règle (lot 3 : charte en vigueur non signée ou justificatif manquant)."""
     champs = dict(id=uuid.uuid4(), raison_sociale=nom, statut=statut, charte_signee_at=charte, zones=list(zones),
                   metiers=list(metiers), rge=True, note_moyenne=4.5, lien_interet=None)
     champs.update(kw)
     return SimpleNamespace(**champs)
+
+
+def elig(p, departement, metier, voit_demo=False):
+    return pr.eligible(p, departement, metier, voit_demo, en_regle=p.charte_signee_at is not None)
+
+
+def refus(statut, metier, p, departement, actifs, voit_demo=False):
+    return pr.refus_creation(statut, metier, p, departement, actifs, voit_demo, en_regle=p.charte_signee_at is not None)
+
+
+def test_sans_en_regle_explicite_personne_n_est_eligible():
+    assert not pr.eligible(partenaire("A"), "83", "isolation")
 
 
 def test_les_reglages_sont_ceux_decides():
@@ -24,13 +37,13 @@ def test_les_reglages_sont_ceux_decides():
 
 
 def test_eligibilite():
-    assert pr.eligible(partenaire("A"), "83", "isolation")
-    assert not pr.eligible(partenaire("B", statut="suspendu"), "83", "isolation")
-    assert not pr.eligible(partenaire("C", statut="en_attente"), "83", "isolation")
-    assert not pr.eligible(partenaire("D", charte=None), "83", "isolation")
-    assert not pr.eligible(partenaire("E", zones=("06",)), "83", "isolation")
-    assert not pr.eligible(partenaire("F", metiers=("pac",)), "83", "isolation")
-    assert not pr.eligible(partenaire("G"), None, "isolation")
+    assert elig(partenaire("A"), "83", "isolation")
+    assert not elig(partenaire("B", statut="suspendu"), "83", "isolation")
+    assert not elig(partenaire("C", statut="en_attente"), "83", "isolation")
+    assert not elig(partenaire("D", charte=None), "83", "isolation")
+    assert not elig(partenaire("E", zones=("06",)), "83", "isolation")
+    assert not elig(partenaire("F", metiers=("pac",)), "83", "isolation")
+    assert not elig(partenaire("G"), None, "isolation")
 
 
 def test_tirage_jamais_plus_de_trois_et_vraiment_au_hasard():
@@ -68,17 +81,17 @@ def test_la_proposition_cache_la_note_avant_trois_avis_et_porte_le_consentement_
 
 def test_garde_fous_de_creation():
     p = partenaire("A")
-    assert pr.refus_creation("locataire", "isolation", p, "83", []) == "Ces travaux se décident avec votre propriétaire."
-    assert pr.refus_creation(None, "isolation", p, "83", []).startswith("Indiquez dans votre fiche")
-    assert pr.refus_creation("proprietaire", "courtage", p, "83", []) == "Choisissez le métier concerné."
-    assert pr.refus_creation("proprietaire", "isolation", partenaire("B", charte=None), "83", []).startswith("Ce partenaire")
-    assert pr.refus_creation("en_achat", "isolation", p, "83", []) is None
+    assert refus("locataire", "isolation", p, "83", []) == "Ces travaux se décident avec votre propriétaire."
+    assert refus(None, "isolation", p, "83", []).startswith("Indiquez dans votre fiche")
+    assert refus("proprietaire", "courtage", p, "83", []) == "Choisissez le métier concerné."
+    assert refus("proprietaire", "isolation", partenaire("B", charte=None), "83", []).startswith("Ce partenaire")
+    assert refus("en_achat", "isolation", p, "83", []) is None
     doublon = SimpleNamespace(partner_id=p.id, metier="isolation")
-    assert "déjà en cours" in pr.refus_creation("proprietaire", "isolation", p, "83", [doublon])
+    assert "déjà en cours" in refus("proprietaire", "isolation", p, "83", [doublon])
     trois = [SimpleNamespace(partner_id=uuid.uuid4(), metier="isolation") for _ in range(3)]
-    assert "déjà 3 demandes" in pr.refus_creation("proprietaire", "isolation", p, "83", trois)
+    assert "déjà 3 demandes" in refus("proprietaire", "isolation", p, "83", trois)
     autre_metier = [SimpleNamespace(partner_id=uuid.uuid4(), metier="pac") for _ in range(3)]
-    assert pr.refus_creation("proprietaire", "isolation", p, "83", autre_metier) is None
+    assert refus("proprietaire", "isolation", p, "83", autre_metier) is None
 
 
 def test_le_courtage_n_est_pas_un_metier_de_travaux():
@@ -87,7 +100,7 @@ def test_le_courtage_n_est_pas_un_metier_de_travaux():
 
 def test_un_partenaire_de_demonstration_n_est_eligible_que_pour_un_compte_de_demo():
     d = partenaire("Démo X", demo=True)
-    assert not pr.eligible(d, "83", "isolation")
-    assert pr.eligible(d, "83", "isolation", voit_demo=True)
-    assert pr.refus_creation("proprietaire", "isolation", d, "83", []).startswith("Ce partenaire")
-    assert pr.refus_creation("proprietaire", "isolation", d, "83", [], voit_demo=True) is None
+    assert not elig(d, "83", "isolation")
+    assert elig(d, "83", "isolation", voit_demo=True)
+    assert refus("proprietaire", "isolation", d, "83", []).startswith("Ce partenaire")
+    assert refus("proprietaire", "isolation", d, "83", [], voit_demo=True) is None

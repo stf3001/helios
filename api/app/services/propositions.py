@@ -30,12 +30,15 @@ def voit_les_demos(email: str | None) -> bool:
     return email is not None and email.lower() in settings.mer_comptes_demo
 
 
-def eligible(partenaire, departement: str | None, metier: str, voit_demo: bool = False) -> bool:
-    """Un partenaire de démonstration ne l'est que pour un compte de démonstration (point 60)."""
+def eligible(partenaire, departement: str | None, metier: str, voit_demo: bool = False,
+             en_regle: bool = False) -> bool:
+    """Un partenaire de démonstration ne l'est que pour un compte de démonstration (point 60).
+    `en_regle` (justificatifs et charte en vigueur signée) vient de `conformite.en_regle` : par
+    défaut faux, pour qu'un appel qui l'oublie ne propose personne plutôt que n'importe qui."""
     if _champ(partenaire, "demo") and not voit_demo:
         return False
     return (_champ(partenaire, "statut") == "actif"
-            and _champ(partenaire, "charte_signee_at") is not None
+            and en_regle
             and departement is not None and departement in (_champ(partenaire, "zones") or [])
             and metier in (_champ(partenaire, "metiers") or []))
 
@@ -57,7 +60,7 @@ def proposition(partenaire, nb_avis: int) -> dict:
 
 
 def refus_creation(statut_foyer: str | None, metier: str | None, partenaire, departement: str | None,
-                   leads_actifs: list, voit_demo: bool = False) -> str | None:
+                   leads_actifs: list, voit_demo: bool = False, en_regle: bool = False) -> str | None:
     """La raison de refuser une mise en relation `travaux`, ou None. `leads_actifs` : ceux du
     foyer qui ne sont ni perdus ni signés."""
     if statut_foyer == "locataire":
@@ -66,7 +69,7 @@ def refus_creation(statut_foyer: str | None, metier: str | None, partenaire, dep
         return "Indiquez dans votre fiche si vous êtes propriétaire ou en cours d'achat."
     if metier not in METIERS_TRAVAUX:
         return "Choisissez le métier concerné."
-    if not eligible(partenaire, departement, metier, voit_demo):
+    if not eligible(partenaire, departement, metier, voit_demo, en_regle):
         return "Ce partenaire n'est pas proposé pour votre projet."
     meme_metier = [l for l in leads_actifs if _champ(l, "metier") == metier]
     if any(_champ(l, "partner_id") == _champ(partenaire, "id") for l in meme_metier):
