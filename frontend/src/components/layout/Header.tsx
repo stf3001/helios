@@ -107,9 +107,12 @@ export default function Header() {
 
         {/* Desktop. `flex-1 justify-center` centre la barre dans le bandeau plutot que
             de la laisser flotter contre le bloc de droite : c'est ce qui donne au lien
-            phare sa position centrale, et non un comptage d'entrees. */}
+            phare sa position centrale, et non un comptage d'entrees.
+            A PARTIR DE 1280 PX SEULEMENT (`xl`, decision du 22/10/2026, point 46) : dix
+            entrees plus « Mon espace » et « Deconnexion » debordaient entre 1000 et 1100 px.
+            En dessous, c'est le menu du telephone — aucun lien n'est retire. */}
         <nav aria-label="Navigation principale"
-          className="hidden lg:flex flex-1 items-center justify-center gap-4 text-[13px] xl:gap-6 xl:text-sm">
+          className="hidden xl:flex flex-1 items-center justify-center gap-6 text-sm">
           {AVANT.map((l) => (
             <NavLink key={l.to} to={l.to} className={lien}>{l.label}</NavLink>
           ))}
@@ -119,7 +122,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-4 shrink-0">
+        <div className="hidden xl:flex items-center gap-4 shrink-0">
           <Link to={LIEN_ESPACE} className={boutonPlein}>Mon espace</Link>
           {user && (
             <button onClick={doLogout} className="text-sm text-gray-500 hover:text-ink">Déconnexion</button>
@@ -129,7 +132,7 @@ export default function Header() {
         {/* Burger mobile */}
         <button
           type="button"
-          className="lg:hidden -mr-2 p-2 text-ink rounded-xl hover:bg-cream"
+          className="xl:hidden -mr-2 p-2 text-ink rounded-xl hover:bg-cream"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="menu-principal"
@@ -142,7 +145,7 @@ export default function Header() {
       {/* Panneau mobile. Le lien phare garde son traitement : sur un telephone, une
           liste de huit lignes identiques ne dit pas par ou commencer. */}
       {open && (
-        <div id="menu-principal" className="lg:hidden border-t border-bord bg-sable animate-slide-up">
+        <div id="menu-principal" className="xl:hidden border-t border-bord bg-sable animate-slide-up">
           <nav aria-label="Navigation principale" className="px-4 py-3 flex flex-col">
             {AVANT.map((l) => (
               <NavLink key={l.to} to={l.to} onClick={close} className={({ isActive }) =>
