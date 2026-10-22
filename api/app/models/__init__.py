@@ -19,6 +19,7 @@ from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
 from app.models.travaux import Travaux
 from app.models.user import User
+from app.models.vigilance import VigilanceDepartement
 from app.models.water import WaterStudy
 
 __all__ = [
@@ -26,5 +27,5 @@ __all__ = [
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
     "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy", "ProProfile",
     "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet", "ChargesMaison", "Isolant",
-    "RisquesCommune",
+    "RisquesCommune", "VigilanceDepartement",
 ]

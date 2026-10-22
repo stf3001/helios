@@ -18,6 +18,7 @@ que c'est vide. Les valeurs vont dans le `.env` du serveur, jamais dans git.
 | `LLM_API_KEY` | Clé Anthropic (Claude) | Tout reste sur le modèle local. **Le compte Anthropic doit avoir du crédit** : au 21/10/2026 il était épuisé (point 42). |
 | `LLM_API_BUDGET_DAILY_EUR`, `…_MONTHLY_EUR`, `LLM_API_DAILY_REQUESTS_PER_USER` | Plafonds de coût et quota par client | Valeurs de développement (1 € / 10 € / 3 par jour) : à remonter pour la production. |
 | `OLLAMA_URL` | Le modèle local et les embeddings | `http://localhost:11434` : Ollama doit tourner sur le serveur (ou ailleurs, adresse à donner). |
+| `METEOFRANCE_API_KEY` | Clé de l'API « Bulletin Vigilance » de Météo-France (compte gratuit sur portail-api.meteofrance.fr, souscrire à `DonneesPubliquesVigilance`). Envoyée dans l'en-tête `apikey` ; si le portail ne donne qu'un jeton OAuth2, adapter `meteofrance_vigilance._entetes`. | Module dormant : aucun appel, aucun bandeau. Puis lancer la collecte toutes les heures (`python -m scripts.collecter_vigilance`), par le planificateur du serveur. |
 
 ## Les décisions à prendre (pas techniques)
 

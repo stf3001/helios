@@ -231,6 +231,12 @@ class Settings(BaseSettings):
     enedis_client_secret: str = ""
     enedis_redirect_uri: str = ""
 
+    # Vigilance météo (phase 2) : API « Bulletin Vigilance » de Météo-France, gratuite, sur compte
+    # (portail-api.meteofrance.fr). Vide : module DORMANT, aucun appel, rien ne s'affiche.
+    meteofrance_api_key: str = ""
+    vigilance_collecte_min_minutes: int = 60   # une collecte pour toute la France, au plus toutes les heures
+    vigilance_apres_episode_jours: int = 7     # « Noter un dégât » après vent violent ou orages
+
     # Batterie physique — mêmes ordres de grandeur que solar_engine.STORAGE_TECHS
     autoconso_battery_efficiency: float = 0.90        # rendement aller-retour (pertes onduleur/charge)
 
