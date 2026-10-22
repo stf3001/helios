@@ -1329,6 +1329,19 @@ Le relevé clos est l'instantané à facturer : il manque la numérotation conti
 obligatoires, le n° de TVA d'Hélios et la conservation légale. `mer_tva_taux` (20 %) est indicatif.
 À reprendre avec l'expert-comptable ; rien n'est facturé d'ici là.
 
+### [x] 71. Mises en relation, lot 5 : le suivi côté foyer et les indicateurs — fait le 22/10/2026
+
+Question « L'entreprise vous a-t-elle contacté ? » après 5 jours ouvrés (espace et bloc « À faire »),
+nouveau tirage sans l'entreprise si « non », déclarations du foyer séparées du statut partenaire,
+indicateurs avec leur source et liste des écarts (migration 0040). Débrief : `debriefs/2026-10-22-mer-lot5.md`.
+
+### [ ] 72. Décider des avoirs pour les demandes « sans contact signalé »
+
+`/admin/indicateurs` liste les demandes où le foyer dit ne pas avoir été appelé ; leur prix n'est
+jamais annulé tout seul (décision du 22/10/2026). Aucun geste « avoir » n'existe encore : aujourd'hui
+seule une contestation acceptée rend une demande non facturable. À trancher par Stéphane : un bouton
+« ne pas facturer » sur un relevé non clos, ou la contestation reste la seule voie.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
