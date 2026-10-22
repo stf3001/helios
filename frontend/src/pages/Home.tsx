@@ -355,9 +355,7 @@ export default function Home() {
       {/* ---------------- TRANSPARENCE ---------------- */}
       <ScrollReveal as="section" className="max-w-[900px] mx-auto px-4 pb-20">
         <div className="border-l-2 border-primary bg-white border-y border-r border-bord rounded-r-2xl p-6 text-gray-600">
-          <strong className="font-semibold text-ink">Transparence.</strong> HELIOS est gratuit pour vous, toujours. La plateforme
-          se rémunère par une commission versée par les entreprises partenaires quand vous leur confiez des travaux.
-          Les conseils d'Helios sont strictement indépendants de ce mécanisme — c'est écrit dans{' '}
+          <strong className="font-semibold text-ink">Transparence.</strong> HELIOS est gratuit pour vous, toujours. Quand vous demandez à être mis en relation avec une entreprise partenaire, celle-ci paie à HELIOS un prix fixe, le même quel que soit le montant de vos travaux, même si vous ne signez rien. Nos conseils n'en dépendent pas. C'est écrit dans{' '}
           <Link to="/engagements" className="underline underline-offset-2 hover:text-primary">sa charte</Link>, et c'est non négociable.
         </div>
       </ScrollReveal>

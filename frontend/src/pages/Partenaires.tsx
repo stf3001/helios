@@ -58,9 +58,7 @@ export default function Partenaires() {
           ))}
         </ul>
         <div className="mt-10 border-l-2 border-primary bg-white border-y border-r border-bord rounded-r-2xl p-6 text-gray-600">
-          <strong>Transparence.</strong> Les partenaires versent à HELIOS une commission d'apport d'affaires
-          quand un client leur confie des travaux via la plateforme. Cette commission ne modifie jamais les
-          préconisations d'Helios, et n'est jamais facturée au client.
+          <strong>Transparence.</strong> Chaque entreprise partenaire paie à HELIOS un prix fixe pour chaque mise en relation demandée par un foyer, sans commission sur les travaux. HELIOS n'a donc aucun intérêt à ce que vous dépensiez plus, ni à vous orienter vers une entreprise plutôt qu'une autre.
         </div>
       </section>
 

@@ -227,7 +227,7 @@ R: Une plateforme gratuite d'accompagnement à la transition énergétique des l
 
 ### Q: Pourquoi est-ce gratuit ? Comment HELIOS gagne de l'argent ?
 `cat: helios | tags: modele, transparence`
-R: En toute transparence : si Helios vous préconise des travaux et que vous choisissez de les confier à une entreprise partenaire de la plateforme, celle-ci nous verse une commission d'apport d'affaires. Vous ne payez jamais rien, et les préconisations d'Helios sont strictement indépendantes de ce mécanisme.
+R: HELIOS est gratuit pour vous, toujours. Quand vous demandez à être mis en relation avec une entreprise partenaire, c'est elle qui paie HELIOS : un prix fixe pour chaque mise en relation, le même quel que soit le montant de vos travaux, et même si vous ne signez rien. HELIOS ne gagne donc rien de plus à vous faire dépenser davantage, ni à vous orienter vers une entreprise plutôt qu'une autre : c'est pour cela que nos conseils n'en dépendent pas.
 
 ### Q: Helios peut-il remplacer un audit énergétique ?
 `cat: helios | tags: limites, audit`

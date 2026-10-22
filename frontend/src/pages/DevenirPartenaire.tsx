@@ -64,7 +64,7 @@ export default function DevenirPartenaire() {
       <section className="max-w-[700px] mx-auto px-4 py-12">
         <p className="text-gray-600 mb-8">
           HELIOS vous apporte des clients qualifiés (fiche maison + pré-audit + projet), avec leur consentement.
-          Commission d'apport d'affaires uniquement si les travaux sont signés — jamais d'abonnement.
+          60 € HT par mise en relation, demandée par un foyer, avec son projet et son consentement. Pas d'abonnement, pas de commission sur vos chantiers. Contestation possible sous 7 jours : coordonnées fausses, hors de votre zone ou de vos métiers, doublon, foyer injoignable après trois essais.
           Référencement soumis à vérification (RGE si requis, assurance décennale, Kbis).
         </p>
 

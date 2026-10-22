@@ -52,16 +52,16 @@
     "sousTitre": "La charte partenaire.",
     "intro": "Certifications à jour (RGE quand les aides l'exigent), assurance décennale. Transparence des prix : devis détaillés, sans frais cachés, délais tenus. Aucun démarchage hors demande explicite, pas de vente forcée. Travaux conformes aux règles de l'art, SAV réactif. Acceptation de la notation par les clients. Un partenaire qui ne respecte plus la charte est déréférencé — sans exception.",
     "sections": [
-      { "titre": "Transparence", "contenu": "Les partenaires versent à HELIOS une commission d'apport d'affaires quand un client leur confie des travaux via la plateforme. Cette commission ne modifie jamais les préconisations d'Helios, et n'est jamais facturée au client." }
+      { "titre": "Transparence", "contenu": "Chaque entreprise partenaire paie à HELIOS un prix fixe pour chaque mise en relation demandée par un foyer, sans commission sur les travaux. HELIOS n'a donc aucun intérêt à ce que vous dépensiez plus, ni à vous orienter vers une entreprise plutôt qu'une autre." }
     ]
   },
   {
     "chemin": "/devenir-partenaire",
     "metaTitre": "Devenir partenaire HELIOS",
-    "metaDesc": "Des clients qualifiés, avec leur consentement. Commission d'apport d'affaires seulement si les travaux sont signés, jamais d'abonnement. Référencement vérifié.",
+    "metaDesc": "Des foyers qui demandent à être mis en relation, avec leur projet et leur consentement. 60 € HT par mise en relation, sans abonnement. Référencement vérifié.",
     "titre": "Devenez partenaire HELIOS.",
     "sousTitre": "Des clients qualifiés, avec leur consentement.",
-    "intro": "HELIOS vous apporte des clients qualifiés (fiche maison, pré-audit et projet), avec leur consentement. Commission d'apport d'affaires uniquement si les travaux sont signés — jamais d'abonnement. Référencement soumis à vérification : RGE si requis, assurance décennale, Kbis.",
+    "intro": "HELIOS vous apporte des clients qualifiés (fiche maison, pré-audit et projet), avec leur consentement. 60 € HT par mise en relation, demandée par un foyer, avec son projet et son consentement. Pas d'abonnement, pas de commission sur vos chantiers. Contestation possible sous 7 jours : coordonnées fausses, hors de votre zone ou de vos métiers, doublon, foyer injoignable après trois essais. Référencement soumis à vérification : RGE si requis, assurance décennale, Kbis.",
     "sections": []
   },
   {
@@ -73,7 +73,7 @@
     "intro": "",
     "sections": [
       { "titre": "Notre avis d'abord — et il peut être négatif", "contenu": "Avant toute mise en relation ou offre partenaire, Helios vous donne son avis indépendant. S'il est défavorable, nous vous le disons — et nous ne vous proposons pas le partenaire. Nous vous dirons aussi quand la meilleure option est de ne rien faire." },
-      { "titre": "Jamais un euro facturé au client", "contenu": "HELIOS est gratuit pour vous, toujours. Nous nous rémunérons par une commission versée par les entreprises partenaires quand un chantier se signe — jamais par vous, et cette commission ne modifie jamais nos préconisations." },
+      { "titre": "Jamais un euro facturé au client", "contenu": "HELIOS est gratuit pour vous, toujours. Quand vous demandez à être mis en relation avec une entreprise partenaire, celle-ci paie à HELIOS un prix fixe, le même quel que soit le montant de vos travaux, même si vous ne signez rien. Nos conseils n'en dépendent pas." },
       { "titre": "Des chiffres calculés, pas générés", "contenu": "Tous les montants (pré-audits, simulateur solaire, économies estimées) sortent de moteurs de calcul déterministes fondés sur des données de référence — jamais d'une IA générative. Et ils sont donnés en fourchettes, car un chiffre certain serait un mensonge." },
       { "titre": "Le comparateur public toujours cité", "contenu": "Pour tout ce qui touche à votre contrat d'énergie, nous citons systématiquement le comparateur public et indépendant energie-info.fr, pour que vous puissiez vérifier par vous-même." },
       { "titre": "Vos données vous appartiennent", "contenu": "Consentement explicite et horodaté avant toute transmission à un partenaire, retirable tant que rien n'est signé. Export complet de vos données et suppression de compte en un clic depuis votre espace. Votre numéro de compteur (PDL) n'est jamais transmis aux modèles d'IA." },

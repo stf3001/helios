@@ -17,10 +17,11 @@ const ENGAGEMENTS = [
   {
     icon: HeartHandshake,
     titre: 'Jamais un euro facturé au client',
+    // Texte court du prix fixe (série 4, lot 1), recopié tel quel — comme `pagesFixes.json`.
     texte:
-      'HELIOS est gratuit pour vous, toujours. Nous nous rémunérons par une commission versée par ' +
-      'les entreprises partenaires quand un chantier se signe — jamais par vous, et cette commission ' +
-      'ne modifie jamais nos préconisations.',
+      "HELIOS est gratuit pour vous, toujours. Quand vous demandez à être mis en relation avec une " +
+      "entreprise partenaire, celle-ci paie à HELIOS un prix fixe, le même quel que soit le montant de vos " +
+      "travaux, même si vous ne signez rien. Nos conseils n'en dépendent pas.",
   },
   {
     icon: Calculator,

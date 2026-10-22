@@ -125,9 +125,10 @@ export default function Eau() {
           à confirmer au devis. Gamme jusqu'aux besoins collectifs.
         </p>
         <div className="border-l-4 border-primary bg-gray-50 rounded-r-2xl p-5 text-sm text-gray-700 mb-8">
-          <strong>Transparence.</strong> HELIOS est apporteur d'affaires d'Hydrolia : si vous équipez votre
-          maison via nous, Hydrolia nous verse une commission — jamais vous. Notre avis reste indépendant,
-          et nous vous dirons franchement si la solution n'est pas pertinente chez vous.
+          <strong>Transparence.</strong> Hydrolia est une société créée par le fondateur d'Hélios. Si vous
+          demandez à être mis en relation avec elle, elle paie à HELIOS le même prix fixe que toute entreprise
+          partenaire — jamais vous. Notre avis reste indépendant, et nous vous dirons franchement si la solution
+          n'est pas pertinente chez vous.
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Sun className="w-4 h-4 text-primary shrink-0" />

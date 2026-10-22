@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # la base réelle (20/07/2026) : question exacte 0.69-0.80, paraphrase 0.67-0.69,
     # hors sujet 0.36. Le chunk Q+R dilue les scores, d'où un seuil plus bas qu'intuitif.
     rag_instant_answer_threshold: float = 0.66
-    constitution_version: str = "v0.2"  # doit suivre prompts/constitution-<version>.md
+    constitution_version: str = "v0.3"  # doit suivre prompts/constitution-<version>.md
 
     rag_api_min_niveau: str = "prediagnostic_qualitatif"  # score >= 40% requis pour basculer vers l'API (doc 07 §5)
     rag_api_long_message_chars: int = 200

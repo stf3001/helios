@@ -49,8 +49,9 @@ export default function Footer() {
         </div>
         <div>
           <p className="font-semibold text-sable mb-3">Transparence</p>
-          <p>HELIOS est gratuit pour vous, toujours. La plateforme se rémunère par une commission versée
-             par les entreprises partenaires — jamais par le client. Les conseils d'Helios sont indépendants.</p>
+          {/* Texte court du prix fixe (série 4, lot 1), recopié tel quel : aussi dans l'accueil et
+              les engagements (`pagesFixes.json`). */}
+          <p>HELIOS est gratuit pour vous, toujours. Quand vous demandez à être mis en relation avec une entreprise partenaire, celle-ci paie à HELIOS un prix fixe, le même quel que soit le montant de vos travaux, même si vous ne signez rien. Nos conseils n'en dépendent pas.</p>
           <p className="mt-2"><Link to="/engagements" className={'underline underline-offset-2 ' + lien}>Tous nos engagements →</Link></p>
         </div>
         <div>
