@@ -26,6 +26,7 @@ interface PartnerCard {
   zones: string[]
   metiers: string[]
   note_moyenne: number | null
+  lien_interet: string | null
 }
 
 export default function Partenaires() {
@@ -88,6 +89,7 @@ export default function Partenaires() {
                     </div>
                   )}
                 </div>
+                {p.lien_interet && <div className="mt-1 text-xs text-terra">Lien d'intérêt : {p.lien_interet}</div>}
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {p.rge && <span className="text-xs bg-leaf/10 text-leaf px-2 py-0.5 rounded-full">RGE</span>}
                   {p.metiers.map((m) => (

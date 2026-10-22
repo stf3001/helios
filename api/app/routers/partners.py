@@ -19,6 +19,7 @@ def _to_public(p: Partner) -> dict:
         "zones": p.zones or [],
         "metiers": p.metiers or [],
         "note_moyenne": p.note_moyenne,
+        "lien_interet": p.lien_interet,  # affiché à côté du nom (mises en relation, lot 1)
     }
 
 
