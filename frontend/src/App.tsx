@@ -25,7 +25,6 @@ import PartnerPortal from './pages/PartnerPortal'
 import Espace from './pages/Espace'
 import EspaceCompte from './pages/EspaceCompte'
 import Glossaire from './pages/Glossaire'
-import PotentielHydrique from './pages/PotentielHydrique'
 import EspacePro from './pages/EspacePro'
 import Engagements from './pages/Engagements'
 import Eau from './pages/Eau'
@@ -123,7 +122,9 @@ function SitePublic() {
           {piliers.filter((p) => !(p as { pageDediee?: boolean }).pageDediee).map((p) => (
             <Route key={p.slug} path={`/${p.slug}`} element={<Pilier />} />
           ))}
-          <Route path="/potentiel-hydrique" element={<PotentielHydrique />} />
+          {/* Retirée le 22/10/2026 (point 13) : elle lisait une table climatique provisoire d'Hydrolia.
+              La machine à eau est calculée dans le simulateur, sur PVGIS. */}
+          <Route path="/potentiel-hydrique" element={<Navigate to="/simulateur-solaire" replace />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
           <Route path="/verifier-email" element={<VerifyEmail />} />

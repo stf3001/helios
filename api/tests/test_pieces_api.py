@@ -112,7 +112,7 @@ def test_robinet_thermostatique_reserve_au_radiateur_a_eau(ctx):
 
 def test_photo_hors_limite_remplacee_et_gardee_apres_suppression(ctx):
     c, a = ctx["c"], ctx["a"]
-    for i in range(6):
+    for i in range(documents.MAX_DOCUMENTS_PAR_MAISON):  # 50 depuis le point 49
         r = c.post("/api/houses/me/documents", headers=a, data={"type": "facture"},
                    files={"file": (f"f{i}.pdf", b"%PDF-1.4", "application/pdf")})
         assert r.status_code == 201, r.text

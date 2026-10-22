@@ -444,15 +444,6 @@ def build_energy_context(study) -> dict:
     }
 
 
-def build_water_context(study) -> dict:
-    """Résumé de la dernière étude de potentiel hydrique (Hydrolia) du foyer."""
-    return {
-        "date_simulation": study.created_at.isoformat() if hasattr(study.created_at, "isoformat") else str(study.created_at),
-        "ville": study.params.get("ville"),
-        "resultat": study.result,
-    }
-
-
 def build_user_content(
     question: str,
     results: list[dict],
@@ -462,7 +453,6 @@ def build_user_content(
     solar_context: dict | None = None,
     audit_context: dict | None = None,
     energy_context: dict | None = None,
-    water_context: dict | None = None,
     simulation_context: dict | None = None,
     partenaires_context: str | None = None,
     historique_context: str | None = None,
@@ -516,7 +506,6 @@ def build_user_content(
         ("DERNIER PRÉ-AUDIT ÉNERGÉTIQUE (déperditions + priorités chiffrées)", audit_context),
         ("DERNIÈRE ÉTUDE ÉNERGIE (SOBRY/courtage, avis Helios déjà rendu)", energy_context),
         ("DERNIÈRE SIMULATION AUTOCONSO (PV/batterie/tarifs dynamiques)", autoconso_context),
-        ("DERNIÈRE ÉTUDE DE POTENTIEL HYDRIQUE (Hydrolia)", water_context),
         ("DERNIÈRE ÉTUDE DU SIMULATEUR (maison équipée : panneaux, stockage, pilotage)",
          simulation_context),
     ):

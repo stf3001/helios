@@ -28,7 +28,6 @@ from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
 from app.models.travaux import Travaux
 from app.models.user import User
-from app.models.water import WaterStudy
 from app.schemas.chat import ChatIn
 from app.services import civilites, ollama_client, rag, regions, router_llm
 from app.services.a_faire import derniers_faits, journal_fusionne
@@ -112,7 +111,6 @@ async def send_message(
     solar_context = None
     audit_context = None
     energy_context = None
-    water_context = None
     niveau = None
     if user:
         pro = await db.scalar(select(ProProfile).where(ProProfile.user_id == user.id))
@@ -156,11 +154,8 @@ async def send_message(
             if energy_study is not None:
                 energy_context = rag.build_energy_context(energy_study)
 
-            water_study = await db.scalar(
-                select(WaterStudy).where(WaterStudy.house_id == house.id).order_by(WaterStudy.created_at.desc())
-            )
-            if water_study is not None:
-                water_context = rag.build_water_context(water_study)
+            # L'étude de potentiel hydrique n'est plus transmise (point 13) : elle repose sur une
+            # table climatique provisoire d'Hydrolia (point 14). Les études restent en base.
 
     # Civilité seule (« bonjour », « allo ? », « merci ») : réponse écrite, servie en
     # quelques millisecondes. On sort AVANT le calcul d'embedding — il n'y a rien à
@@ -315,7 +310,6 @@ async def send_message(
         solar_context,
         audit_context,
         energy_context,
-        water_context,
         simulation_context=simulation_context,
         partenaires_context=partenaires_context,
         historique_context=historique_context,

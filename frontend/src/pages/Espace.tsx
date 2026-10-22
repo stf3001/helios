@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  Home, Sun, FileText, Zap, Handshake, Settings, Droplets, Building2, Wind, Sprout,
+  Home, Sun, FileText, Zap, Handshake, Settings, Building2, Wind, Sprout,
   FolderOpen, MessageCircle, LayoutGrid, Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -45,7 +45,6 @@ const ONGLETS: OngletRail<Section>[] = [
 
 const SIMULATEURS = [
   { to: '/simulateur-solaire', icon: Sun, title: 'Potentiel solaire', desc: 'PV, batterie, tarifs' },
-  { to: '/potentiel-hydrique', icon: Droplets, title: 'Potentiel hydrique', desc: 'Eau atmosphérique' },
   { to: '/espace/jardin', icon: Sprout, title: 'Mes cultures', desc: 'Le potager mois par mois' },
 ]
 

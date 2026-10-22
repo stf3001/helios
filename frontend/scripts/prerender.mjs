@@ -151,9 +151,10 @@ function pageHtml(coquille, fiche) {
  */
 const PAGES_FIXES = [
   // Pas `/comment-ca-marche` : elle redirige vers `/helios` par le JavaScript, un robot
-  // qui ne l'execute pas y trouverait une page vide.
+  // qui ne l'execute pas y trouverait une page vide. Ni `/potentiel-hydrique`, retirée
+  // (point 13) : nginx la renvoie en 301 vers `/simulateur-solaire`.
   '/', '/helios', '/faq', '/glossaire',
-  '/simulateur-solaire', '/potentiel-hydrique',
+  '/simulateur-solaire',
   '/partenaires', '/devenir-partenaire',
   '/engagements', '/vision', '/colibri', '/qui-sommes-nous',
   '/le-vent', '/achat-energie',
@@ -167,8 +168,7 @@ const PILIERS = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/piliers.
  *  la version servie aux robots doit dire la même chose que la page.
  *  `/` n'y est pas : son HTML est la coquille `index.html` elle-même, qui sert aussi de
  *  repli à toutes les routes de l'application — y écrire le contenu de l'accueil et sa
- *  canonique les donnerait à chacune. Son titre et sa description y sont déjà.
- *  `/potentiel-hydrique` non plus : elle lit une table climatique fausse (TODO 13-14). */
+ *  canonique les donnerait à chacune. Son titre et sa description y sont déjà. */
 const PAGES_FIXES_CONTENU = JSON.parse(readFileSync(resolve(RACINE_FRONT, 'src/data/pagesFixes.json'), 'utf-8'))
 
 /** Pages locales : production PVGIS RÉELLE par ville (écart x1,5 entre Lille et Marseille).
