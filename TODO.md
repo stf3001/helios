@@ -1102,6 +1102,15 @@ le crédit rechargé (Plans & Billing de la console Anthropic). À trancher auss
 sur le carnet saute désormais la réponse instantanée, et le quota de 3 questions API par
 client et par jour renvoie la 4ᵉ au modèle local.
 
+**Mise à jour du 22/10/2026 (chat et puissance, point 81)** : même constat sur la puissance de
+chauffage. Le crédit Anthropic est toujours épuisé (« credit balance is too low », relu dans les
+journaux) : un foyer avec pré-audit part vers Claude et retombe sur `llama3.2:3b`. Sur cinq
+questions, après deux ajustements de consigne : deux justes (un devis de 14 kW jugé au-dessus de
+la plage ; aucune puissance donnée sans bloc puissance), une juste mais incomplète (la fourchette
+de besoin sans la plage PAC), deux fausses (les radiateurs : surface et « 1 262 kW » inventées ;
+le relevé : cite le facteur 10 kWh/L au lieu des 15 000 kWh présents). Le contexte est juste
+(testé) : c'est le modèle. Réponses mot pour mot dans `debriefs/2026-10-22-chat-puissance.md`.
+
 ### [x] 43. Carnet, lot 6 : le « Dossier de la maison » en PDF — fait le 21/10/2026
 
 **Vérifié à l'œil** sur trois maisons rendues en image (code postal seul : 1 page ; moyenne :
@@ -1421,7 +1430,11 @@ dans ses hypothèses. À trancher par Stéphane : garder la règle, ou faire ré
 quand un appoint hors facture est déclaré, ou quand l'écart entre les deux calculs dépasse un
 seuil. Sans effet sur l'air/eau : elle ne se propose qu'au fioul et au gaz, jamais déclarés.
 
-### [ ] 81. Valider les facteurs de conversion et l'eau chaude au gaz
+### [x] 81. Valider les facteurs de conversion et l'eau chaude au gaz — validés le 22/10/2026
+
+Validés en l'état par Stéphane ; `config.py` le dit. Le chat reprend désormais la puissance, la
+plage de PAC, les verdicts des radiateurs et le relevé (`rag.resume_puissance`). Débrief :
+`debriefs/2026-10-22-chat-puissance.md`. Texte d'origine :
 
 `config.py` : `audit_kwh_par_unite` (fioul 10 kWh/L, gaz 11 kWh/m³, bûches 1 700 kWh/stère,
 granulés 4,6 kWh/kg) et `audit_ecs_combustible_kwh_occupant_an` (1 100 kWh de gaz par occupant).

@@ -1,0 +1,63 @@
+[
+ {
+  "foyer": "v27",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Une pompe à chaleur air/eau d'environ 7 à 10 kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Mes radiateurs suffiront-ils ?",
+  "reponse": "Ça se calcule, pièce par pièce. On relève chaque radiateur (type, hauteur, nombre d'éléments) pour connaître sa puissance nominale, donnée pour une eau très chaude (ΔT 50). Puis on regarde ce qu'il rend à plus basse température. Exemple réel : des radiateurs aluminium totalisant environ 10 kW à ΔT 50 ne rendent plus que 2,5 kW avec une eau à 40 °C, mais 4,6 kW à 50 °C et 5,7 kW à 55 °C. Si le besoin au pire jour est de 4 kW, une eau à 50 °C suffit, et 35 à 45 °C la majeure partie de l'hiver. Des radiateurs généreux (beaucoup d'éléments) sont un atout : ils permettent de chauffer plus bas, donc avec un meilleur rendement. Un radiateur rouillé ou fuyard se remplace pendant le chantier, circuit déjà vidangé.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "kb"
+ },
+ {
+  "foyer": "v27",
+  "question": "Un installateur me propose 14 kW, c'est normal ?",
+  "reponse": "Oui, 14 kW est une puissance réaliste pour une pompe à chaleur. Le calcul de référence que j'ai effectué à partir de votre consommation réelle de 8,5 kW de chauffage me donne une plage de 7,3 à 8,5 kW. Une pompe à chaleur de 7 à 10 kW devrait donc être suffisante pour couvrir votre besoin de chauffage. Si le devis propose 14 kW, il est possible qu'il repose sur un calcul spécifique ou sur une installation particulière qui nécessite une puissance plus élevée. Il faudrait demander plus d'informations sur le devis pour être sûr.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Combien de kWh représente mon fioul ?",
+  "reponse": "10.0",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v25",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Pour évaluer la puissance de pompe à chaleur adaptée à votre maison, nous devons considérer plusieurs paramètres, notamment le nombre de pièces, l'altitude et les besoins énergétiques actuels. Cependant, pour vous fournir une estimation, je vais utiliser les hypothèses fournies dans le contexte de notre analyse.\n\n- **Nombre de niveaux** : Nous avons décidé de 1 niveau (valeur par défaut) : combles et plancher = surface habitable.\n- **Altitude** : Ignorée dans notre modèle de calcul.\n- **Zone climatique** : H3.\n- **Énergie chauffage** : Gaz (valeur par défaut).\n- **Production d'eau chaude** : Ballon électrique (valeur par défaut).\n\nAvec ces informations, nous pouvons considérer une puissance de pompe à chaleur autour de 6 kW. C'est une estimation basée sur des hypothèses et peut varier en fonction de votre situation spécifique. La puissance exacte dépendra de nombreux facteurs, notamment la surface habitable, les performances des murs, de la toiture, de la isolation, et bien sûr, des besoins énergétiques réels.\n\nIl est crucial de consulter un professionnel pour une évaluation précise et personnalisée de votre maison.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ }
+]

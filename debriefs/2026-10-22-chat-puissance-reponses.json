@@ -1,0 +1,62 @@
+[
+ {
+  "foyer": "v27",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "D'après votre dossier, au jour le plus froid de référence (-5 °C), votre maison demande entre 7,3 et 8,5 kW de chauffage.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Mes radiateurs suffiront-ils ?",
+  "reponse": "Bonjour !\n\nPour répondre à votre question, les informations nécessaires pour déterminer si vos radiateurs suffiront à couvrir votre besoin de chauffage sont disponibles sur la page du simulateur de votre foyer.\n\nEn regardant le tableau de chauffage, nous voyons que :\n\n- La superficie de votre maison est de 130 m².\n- Le besoin utile de chauffage est de 180 kWh/an par m².\n- La superficie totale de vos radiateurs est de 7,3 m² (valeur calculée à partir de votre consommation réelle de 8,5 kW).\n- Le besoin utile de chauffage par m² est de 180 kWh/an, soit 7,3 m² x 180 kW/m² = 1 262 kW pour une superficie totale de 7,3 m².\n\nIl semble que vos radiateurs devraient suffire pour couvrir votre besoin de chauffage, mais comme indiqué dans le tableau de chauffage, des radiateurs supplémentaires pourraient être nécessaires pour répondre à votre besoin de 1 262 kW.\n\nIl est toujours recommandé de consulter un professionnel pour une évaluation plus précise de vos besoins de chauffage.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Un installateur me propose 14 kW, c'est normal ?",
+  "reponse": "Non, 14 kW est supérieur au besoin de 7 à 10 kW pour votre foyer.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Combien de kWh représente mon fioul ?",
+  "reponse": "Avec les données fournies, il n'est pas possible de déterminer la quantité de kWh que représente le fioul. Cependant, selon les données fournies, le fioul représente 10,0 kWh/litre.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v25",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Bonjour ! Pour estimer la puissance de pompe à chaleur nécessaire à votre maison, nous avons besoin de quelques informations supplémentaires.\n\nPour commencer, j'aimerais savoir :\n\n- Quel est le nombre de pièces en surface habitable dans votre maison ?\n- Combien d'habitants y a-t-il normalement présents à l'intérieur ? \n- Quelle est la zone climatique de votre maison ? \n\nCes informations nous aideront à mieux comprendre vos besoins énergétiques et à estimer la puissance de pompe à chaleur appropriée. \n\nVeuillez me donner ces informations pour que je puisse vous donner un aperçu de la puissance de pompe à chaleur qui pourrait vous convenir.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ }
+]
