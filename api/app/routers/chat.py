@@ -276,9 +276,13 @@ async def send_message(
     # Série 9 : puissance, radiateurs, relevé ou puissance d'un devis → les phrases du pré-audit
     # du foyer, telles quelles, sans LLM (`model_used = "preaudit"`). Avant la fiche générale :
     # elles portent les chiffres de CETTE maison. `force_llm` (« développer ») passe outre.
-    if not payload.force_llm and dernier_audit is not None:
-        directe = rag.reponse_preaudit(dernier_audit.json_result, dernier_audit.created_at.isoformat(),
-                                       payload.content)
+    # Série 10 : un foyer connecté sans ces calculs reçoit l'invitation à faire ou refaire son
+    # pré-audit, jamais une puissance inventée par le modèle. Un visiteur sans compte, non.
+    if not payload.force_llm and user is not None:
+        directe = rag.reponse_preaudit(
+            dernier_audit.json_result if dernier_audit else None,
+            dernier_audit.created_at.isoformat() if dernier_audit else None,
+            payload.content, connecte=True)
         if directe is not None:
 
             async def stream_preaudit():

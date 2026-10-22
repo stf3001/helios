@@ -687,6 +687,8 @@ TEXTES_PUISSANCE: dict[str, str] = {
     "chat_sans_pieces": "Pour savoir si vos radiateurs suffisent, indiquez vos pièces et leurs radiateurs (avec leur puissance) dans « Ma maison », puis refaites le pré-audit.",
     "chat_devis_dessus": "{kw} kW, c'est au-dessus de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur sur quoi repose cette puissance : une machine trop puissante coûte plus cher et fonctionne moins bien.",
     "chat_devis_dans": "{kw} kW, c'est dans la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW).",
+    "chat_preaudit_ancien": "Votre pré-audit du {date} ne calcule pas encore la puissance de chauffage de votre maison. Refaites-le depuis votre espace : il donnera la puissance, la plage de pompe à chaleur et, si vos pièces sont saisies, le bilan de vos radiateurs.",
+    "chat_sans_preaudit": "Pour connaître la puissance de chauffage de votre maison, faites votre pré-audit depuis votre espace : il la calcule à partir de votre fiche, avec la plage de pompe à chaleur qui conviendrait et, si vos pièces sont saisies, le bilan de vos radiateurs.",
     "chat_devis_dessous": "{kw} kW, c'est en dessous de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur comment la maison sera chauffée les jours les plus froids.",
 }
 # Le relevé d'une autre énergie, tel que la fiche le dit (libellés de `FicheMaison.tsx`, à tenir

@@ -427,8 +427,20 @@ SUJETS_PREAUDIT: tuple[tuple[str, re.Pattern], ...] = tuple((nom, re.compile(mot
     ("devis", r"\d+(?:[.,]\d+)?\s*kw(?!h)\b"),
     ("puissance", r"puissance|dimensionn|quelle taille|combien de kw(?!h)"),
 ))
-# « Quelle puissance souscrire ? » parle du compteur, pas du chauffage.
-_PUISSANCE_COMPTEUR = re.compile(r"souscri|kva|compteur|abonnement", re.IGNORECASE)
+# Les autres puissances (série 10) : une question qui en parle ne reçoit ni la puissance de
+# chauffage ni la comparaison à la plage de PAC — elle a ses fiches et sa voie. Exemples :
+#   « Quelle puissance souscrire ? »                (compteur)
+#   « Quelle puissance de panneaux solaires ? »     (solaire)
+#   « Une borne de 7 kW, c'est assez ? »            (recharge)
+#   « Une clim de 3,5 kW pour ma chambre ? »        (froid)
+# Seuls `puissance` et `devis` sont retirés : « mes radiateurs » et « mon relevé » restent.
+_AUTRES_PUISSANCES = re.compile(
+    r"souscri|kva|compteur|abonnement"            # compteur
+    r"|solaire|panneau|photovolta|kwc|onduleur|batterie"  # solaire
+    r"|borne|recharge|voiture"                     # recharge
+    r"|clim|split",                                # froid
+    re.IGNORECASE,
+)
 _NOMBRE_KW = re.compile(r"(\d+(?:[.,]\d+)?)\s*kw(?!h)\b", re.IGNORECASE)
 
 
@@ -444,21 +456,29 @@ def _fr_entier(n) -> str:
 
 def sujets_preaudit(question: str) -> list[str]:
     sujets = [nom for nom, motif in SUJETS_PREAUDIT if motif.search(question)]
-    if "puissance" in sujets and _PUISSANCE_COMPTEUR.search(question):
-        sujets.remove("puissance")
+    if _AUTRES_PUISSANCES.search(question):
+        sujets = [s for s in sujets if s not in ("puissance", "devis")]
     return sujets
 
 
-def reponse_preaudit(audit_result: dict, date_audit, question: str) -> str | None:
+def reponse_preaudit(audit_result: dict | None, date_audit, question: str, connecte: bool = False) -> str | None:
     """Les phrases du pré-audit qui répondent à la question, ou None (la question va au LLM).
 
-    Aucun calcul, sauf la comparaison d'une puissance proposée à la plage de PAC. Sans bloc
-    `puissance` (audit avant la v2.6), ou pour un devis sans plage air/eau, None."""
+    Aucun calcul, sauf la comparaison d'une puissance proposée à la plage de PAC. Pour un devis
+    sans plage air/eau, None. Sans bloc `puissance` : un foyer connecté est invité à refaire
+    (`chat_preaudit_ancien`) ou à faire (`chat_sans_preaudit`) son pré-audit — jamais une
+    puissance inventée (série 10) ; un visiteur sans compte, None (voie habituelle)."""
     bloc = (audit_result or {}).get("puissance")
     sujets = sujets_preaudit(question)
-    if not bloc or not sujets:
+    if not sujets:
         return None
     tx = _ref.TEXTES_PUISSANCE
+    if not bloc:
+        if not connecte:
+            return None
+        if audit_result is None:
+            return tx["chat_sans_preaudit"]
+        return tx["chat_preaudit_ancien"].format(date=date.fromisoformat(str(date_audit)[:10]).strftime("%d/%m/%Y"))
     plage = bloc.get("pac_air_eau_kw") if bloc.get("affichage") == "complet" else None
     parties: list[str] = []
     for sujet in sujets:
