@@ -131,11 +131,22 @@ def test_le_cycle_complet_du_chauffage(foyer):
 def test_eau_chaude_autre_laisse_la_fiche_libre(foyer):
     c, h = foyer
     r = c.post("/api/houses/me/equipements", headers=h, json={
-        "categorie": "ecs", "type": "autre", "annee_pose": 2015, "origine_fiche": "ecs"})
+        "categorie": "ecs", "type": "ballon_elec", "annee_pose": 2015, "origine_fiche": "ecs"})
     assert r.status_code == 201
+    ballon = r.json()["id"]
     f = _fiche(c, h)
-    assert f["ecs"] == "solaire" and "ecs" not in f["champs_verrouilles"]
+    assert (f["ecs"], f["ecs_annee"]) == ("ballon_elec", 2015) and "ecs" in f["champs_verrouilles"]
+
+    # Le type passe à « autre » : la fiche garde sa valeur telle quelle, et redevient libre.
+    assert c.patch(f"/api/houses/me/equipements/{ballon}", headers=h, json={"type": "autre"}).status_code == 200
+    f = _fiche(c, h)
+    assert (f["ecs"], f["ecs_annee"]) == ("ballon_elec", 2015)
+    assert "ecs" not in f["champs_verrouilles"] and "ecs_annee" not in f["champs_verrouilles"]
     assert c.patch("/api/houses/me", headers=h, json={"ecs": "gaz"}).status_code == 200
+
+    # Mis hors service, il ne vide rien non plus : il ne tenait plus la fiche.
+    assert c.patch(f"/api/houses/me/equipements/{ballon}", headers=h, json={"en_service": False}).status_code == 200
+    assert _fiche(c, h)["ecs"] == "gaz"
 
 
 def test_la_clim_ecrit_son_libelle_et_garde_le_nombre_de_pieces(foyer):

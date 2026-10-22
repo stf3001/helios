@@ -1330,7 +1330,7 @@ affiché (relevé dans le navigateur), et le pré-rendu les écrit avec le gabar
 
 ## Carnet de maison
 - `equipements` et `travaux` (0024) ; âge et garanties calculés à la lecture (`services/garanties.py`, pur), jamais stockés ; numéro de série et notes jamais transmis au chat. Les codes de `TYPES_PAR_CATEGORIE` (`models/equipement.py`) et `components/carnet/libelles.ts` se tiennent à jour ENSEMBLE.
-- L'équipement en service portant `origine_fiche` FIXE la fiche (`services/fiche_equipements.py`, seule table de correspondance, dans les deux sens) : champs verrouillés en lecture, un seul par origine, hors service ou suppression = champ vidé. Un type sans équivalent (`autre` en eau chaude ou ventilation) laisse le champ libre.
+- L'équipement en service portant `origine_fiche` FIXE la fiche (`services/fiche_equipements.py`, seule table de correspondance, dans les deux sens) : champs verrouillés en lecture, un seul par origine, hors service ou suppression = champ vidé. Un type sans équivalent (`autre` en eau chaude ou ventilation) laisse le champ libre, et y passer ne vide rien.
 - `clim_type` reçoit les libellés de `libelles.ts` (`LIBELLES_CLIM`, à tenir ENSEMBLE) ; la migration 0030 importe le service, la rejouer sur une base neuve applique la table du moment.
 - Pièces et émetteurs (0025) : saisie seule, aucun moteur ne les lit encore (point 37) ; `resume_pieces` (pur) signale les écarts avec la fiche sans jamais la corriger. Codes : `models/piece.py` et `components/carnet/libellesPieces.ts` ENSEMBLE.
 - La photo d'une pièce est un `house_documents` avec `piece_id` : hors limite des 6, une seule par pièce (la nouvelle remplace l'ancienne), gardée dans les papiers si la pièce disparaît.

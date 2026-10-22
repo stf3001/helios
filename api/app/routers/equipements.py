@@ -140,18 +140,19 @@ async def update_equipement(
         verifier_type(champs.get("categorie", eq.categorie), champs.get("type", eq.type))
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
-    avant = set(fe.champs_fiche_depuis(eq)) if eq.en_service else set()
+    # Ce qu'il fixe AVANT la modification : vidé seulement s'il quitte le service.
+    avant = fe.champs_a_vider(eq) if eq.en_service else {}
     for champ, valeur in champs.items():
         if champ in ("categorie", "type", "en_service") and valeur is None:
             continue  # colonnes NOT NULL : « null » ne veut rien dire ici
         setattr(eq, champ, valeur)
     await _verifier_origine(db, house, eq)
     await db.flush()
-    # Ce qu'il fixait et ne fixe plus (hors service, type devenu sans équivalent) est vidé ;
-    # ce qu'il fixe encore est réécrit par la synchronisation, sans passer par le vide —
-    # sinon un « reseau » conservé face à un « autre » redeviendrait « autre ».
-    apres = set(fe.champs_fiche_depuis(eq)) if eq.en_service else set()
-    await _synchroniser(db, house, dict.fromkeys(avant - apres))
+    # Un type devenu sans équivalent (ballon électrique → « autre ») ne vide RIEN : la valeur
+    # de la fiche reste telle quelle et redevient libre (décision du 22/10/2026). Ce qu'il
+    # fixe encore est réécrit par la synchronisation, sans passer par le vide — sinon un
+    # « reseau » conservé face à un « autre » redeviendrait « autre ».
+    await _synchroniser(db, house, avant if not eq.en_service else None)
     await db.commit()
     await db.refresh(eq)
     return _out(eq, date.today())
