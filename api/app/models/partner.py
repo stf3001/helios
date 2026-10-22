@@ -143,3 +143,28 @@ class PartnerActivation(Base):
     expire_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     utilise_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+
+
+class ReleveCloture(Base):
+    """La clôture d'un mois de relevés (lot 4) — une ligne par mois, même vide."""
+
+    __tablename__ = "releves_clotures"
+
+    mois: Mapped[str] = mapped_column(String(7), primary_key=True)  # AAAA-MM, heure de Paris
+    cloture_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+    cloture_par: Mapped[str | None] = mapped_column(String(255))
+
+
+class Releve(Base):
+    """Relevé CLOS d'un partenaire pour un mois : instantané et PDF figés. Pas une facture."""
+
+    __tablename__ = "releves"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    partner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("partners.id"), nullable=False,
+                                                  index=True)
+    mois: Mapped[str] = mapped_column(String(7), ForeignKey("releves_clotures.mois"), nullable=False)
+    statut: Mapped[str] = mapped_column(String(12), nullable=False, default="clos")
+    instantane: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    pdf_path: Mapped[str | None] = mapped_column(String(255))
+    cloture_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
