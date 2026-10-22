@@ -1111,6 +1111,14 @@ de besoin sans la plage PAC), deux fausses (les radiateurs : surface et « 1 262
 le relevé : cite le facteur 10 kWh/L au lieu des 15 000 kWh présents). Le contexte est juste
 (testé) : c'est le modèle. Réponses mot pour mot dans `debriefs/2026-10-22-chat-puissance.md`.
 
+**Mise à jour du 22/10/2026 (série 9)** : les questions de puissance, de radiateurs, de relevé et
+de puissance d'un devis ne passent plus par le LLM quand le pré-audit du foyer porte le bloc
+puissance — Hélios renvoie les phrases du pré-audit (`rag.reponse_preaudit`, `model_used =
+preaudit`). Vérifié par les vraies routes : les quatre questions fausses ou incomplètes sont
+justes. Reste au LLM, et donc à ce point : un foyer SANS bloc puissance (audit v2.5) reçoit du
+modèle local une puissance inventée (« 20 kW à 40 kW »), malgré la consigne. Débrief :
+`debriefs/2026-10-22-chat-reponse-preaudit.md`.
+
 ### [x] 43. Carnet, lot 6 : le « Dossier de la maison » en PDF — fait le 21/10/2026
 
 **Vérifié à l'œil** sur trois maisons rendues en image (code postal seul : 1 page ; moyenne :

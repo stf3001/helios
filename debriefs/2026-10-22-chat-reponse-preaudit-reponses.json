@@ -1,0 +1,91 @@
+[
+ {
+  "foyer": "v27",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\nAu jour le plus froid de référence (-5 °C), votre maison demande entre 7,3 et 8,5 kW de chauffage. Le calcul tiré de votre consommation réelle (8,5 kW) est le plus juste ; le calcul au volume (7,3 kW) sert de repère de prudence.\nUne pompe à chaleur air/eau d'environ 7 à 10 kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v27",
+  "question": "Mes radiateurs suffiront-ils ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\n- Séjour : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question.\n- Cuisine : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question.\n- Chambre 1 : vos radiateurs suffisent avec une eau à 55 °C.\n- Chambre 2 : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question.\n- Bureau : vos radiateurs suffisent avec une eau à 50 °C.\n- Salle de bains : la puissance des radiateurs n'est pas indiquée ; l'installateur doit la relever.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v27",
+  "question": "Un installateur me propose 14 kW, c'est normal ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\n14 kW, c'est au-dessus de la plage que calcule votre pré-audit (7 à 10 kW). Demandez à l'installateur sur quoi repose cette puissance : une machine trop puissante coûte plus cher et fonctionne moins bien.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v27",
+  "question": "Combien de kWh représente mon fioul ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\nVotre relevé (1 500 litres de fioul par an) représente environ 15 000 kWh.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v25",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Pour déterminer la puissance de chaleur adéquate pour votre maison, il est essentiel de prendre en compte plusieurs facteurs, notamment la surface habitable, le nombre d'occupants, les besoins en chauffage et l'efficacité de la construction.\n\nPuisque nous n'avons pas de détails précis sur ces éléments pour votre maison, je vais vous fournir une orientation générale. La puissance de chaleur est généralement exprimée en kilowatts (kW) et dépend du nombre de kW de chaleur nécessaire pour équilibrer la perte de chaleur par unité de surface habitable à une température d'environ 20°C.\n\nPour un foyer de 3 pièces avec 3 occupants, une estimation de base pourrait être :\n\n*   Forêt ( zone H3) :\n    *   surface habitable supérieure ou égale à 50 m² : 20 kW à 40 kW\n    *   surface habitable inférieure à 50 m² : 10 kW à 20 kW\n\nCependant, il est crucial de prendre en compte les conditions spécifiques de votre maison, notamment son isolement, sa construction et les éléments qui façonnent votre besoin en chauffage. Il est également important de noter que ces estimations sont des hypothèses et qu'une évaluation plus précise par un professionnel serait nécessaire pour déterminer la puissance exacte de chaleur appropriée.\n\nIl est également important de noter que le coût et le coût de installation de la chaleur varient en fonction des options de chauffage choisis, notamment l'énergie utilisée.\n\nJe vous recommande de consulter un professionnel pour une évaluation plus précise de vos besoins en matière de chauffage et pour déterminer la puissance de chaleur appropriée et les coûts associés.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "6 kW, c'est assez ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\n6 kW, c'est en dessous de la plage que calcule votre pré-audit (7 à 10 kW). Demandez à l'installateur comment la maison sera chauffée les jours les plus froids.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v27",
+  "question": "Quelle marque de PAC choisir ?",
+  "reponse": "Je ne peux pas vous aider à choisir une marque de PAC.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ }
+]
