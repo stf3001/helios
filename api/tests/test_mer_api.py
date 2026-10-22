@@ -118,7 +118,9 @@ def test_ad_solar_jamais_propose_hydrolia_et_eolia_portent_leur_lien(ctx):
 def test_creation_garde_fous_et_prix_fige(ctx):
     c, ids, h = ctx
     creer = lambda qui, nom, **kw: c.post("/api/leads", headers=h[qui], json={
-        "partner_id": str(ids[nom]), "type": "travaux", "metier": "isolation", "consent": True, **kw})
+        "partner_id": str(ids[nom]), "type": "travaux", "metier": "isolation", "consent": True,
+        "contact": {"nom": "Test", "email": "test@example.com"}, "creneaux": [{"jour": "lundi", "plage": "soir"}],
+        **kw})
 
     r = creer("locataire", "A")
     assert r.status_code == 400 and r.json()["detail"] == "Ces travaux se décident avec votre propriétaire."

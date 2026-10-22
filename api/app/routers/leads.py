@@ -12,8 +12,16 @@ Garde-fous :
   doublon, au plus 3 demandes actives par métier ;
 - le client peut retirer son consentement tant que le devis n'est pas signé ;
 - lead immuable après SIGNÉ.
+
+Lot 2 : un lead `travaux` porte le DOSSIER que le foyer a coché (`services/dossier_lead.py`),
+figé et daté, ses créneaux, ses coordonnées, et un score calculé depuis ce dossier
+(`services/score_lead.py`) — sans effet sur le prix, l'ordre des propositions ni l'accès. Les
+documents choisis sont copiés sous `generated/lead_docs/<lead_id>/` ; retirer son consentement
+supprime ces copies et vide le dossier, les coordonnées, le message et les créneaux.
 """
-from datetime import datetime, timezone
+import shutil
+from datetime import date, datetime, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
@@ -22,14 +30,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.models.audit import Audit
 from app.models.house import House
+from app.models.house_document import HouseDocument
 from app.models.partner import Lead, Partner, Review
+from app.models.projet import Projet
+from app.models.simulateur import SimulateurStudy
 from app.models.user import User
-from app.schemas.partner import LeadCreate, LeadStatusUpdate, ReviewCreate
-from app.services import commission, propositions, regions
+from app.schemas.partner import LeadCreate, LeadDossier, LeadStatusUpdate, ReviewCreate
+from app.services import commission, dossier_lead, propositions, regions
+from app.services.score_lead import score as score_lead
 from app.services.email import send_lead_notification
 
 router = APIRouter(prefix="/leads", tags=["leads"])
+
+LEAD_DOCS_DIR = Path(__file__).resolve().parents[2] / "generated" / "lead_docs"
 
 
 async def _own_house(db: AsyncSession, user_id) -> House:
@@ -65,6 +80,53 @@ def _to_out(lead: Lead, partner: Partner | None) -> dict:
     }
 
 
+async def _derniere_etude(db: AsyncSession, house_id, type_: str):
+    if type_ == "audit":
+        a = await db.scalar(select(Audit).where(Audit.house_id == house_id).order_by(Audit.created_at.desc()).limit(1))
+        return a and {"id": a.id, "type": "audit", "date": a.created_at, "contenu": a.json_result}
+    s = await db.scalar(select(SimulateurStudy).where(SimulateurStudy.house_id == house_id)
+                        .order_by(SimulateurStudy.created_at.desc()).limit(1))
+    return s and {"id": s.id, "type": "simulateur", "date": s.created_at, "contenu": s.resultat}
+
+
+async def _preparer(db: AsyncSession, house: House, payload: LeadDossier) -> dict:
+    """Le dossier, son score et les documents à copier — une seule fonction pour l'aperçu et la
+    création : ce que le foyer voit est exactement ce qui part."""
+    partage = payload.partage
+    projet = None
+    if partage.projet_id is not None:
+        projet = await db.get(Projet, partage.projet_id)
+        if projet is None or projet.house_id != house.id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Projet introuvable")
+    etude = await _derniere_etude(db, house.id, partage.etude) if partage.etude else None
+    if partage.etude and etude is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Aucune étude de ce type à partager.")
+    ids = list(dict.fromkeys(partage.document_ids))
+    if len(ids) > settings.mer_documents_max:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{settings.mer_documents_max} documents au plus.")
+    documents = list(await db.scalars(select(HouseDocument).where(HouseDocument.id.in_(ids),
+                                                                  HouseDocument.house_id == house.id))) if ids else []
+    if len(documents) != len(ids):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document introuvable")
+    documents.sort(key=lambda d: ids.index(d.id))
+    try:
+        creneaux = dossier_lead.valider_creneaux([c.model_dump() for c in payload.creneaux])
+    except dossier_lead.DossierInvalide as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+    aujourd_hui = date.today()
+    dossier = dossier_lead.construire_dossier(
+        house, payload.metier, payload.message, {"fiche": partage.fiche, "projet": True, "etude": True},
+        projet=projet, etude=etude, documents=documents, aujourd_hui=aujourd_hui)
+    telephone = payload.contact.telephone if payload.contact else None
+    total, detail = score_lead(dossier, telephone, aujourd_hui)
+    return {"dossier": dossier, "score": total, "score_detail": detail, "creneaux": creneaux,
+            "contact": payload.contact.model_dump() if payload.contact else None, "documents": documents}
+
+
+def _supprimer_copies(lead_id) -> None:
+    shutil.rmtree(LEAD_DOCS_DIR / str(lead_id), ignore_errors=True)
+
+
 async def _nb_avis(db: AsyncSession) -> dict:
     rows = await db.execute(select(Lead.partner_id, func.count()).join(Review, Review.lead_id == Lead.id)
                             .group_by(Lead.partner_id))
@@ -87,6 +149,36 @@ async def get_propositions(metier: str, user: User = Depends(get_current_user), 
             "propositions": [propositions.proposition(p, avis.get(p.id, 0)) for p in tires]}
 
 
+@router.get("/partageable")
+async def get_partageable(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Ce que le foyer PEUT cocher : ses projets, sa dernière étude de chaque type, ses documents,
+    et ses coordonnées connues pour préremplir le formulaire. Rien n'est coché d'avance."""
+    house = await _own_house(db, user.id)
+    projets = list(await db.scalars(select(Projet).where(Projet.house_id == house.id).order_by(Projet.created_at.desc())))
+    documents = list(await db.scalars(select(HouseDocument).where(HouseDocument.house_id == house.id)
+                                      .order_by(HouseDocument.uploaded_at.desc())))
+    etudes = {}
+    for t in ("audit", "simulateur"):
+        e = await _derniere_etude(db, house.id, t)
+        etudes[t] = e and {"id": e["id"], "date": e["date"]}
+    return {
+        "contact": {"nom": user.prenom or "", "email": user.email, "telephone": None},
+        "projets": [{"id": p.id, "titre": p.titre, "etape": p.etape} for p in projets],
+        "etudes": etudes,
+        "documents": [{"id": d.id, "type": d.type, "filename": d.filename} for d in documents],
+        "documents_max": settings.mer_documents_max,
+    }
+
+
+@router.post("/apercu")
+async def apercu(payload: LeadDossier, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Exactement ce qui partira, avant la case de consentement — rien n'est enregistré."""
+    house = await _own_house(db, user.id)
+    p = await _preparer(db, house, payload)
+    p.pop("documents")
+    return p
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Demande de mise en relation — exige le consentement explicite (doc 08 §6)."""
@@ -97,7 +189,7 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
     partner = await db.get(Partner, payload.partner_id)
     if partner is None or partner.statut != "actif":
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire indisponible")
-    prix_ht = None
+    prix_ht = prepare = None
     if payload.type == "travaux":
         actifs = list(await db.scalars(select(Lead).where(
             Lead.house_id == house.id, Lead.type == "travaux", Lead.statut.in_(propositions.STATUTS_ACTIFS))))
@@ -107,6 +199,9 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
         if refus:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, refus)
         prix_ht = settings.mer_prix_ht_eur  # figé : un changement de prix ne touche pas les leads passés
+        if payload.contact is None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Indiquez vos coordonnées.")
+        prepare = await _preparer(db, house, payload)
 
     lead = Lead(
         house_id=house.id,
@@ -118,8 +213,26 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
         consent_client_at=datetime.now(timezone.utc),
         prix_ht=prix_ht,
     )
+    if prepare:
+        contact = prepare["contact"]
+        lead.dossier, lead.score, lead.score_detail = prepare["dossier"], prepare["score"], prepare["score_detail"]
+        lead.creneaux, lead.message = prepare["creneaux"], prepare["dossier"]["minimum"]["message"]
+        lead.contact_nom, lead.contact_email = contact["nom"].strip(), contact["email"]
+        lead.contact_telephone = (contact["telephone"] or "").strip() or None
     db.add(lead)
-    await db.commit()
+    await db.flush()
+    if prepare and prepare["documents"]:
+        # Copiés, pas liés : supprimer le document de la maison ne le retire pas au partenaire.
+        dossier_docs = LEAD_DOCS_DIR / str(lead.id)
+        dossier_docs.mkdir(parents=True, exist_ok=True)
+        for d in prepare["documents"]:
+            if Path(d.path).exists():
+                shutil.copyfile(d.path, dossier_docs / f"{d.id}{Path(d.path).suffix.lower()}")
+    try:
+        await db.commit()
+    except Exception:
+        _supprimer_copies(lead.id)
+        raise
     await db.refresh(lead)
 
     await send_lead_notification(partner.email, partner.raison_sociale, lead.id)
@@ -148,7 +261,11 @@ async def withdraw_consent(lead_id, user: User = Depends(get_current_user), db: 
     lead.consent_retire_at = datetime.now(timezone.utc)
     lead.statut = "perdu"
     lead.motif_perdu = "Consentement retiré par le client"
+    # Le retrait retire les données : le lead ne garde que son historique de statut et son prix.
+    lead.dossier = lead.score = lead.score_detail = lead.creneaux = lead.message = None
+    lead.contact_nom = lead.contact_telephone = lead.contact_email = None
     await db.commit()
+    _supprimer_copies(lead.id)
     return _to_out(lead, await db.get(Partner, lead.partner_id))
 
 
