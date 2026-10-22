@@ -25,6 +25,7 @@ from app.schemas.equipement import EquipementCreate, EquipementUpdate, verifier_
 from app.services import fiche_equipements as fe
 from app.services.completeness import compute_score
 from app.services.garanties import age_ans, date_pose, garanties_maison
+from app.services.parcours import garanties_visibles
 from app.services.suggestions_fiche import suggestions
 
 router = APIRouter(prefix="/houses/me", tags=["carnet"])
@@ -188,4 +189,4 @@ async def list_garanties(user: User = Depends(get_current_user), db: AsyncSessio
         return []
     equipements = list(await db.scalars(select(Equipement).where(Equipement.house_id == house.id)))
     travaux = list(await db.scalars(select(Travaux).where(Travaux.house_id == house.id)))
-    return garanties_maison(equipements, travaux, date.today())
+    return garanties_visibles(garanties_maison(equipements, travaux, date.today()), house)

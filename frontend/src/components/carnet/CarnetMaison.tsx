@@ -8,7 +8,7 @@ import { faqSlug } from '../../lib/faqSlug'
 import MesPieces from './MesPieces'
 import Calendrier from './Calendrier'
 import Journal from './Journal'
-import { signalerMaj, useMaj } from './commun'
+import { type Parcours, signalerMaj, useMaj } from './commun'
 import type { Draft } from '../fiche/types'
 import {
   type Chantier, type Doc, type Equipement, type Garantie, FormChantier, FormEquipement, messageErreur,
@@ -29,6 +29,9 @@ import {
  * la réécrit à chaque enregistrement, d'où la disparition de la note « Votre fiche indique… ».
  * Le mettre hors service ou le supprimer vide le champ de la fiche : un bandeau propose
  * alors d'ajouter ce qui le remplace.
+ *
+ * Lot 8 : un locataire ne décide pas des travaux — ni chantiers ni garanties de chantier ici,
+ * seulement les garanties de ses appareils ; le calendrier lui propose la note au propriétaire.
  */
 
 type Suggestion = {
@@ -118,7 +121,7 @@ function CarteEquipement({ e, onModifier, onService, onSupprimer }: {
   )
 }
 
-export default function CarnetMaison() {
+export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
   const { authFetch } = useAuth()
   const [equipements, setEquipements] = useState<Equipement[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -280,13 +283,33 @@ export default function CarnetMaison() {
       </section>
 
       {/* — Calendrier d'entretien (lot 4) : la cible de « Tout voir » du bloc « À faire » — */}
-      <Calendrier equipements={equipements} documents={documents} />
+      <Calendrier equipements={equipements} documents={documents} noteProprietaire={parcours.note_proprietaire} />
 
       {/* — Mes pièces (lot 2) : sous les équipements, qui alimentent ses émetteurs — */}
       <MesPieces equipements={enService} />
 
+      {/* — Garanties des appareils (locataire, lot 8) : les seules qui le concernent — */}
+      {!parcours.voit_travaux && ouvertes.length > 0 && (
+        <section className="rounded-xl border border-ink/10 bg-white p-4">
+          <h2 className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
+            <ShieldCheck className="h-5 w-5 text-primary" /> Garanties de vos appareils
+          </h2>
+          <ul className="divide-y divide-bord rounded-lg border border-bord">
+            {ouvertes.map((g) => (
+              <li key={`${g.provenance}-${g.code}-${g.libelle}`} className="flex items-start justify-between gap-2 px-3 py-2">
+                <span className="min-w-0 text-sm">
+                  <span className="block text-ink">{g.libelle}</span>
+                  <span className="block text-xs text-dark/60">jusqu'au {dateFr(g.fin)} · date que vous avez indiquée</span>
+                </span>
+                <Pastille statut={g.statut} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* — Travaux et garanties — */}
-      <section className="rounded-xl border border-ink/10 bg-white p-4">
+      {parcours.voit_travaux && (<section className="rounded-xl border border-ink/10 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-xl text-ink">
             <ShieldCheck className="h-5 w-5 text-primary" /> Travaux et garanties
@@ -371,7 +394,7 @@ export default function CarnetMaison() {
             ))}
           </ul>
         )}
-      </section>
+      </section>)}
 
       {/* — Journal de la maison (lot 4) — */}
       <Journal equipements={equipements} documents={documents}

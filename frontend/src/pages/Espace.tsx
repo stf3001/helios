@@ -10,6 +10,8 @@ import { Skeleton, SkeletonCards } from '../components/Skeleton'
 import ApiError from '../components/ApiError'
 import HouseDocuments from '../components/fiche/HouseDocuments'
 import CarnetMaison from '../components/carnet/CarnetMaison'
+import AvantAcheter from '../components/carnet/AvantAcheter'
+import type { Parcours } from '../components/carnet/commun'
 import AFaire from '../components/carnet/AFaire'
 import ExportDossier from '../components/carnet/ExportDossier'
 import BlocHelios from '../components/chat/BlocHelios'
@@ -103,7 +105,9 @@ export default function Espace() {
   const ancre = searchParams.get('aller')
   const [section, setSection] = useState<Section>(
     ancre && ANCRES_MAISON.includes(ancre) ? 'maison' : 'helios')
-  const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
+  const [house, setHouse] = useState<{
+    completeness_score: number; niveau: string; code_postal: string; parcours: Parcours
+  } | null>(null)
   const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -169,7 +173,10 @@ export default function Espace() {
         <>
           {/* « À faire ce mois-ci » (carnet, lot 4) : AU-DESSUS des onglets, pour être vu
               quel que soit l'onglet ouvert. Sans fiche, il n'a rien à dire. */}
-          {house && (
+          {/* Lot 8 : l'acheteur a « Avant d'acheter » À LA PLACE du bloc — rien à entretenir
+              tant qu'il n'est pas chez lui, tout à demander au vendeur. */}
+          {house && house.parcours.avant_d_acheter && <AvantAcheter />}
+          {house && !house.parcours.avant_d_acheter && (
             <AFaire onVoirMaison={() => setSection('maison')}
               onToutVoir={() => { setSection('maison'); allerA('calendrier-entretien') }} />
           )}
@@ -240,7 +247,7 @@ export default function Espace() {
                   )}
                 </div>
                 {/* Le carnet n'a de sens qu'une fois la maison créée : ses routes en dépendent. */}
-                {house && <CarnetMaison />}
+                {house && <CarnetMaison parcours={house.parcours} />}
                 </div>
               )}
 

@@ -70,6 +70,11 @@ const CHAUFFAGE_OPTIONS = [
 const SYSTEMES_FIELDS: FieldSpec[] = [
   { key: 'chauffage_principal', label: 'Chauffage principal', type: 'select', options: CHAUFFAGE_OPTIONS },
   { key: 'chauffage_principal_annee', label: "Année d'installation", type: 'number', min: 1900, max: 2100 },
+  // Hors score de complétude (lot 8 du carnet) : `oui` → l'entretien de la chaudière est
+  // l'affaire de la copropriété. Jamais posée à une maison.
+  { key: 'chauffage_collectif', label: 'Votre immeuble a-t-il un chauffage collectif ?', type: 'select',
+    options: [{ value: 'oui', label: 'Oui' }, { value: 'non', label: 'Non' }, { value: 'ne_sais_pas', label: 'Je ne sais pas' }],
+    help: "Une chaudière commune à l'immeuble, entretenue par la copropriété", si: { key: 'type_logement', vaut: 'appartement' } },
   { key: 'chauffage_appoint', label: "Chauffage d'appoint", type: 'select', options: CHAUFFAGE_OPTIONS },
   { key: 'chauffage_appoint_annee', label: "Année d'installation (appoint)", type: 'number', min: 1900, max: 2100 },
   { key: 'ecs', label: "Eau chaude sanitaire", type: 'select', options: [

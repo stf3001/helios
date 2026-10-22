@@ -27,6 +27,14 @@ export type Echeance = {
   regle: string; date_reference: string | null; provenance: string; reference_supposee: boolean
   echeance: string | null; statut: 'en_retard' | 'ce_mois' | 'bientot' | 'a_planifier' | 'plus_tard'
   periode_conseillee: number[] | null; mention_puissance: string | null
+  // Lot 8 : à qui revient la tâche. `pour_moi: false` → affichée en lecture, avec `mention`.
+  responsable: 'occupant' | 'proprietaire'; pour_moi: boolean; mention: string | null
+}
+
+/** Ce que l'espace montre selon le statut du foyer (`services/parcours.py`). */
+export type Parcours = {
+  profil: 'proprietaire' | 'locataire' | 'acheteur'; voit_travaux: boolean; voit_projets_lourds: boolean
+  avant_d_acheter: boolean; note_proprietaire: boolean
 }
 
 export type EquipementNom = { id: string; categorie: string; type: string; marque: string | null; en_service: boolean }
