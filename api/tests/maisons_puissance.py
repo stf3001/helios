@@ -16,12 +16,13 @@ def piece(nom, type_, surface, *emetteurs, chauffee=True):
 
 
 def pieces_fioul():
-    """Six pièces, 100 m² comme la fiche, radiateurs à eau ; la salle de bains sans puissance."""
+    """Six pièces chauffées (90 m²) et un garage, radiateurs à eau donnés pour ΔT = 50 K ; la salle
+    de bains sans puissance, le bureau en plancher chauffant. Un verdict de chaque sorte."""
     lignes = [
-        piece("Séjour", "sejour", 35, ("radiateur_eau", 2, 1500)),
+        piece("Séjour", "sejour", 35, ("radiateur_eau", 2, 2500)),
         piece("Cuisine", "cuisine", 12, ("radiateur_eau", 1, 1000)),
-        piece("Chambre 1", "chambre", 14, ("radiateur_eau", 1, 1500)),
-        piece("Chambre 2", "chambre", 12, ("radiateur_eau", 1, 800)),
+        piece("Chambre 1", "chambre", 14, ("radiateur_eau", 1, 2500)),
+        piece("Chambre 2", "chambre", 12, ("radiateur_eau", 1, 1800)),
         piece("Bureau", "bureau", 10, ("plancher_chauffant_eau", 1, None)),
         piece("Salle de bains", "salle_de_bain", 7, ("radiateur_eau", 1, None)),
         piece("Garage", "garage", 20, chauffee=False),
@@ -35,7 +36,6 @@ def maisons():
     return {
         "reference": (reference_complete(), [], []),
         "fioul_6_pieces": (maison_type(), pieces, emetteurs),
-        "convecteurs": (reference_complete(chauffage_principal="elec_direct", chauffage_principal_annee=None),
-                        [], []),
+        "convecteurs": (maison_type(chauffage_principal="elec_direct", conso_elec_kwh_an=12000), [], []),
         "gaz_sans_pieces": (maison_type(chauffage_principal="gaz"), [], []),
     }

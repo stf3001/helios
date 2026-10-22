@@ -1,9 +1,9 @@
 {
  "a_preciser": [
   {
-   "champ": "isolation_plancher",
-   "hypothese": "inconnue : supposée faible",
-   "libelle": "L'isolation de votre plancher bas"
+   "champ": "dpe_lettre",
+   "hypothese": "inconnue : estimation d'après l'année de construction",
+   "libelle": "La lettre de votre DPE"
   },
   {
    "champ": "chauffage_principal_annee",
@@ -11,19 +11,19 @@
    "libelle": "L'année de votre chauffage"
   },
   {
-   "champ": "puissance_souscrite",
-   "hypothese": "supposée : 6 kVA",
-   "libelle": "Votre puissance souscrite"
+   "champ": "ecs",
+   "hypothese": "supposée : ballon électrique",
+   "libelle": "Votre production d'eau chaude"
   }
  ],
  "aides_date_reference": "2026-10-20",
  "alertes": [],
  "avertissement": "Pré-diagnostic indicatif (ordres de grandeur), ne remplace ni un DPE ni un audit énergétique réalisé par un professionnel certifié. Coûts, aides et économies à confirmer.",
  "climat": {
-  "apres_plan_recommande_kg_an": 240,
-  "apres_tout_le_plan_kg_an": 110,
-  "chauffage_kg_an": 170,
-  "eau_chaude_kg_an": 210,
+  "apres_plan_recommande_kg_an": 290,
+  "apres_tout_le_plan_kg_an": 260,
+  "chauffage_kg_an": 580,
+  "eau_chaude_kg_an": 160,
   "facteurs": {
    "bois": 0.03,
    "electricite_chauffage": 0.079,
@@ -34,7 +34,7 @@
   },
   "statut": "calcule"
  },
- "completeness_score": 62.2,
+ "completeness_score": 49.0,
  "confort_ete": {
   "conseils": [
    "Des protections solaires extérieures (volets, stores, brise-soleil) sur les baies exposées sud et ouest : elles arrêtent la chaleur avant qu'elle n'entre.",
@@ -42,34 +42,27 @@
    "Des brasseurs d'air (ventilateurs de plafond) avant toute climatisation supplémentaire.",
    "L'isolation des combles, qui limite fortement la chaleur sous le toit."
   ],
-  "note_clim": "Avant d'ajouter de la climatisation : protections solaires extérieures, ventilation nocturne et brasseurs d'air.",
-  "note_combles": "Peu rentable sur votre chauffage, l'isolation des combles reste le premier levier contre la surchauffe d'été."
+  "note_clim": null,
+  "note_combles": null
  },
- "conseils_equipements": [
-  {
-   "age_ans": 16,
-   "duree_vie_ans": 15,
-   "equipement": "ballon_elec",
-   "texte": "Votre ballon d'eau chaude électrique a 16 ans : faites-le entretenir et préparez son remplacement plutôt que de le subir en panne."
-  }
- ],
+ "conseils_equipements": [],
  "consommation": {
   "base_economies": "declaree",
-  "conso_chauffage_declaree_kwh_an": 2100,
-  "conso_chauffage_estimee_kwh_an": 15842,
-  "conso_chauffage_retenue_kwh_an": 2100,
-  "conso_elec_declaree_kwh_an": 9000,
-  "cout_chauffage_actuel_eur": 420,
+  "conso_chauffage_declaree_kwh_an": 7350,
+  "conso_chauffage_estimee_kwh_an": 9900,
+  "conso_chauffage_retenue_kwh_an": 7350,
+  "conso_elec_declaree_kwh_an": 12000,
+  "cout_chauffage_actuel_eur": 1471,
   "detail_estimation": {
-   "coef_ep_ef": 1.9,
-   "dpe_kwh_ep_m2_an": 215,
-   "part_chauffage": 0.7
+   "besoin_utile_kwh_m2_an": 180,
+   "coef_zone": 0.55,
+   "rendement": 1.0
   },
   "energie_chauffage": "electricite",
-  "message_ratio": "Votre consommation réelle est nettement plus basse que ce que prévoit le calcul théorique (DPE ancien, chauffage partiel, pièces peu chauffées, appoint d'une autre énergie…). Les économies sont calculées sur votre consommation réelle.",
-  "origine": "dpe",
+  "message_ratio": "Votre consommation réelle est cohérente avec l'état de la maison.",
+  "origine": "annee_construction",
   "prix_energie_eur_kwh": 0.2001,
-  "ratio_reel_theorique": 0.13,
+  "ratio_reel_theorique": 0.74,
   "statuts": {
    "conso_chauffage_declaree_kwh_an": "calcule",
    "conso_chauffage_estimee_kwh_an": "calcule",
@@ -80,73 +73,75 @@
    "ratio_reel_theorique": "calcule",
    "usages_specifiques_kwh_an": "suppose"
   },
-  "surface_m2": 200,
-  "usages_specifiques_kwh_an": 6900,
+  "surface_m2": 100,
+  "usages_specifiques_kwh_an": 4650,
   "zone_climatique": "H3"
  },
  "contrat": [],
  "couts": {
-  "chauffage_et_eau_chaude_10_ans_eur": 11610,
-  "chauffage_eur_an": 420,
-  "eau_chaude_eur_an": 640,
-  "economie_10_ans_plan_recommande_eur": 4560,
+  "chauffage_et_eau_chaude_10_ans_eur": 21370,
+  "chauffage_eur_an": 1471,
+  "eau_chaude_eur_an": 480,
+  "economie_10_ans_plan_recommande_eur": 12480,
   "hausse_pct_an": 2.0,
   "statut": "calcule"
  },
  "deperditions": [
   {
-   "part_pct": 26.4,
+   "part_pct": 36.6,
    "poste": "toiture",
    "statut": "calcule"
   },
   {
-   "part_pct": 24.2,
+   "part_pct": 20.2,
    "poste": "air_ventilation",
    "statut": "calcule"
   },
   {
-   "part_pct": 21.7,
+   "part_pct": 18.1,
    "poste": "murs",
    "statut": "calcule"
   },
   {
-   "part_pct": 12.0,
-   "poste": "plancher",
-   "statut": "suppose"
-  },
-  {
-   "part_pct": 10.2,
+   "part_pct": 17.0,
    "poste": "menuiseries",
    "statut": "calcule"
   },
   {
-   "part_pct": 5.5,
+   "part_pct": 4.6,
    "poste": "ponts_thermiques",
    "statut": "suppose"
+  },
+  {
+   "part_pct": 3.5,
+   "poste": "plancher",
+   "statut": "calcule"
   }
  ],
- "deperditions_statut": "suppose",
+ "deperditions_statut": "calcule",
  "dpe_attestation": null,
  "entrees": [
   {
    "champ": "surface_habitable",
    "statut": "declare",
-   "valeur": 200
+   "valeur": 100
   },
   {
    "champ": "nb_niveaux",
-   "statut": "declare",
-   "valeur": 2
+   "hypothese": "inconnu → 1 niveau (combles et plancher = surface habitable)",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "nb_occupants",
-   "statut": "declare",
-   "valeur": 4
+   "hypothese": "inconnu → 3 occupants",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "code_postal",
    "statut": "declare",
-   "valeur": "83000"
+   "valeur": "13001"
   },
   {
    "champ": "chauffage_principal",
@@ -155,8 +150,9 @@
   },
   {
    "champ": "ecs",
-   "statut": "declare",
-   "valeur": "ballon_elec"
+   "hypothese": "inconnue → ballon_elec",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "puissance_souscrite",
@@ -166,8 +162,9 @@
   },
   {
    "champ": "type_logement",
-   "statut": "declare",
-   "valeur": "maison"
+   "hypothese": "inconnu, non utilisé",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "statut",
@@ -177,19 +174,19 @@
   },
   {
    "champ": "annee_construction",
+   "statut": "declare",
+   "valeur": "1975_1988"
+  },
+  {
+   "champ": "dpe_lettre",
    "hypothese": "inconnu, non utilisé",
    "statut": "suppose",
    "valeur": null
   },
   {
-   "champ": "dpe_lettre",
-   "statut": "declare",
-   "valeur": "D"
-  },
-  {
    "champ": "isolation_combles",
    "statut": "declare",
-   "valeur": "partielle"
+   "valeur": "aucune"
   },
   {
    "champ": "isolation_murs",
@@ -198,14 +195,13 @@
   },
   {
    "champ": "isolation_plancher",
-   "hypothese": "inconnu, non utilisé",
-   "statut": "suppose",
-   "valeur": null
+   "statut": "declare",
+   "valeur": "bonne"
   },
   {
    "champ": "menuiseries",
    "statut": "declare",
-   "valeur": "double"
+   "valeur": "simple"
   },
   {
    "champ": "ventilation",
@@ -215,7 +211,7 @@
   {
    "champ": "regulation",
    "statut": "declare",
-   "valeur": "thermostat"
+   "valeur": "aucune"
   },
   {
    "champ": "chauffage_principal_annee",
@@ -225,8 +221,9 @@
   },
   {
    "champ": "chauffage_appoint",
-   "statut": "declare",
-   "valeur": "autre"
+   "hypothese": "inconnu, non utilisé",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "chauffage_appoint_annee",
@@ -236,29 +233,33 @@
   },
   {
    "champ": "ecs_annee",
-   "statut": "declare",
-   "valeur": 2010
+   "hypothese": "inconnu, non utilisé",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "clim",
-   "statut": "declare",
-   "valeur": true
+   "hypothese": "inconnu, non utilisé",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "clim_nb_pieces",
-   "statut": "declare",
-   "valeur": 4
+   "hypothese": "inconnu, non utilisé",
+   "statut": "suppose",
+   "valeur": null
   },
   {
    "champ": "conso_elec_kwh_an",
    "statut": "declare",
-   "valeur": 9000
+   "valeur": 12000
   },
   {
    "champ": "objectifs",
-   "hypothese": "inconnu, non utilisé",
-   "statut": "suppose",
-   "valeur": null
+   "statut": "declare",
+   "valeur": [
+    "confort_hiver"
+   ]
   }
  ],
  "gestes": [
@@ -269,18 +270,6 @@
   {
    "cle": "programmation",
    "texte": "Programmez le chauffage selon votre présence : il baisse quand la maison est vide."
-  },
-  {
-   "cle": "clim",
-   "fiche": "gestes_equipements",
-   "fiche_question": "Comment faire consommer moins sa climatisation l'été ?",
-   "texte": "Consigne à 26 °C, un brasseur d'air pour gagner 2 °C de confort, volets fermés côté soleil dès le matin."
-  },
-  {
-   "cle": "ballon_elec",
-   "fiche": "gestes_equipements",
-   "fiche_question": "Quels gestes pour l'eau chaude, selon mon équipement ?",
-   "texte": "Ballon réglé à 55 °C et contacteur sur « auto » si vous êtes en heures creuses."
   },
   {
    "cle": "eau_chaude_tous",
@@ -295,43 +284,61 @@
  ],
  "hypotheses": [
   {
+   "cle": "nb_niveaux",
+   "date": null,
+   "source": "Fiche Maison",
+   "valeur": "1 niveau (valeur par défaut) : combles et plancher = surface habitable"
+  },
+  {
+   "cle": "nb_occupants",
+   "date": null,
+   "source": "Fiche Maison",
+   "valeur": "3 occupants (valeur par défaut)"
+  },
+  {
    "cle": "zone_climatique",
    "date": "2010-10-26",
    "source": "Arrêté du 26/10/2010, annexe I",
    "valeur": "H3"
   },
   {
-   "cle": "appoint_hors_facture",
+   "cle": "ecs",
    "date": null,
    "source": "Fiche Maison",
-   "valeur": "une partie du chauffage peut venir de l'appoint et n'apparaît pas dans la facture électrique"
+   "valeur": "ballon électrique (valeur par défaut)"
   },
   {
-   "cle": "dpe_kwh_ep_m2_an[D]",
+   "cle": "besoin_utile_kwh_m2_an[1975_1988]",
    "date": "2026-10-19",
-   "source": "Milieu de classe DPE (seuils arrêté du 31/03/2021)",
-   "valeur": 215
+   "source": "Ordre de grandeur par année de construction, à calibrer",
+   "valeur": 180
   },
   {
-   "cle": "coef_ep_ef[electricite]",
-   "date": "2026-01-01",
-   "source": "Coefficient de conversion énergie primaire / finale",
-   "valeur": 1.9
-  },
-  {
-   "cle": "part_chauffage_dpe[elec_direct]",
+   "cle": "coef_zone[H3]",
    "date": "2026-10-19",
-   "source": "Part du chauffage dans le DPE tous usages, à calibrer",
-   "valeur": 0.7
+   "source": "Correction climatique H1/H2/H3, à calibrer (altitude ignorée)",
+   "valeur": 0.55
+  },
+  {
+   "cle": "rendement_chauffage[elec_direct]",
+   "date": "2026-10-19",
+   "source": "Rendement saisonnier, ordre de grandeur",
+   "valeur": 1.0
+  },
+  {
+   "cle": "altitude",
+   "date": "2026-10-19",
+   "source": "Correction climatique H1/H2/H3, à calibrer (altitude ignorée)",
+   "valeur": "ignorée en v2"
   },
   {
    "cle": "usages_specifiques_kwh_an",
    "date": "2026-10-19",
    "source": "Couches de consommation du simulateur (simu_conso_*)",
    "valeur": {
-    "base": 2700,
-    "climatisation": 1000,
-    "eau_chaude": 3200
+    "base": 2250,
+    "climatisation": 0,
+    "eau_chaude": 2400
    }
   },
   {
@@ -354,31 +361,10 @@
    }
   },
   {
-   "cle": "ballon_thermodynamique",
-   "date": "2026-10-19",
-   "source": "Coût du ballon thermodynamique, à valider",
-   "valeur": {
-    "base_retenue": "surcout",
-    "cout_eur": [
-     2500,
-     4000
-    ],
-    "surcout_eur": [
-     1800,
-     2800
-    ]
-   }
-  },
-  {
    "cle": "couts_actions",
    "date": "2026-07-18",
    "source": "Ordres de grandeur TTC posés, à calibrer",
    "valeur": {
-    "ballon_thermodynamique": [
-     1800,
-     2800,
-     "forfait"
-    ],
     "isolation_combles": [
      25,
      70,
@@ -389,15 +375,20 @@
      180,
      "m² de mur"
     ],
-    "isolation_plancher": [
-     30,
-     60,
-     "m²"
+    "menuiseries": [
+     500,
+     800,
+     "fenêtre(s)"
     ],
     "pac_air_air": [
      1800,
      3000,
      "unité(s) intérieure(s)"
+    ],
+    "regulation": [
+     150,
+     500,
+     "forfait"
     ]
    }
   },
@@ -406,11 +397,6 @@
    "date": "2026-10-20",
    "source": "kb/baremes_aides.md quand la fiche existe, sinon à vérifier",
    "valeur": {
-    "ballon_thermodynamique": [
-     "eur",
-     0,
-     0
-    ],
     "isolation_combles": [
      "eur_m2",
      0,
@@ -421,12 +407,17 @@
      0,
      0
     ],
-    "isolation_plancher": [
+    "menuiseries": [
      "eur",
      0,
      0
     ],
     "pac_air_air": [
+     "eur",
+     0,
+     0
+    ],
+    "regulation": [
      "eur",
      0,
      0
@@ -438,16 +429,17 @@
    "date": "2026-10-19",
    "source": "Gain sur le chauffage par action, à calibrer",
    "valeur": {
-    "isolation_combles": 0.15,
+    "isolation_combles": 0.25,
     "isolation_murs": 0.12,
-    "isolation_plancher": 0.068
+    "menuiseries": 0.12,
+    "regulation": 0.1
    }
   },
   {
-   "cle": "ratio_murs[2 niveau(x)]",
+   "cle": "ratio_murs[1 niveau(x)]",
    "date": "2026-10-19",
    "source": "Surface de murs / surface habitable, à calibrer",
-   "valeur": 0.85
+   "valeur": 0.9
   },
   {
    "cle": "horizons",
@@ -463,14 +455,6 @@
    "date": "2026-07-18",
    "source": "Demi-largeur des fourchettes",
    "valeur": 0.15
-  },
-  {
-   "cle": "duree_vie_equipements",
-   "date": "2026-10-19",
-   "source": "Durées de vie typiques, à calibrer",
-   "valeur": {
-    "ballon_elec": 15
-   }
   },
   {
    "cle": "facteurs_co2_kg_kwh",
@@ -495,61 +479,60 @@
  "niveau": "prediagnostic_qualitatif",
  "priorites": [
   {
-   "action": "ballon_thermodynamique",
+   "action": "regulation",
    "aide_estimee_eur": {
     "bas": 0,
     "haut": 0
    },
-   "aide_note": "plus aidé par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE possibles (montant variable)",
+   "aide_note": "primes CEE possibles pour une régulation posée par un professionnel",
    "aide_source": "kb/baremes_aides.md (20/10/2026)",
    "aides_statut": "base_connaissances",
-   "base_cout": "surcout",
    "benefices": [
-    "deux à trois fois moins d'électricité pour l'eau chaude",
-    "un remplacement choisi, pas subi"
+    "un confort maîtrisé",
+    "une maison chaude au bon moment",
+    "une facture qui baisse sans travaux"
    ],
-   "categorie": "eau_chaude",
-   "contexte": "au remplacement de votre ballon, qui approche de sa fin de vie",
+   "categorie": "chauffage",
    "cout_eur": {
-    "bas": 1800,
-    "haut": 2800
+    "bas": 150,
+    "haut": 500
    },
    "cout_unitaire_eur": {
-    "bas": 1800,
-    "haut": 2800,
+    "bas": 150,
+    "haut": 500,
     "unite": "forfait"
    },
    "devis": [
-    "volume et prise d'air",
-    "COP et ses conditions",
-    "dépose de l'ancien ballon"
+    "type de régulation adapté au chauffage",
+    "emplacement de la sonde",
+    "mise en service et réglages expliqués"
    ],
-   "duree_vie_ans": 15,
+   "duree_vie_ans": 10,
    "economie_annuelle_eur": {
-    "bas": 354,
-    "central": 416,
-    "haut": 479
+    "bas": 125,
+    "central": 147,
+    "haut": 169
    },
-   "economie_annuelle_kwh": 2080,
+   "economie_annuelle_kwh": 735,
    "energie_economisee": "electricite",
-   "fiche": "action_ballon_thermodynamique",
-   "fiche_question": "Passer à un ballon thermodynamique est-il rentable dans mon cas ?",
-   "gain_pct_chauffage": null,
-   "horizon": "prioritaire",
-   "label": "Ballon d'eau chaude thermodynamique",
+   "fiche": "action_regulation",
+   "fiche_question": "Un thermostat ou une programmation sont-ils rentables dans mon cas ?",
+   "gain_pct_chauffage": 0.1,
+   "horizon": "maintenant",
+   "label": "Thermostat programmable / régulation",
    "libelle_occasion": null,
    "part_deperdition_pct": null,
-   "poste": "eau_chaude",
-   "pourquoi": "Votre ballon a 16 ans : au moment de le changer, le thermodynamique ne coûte que la différence avec un ballon neuf, et consomme deux à trois fois moins.",
-   "priorite_hierarchie": 3,
+   "poste": "pilotage",
+   "pourquoi": "Votre chauffage tourne sans programmation : baisser la nuit et en absence est le geste le plus rentable de votre plan.",
+   "priorite_hierarchie": 1,
    "quantite": {
     "unite": "forfait",
     "valeur": 1
    },
    "rang": 1,
    "reste_a_charge_eur": {
-    "bas": 1800,
-    "haut": 2800
+    "bas": 150,
+    "haut": 500
    },
    "statuts": {
     "aide_estimee_eur": "suppose",
@@ -559,11 +542,11 @@
     "quantite": "suppose",
     "temps_retour_ans": "calcule"
    },
-   "temps_retour_ans": 5.5,
+   "temps_retour_ans": 2.2,
    "vigilance": [
-    "local non chauffé ou version gainée",
-    "taille adaptée au foyer",
-    "eau calcaire = plus d'entretien"
+    "sonde loin des sources de chaleur",
+    "consigne stable plutôt que poussée à fond",
+    "programmation ajustée au ressenti"
    ]
   },
   {
@@ -597,27 +580,26 @@
    ],
    "duree_vie_ans": 30,
    "economie_annuelle_eur": {
-    "bas": 54,
-    "central": 63,
-    "haut": 72
+    "bas": 281,
+    "central": 331,
+    "haut": 381
    },
-   "economie_annuelle_kwh": 315,
+   "economie_annuelle_kwh": 1654,
    "energie_economisee": "electricite",
    "fiche": "action_combles",
    "fiche_question": "Isoler mes combles est-il rentable dans mon cas ?",
-   "gain_pct_chauffage": 0.15,
-   "horizon": "a_l_occasion",
+   "gain_pct_chauffage": 0.25,
+   "horizon": "prioritaire",
    "label": "Isolation des combles / toiture",
-   "libelle_occasion": "lors d'une réfection de la toiture ou de l'aménagement des combles",
-   "part_deperdition_pct": 26.4,
+   "libelle_occasion": null,
+   "part_deperdition_pct": 36.6,
    "poste": "toiture",
-   "pourquoi": "Votre toit perd beaucoup de chaleur, mais cette chaleur vous coûte peu : des convecteurs électriques, climat doux (H3), environ 420 €/an de chauffage. L'économie ne rembourse pas vite les travaux. Gardez-les pour une réfection de toiture ou l'aménagement des combles.",
+   "pourquoi": "Avec des convecteurs électriques, chaque kWh perdu par le toit vous coûte cher. Le toit est votre premier poste de pertes, c'est donc le premier à traiter.",
    "priorite_hierarchie": 2,
    "quantite": {
     "unite": "m²",
     "valeur": 100
    },
-   "raison_occasion": "chauffage_peu_cher",
    "rang": 2,
    "reste_a_charge_eur": {
     "bas": 2500,
@@ -631,11 +613,83 @@
     "quantite": "suppose",
     "temps_retour_ans": "calcule"
    },
-   "temps_retour_ans": 75.4,
+   "temps_retour_ans": 14.4,
    "vigilance": [
     "écart au feu des conduits",
     "spots et boîtiers protégés",
     "ventilation vérifiée après les travaux"
+   ]
+  },
+  {
+   "action": "pac_air_air",
+   "aide_estimee_eur": {
+    "bas": 0,
+    "haut": 0
+   },
+   "aide_note": "pas d'aide MaPrimeRénov' pour une PAC air/air ; primes CEE possibles",
+   "aide_source": "kb/action_pac_remplacement.md (20/10/2026)",
+   "aides_statut": "base_connaissances",
+   "benefices": [
+    "environ trois fois moins d'électricité pour la même chaleur",
+    "le rafraîchissement d'été avec le même appareil",
+    "une énergie qui peut venir de vos panneaux"
+   ],
+   "categorie": "chauffage",
+   "conso_apres_kwh_electricite": 1654,
+   "contexte": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
+   "cout_eur": {
+    "bas": 7200,
+    "haut": 12000
+   },
+   "cout_unitaire_eur": {
+    "bas": 1800,
+    "haut": 3000,
+    "unite": "unité(s) intérieure(s)"
+   },
+   "devis": [
+    "une unité par pièce principale, puissance justifiée",
+    "niveau sonore des unités intérieures et extérieure",
+    "évacuation des condensats et ligne électrique dédiée"
+   ],
+   "duree_vie_ans": 15,
+   "economie_annuelle_eur": {
+    "bas": 563,
+    "central": 662,
+    "haut": 761
+   },
+   "economie_annuelle_kwh": null,
+   "fiche": "action_pac_remplacement",
+   "fiche_question": "J'ai des convecteurs électriques : pompe à chaleur air/eau ou air/air ?",
+   "gain_pct_chauffage": null,
+   "horizon": "prioritaire",
+   "label": "Pompe à chaleur air/air (une unité par pièce principale)",
+   "libelle_occasion": null,
+   "part_deperdition_pct": null,
+   "poste": "systeme_chauffage",
+   "pourquoi": "Avec des convecteurs, chaque kWh de chaleur se paie au prix de l'électricité. Une pompe à chaleur air/air en produit environ trois pour un, sans créer de circuit d'eau.",
+   "priorite_hierarchie": 3,
+   "quantite": {
+    "unite": "unité(s) intérieure(s)",
+    "valeur": 4
+   },
+   "rang": 3,
+   "reste_a_charge_eur": {
+    "bas": 7200,
+    "haut": 12000
+   },
+   "statuts": {
+    "aide_estimee_eur": "suppose",
+    "cout_eur": "suppose",
+    "economie_annuelle_eur": "calcule",
+    "part_deperdition_pct": null,
+    "quantite": "suppose",
+    "temps_retour_ans": "calcule"
+   },
+   "temps_retour_ans": 14.5,
+   "vigilance": [
+    "isoler avant pour une machine plus petite",
+    "emplacement de l'unité extérieure (bruit)",
+    "puissance justifiée par vos factures"
    ]
   },
   {
@@ -654,8 +708,8 @@
    ],
    "categorie": "chauffage",
    "cout_eur": {
-    "bas": 15300,
-    "haut": 30600
+    "bas": 8100,
+    "haut": 16200
    },
    "cout_unitaire_eur": {
     "bas": 90,
@@ -669,11 +723,11 @@
    ],
    "duree_vie_ans": 40,
    "economie_annuelle_eur": {
-    "bas": 36,
-    "central": 43,
-    "haut": 49
+    "bas": 34,
+    "central": 40,
+    "haut": 46
    },
-   "economie_annuelle_kwh": 214,
+   "economie_annuelle_kwh": 198,
    "energie_economisee": "electricite",
    "fiche": "action_murs",
    "fiche_question": "Isoler mes murs est-il rentable dans mon cas ?",
@@ -681,19 +735,19 @@
    "horizon": "a_l_occasion",
    "label": "Isolation des murs",
    "libelle_occasion": "lors d'un ravalement de façade",
-   "part_deperdition_pct": 21.7,
+   "part_deperdition_pct": 18.1,
    "poste": "murs",
-   "pourquoi": "Isoler les murs coûte cher au m², et votre chauffage vous coûte peu (420 €/an). Sur l'énergie seule, ça ne se rembourse pas : faites-le au ravalement, quand l'échafaudage est déjà payé.",
+   "pourquoi": "Isoler les murs coûte cher au m² : même avec des convecteurs électriques, l'économie ne rembourse pas les travaux. Faites-le au ravalement, quand l'échafaudage est déjà payé.",
    "priorite_hierarchie": 2,
    "quantite": {
     "unite": "m² de mur",
-    "valeur": 170
+    "valeur": 90
    },
-   "raison_occasion": "chauffage_peu_cher",
-   "rang": 3,
+   "raison_occasion": "trop_cher",
+   "rang": 4,
    "reste_a_charge_eur": {
-    "bas": 15300,
-    "haut": 30600
+    "bas": 8100,
+    "haut": 16200
    },
    "statuts": {
     "aide_estimee_eur": "suppose",
@@ -703,7 +757,7 @@
     "quantite": "suppose",
     "temps_retour_ans": "calcule"
    },
-   "temps_retour_ans": 535.4,
+   "temps_retour_ans": 306.0,
    "vigilance": [
     "déclaration préalable en mairie (par l'extérieur)",
     "mur ancien : isolant perméable et chaux",
@@ -711,157 +765,80 @@
    ]
   },
   {
-   "action": "isolation_plancher",
+   "action": "menuiseries",
    "aide_estimee_eur": {
     "bas": 0,
     "haut": 0
    },
-   "aide_note": "plus aidée par MaPrimeRénov' par geste depuis le 01/01/2026 ; primes CEE possibles ; finançable en rénovation d'ampleur",
+   "aide_note": "plus aidées par MaPrimeRénov' par geste depuis le 01/09/2026 ; primes CEE possibles ; finançables en rénovation d'ampleur",
    "aide_source": "kb/baremes_aides.md (20/10/2026)",
    "aides_statut": "base_connaissances",
    "benefices": [
-    "un sol moins froid",
-    "un rez-de-chaussée plus homogène",
-    "moins d'humidité ressentie"
+    "moins de bruit",
+    "plus de sensation de froid près des vitres",
+    "fin de la condensation (avec une ventilation adaptée)"
    ],
    "categorie": "chauffage",
    "cout_eur": {
-    "bas": 3000,
-    "haut": 6000
+    "bas": 3500,
+    "haut": 5600
    },
    "cout_unitaire_eur": {
-    "bas": 30,
-    "haut": 60,
-    "unite": "m²"
+    "bas": 500,
+    "haut": 800,
+    "unite": "fenêtre(s)"
    },
    "devis": [
-    "R ≥ 3",
-    "surface mesurée",
-    "mode de fixation"
+    "Uw ≤ 1,3",
+    "type de pose",
+    "entrées d'air et calfeutrement"
    ],
-   "duree_vie_ans": 40,
+   "duree_vie_ans": 30,
    "economie_annuelle_eur": {
-    "bas": 18,
-    "central": 21,
-    "haut": 25
+    "bas": 30,
+    "central": 35,
+    "haut": 40
    },
-   "economie_annuelle_kwh": 107,
+   "economie_annuelle_kwh": 175,
    "energie_economisee": "electricite",
-   "fiche": "action_plancher",
-   "fiche_question": "Isoler mon plancher bas est-il rentable dans mon cas ?",
-   "gain_pct_chauffage": 0.068,
+   "fiche": "action_menuiseries",
+   "fiche_question": "Remplacer mes fenêtres est-il rentable dans mon cas ?",
+   "gain_pct_chauffage": 0.12,
    "horizon": "a_l_occasion",
-   "label": "Isolation du plancher bas",
-   "libelle_occasion": "lors d'une réfection des sols ou si le vide sanitaire est accessible",
-   "part_deperdition_pct": 12.0,
-   "poste": "plancher",
-   "pourquoi": "Le plancher pèse peu dans vos pertes, et votre chauffage vous coûte peu. À faire si le vide sanitaire est accessible, ou lors d'une réfection des sols.",
+   "label": "Remplacement des menuiseries (double/triple vitrage)",
+   "libelle_occasion": "au remplacement des fenêtres en fin de vie",
+   "part_deperdition_pct": 17.0,
+   "poste": "menuiseries",
+   "pourquoi": "Vos fenêtres pèsent peu dans vos pertes : les changer ne se rembourse pas sur l'énergie. Faites-le en fin de vie, ou pour le bruit et le confort. En attendant, des joints neufs font déjà beaucoup.",
    "priorite_hierarchie": 2,
    "quantite": {
-    "unite": "m²",
-    "valeur": 100
+    "unite": "fenêtre(s)",
+    "valeur": 7
    },
-   "raison_occasion": "chauffage_peu_cher",
-   "rang": 4,
-   "reste_a_charge_eur": {
-    "bas": 3000,
-    "haut": 6000
-   },
-   "statuts": {
-    "aide_estimee_eur": "suppose",
-    "cout_eur": "suppose",
-    "economie_annuelle_eur": "calcule",
-    "part_deperdition_pct": "suppose",
-    "quantite": "suppose",
-    "temps_retour_ans": "calcule"
-   },
-   "temps_retour_ans": 210.5,
-   "vigilance": [
-    "garder la ventilation du vide sanitaire",
-    "traiter l'humidité d'abord",
-    "réseaux accessibles et calorifugés"
-   ]
-  },
-  {
-   "action": "pac_air_air",
-   "aide_estimee_eur": {
-    "bas": 0,
-    "haut": 0
-   },
-   "aide_note": "pas d'aide MaPrimeRénov' pour une PAC air/air ; primes CEE possibles",
-   "aide_source": "kb/action_pac_remplacement.md (20/10/2026)",
-   "aides_statut": "base_connaissances",
-   "benefices": [
-    "environ trois fois moins d'électricité pour la même chaleur",
-    "le rafraîchissement d'été avec le même appareil",
-    "une énergie qui peut venir de vos panneaux"
-   ],
-   "categorie": "chauffage",
-   "conso_apres_kwh_electricite": 488,
-   "contexte": "Avec des convecteurs, il n'y a pas de circuit d'eau : une PAC air/eau impose d'en créer un. Une PAC air/air est souvent la solution réaliste.",
-   "cout_eur": {
-    "bas": 10800,
-    "haut": 18000
-   },
-   "cout_unitaire_eur": {
-    "bas": 1800,
-    "haut": 3000,
-    "unite": "unité(s) intérieure(s)"
-   },
-   "devis": [
-    "une unité par pièce principale, puissance justifiée",
-    "niveau sonore des unités intérieures et extérieure",
-    "évacuation des condensats et ligne électrique dédiée"
-   ],
-   "duree_vie_ans": 15,
-   "economie_annuelle_eur": {
-    "bas": 166,
-    "central": 195,
-    "haut": 225
-   },
-   "economie_annuelle_kwh": null,
-   "fiche": "action_pac_remplacement",
-   "fiche_question": "J'ai des convecteurs électriques : pompe à chaleur air/eau ou air/air ?",
-   "gain_pct_chauffage": null,
-   "horizon": "a_l_occasion",
-   "label": "Pompe à chaleur air/air (une unité par pièce principale)",
-   "libelle_occasion": "au remplacement de vos convecteurs",
-   "part_deperdition_pct": null,
-   "poste": "systeme_chauffage",
-   "pourquoi": "Votre maison chauffe peu (420 €/an) : une pompe à chaleur rapporterait peu en euros. Prévoyez-la pour la fin de vie de votre chauffage actuel.",
-   "priorite_hierarchie": 3,
-   "quantite": {
-    "unite": "unité(s) intérieure(s)",
-    "valeur": 6
-   },
-   "raison_occasion": "chauffage_peu_cher",
+   "raison_occasion": "trop_cher",
    "rang": 5,
    "reste_a_charge_eur": {
-    "bas": 10800,
-    "haut": 18000
+    "bas": 3500,
+    "haut": 5600
    },
    "statuts": {
     "aide_estimee_eur": "suppose",
     "cout_eur": "suppose",
     "economie_annuelle_eur": "calcule",
-    "part_deperdition_pct": null,
+    "part_deperdition_pct": "calcule",
     "quantite": "suppose",
     "temps_retour_ans": "calcule"
    },
-   "temps_retour_ans": 73.7,
+   "temps_retour_ans": 130.2,
    "vigilance": [
-    "isoler avant pour une machine plus petite",
-    "emplacement de l'unité extérieure (bruit)",
-    "puissance justifiée par vos factures"
+    "ventilation à vérifier",
+    "pose en rénovation = moins de lumière",
+    "déclaration préalable si l'aspect change"
    ]
   }
  ],
  "renovation_ampleur": null,
- "solaire": {
-  "lien": "/simulateur-solaire",
-  "texte": "Votre maison consomme 9 000 kWh d'électricité par an : une production solaire pourrait en couvrir une partie. Estimez-la avec le simulateur (pré-rempli avec votre fiche).",
-  "type": "piste"
- },
+ "solaire": null,
  "synthese": {
   "a_l_occasion": {
    "aides_estimees_eur": {
@@ -869,14 +846,14 @@
     "haut": 0
    },
    "economie_annuelle_eur": {
-    "bas": 274,
-    "central": 322,
-    "haut": 371
+    "bas": 64,
+    "central": 75,
+    "haut": 86
    },
    "economie_chauffage_eur": {
-    "bas": 274,
-    "central": 322,
-    "haut": 371
+    "bas": 64,
+    "central": 75,
+    "haut": 86
    },
    "economie_eau_chaude_eur": {
     "bas": 0,
@@ -884,13 +861,13 @@
     "haut": 0
    },
    "investissement_eur": {
-    "bas": 31600,
-    "haut": 61600
+    "bas": 11600,
+    "haut": 21800
    },
-   "nb": 4,
+   "nb": 2,
    "reste_a_charge_eur": {
-    "bas": 31600,
-    "haut": 61600
+    "bas": 11600,
+    "haut": 21800
    }
   },
   "aides_estimees_eur": {
@@ -898,34 +875,30 @@
    "haut": 0
   },
   "aides_statut": "a_verifier",
-  "cout_chauffage_actuel_eur": 420,
-  "decompte": "1 action prioritaire, 4 à prévoir à l'occasion",
+  "cout_chauffage_actuel_eur": 1471,
+  "decompte": "1 action à faire maintenant, 2 actions prioritaires, 2 à prévoir à l'occasion",
   "economie_annuelle_totale_eur": {
-   "bas": 628,
-   "central": 739,
-   "haut": 849
+   "bas": 1032,
+   "central": 1214,
+   "haut": 1397
   },
   "economie_chauffage_eur": {
-   "bas": 274,
-   "central": 323,
-   "haut": 371
+   "bas": 1032,
+   "central": 1214,
+   "haut": 1397
   },
-  "economie_chauffage_pct": 77,
-  "economie_eau_chaude_eur": {
-   "bas": 354,
-   "central": 416,
-   "haut": 478
-  },
+  "economie_chauffage_pct": 83,
+  "economie_eau_chaude_eur": null,
   "investissement_eur": {
-   "bas": 33400,
-   "haut": 64400
+   "bas": 21450,
+   "haut": 41300
   },
-  "message_sans_isolation": "Aucune isolation n'est rentable à court terme : votre chauffage vous coûte environ 420 €/an. Les leviers utiles sont ailleurs : ballon d'eau chaude thermodynamique, étudier une production solaire, les gestes gratuits.",
+  "message_sans_isolation": null,
   "nb_actions": 5,
   "nb_par_horizon": {
-   "a_l_occasion": 4,
-   "maintenant": 0,
-   "prioritaire": 1
+   "a_l_occasion": 2,
+   "maintenant": 1,
+   "prioritaire": 2
   },
   "plan_recommande": {
    "aides_estimees_eur": {
@@ -933,36 +906,36 @@
     "haut": 0
    },
    "economie_annuelle_eur": {
-    "bas": 354,
-    "central": 416,
-    "haut": 479
+    "bas": 969,
+    "central": 1140,
+    "haut": 1311
    },
    "economie_chauffage_eur": {
+    "bas": 969,
+    "central": 1140,
+    "haut": 1311
+   },
+   "economie_eau_chaude_eur": {
     "bas": 0,
     "central": 0,
     "haut": 0
    },
-   "economie_eau_chaude_eur": {
-    "bas": 354,
-    "central": 416,
-    "haut": 479
-   },
    "investissement_eur": {
-    "bas": 1800,
-    "haut": 2800
+    "bas": 9850,
+    "haut": 19500
    },
-   "nb": 1,
+   "nb": 3,
    "reste_a_charge_eur": {
-    "bas": 1800,
-    "haut": 2800
+    "bas": 9850,
+    "haut": 19500
    }
   },
-  "premiere_action": "Ballon d'eau chaude thermodynamique",
+  "premiere_action": "Thermostat programmable / régulation",
   "premiere_action_type": "action",
   "reste_a_charge_eur": {
-   "bas": 33400,
-   "haut": 64400
+   "bas": 21450,
+   "haut": 41300
   }
  },
- "version_helios": "v2.5"
+ "version_helios": "v2.6"
 }

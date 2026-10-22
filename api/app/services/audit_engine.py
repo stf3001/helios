@@ -66,9 +66,11 @@ class _Trace:
         else:
             self.entrees.append({"champ": champ, "valeur": valeur, "statut": "declare"})
 
-    def hyp(self, cle: str, valeur, source: str):
+    def hyp(self, cle: str, valeur, source: str, statut: str | None = None):
         texte, date_source = ref.SOURCES[source]
         self.hypotheses[cle] = {"cle": cle, "valeur": valeur, "source": texte, "date": date_source}
+        if statut:  # v2.6 : les valeurs de la puissance disent si elles sont calculées ou supposées
+            self.hypotheses[cle]["statut"] = statut
 
     def hyp_fiche(self, cle: str, valeur: str):
         """Une hypothèse qui tient à la fiche elle-même (valeur par défaut, lecture d'un champ).
@@ -280,8 +282,10 @@ def _etat(valeur: str | None) -> str:
     return valeur if valeur is not None else "inconnue"
 
 
-def deperditions(house: House) -> list[dict]:
-    """Répartition des déperditions par poste (en %), modulée par l'état réel. Somme = 100 %."""
+def _poids_deperditions(house: House) -> tuple[dict[str, float], set[str]]:
+    """Poids de chaque poste AVANT renormalisation (part de référence × qualité réelle), et les
+    postes dont l'état est inconnu. Leur somme est l'indice d'isolation de la puissance au volume :
+    environ 1 pour une maison non isolée, moins quand elle l'est."""
     etats = {
         "toiture": (ref.QUALITE_ISOLATION, _etat(house.isolation_combles)),
         "murs": (ref.QUALITE_ISOLATION, _etat(house.isolation_murs)),
@@ -294,12 +298,152 @@ def deperditions(house: House) -> list[dict]:
     inconnus = {poste for poste, (_, etat) in etats.items() if etat == "inconnue"} | {"ponts_thermiques"}
 
     poids = {poste: ref.DEPERDITION_BASE[poste] * coeffs[poste] for poste in ref.DEPERDITION_BASE}
+    return poids, inconnus
+
+
+def deperditions(house: House) -> list[dict]:
+    """Répartition des déperditions par poste (en %), modulée par l'état réel. Somme = 100 %."""
+    poids, inconnus = _poids_deperditions(house)
     total = sum(poids.values()) or 1.0
     return [
         {"poste": poste, "part_pct": round(100 * p / total, 1),
          "statut": "suppose" if poste in inconnus else "calcule"}
         for poste, p in sorted(poids.items(), key=lambda kv: kv[1], reverse=True)
     ]
+
+
+# --- Puissance de chauffage et radiateurs (v2.6, point 37) ---------------------------------
+#
+# Deux calculs, affichés en fourchette (méthode de `kb/pac_air_eau.md`). Ils ne changent ni les
+# coûts, ni les économies, ni l'ordre des actions : le bloc s'ajoute à côté.
+
+def _kw(x: float) -> str:
+    """9.53 -> « 9,5 » ; 11.0 -> « 11 » ; -5.0 -> « -5 »."""
+    s = f"{x:.1f}".replace(".", ",")
+    return s[:-2] if s.endswith(",0") else s
+
+
+def _demi_kw(x: float) -> float:
+    return round(x * 2) / 2
+
+
+def puissance_chauffage(house: House, p: dict, c: dict, t: _Trace) -> dict | None:
+    """Puissance au jour le plus froid de référence : par la consommation (H = Q utile / (DJU ×
+    24), × ΔT) et au volume (S × h × G × ΔT). La consommation fait référence quand elle est
+    déclarée ; sinon le volume. Les deux sont toujours donnés."""
+    zone = p["zone"]
+    t_int = settings.audit_t_int
+    t_base = _grille(settings.audit_t_base_par_zone, zone)
+    dju = _grille(settings.audit_dju_par_zone, zone)
+    ecart = t_int - t_base
+    rendement = _grille(settings.audit_rendement_chauffage, p["chauffage"])
+    declaree = c["base_economies"] == "declaree"
+
+    q_utile = c["conso_chauffage_retenue_kwh_an"] * rendement
+    p_conso = q_utile * 1000 / (dju * 24) * ecart / 1000 if q_utile else None
+
+    poids, _ = _poids_deperditions(house)
+    indice = sum(poids.values())
+    g = max(settings.audit_g_min, settings.audit_g_non_isolee * indice)
+    h = settings.audit_hauteur_plafond_m
+    p_volume = p["surface"] * h * g * ecart / 1000 if p["surface"] else None
+
+    reference = "consommation" if declaree and p_conso else "volume"
+    p_ref = p_conso if reference == "consommation" else p_volume
+    if not p_ref:
+        return None
+    connues = [x for x in (p_conso, p_volume) if x]
+    bas_pct, haut_pct = settings.audit_pac_plage_pct
+
+    t.hyp("puissance_t_int", t_int, "puissance", "suppose")
+    t.hyp(f"puissance_t_base[{zone}]", t_base, "puissance", "suppose")
+    t.hyp(f"puissance_dju[{zone}]", dju, "puissance", "suppose")
+    t.hyp(f"puissance_rendement[{p['chauffage']}]", rendement, "puissance", "suppose")
+    t.hyp("puissance_hauteur_plafond_m", h, "puissance", "suppose")
+    t.hyp("puissance_indice_isolation", round(indice, 3), "puissance", "calcule")
+    t.hyp("puissance_g_w_m3_k", round(g, 3), "puissance", "calcule")
+    t.hyp("puissance_pac_plage_pct", [bas_pct, haut_pct], "puissance", "suppose")
+
+    return {
+        "t_int": t_int, "t_base": t_base, "dju": dju,
+        "p_conso_kw": round(p_conso, 1) if p_conso else None,
+        "p_volume_kw": round(p_volume, 1) if p_volume else None,
+        "reference": reference,  # consommation | volume
+        "p_reference_kw": round(p_ref, 1),
+        "p_bas_kw": round(min(connues), 1), "p_haut_kw": round(max(connues), 1),
+        "pac_air_eau_kw": {"bas": _demi_kw(p_ref * bas_pct / 100), "haut": _demi_kw(p_ref * haut_pct / 100)},
+        "statuts": {"p_conso_kw": "calcule" if declaree else "suppose", "p_volume_kw": "suppose",
+                    "p_reference_kw": "calcule" if reference == "consommation" else "suppose"},
+    }
+
+
+def _p_radiateur(p_nominale: float, depart: float, retour: float, t_int: float) -> float:
+    """Puissance d'un radiateur, donnée pour ΔT = 50 K, à une température d'eau plus basse."""
+    ecart = (depart + retour) / 2 - t_int
+    return p_nominale * (max(ecart, 0) / 50) ** settings.audit_exposant_radiateur
+
+
+def bilan_radiateurs(pieces, emetteurs, p_reference_kw: float, t_int: float, t: _Trace) -> list[dict]:
+    """Pièce par pièce : les radiateurs à eau suffisent-ils à 50 °C, puis à 55 °C ? Le besoin de
+    la pièce est la puissance de référence répartie au prorata des surfaces des pièces chauffées
+    (la fiche donne le total, les pièces seulement la répartition)."""
+    par_piece: dict = {}
+    for e in emetteurs:
+        par_piece.setdefault(e.piece_id, []).append(e)
+    chauffees = [pc for pc in pieces if pc.chauffee is not False]
+    surface_totale = sum(pc.surface_m2 for pc in chauffees if pc.surface_m2)
+    regimes = settings.audit_regimes_radiateurs
+    t.hyp("radiateurs_regimes", [list(r) for r in regimes], "puissance", "suppose")
+    t.hyp("radiateurs_exposant", settings.audit_exposant_radiateur, "puissance", "suppose")
+
+    lignes = []
+    for pc in chauffees:
+        siens = par_piece.get(pc.id, [])
+        types = {e.type for e in siens}
+        besoin = p_reference_kw * 1000 * pc.surface_m2 / surface_totale if pc.surface_m2 and surface_totale else None
+        ligne = {"piece": pc.nom, "surface_m2": pc.surface_m2,
+                 "besoin_w": round(besoin) if besoin is not None else None,
+                 "puissance_nominale_w": None, "puissance_50_w": None, "puissance_55_w": None}
+        if types & ref.EMETTEURS_BASSE_TEMPERATURE:
+            ligne["verdict"] = "ok_50"
+        elif types & ref.EMETTEURS_EAU:
+            eau = [e for e in siens if e.type in ref.EMETTEURS_EAU]
+            if besoin is None or any(not e.puissance_w for e in eau):
+                ligne["verdict"] = "inconnu"
+            else:
+                nominale = sum((e.nombre or 1) * e.puissance_w for e in eau)
+                aux = [_p_radiateur(nominale, dep, ret, t_int) for dep, ret in regimes]
+                ligne.update({"puissance_nominale_w": round(nominale), "puissance_50_w": round(aux[0]),
+                              "puissance_55_w": round(aux[1])})
+                ligne["verdict"] = ("ok_50" if aux[0] >= besoin else "ok_55" if aux[1] >= besoin
+                                    else "insuffisant")
+        elif types and types <= ref.EMETTEURS_ELECTRIQUES:
+            ligne["verdict"] = "electrique"
+        else:
+            continue  # bois, clim, autre, ou rien : aucun verdict à donner
+        lignes.append(ligne)
+    return lignes
+
+
+def textes_puissance(bloc: dict, actions: list[dict]) -> None:
+    """Pose les phrases de la fiche PAC sur le bloc. Air/eau proposée : puissance, plage et
+    radiateurs ; air/air (convecteurs) : la seule phrase de puissance ; sinon rien d'affiché."""
+    cles = {a["action"] for a in actions}
+    bloc["affichage"] = "complet" if "pac_air_eau" in cles else "puissance" if "pac_air_air" in cles else None
+    tx = ref.TEXTES_PUISSANCE
+    v = {"t_base": _kw(bloc["t_base"]), "p_bas": _kw(bloc["p_bas_kw"]), "p_haut": _kw(bloc["p_haut_kw"]),
+         "p_conso": _kw(bloc["p_conso_kw"]) if bloc["p_conso_kw"] else None,
+         "p_volume": _kw(bloc["p_volume_kw"]) if bloc["p_volume_kw"] else None,
+         "pac_bas": _kw(bloc["pac_air_eau_kw"]["bas"]), "pac_haut": _kw(bloc["pac_air_eau_kw"]["haut"])}
+    cle = "puissance_declaree" if bloc["reference"] == "consommation" else "puissance_estimee"
+    bloc["texte"] = _remplir(tx[cle], v)
+    complet = bloc["affichage"] == "complet"
+    bloc["texte_plage"] = _remplir(tx["plage_pac"], v) if complet else None
+    radiateurs = bloc["radiateurs"] if complet else []
+    for r in radiateurs:
+        r["texte"] = _remplir(tx.get(f"radiateurs_{r['verdict']}"), {"piece": r["piece"]})
+    bloc["note_radiateurs"] = (ref.TEXTES_ACTIONS["pac_air_air"]["note_convecteurs"]
+                               if radiateurs and all(r["verdict"] == "electrique" for r in radiateurs) else None)
 
 
 # --- Conseils sans chiffre ------------------------------------------------------------------
@@ -989,11 +1133,13 @@ def a_preciser(entrees: list[dict]) -> list[dict]:
     return champs_supposes(entrees)[:ref.A_PRECISER_MAX]
 
 
-def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: date | None = None) -> dict:
+def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: date | None = None,
+              pieces=(), emetteurs=()) -> dict:
     """Produit le JSON structuré complet du pré-audit (sans texte LLM — chiffres déterministes).
 
     `etude_simulateur` : résumé de la dernière étude du simulateur (`resume_etude_simulateur`),
-    passé par la route ; ses chiffres sont cités tels quels.
+    passé par la route ; ses chiffres sont cités tels quels. `pieces` et `emetteurs` : ceux du
+    carnet (lot 2), lus par la route ; ils ne servent qu'au bilan des radiateurs (v2.6).
     """
     aujourd_hui = aujourd_hui or date.today()
     t = _Trace()
@@ -1030,6 +1176,11 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
     bloc_plan = _bloc_plan(plan)
     bloc_climat = climat(c, p, travaux, t)
     bloc_couts = couts(c, p, bloc_plan, t)
+    puissance = puissance_chauffage(house, p, c, t)
+    if puissance:
+        puissance["radiateurs"] = (bilan_radiateurs(pieces, emetteurs, puissance["p_reference_kw"],
+                                                    puissance["t_int"], t) if pieces else [])
+        textes_puissance(puissance, actions)
 
     return {
         "version_helios": settings.audit_version,
@@ -1055,6 +1206,8 @@ def run_audit(house: House, etude_simulateur: dict | None = None, aujourd_hui: d
         "climat": bloc_climat,
         "couts": bloc_couts,
         "solaire": solaire,
+        # v2.6 : à côté du reste, sans rien y changer. `affichage` dit ce que l'écran en montre.
+        "puissance": puissance,
         "synthese": {
             "nb_actions": len(actions),
             "nb_par_horizon": nb,

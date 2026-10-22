@@ -10,6 +10,7 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.audit import Audit
 from app.models.house import House
+from app.models.piece import Emetteur, Piece
 from app.models.simulateur import SimulateurStudy
 from app.models.user import User
 from app.services import audit_engine, pdf_audit
@@ -44,7 +45,10 @@ async def generate_audit(user: User = Depends(get_current_user), db: AsyncSessio
         .order_by(SimulateurStudy.created_at.desc()).limit(1)
     )
     resume = audit_engine.resume_etude_simulateur(etude) if etude else None
-    result = audit_engine.run_audit(house, etude_simulateur=resume)
+    # Les pièces du carnet (lot 2) : seulement pour répartir la puissance et juger les radiateurs.
+    pieces = list(await db.scalars(select(Piece).where(Piece.house_id == house.id).order_by(Piece.ordre)))
+    emetteurs = list(await db.scalars(select(Emetteur).where(Emetteur.piece_id.in_([pc.id for pc in pieces]))))         if pieces else []
+    result = audit_engine.run_audit(house, etude_simulateur=resume, pieces=pieces, emetteurs=emetteurs)
     label = f"{(house.type_logement or 'logement').capitalize()} · {house.code_postal}"
     pdf_path = pdf_audit.build_pdf(result, house_label=label)
 
