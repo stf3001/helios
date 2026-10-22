@@ -125,6 +125,13 @@ class Settings(BaseSettings):
     audit_prix_energie_eur_kwh: tuple[tuple[str, float], ...] = (
         ("gaz", 0.1456), ("fioul", 0.19), ("bois", 0.08), ("reseau", 0.095),
     )
+    # Date de valeur de chaque prix ci-dessus et du TRV (`simu_prix_kwh_par_kva`), relevée dans
+    # leurs commentaires : « Ce que coûte ma maison » (carnet, lot 10) l'affiche à côté du
+    # montant. À METTRE À JOUR AVEC LE PRIX — un prix sans sa date passe pour actuel.
+    audit_prix_energie_date_valeur: tuple[tuple[str, str], ...] = (
+        ("electricite", "2026-08-01"), ("gaz", "2026-10-01"), ("fioul", "2026-09-01"),
+        ("bois", "2026-10-01"), ("reseau", "2026-03-01"),
+    )
     audit_puissance_kva_defaut: int = 6
     # Usages hors chauffage, pour isoler le chauffage d'une facture électrique. Ce sont les
     # couches du simulateur (`simu_conso_*`) ; seuls les défauts de la fiche sont propres ici.

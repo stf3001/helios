@@ -1,5 +1,6 @@
 from app.models.agent_log import AgentLog
 from app.models.audit import Audit
+from app.models.charges import ChargesMaison
 from app.models.conversation import Conversation, Message
 from app.models.energy import EnergyStudy
 from app.models.equipement import Equipement
@@ -22,5 +23,5 @@ __all__ = [
     "User", "House", "RefreshToken", "KbDocument", "KbChunk",
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
     "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy", "ProProfile",
-    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet",
+    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet", "ChargesMaison",
 ]
