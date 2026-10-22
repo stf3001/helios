@@ -14,6 +14,7 @@ from app.models.piece import Emetteur, Piece
 from app.models.pro import ProProfile
 from app.models.projet import Projet
 from app.models.refresh_token import RefreshToken
+from app.models.risques import RisquesCommune
 from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
 from app.models.travaux import Travaux
@@ -25,4 +26,5 @@ __all__ = [
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
     "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy", "ProProfile",
     "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet", "ChargesMaison", "Isolant",
+    "RisquesCommune",
 ]

@@ -85,6 +85,9 @@ class House(Base):
 
     # Obligation légale de débroussaillement (carnet, lot 3 bis, migration 0026) : oui|non|ne_sais_pas.
     # Demandée aux maisons seulement, hors score de complétude.
+    # Phase 2 : la commune, choisie parmi celles du code postal — hors score. Jamais l'adresse.
+    code_insee: Mapped[str | None] = mapped_column(String(5))
+    commune: Mapped[str | None] = mapped_column(String(120))
     zone_old: Mapped[str] = mapped_column(String(12), nullable=False, default="ne_sais_pas",
                                           server_default="ne_sais_pas")
     # Chauffage collectif (carnet, lot 8, migration 0031) : oui|non|ne_sais_pas. Demandé aux
