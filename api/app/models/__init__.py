@@ -6,6 +6,7 @@ from app.models.energy import EnergyStudy
 from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.house_document import HouseDocument
+from app.models.isolant import Isolant
 from app.models.journal import JournalEntree
 from app.models.kb import KbChunk, KbDocument
 from app.models.partner import Lead, Partner, Review
@@ -23,5 +24,5 @@ __all__ = [
     "User", "House", "RefreshToken", "KbDocument", "KbChunk",
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
     "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy", "ProProfile",
-    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet", "ChargesMaison",
+    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet", "ChargesMaison", "Isolant",
 ]

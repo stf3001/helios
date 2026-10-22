@@ -13,6 +13,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.db import Base
 
 MAX_TRAVAUX_PAR_MAISON = 40
+# Les rénovations du carnet d'information du logement (arrêté du 27/12/2022, articles 2 à 6) ;
+# `autre` = hors carnet. Lot 11.
+CATEGORIES_CIL = ("isolation_toiture", "isolation_murs", "parois_vitrees_portes", "planchers_bas",
+                  "chauffage_froid_ecs", "autre")
 
 
 class Travaux(Base):
@@ -32,5 +36,6 @@ class Travaux(Base):
     attestation_assurance_document_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("house_documents.id", ondelete="SET NULL")
     )
-    note: Mapped[str | None] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)  # la description des travaux, pour le CIL
+    categorie_cil: Mapped[str | None] = mapped_column(String(30))  # CATEGORIES_CIL (lot 11)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")

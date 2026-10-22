@@ -7,7 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 
-DOC_TYPES = ("dpe", "facture", "photo", "devis", "autre")
+# `plan` (lot 11) : plans, coupes, schémas de réseaux — une rubrique du carnet d'information du logement.
+DOC_TYPES = ("dpe", "facture", "photo", "devis", "plan", "autre")
 
 
 class HouseDocument(Base):

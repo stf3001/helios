@@ -40,6 +40,11 @@ UNITES = ("kW", "kWc", "kWh", "L")
 # Les champs de la fiche dont un équipement peut naître (bandeau de suggestions).
 ORIGINES_FICHE = ("chauffage_principal", "chauffage_appoint", "ecs", "clim", "ventilation")
 
+# Carnet d'information du logement (lot 11, arrêté du 27/12/2022) : deux caractéristiques de
+# plus pour un équipement de chauffage, de refroidissement ou d'eau chaude. Déclarées, facultatives.
+MODES_EVACUATION = ("ventouse", "conduit", "sans_objet", "inconnu")
+ETIQUETTES_ENERGIE = ("A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G", "inconnue")
+
 MAX_EQUIPEMENTS_PAR_MAISON = 60
 
 
@@ -70,6 +75,8 @@ class Equipement(Base):
     origine_fiche: Mapped[str | None] = mapped_column(String(30))
     en_service: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
     note: Mapped[str | None] = mapped_column(Text)  # jamais transmise au chat
+    mode_evacuation: Mapped[str | None] = mapped_column(String(12))   # MODES_EVACUATION (lot 11)
+    etiquette_energie: Mapped[str | None] = mapped_column(String(10))  # ETIQUETTES_ENERGIE (lot 11)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default="now()", onupdate=lambda: datetime.now(timezone.utc)

@@ -10,6 +10,8 @@ Categorie = Literal[
     "chauffage", "ecs", "clim", "ventilation", "production_electricite", "stockage", "recharge", "eau", "autre"
 ]
 Unite = Literal["kW", "kWc", "kWh", "L"]
+ModeEvacuation = Literal["ventouse", "conduit", "sans_objet", "inconnu"]  # MODES_EVACUATION (lot 11)
+EtiquetteEnergie = Literal["A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G", "inconnue"]
 OrigineFiche = Literal["chauffage_principal", "chauffage_appoint", "ecs", "clim", "ventilation"]
 
 
@@ -37,6 +39,8 @@ class _Champs(BaseModel):
     contrat_prestataire: str | None = Field(default=None, max_length=120)
     travaux_id: uuid.UUID | None = None
     note: str | None = Field(default=None, max_length=2000)
+    mode_evacuation: ModeEvacuation | None = None
+    etiquette_energie: EtiquetteEnergie | None = None
 
 
 class EquipementCreate(_Champs):

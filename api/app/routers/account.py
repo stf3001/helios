@@ -26,6 +26,7 @@ from app.models.piece import Emetteur, Piece
 from app.models.refresh_token import RefreshToken
 from app.models.solar import SolarStudy
 from app.models.charges import ChargesMaison
+from app.models.isolant import Isolant
 from app.models.projet import Projet
 from app.models.travaux import Travaux
 from app.models.user import User
@@ -59,6 +60,8 @@ async def export_data(user: User = Depends(get_current_user), db: AsyncSession =
             select(Travaux).where(Travaux.house_id == house.id))]
         data["projets"] = [_serialize(p) for p in await db.scalars(
             select(Projet).where(Projet.house_id == house.id))]
+        data["isolants"] = [_serialize(i) for i in await db.scalars(
+            select(Isolant).where(Isolant.house_id == house.id))]
         data["charges"] = [_serialize(c) for c in await db.scalars(
             select(ChargesMaison).where(ChargesMaison.house_id == house.id))]
         data["journal"] = [_serialize(j) for j in await db.scalars(
