@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.core.ratelimit import limiter
 from app.routers import (
     account, admin, audits, auth, chat, documents, dossier, energy, entretien, equipements, faq, houses, jardin, journal, leads,
-    parcours, partner_portal, partners, pieces, pro, autoconso, rendez_vous, simulateur, solar, travaux, water,
+    parcours, partner_portal, partners, pieces, projets, pro, autoconso, rendez_vous, simulateur, solar, travaux, water,
 )
 
 app = FastAPI(title="HELIOS API", version="0.1.0")
@@ -59,6 +59,7 @@ app.include_router(entretien.router, prefix="/api")
 app.include_router(journal.router, prefix="/api")
 app.include_router(dossier.router, prefix="/api")
 app.include_router(parcours.router, prefix="/api")
+app.include_router(projets.router, prefix="/api")
 
 
 @app.get("/health")
