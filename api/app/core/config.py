@@ -327,6 +327,7 @@ class Settings(BaseSettings):
     mer_activation_jours: int = 7           # lien d'activation d'un compte partenaire, usage unique (lot 3)
     mer_kbis_max_mois: int = 3              # un Kbis de moins de 3 mois a la candidature
     mer_tva_taux: float = 0.20               # releves (lot 4) : TVA et TTC INDICATIFS, un releve n'est pas une facture
+    mer_delai_contact_jours_ouvres: int = 5  # lot 5 : au-dela, sans contact declare, on demande au foyer (doc 08)
 
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
