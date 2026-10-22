@@ -23,6 +23,7 @@ from app.schemas.journal import Fait
 from app.services.a_faire import a_faire, derniers_faits
 from app.services.entretien import echeances, table_courante, verifications
 from app.services.garanties import garanties_maison
+from app.services.parcours import garanties_visibles, parcours
 
 router = APIRouter(prefix="/houses/me", tags=["carnet"])
 
@@ -58,9 +59,11 @@ async def get_entretien(user: User = Depends(get_current_user), db: AsyncSession
 async def a_faire_de_la_maison(db: AsyncSession, house: House) -> dict:
     c = await _calcul(db, house)
     travaux = list(await db.scalars(select(Travaux).where(Travaux.house_id == house.id)))
-    garanties = garanties_maison(c["equipements"], travaux, date.today())
+    garanties = garanties_visibles(garanties_maison(c["equipements"], travaux, date.today()), house)
     bloc = a_faire(c["echeances"], garanties, date.today(), table_vide=not c["table"]["taches"])
     bloc["sans_equipement"] = not any(e.en_service for e in c["equipements"])
+    # Lot 8 : l'écran choisit d'après le profil (acheteur → « Avant d'acheter » à la place du bloc).
+    bloc["parcours"] = parcours(house)
     return bloc
 
 

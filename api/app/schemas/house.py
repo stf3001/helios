@@ -110,6 +110,8 @@ class HouseOut(HouseUpdate):
     block_scores: dict[str, float]
     # Les champs qu'un équipement du carnet fixe (lot 7) : la fiche les affiche en lecture.
     champs_verrouilles: list[str] = []
+    # Le parcours du foyer (lot 8, `services/parcours.py`) : ce que l'espace montre selon le statut.
+    parcours: dict = {}
     updated_at: datetime
 
     class Config:

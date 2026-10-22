@@ -10,7 +10,12 @@ from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.user import User
 from app.schemas.house import HouseCreate, HouseOut, HouseUpdate
+from datetime import date
+
+from app.models.house_document import HouseDocument
+from app.models.journal import JournalEntree
 from app.services import fiche_equipements as fe
+from app.services import parcours as pc
 from app.services.completeness import block_scores, compute_score, niveau_for_score
 
 router = APIRouter(prefix="/houses", tags=["houses"])
@@ -23,6 +28,7 @@ def _to_out(house: House, equipements: list[Equipement] = ()) -> HouseOut:
         niveau=niveau_for_score(house.completeness_score),
         block_scores=block_scores(house),
         champs_verrouilles=fe.champs_verrouilles(equipements),
+        parcours=pc.parcours(house),
     )
 
 
@@ -76,6 +82,14 @@ async def update_my_house(
             status.HTTP_400_BAD_REQUEST,
             f"{noms} vient de vos équipements : modifiez-le dans « Mes équipements ».",
         )
+    # Lot 8 : l'acheteur devient propriétaire — sa liste « Avant d'acheter » est archivée au
+    # journal telle qu'elle était, puis vidée (le parcours « Avant d'acheter » disparaît).
+    if house.statut == "en_achat" and champs.get("statut") == "proprietaire":
+        lignes = pc.avant_achat(house)
+        docs = {str(d.id): d.filename for d in await db.scalars(
+            select(HouseDocument).where(HouseDocument.house_id == house.id))}
+        db.add(JournalEntree(house_id=house.id, **pc.archive(lignes, docs, date.today())))
+        house.avant_achat = None
     for field, value in champs.items():
         if field in ("zone_old", "chauffage_collectif") and value is None:
             value = "ne_sais_pas"  # colonne NOT NULL : « non renseigné » veut dire « je ne sais pas »
