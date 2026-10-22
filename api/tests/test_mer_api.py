@@ -151,7 +151,8 @@ def test_creation_garde_fous_et_prix_fige(ctx):
     assert float(prix_ht) == 60 and commission is None
 
     # Signé avec un montant : aucune commission n'est calculée sur un lead `travaux`.
-    r = c.patch(f"/api/leads/{premier.json()['id']}/status", headers=h["proprio"],
+    hp = {"Authorization": f"Bearer {create_partner_token(str(ids['A']))}"}
+    r = c.patch(f"/api/partner/leads/{premier.json()['id']}/status", headers=hp,
                 json={"statut": "signe", "montant_travaux": 12000})
     assert r.status_code == 200
     assert c.portal.call(prix)[1] is None

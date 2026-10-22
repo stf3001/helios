@@ -18,12 +18,21 @@ figé et daté, ses créneaux, ses coordonnées, et un score calculé depuis ce 
 (`services/score_lead.py`) — sans effet sur le prix, l'ordre des propositions ni l'accès. Les
 documents choisis sont copiés sous `generated/lead_docs/<lead_id>/` ; retirer son consentement
 supprime ces copies et vide le dossier, les coordonnées, le message et les créneaux.
+
+Lot 5 : le foyer DÉCLARE à côté du partenaire, sans jamais écrire dans son statut (sinon aucun
+écart ne serait visible) — réponse à « L'entreprise vous a-t-elle contacté ? » (posée 5 jours
+ouvrés après la transmission, `services/suivi_foyer.py`), devis reçu, travaux signés, projet
+abandonné. Un « non » marque la demande `sans_contact_signale`, ouvre un nouveau tirage SANS ce
+partenaire, et ne touche pas au prix : l'administration décide.
 """
 import shutil
+import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,8 +46,8 @@ from app.models.partner import Lead, Partner, Review
 from app.models.projet import Projet
 from app.models.simulateur import SimulateurStudy
 from app.models.user import User
-from app.schemas.partner import LeadCreate, LeadDossier, LeadStatusUpdate, ReviewCreate
-from app.services import commission, conformite_lecture, dossier_lead, propositions, regions
+from app.schemas.partner import LeadCreate, LeadDossier, ReviewCreate
+from app.services import conformite_lecture, dossier_lead, propositions, regions, suivi_foyer
 from app.services.score_lead import score as score_lead
 from app.services.email import send_lead_notification
 
@@ -64,7 +73,8 @@ async def _own_lead(db: AsyncSession, user_id, lead_id) -> Lead:
     return lead
 
 
-def _to_out(lead: Lead, partner: Partner | None) -> dict:
+def _to_out(lead: Lead, partner: Partner | None, aujourd_hui: date | None = None) -> dict:
+    faites = suivi_foyer.declarations(lead)
     return {
         "id": lead.id,
         "partner": {"id": partner.id, "raison_sociale": partner.raison_sociale,
@@ -77,7 +87,22 @@ def _to_out(lead: Lead, partner: Partner | None) -> dict:
         "consent_client_at": lead.consent_client_at,
         "consent_retire_at": lead.consent_retire_at,
         "created_at": lead.created_at,
+        # Suivi (lot 5) : ce que dit le partenaire, ce que dit le foyer, et l'étape qui en découle.
+        "contacte_le": lead.contacte_le,
+        "contact_foyer": lead.contact_foyer,
+        "declarations_foyer": lead.declarations_foyer or [],
+        "sans_contact_signale": lead.sans_contact_signale,
+        "etape": suivi_foyer.etape(lead),
+        "question_contact": suivi_foyer.question_contact_due(lead, aujourd_hui or date.today()),
+        "peut_noter": "travaux_signes" in faites or lead.statut == "signe",
     }
+
+
+async def _actifs(db: AsyncSession, house_id) -> list:
+    """Les demandes qui occupent une place : ni perdues, ni signées, ni signalées sans contact."""
+    return list(await db.scalars(select(Lead).where(
+        Lead.house_id == house_id, Lead.type == "travaux", Lead.statut.in_(propositions.STATUTS_ACTIFS),
+        Lead.sans_contact_signale.is_(False))))
 
 
 async def _derniere_etude(db: AsyncSession, house_id, type_: str):
@@ -134,8 +159,10 @@ async def _nb_avis(db: AsyncSession) -> dict:
 
 
 @router.get("/propositions")
-async def get_propositions(metier: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Au plus 3 partenaires éligibles, TIRÉS AU SORT, dans un ordre aléatoire — jamais triés."""
+async def get_propositions(metier: str, exclure: uuid.UUID | None = None, user: User = Depends(get_current_user),
+                           db: AsyncSession = Depends(get_db)):
+    """Au plus 3 partenaires éligibles, TIRÉS AU SORT, dans un ordre aléatoire — jamais triés.
+    `exclure` : le partenaire qui n'a pas appelé (« Demander une autre entreprise », lot 5)."""
     house = await _own_house(db, user.id)
     if metier not in propositions.METIERS_TRAVAUX:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Métier inconnu")
@@ -143,7 +170,8 @@ async def get_propositions(metier: str, user: User = Depends(get_current_user), 
     voit_demo = propositions.voit_les_demos(user.email)
     actifs = list(await db.scalars(select(Partner).where(Partner.statut == "actif")))
     en_regle = await conformite_lecture.en_regle(db, actifs)
-    eligibles = [p for p in actifs if propositions.eligible(p, departement, metier, voit_demo, p.id in en_regle)]
+    eligibles = [p for p in actifs if p.id != exclure
+                 and propositions.eligible(p, departement, metier, voit_demo, p.id in en_regle)]
     avis = await _nb_avis(db)
     tires = propositions.tirer(eligibles, settings.mer_nb_propositions)
     return {"metier": metier, "ordre": "tire_au_sort",
@@ -192,8 +220,7 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire indisponible")
     prix_ht = prepare = None
     if payload.type == "travaux":
-        actifs = list(await db.scalars(select(Lead).where(
-            Lead.house_id == house.id, Lead.type == "travaux", Lead.statut.in_(propositions.STATUTS_ACTIFS))))
+        actifs = await _actifs(db, house.id)
         refus = propositions.refus_creation(
             house.statut, payload.metier, partner, regions.departement_du_code_postal(house.code_postal or ""), actifs,
             propositions.voit_les_demos(user.email), partner.id in await conformite_lecture.en_regle(db, [partner]))
@@ -270,29 +297,41 @@ async def withdraw_consent(lead_id, user: User = Depends(get_current_user), db: 
     return _to_out(lead, await db.get(Partner, lead.partner_id))
 
 
-@router.patch("/{lead_id}/status")
-async def update_status(
-    lead_id, payload: LeadStatusUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-):
-    """Avance le lead dans son cycle. Aucune commission sur un lead `travaux` (prix fixe, figé à la
-    création) ; le courtage (`energie`) garde son calcul.
+class ReponseContact(BaseModel):
+    reponse: Literal["oui", "non"]
 
-    NB : en production ces transitions viendront de l'espace partenaire ; ici l'endpoint sert le suivi
-    et la démo. Un lead SIGNÉ est immuable (doc 08 §2).
-    """
+
+@router.post("/{lead_id}/contact")
+async def repondre_contact(lead_id, payload: ReponseContact, user: User = Depends(get_current_user),
+                           db: AsyncSession = Depends(get_db)):
+    """« L'entreprise vous a-t-elle contacté ? » — une seule réponse. « Non » ouvre un nouveau
+    tirage sans ce partenaire ; le prix de cette demande N'EST PAS annulé (l'administration décide)."""
     lead = await _own_lead(db, user.id, lead_id)
-    if lead.statut == "signe":
-        raise HTTPException(status.HTTP_409_CONFLICT, "Lead signé : immuable.")
+    if lead.type != "travaux" or lead.consent_retire_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Cette demande n'appelle pas de réponse.")
+    if lead.contact_foyer is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Vous avez déjà répondu.")
+    lead.contact_foyer, lead.contact_foyer_le = payload.reponse, datetime.now(timezone.utc)
+    lead.sans_contact_signale = payload.reponse == "non"
+    await db.commit()
+    return _to_out(lead, await db.get(Partner, lead.partner_id))
 
-    if payload.montant_travaux is not None:
-        lead.montant_travaux = payload.montant_travaux
-    if payload.statut == "perdu" and payload.motif_perdu:
-        lead.motif_perdu = payload.motif_perdu
 
-    lead.statut = payload.statut
-    if payload.statut == "signe" and lead.type != "travaux":
-        lead.commission = commission.compute_commission(lead.metier, lead.montant_travaux)
+class Declaration(BaseModel):
+    type: Literal["devis_recu", "travaux_signes", "projet_abandonne"]
 
+
+@router.post("/{lead_id}/declaration")
+async def declarer(lead_id, payload: Declaration, user: User = Depends(get_current_user),
+                   db: AsyncSession = Depends(get_db)):
+    """Devis reçu, travaux signés, projet abandonné — à tout moment. Statistiques et écarts
+    seulement : ni le statut du partenaire, ni le prix ne bougent."""
+    lead = await _own_lead(db, user.id, lead_id)
+    if lead.type != "travaux" or lead.consent_retire_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Cette demande n'appelle pas de déclaration.")
+    if payload.type not in suivi_foyer.declarations(lead):
+        lead.declarations_foyer = [*(lead.declarations_foyer or []),
+                                   {"type": payload.type, "le": datetime.now(timezone.utc).isoformat()}]
     await db.commit()
     return _to_out(lead, await db.get(Partner, lead.partner_id))
 
@@ -303,7 +342,7 @@ async def review_partner(
 ):
     """Notation post-chantier — obligatoire pour la qualité (doc 08 §4). Recalcule la note moyenne du partenaire."""
     lead = await _own_lead(db, user.id, lead_id)
-    if lead.statut != "signe":
+    if lead.statut != "signe" and "travaux_signes" not in suivi_foyer.declarations(lead):
         raise HTTPException(status.HTTP_409_CONFLICT, "La notation intervient après signature du chantier.")
     if await db.scalar(select(Review).where(Review.lead_id == lead.id)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Ce chantier a déjà été noté.")

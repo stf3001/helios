@@ -15,11 +15,13 @@ from app.core.deps import get_current_user
 from app.models.equipement import Equipement
 from app.models.house import House
 from app.models.journal import JournalEntree
+from app.models.partner import Lead, Partner
 from app.models.travaux import Travaux
 from app.models.user import User
 from app.routers.equipements import _own_house
 from app.routers.journal import cols, verifier_liens, verifier_limite
 from app.schemas.journal import Fait
+from app.services import suivi_foyer
 from app.services.a_faire import a_faire, derniers_faits
 from app.services.entretien import echeances, table_courante, verifications
 from app.services.garanties import garanties_maison
@@ -64,6 +66,13 @@ async def a_faire_de_la_maison(db: AsyncSession, house: House) -> dict:
     bloc["sans_equipement"] = not any(e.en_service for e in c["equipements"])
     # Lot 8 : l'écran choisit d'après le profil (acheteur → « Avant d'acheter » à la place du bloc).
     bloc["parcours"] = parcours(house)
+    # Mises en relation, lot 5 : « L'entreprise vous a-t-elle contacté ? » tant qu'elle attend sa réponse.
+    leads = (await db.execute(select(Lead, Partner.raison_sociale).join(Partner, Partner.id == Lead.partner_id)
+                              .where(Lead.house_id == house.id, Lead.type == "travaux"))).all()
+    bloc["questions_contact"] = [
+        {"lead_id": l.id, "partenaire": nom, "metier": l.metier, "transmis_le": l.consent_client_at}
+        for l, nom in leads if suivi_foyer.question_contact_due(l, date.today())]
+    bloc["rien_d_urgent"] = bloc["rien_d_urgent"] and not bloc["questions_contact"]
     return bloc
 
 
