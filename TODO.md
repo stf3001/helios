@@ -1126,6 +1126,32 @@ Trouvé en vérifiant le lot 7 (22/10/2026), sans lien avec lui : à 1024 px, le
 sur `/mon-espace`. À 375 px, rien ne déborde (menu burger). La barre de navigation publique
 compte désormais dix entrées : à replier plus tôt, ou à resserrer.
 
+### [x] 47. Carnet, lot 8 : un parcours par statut et par type de logement — fait le 22/10/2026
+
+`responsable` ajouté aux 18 tâches de `taches.json` (rien d'autre, prouvé par
+`test_statuts.py` contre la version du 20/10 gardée en fixture). Locataire : tâches du
+propriétaire en lecture, hors du bloc, note à copier ; appartement : ni débroussaillement ni
+SPANC, chaudière « Assurée par la copropriété » en chauffage collectif (migration 0031) ;
+acheteur : « Avant d'acheter » à la place du bloc, archivé au journal au passage à
+propriétaire. **Vérifié à l'écran** sur les quatre foyers (compte de démo, remis en état).
+Voir `debriefs/2026-10-22-carnet-lot8.md`.
+
+### [ ] 48. Relire les deux fiches du lot 8 avant de les passer en vérifiées
+
+`kb/achat_logement.md` (liste « Avant d'acheter », carnet d'information du logement) et
+`kb/locataire_entretien.md` (répartition des charges, phrases de la note au propriétaire)
+sont `verif: a_verifier`. Les libellés affichés en sont recopiés mot pour mot : une
+correction se fait dans la fiche, puis dans `services/parcours.py` ou
+`services/note_proprietaire.py` (les tests cassent sinon). À vérifier en particulier :
+« l'attestation du vendeur » sur le débroussaillement, reprise du brief.
+
+### [ ] 49. Un acheteur qui joint tous ses papiers bute sur la limite de 6 documents
+
+La liste « Avant d'acheter » compte jusqu'à 7 lignes, et une pièce jointe passe par le dépôt
+normal de la maison (`MAX_DOCUMENTS_PAR_MAISON = 6`). Le 7ᵉ dépôt est refusé avec le message
+du serveur. À trancher : relever la limite, ou sortir ces pièces du compte comme les photos
+de pièces (lot 2).
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
