@@ -52,13 +52,21 @@ Décisions de Stéphane du 22/10/2026 : 60 € HT tous métiers, dus à la trans
 | 2 | `BRIEF-p2-vigilance-meteo.md` (module dormant sans clé Météo-France) | lot 1 de la série |
 | 3 | `BRIEF-p2-projets-isolation.md` | aucun |
 
-## Série 6 (22/10/2026) — pièces dans le pré-audit (point 37)
+## Série 6 (22/10/2026) — pièces dans le pré-audit (point 37), faite le 22/10/2026
 
 Décisions de Stéphane du 22/10/2026 : deux calculs de puissance affichés en fourchette ; plage PAC air/eau à 80-120 % ; air/air inchangé (selon la surface) ; radiateurs testés à 50 °C puis 55 °C.
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-preaudit-lot6-puissance.md` | aucun |
+
+## Série 7 (22/10/2026) — consommation de fioul, gaz et bois (points 79 et 80)
+
+Décisions de Stéphane du 22/10/2026 : réglages de puissance validés en l'état ; appoint hors facture → le volume fait référence ; la consommation des combustibles est saisie avec son unité.
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-preaudit-lot7-conso-combustibles.md` | série 6 |
 
 ## Références
 
