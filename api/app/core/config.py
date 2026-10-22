@@ -326,6 +326,7 @@ class Settings(BaseSettings):
     mer_documents_max: int = 5              # documents qu'un foyer peut joindre a une demande
     mer_activation_jours: int = 7           # lien d'activation d'un compte partenaire, usage unique (lot 3)
     mer_kbis_max_mois: int = 3              # un Kbis de moins de 3 mois a la candidature
+    mer_tva_taux: float = 0.20               # releves (lot 4) : TVA et TTC INDICATIFS, un releve n'est pas une facture
 
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
