@@ -181,7 +181,7 @@ def test_sans_calculateur_lier_etude_est_refuse(foyers):
 def test_locataire(foyers):
     c, _, h = foyers
     ids = [m["id"] for m in c.get("/api/houses/me/projets/modeles", headers=h["locataire"]).json()["modeles"]]
-    assert ids == ["machine-eau-air"]
+    assert ids == ["machine-eau-air", "regulation-chauffage"]
     assert c.post("/api/houses/me/projets", headers=h["locataire"],
                   json={"modele_id": "panneaux-solaires"}).status_code == 400
     for _ in range(20):

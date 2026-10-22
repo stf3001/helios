@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 from app.models.equipement import ORIGINES_FICHE, TYPES_PAR_CATEGORIE
+from app.models.travaux import CATEGORIES_CIL
+from app.services.audit_reference import ACTIONS
 
 CHEMIN_MODELES = Path(__file__).resolve().parents[2] / "data" / "projets" / "modeles.json"
 
@@ -21,16 +23,18 @@ ETAPES = ("idee", "etude", "devis", "decide", "travaux", "termine", "abandonne")
 # Ce que le foyer peut choisir lui-même : `termine` passe par « Les travaux sont terminés »,
 # qui crée travaux, garanties, équipements et journal.
 ETAPES_LIBRES = tuple(e for e in ETAPES if e != "termine")
-FAMILLES = ("solaire_stockage", "sortie_fossile", "ecosysteme")
+FAMILLES = ("solaire_stockage", "sortie_fossile", "ecosysteme", "enveloppe")
 # Plus « pre-audit:<clé d'action> ». `aucun` : pas de calculateur (point 51) — l'écran renvoie aux
 # fiches. L'outil `eau` a été retiré avec le potentiel hydrique (point 13).
 OUTILS = ("simulateur-solaire", "vent", "jardin", "aucun")
 POSTES_SIMULATEUR = ("panneaux_eur", "carport_eur", "batterie_eur", "inertie_eur", "eolien_eur")
 CHAMPS_MASQUE = ("statut", "type_logement", "chauffage_principal")
 MAX_PROJETS_PAR_MAISON = 20
+# Pour un modèle `mention_locataire` (la régulation, souvent un thermostat) que voit un locataire.
+MENTION_LOCATAIRE = "Les travaux sur le chauffage se décident avec votre propriétaire."
 
 _CHAMPS = {"id", "titre", "famille", "outil", "poste", "fiches_kb", "equipements_crees", "lourd",
-           "masque_si", "affiche_si"}
+           "masque_si", "affiche_si", "categorie_cil", "mention_locataire"}
 
 
 class ModeleInvalide(ValueError):
@@ -49,6 +53,8 @@ def _valider(m: dict, ids: set) -> None:
     outil = m.get("outil")
     if not (outil in OUTILS or (isinstance(outil, str) and outil.startswith("pre-audit:") and len(outil) > 10)):
         raise ModeleInvalide(f"`outil` inconnu : {outil!r}")
+    if outil.startswith("pre-audit:") and outil.split(":", 1)[1] not in ACTIONS:
+        raise ModeleInvalide(f"action du pré-audit inconnue : {outil!r}")
     if outil == "simulateur-solaire" and m.get("poste") not in POSTES_SIMULATEUR:
         raise ModeleInvalide("un modèle du simulateur dit quel `poste` de l'investissement le concerne")
     if not (isinstance(m.get("fiches_kb"), list) and m["fiches_kb"]):
@@ -65,6 +71,10 @@ def _valider(m: dict, ids: set) -> None:
             raise ModeleInvalide(f"`{cle}` : {{champ de fiche : [valeurs]}} attendu")
     if not isinstance(m.get("lourd"), bool):
         raise ModeleInvalide("`lourd` (vrai ou faux) est obligatoire")
+    if m.get("categorie_cil") not in (None, *CATEGORIES_CIL):
+        raise ModeleInvalide(f"`categorie_cil` inconnue : {m['categorie_cil']!r}")
+    if not isinstance(m.get("mention_locataire", False), bool):
+        raise ModeleInvalide("`mention_locataire` : vrai ou faux")
 
 
 def charger_modeles(chemin: Path = CHEMIN_MODELES) -> list[dict]:
@@ -83,6 +93,11 @@ def charger_modeles(chemin: Path = CHEMIN_MODELES) -> list[dict]:
 
 def _champ(obj, nom):
     return obj.get(nom) if isinstance(obj, dict) else getattr(obj, nom, None)
+
+
+def mention(modele: dict, parcours: dict) -> str | None:
+    """La mention d'un modèle léger que voit un locataire, sinon rien."""
+    return MENTION_LOCATAIRE if modele.get("mention_locataire") and parcours.get("profil") == "locataire" else None
 
 
 def fiches_manquantes(modele: dict, sources: set[str]) -> list[str]:

@@ -9,7 +9,7 @@ import MesPieces from './MesPieces'
 import { ACompleter, type BlocCil, type Isolant, type Manque, Isolants } from './CarnetCil'
 import Calendrier from './Calendrier'
 import Journal from './Journal'
-import { type Parcours, signalerMaj, useMaj } from './commun'
+import { type Parcours, signalerMaj, useMaj, useOuvrirIsolants } from './commun'
 import type { Draft } from '../fiche/types'
 import {
   type Chantier, type Doc, type Equipement, type Garantie, FormChantier, FormEquipement, messageErreur,
@@ -45,7 +45,9 @@ type Suggestion = {
   origine_fiche: string; categorie: string; type: string | null
   annee_pose: number | null; valeur_fiche: string | null
 }
-type GarantieMaison = Garantie & { provenance: 'travaux' | 'equipement'; donnees: string; mention: string | null }
+type GarantieMaison = Garantie & {
+  provenance: 'travaux' | 'equipement'; source_id: string; donnees: string; mention: string | null
+}
 /** Ce que dit le bandeau après une mise hors service : la place de la fiche restée vide. */
 const PLACE_FICHE: Record<string, string> = {
   chauffage_principal: 'votre chauffage principal', chauffage_appoint: "votre chauffage d'appoint",
@@ -163,6 +165,16 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
   // Le bloc « À faire », le calendrier et le journal écrivent aussi (« C'est fait »,
   // remplacement) : tout le carnet se recharge au même signal.
   useMaj(charger)
+  // « Mes projets » vient de réceptionner une isolation : sa saisie d'isolants s'ouvre ici.
+  const [aMontrer, setAMontrer] = useState<string | null>(null)
+  useOuvrirIsolants(useCallback((id: string) => { setIsolantOuvert(`nouveau:${id}`); setAMontrer(id) }, []))
+  // Le chantier n'existe à l'écran qu'après le rechargement du carnet : on y va dès qu'il est rendu.
+  useEffect(() => {
+    if (aMontrer && chantiers.some((c) => c.id === aMontrer)) {
+      montrer(`chantier-${aMontrer}`)
+      setAMontrer(null)
+    }
+  }, [aMontrer, chantiers])
 
   async function ecrire(url: string, method: string, corps?: object): Promise<string | null> {
     const res = await authFetch(url, {
@@ -329,7 +341,7 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
           </h2>
           <ul className="divide-y divide-bord rounded-lg border border-bord">
             {ouvertes.map((g) => (
-              <li key={`${g.provenance}-${g.code}-${g.libelle}`} className="flex items-start justify-between gap-2 px-3 py-2">
+              <li key={`${g.provenance}-${g.source_id}-${g.code}`} className="flex items-start justify-between gap-2 px-3 py-2">
                 <span className="min-w-0 text-sm">
                   <span className="block text-ink">{g.libelle}</span>
                   <span className="block text-xs text-dark/60">jusqu'au {dateFr(g.fin)} · date que vous avez indiquée</span>
@@ -368,7 +380,7 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
             <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-dark/50">Garanties en cours</h3>
             <ul className="divide-y divide-bord rounded-lg border border-bord">
               {ouvertes.map((g) => (
-                <li key={`${g.provenance}-${g.code}-${g.libelle}`} className="flex items-start justify-between gap-2 px-3 py-2">
+                <li key={`${g.provenance}-${g.source_id}-${g.code}`} className="flex items-start justify-between gap-2 px-3 py-2">
                   <span className="min-w-0 text-sm">
                     <span className="block text-ink">{g.libelle}</span>
                     <span className="block text-xs text-dark/60">

@@ -8,7 +8,7 @@ viennent d'un calcul déjà fait, les explications des fiches `kb/` qu'il nomme.
 
 - `id` : identifiant unique (`panneaux-solaires`).
 - `titre` : ce que le foyer lit.
-- `famille` : `solaire_stockage`, `sortie_fossile` ou `ecosysteme`.
+- `famille` : `solaire_stockage`, `sortie_fossile`, `ecosysteme` ou `enveloppe` (« Isolation et confort »).
 - `outil` : où se fait le calcul — `simulateur-solaire`, `pre-audit:<clé d'action>` (clés de
   `ACTIONS` dans `audit_reference.py`), `vent`, `jardin`, ou `aucun` : pas de calculateur,
   l'écran renvoie aux fiches et `lier-etude` est refusé (jardin d'hiver ; machine à eau tant
@@ -24,3 +24,9 @@ viennent d'un calcul déjà fait, les explications des fiches `kb/` qu'il nomme.
 - `masque_si` : `{champ de fiche : [valeurs]}` — caché si la fiche porte l'une d'elles.
 - `affiche_si` : `{champ de fiche : [valeurs]}` — caché si la fiche porte une AUTRE valeur ;
   un champ non renseigné ne cache rien.
+- `categorie_cil` (facultatif) : la rubrique du carnet d'information du logement (`CATEGORIES_CIL`
+  de `models/travaux.py`) que « Les travaux sont terminés » propose pour le chantier ; le foyer
+  peut la changer ou la retirer.
+- `mention_locataire` (facultatif, vrai ou faux) : un modèle LÉGER que voit un locataire porte
+  `projets.MENTION_LOCATAIRE` (« voir avec le propriétaire »). Seule la régulation l'a.
+- Un `outil` `pre-audit:<clé>` doit nommer une clé de `ACTIONS` : le chargeur le vérifie.

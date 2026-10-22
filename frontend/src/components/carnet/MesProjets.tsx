@@ -5,8 +5,8 @@ import { useAuth } from '../../context/AuthContext'
 import Depliant from '../Depliant'
 import { faqSlug } from '../../lib/faqSlug'
 import { type Doc, type Equipement, messageErreur } from './Formulaires'
-import { aujourdhui, signalerMaj, useMaj } from './commun'
-import { dateFr, libelleType } from './libelles'
+import { aujourdhui, ouvrirIsolants, signalerMaj, useMaj } from './commun'
+import { CATEGORIES_CIL, dateFr, libelleType } from './libelles'
 
 /**
  * « Mes projets » (carnet, lot 9) : de l'idée à la réception des travaux.
@@ -21,7 +21,7 @@ import { dateFr, libelleType } from './libelles'
 
 type Modele = {
   id: string; titre: string; famille: string; outil: string; outil_lien: string | null
-  calcul: { type: string; date: string } | null
+  calcul: { type: string; date: string } | null; mention: string | null
 }
 type EquipementPropose = { categorie: string; type: string; origine_fiche?: string }
 type Projet = {
@@ -31,8 +31,11 @@ type Projet = {
   budget_statut: string | null; budget_date: string | null
   economie_annuelle_eur: number | null; economie_source: string | null; economie_statut: string | null
   economie_date: string | null; devis_document_ids: string[] | null; note: string | null; travaux_id: string | null
-  modele: { titre: string; famille: string; outil: string; outil_lien: string | null; equipements_crees: EquipementPropose[] } | null
-  fiches?: { source: string; questions: string[] }[]
+  modele: {
+    titre: string; famille: string; outil: string; outil_lien: string | null; equipements_crees: EquipementPropose[]
+    categorie_cil: string | null
+  } | null
+  fiches?: { source: string; questions: string[] }[]; mention?: string | null
 }
 
 const ETAPES: Record<string, string> = {
@@ -42,7 +45,10 @@ const ETAPES: Record<string, string> = {
 const EN_COURS = ['idee', 'etude', 'devis', 'decide', 'travaux']
 const FAMILLES: Record<string, string> = {
   solaire_stockage: 'Solaire et stockage', sortie_fossile: 'Chauffage et eau chaude', ecosysteme: 'Autour de la maison',
+  enveloppe: 'Isolation et confort',
 }
+// Les rubriques dont le chantier attend la liste de ses isolants (lot 11).
+const CIL_ISOLATION = ['isolation_toiture', 'isolation_murs', 'planchers_bas']
 const SOURCES: Record<string, string> = { etude: 'étude du simulateur', audit: 'pré-audit', devis: 'devis' }
 const STATUTS: Record<string, string> = { calcule: 'calculé', suppose: 'supposé', declare: 'déclaré' }
 const CALCULS: Record<string, string> = { simulateur: 'Une étude du simulateur', audit: 'Un pré-audit' }
@@ -58,7 +64,9 @@ const FICHES: Record<string, string> = {
   action_ballon_thermodynamique: 'Le ballon thermodynamique', supports_securite: 'Supports et carport',
   eau: "L'eau de l'air", eolien: "L'éolien", jardin_hiver: "Le jardin d'hiver", baremes_aides: 'Les aides', urbanisme_assurance: 'Urbanisme et assurance',
   financement_projet: 'Financer son projet', choisir_installateur: "Choisir l'entreprise",
-  garanties_travaux: 'Les garanties après travaux',
+  garanties_travaux: 'Les garanties après travaux', action_combles: 'Isoler les combles', action_murs: 'Isoler les murs',
+  action_plancher: 'Isoler le plancher bas', action_menuiseries: 'Changer les fenêtres', action_ventilation: 'La ventilation',
+  action_regulation: 'Réguler le chauffage',
 }
 
 const euros = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} €`
@@ -104,7 +112,10 @@ function FormTerminer({ p, documents, equipements, onFini }: {
 }) {
   const { authFetch } = useAuth()
   const proposes = p.modele?.equipements_crees ?? []
-  const [d, setD] = useState({ date_reception: aujourdhui(), entreprise: '', montant_ttc: '', facture: '', attestation: '' })
+  const [d, setD] = useState({
+    date_reception: aujourdhui(), entreprise: '', montant_ttc: '', facture: '', attestation: '',
+    rubrique: p.modele?.categorie_cil ?? '',
+  })
   const [coches, setCoches] = useState<number[]>(proposes.map((_, i) => i))
   const [erreur, setErreur] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(false)
@@ -119,13 +130,16 @@ function FormTerminer({ p, documents, equipements, onFini }: {
         date_reception: d.date_reception, entreprise: d.entreprise || null,
         montant_ttc: d.montant_ttc === '' ? null : Number(d.montant_ttc),
         facture_document_id: d.facture || null, attestation_assurance_document_id: d.attestation || null,
-        equipements: coches,
+        equipements: coches, categorie_cil: d.rubrique || null,
       }),
     })
     setEnvoi(false)
     if (!res.ok) { setErreur(await messageErreur(res)); return }
+    const fini: Projet = await res.json()
     signalerMaj()
     onFini()
+    // Une isolation réceptionnée : on ouvre tout de suite la liste de ses isolants.
+    if (fini.travaux_id && CIL_ISOLATION.includes(d.rubrique)) ouvrirIsolants(fini.travaux_id)
   }
 
   const champ = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm'
@@ -150,6 +164,12 @@ function FormTerminer({ p, documents, equipements, onFini }: {
           <select value={d.facture} onChange={(e) => setD({ ...d, facture: e.target.value })} className={champ}>
             <option value="">— aucune —</option>
             {documents.map((x) => <option key={x.id} value={x.id}>{x.filename}</option>)}
+          </select>
+        </label>
+        <label className="text-sm sm:col-span-2">Rubrique du carnet d'information du logement
+          <select value={d.rubrique} onChange={(e) => setD({ ...d, rubrique: e.target.value })} className={champ}>
+            <option value="">— aucune —</option>
+            {CATEGORIES_CIL.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </label>
         <label className="text-sm sm:col-span-2">Attestation d'assurance décennale
@@ -240,6 +260,8 @@ function FicheProjet({ id, documents, equipements, onFermer }: {
           </select>
         </label>
       )}
+
+      {p.mention && <p className="text-sm text-dark/70">{p.mention}</p>}
 
       <Chiffres p={p} />
 
@@ -430,6 +452,7 @@ export default function MesProjets() {
                         {m.outil === 'aucun' ? 'Pas de calculateur : des fiches à lire'
                           : m.calcul ? `${CALCULS[m.calcul.type] ?? 'Un calcul'} du ${dateFr(m.calcul.date)} existe` : 'Pas encore de calcul'}
                       </span>
+                      {m.mention && <span className="text-xs text-dark/60">{m.mention}</span>}
                     </button>
                   </li>
                 ))}

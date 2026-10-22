@@ -27,6 +27,19 @@ export function useOuvrirJournal(ouvrir: (brouillon: Record<string, string>) => 
   }, [ouvrir])
 }
 
+/** Ouvre la saisie des isolants d'un chantier (un projet d'isolation vient d'être réceptionné). */
+const OUVRIR_ISOLANTS = 'carnet:ouvrir-isolants'
+export function ouvrirIsolants(travauxId: string) {
+  window.dispatchEvent(new CustomEvent(OUVRIR_ISOLANTS, { detail: travauxId }))
+}
+export function useOuvrirIsolants(ouvrir: (travauxId: string) => void) {
+  useEffect(() => {
+    const ecouter = (e: Event) => ouvrir((e as CustomEvent).detail)
+    window.addEventListener(OUVRIR_ISOLANTS, ecouter)
+    return () => window.removeEventListener(OUVRIR_ISOLANTS, ecouter)
+  }, [ouvrir])
+}
+
 export function useMaj(recharger: () => void) {
   useEffect(() => {
     window.addEventListener(EVENEMENT, recharger)

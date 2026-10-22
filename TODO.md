@@ -1373,6 +1373,20 @@ de département, codes de phénomène) et remplacer `tests/fixtures/meteofrance/
 par une réponse enregistrée. Au déploiement : la collecte toutes les heures. La neige-verglas n'a
 pas de question dans la fiche : elle s'affiche sans gestes.
 
+### [x] 77. Phase 2, projets « Isolation et confort » — fait le 22/10/2026
+
+Six modèles de projet (combles ou toiture, murs, plancher bas, fenêtres, VMC, régulation), chacun
+relié à son action du pré-audit et à sa fiche `kb/action_*` ; le chantier réceptionné reçoit sa
+rubrique du carnet d'information du logement et ouvre la saisie des isolants. Débrief :
+`debriefs/2026-10-22-p2-projets-isolation.md`.
+
+### [ ] 78. Relire la mention « voir avec le propriétaire » de la régulation
+
+`projets.MENTION_LOCATAIRE` : « Les travaux sur le chauffage se décident avec votre
+propriétaire. » Proposée dans le plan du 22/10/2026, acceptée avec lui, écrite par moi : à
+relire par Stéphane. La rubrique proposée pour la ventilation est « aucune » (la liste du brief
+n'en a pas) : à confirmer aussi.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même

@@ -23,7 +23,7 @@ from app.models.journal import JournalEntree
 from app.models.kb import KbDocument
 from app.models.projet import Projet
 from app.models.simulateur import SimulateurStudy
-from app.models.travaux import MAX_TRAVAUX_PAR_MAISON, Travaux
+from app.models.travaux import CATEGORIES_CIL, MAX_TRAVAUX_PAR_MAISON, Travaux
 from app.models.user import User
 from app.routers.equipements import _own_house, _synchroniser
 from app.routers.journal import verifier_limite
@@ -62,6 +62,9 @@ class Terminer(BaseModel):
     attestation_assurance_document_id: uuid.UUID | None = None
     # Les rangs des équipements proposés par le modèle que le foyer a cochés.
     equipements: list[int] = Field(default_factory=list, max_length=10)
+    # La rubrique du carnet d'information du logement : absente, celle que propose le modèle ;
+    # `null`, aucune (le foyer l'a retirée).
+    categorie_cil: str | None = None
 
 
 def _lien(outil: str) -> str | None:
@@ -113,7 +116,7 @@ def _out(p: Projet, modele: dict | None) -> dict:
     sortie["modele"] = None if modele is None else {
         "titre": modele["titre"], "famille": modele["famille"], "outil": modele["outil"],
         "outil_lien": _lien(modele["outil"]), "fiches_kb": modele["fiches_kb"],
-        "equipements_crees": modele["equipements_crees"],
+        "equipements_crees": modele["equipements_crees"], "categorie_cil": modele.get("categorie_cil"),
     }
     return sortie
 
@@ -130,6 +133,7 @@ async def get_modeles(user: User = Depends(get_current_user), db: AsyncSession =
             "outil_lien": _lien(m["outil"]),
             # « Une étude solaire du 12/10 existe » : ce qui est déjà calculé pour ce modèle.
             "calcul": None if etude is None else {"type": etude["etude_ref"]["type"], "date": etude["etude_ref"]["date"]},
+            "mention": pj.mention(m, parcours(house)),
         })
     return {"familles": list(pj.FAMILLES), "modeles": sortie}
 
@@ -151,6 +155,7 @@ async def get_projet(projet_id: uuid.UUID, user: User = Depends(get_current_user
     modele = _modeles().get(p.modele_id)
     sortie = _out(p, modele)
     sortie["fiches"] = await _fiches(db, modele["fiches_kb"]) if modele else []
+    sortie["mention"] = pj.mention(modele, parcours(house)) if modele else None
     return sortie
 
 
@@ -249,6 +254,9 @@ async def terminer(projet_id: uuid.UUID, payload: Terminer, user: User = Depends
     if payload.date_reception > date.today():
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "La date de réception ne peut pas être dans le futur.")
     modele = _modeles().get(p.modele_id) or {"equipements_crees": []}
+    rubrique = payload.categorie_cil if "categorie_cil" in payload.model_fields_set else modele.get("categorie_cil")
+    if rubrique not in (None, *CATEGORIES_CIL):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Rubrique du carnet d'information du logement inconnue")
     try:
         a_creer = pj.equipements_a_creer(modele, payload.equipements)
     except ValueError as exc:
@@ -265,7 +273,7 @@ async def terminer(projet_id: uuid.UUID, payload: Terminer, user: User = Depends
     t = Travaux(house_id=house.id, nature=p.titre[:120], entreprise=payload.entreprise,
                 date_reception=payload.date_reception, montant_ttc=payload.montant_ttc,
                 facture_document_id=payload.facture_document_id,
-                attestation_assurance_document_id=payload.attestation_assurance_document_id)
+                attestation_assurance_document_id=payload.attestation_assurance_document_id, categorie_cil=rubrique)
     db.add(t)
     await db.flush()
     for e in a_creer:
