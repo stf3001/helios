@@ -17,6 +17,7 @@ interface Lead {
   metier: string | null
   statut: string
   montant_travaux: number | null
+  consent_client_at: string
   consent_retire_at: string | null
   created_at: string
   // Suivi (lot 5) : ce que dit le partenaire et ce que dit le foyer restent séparés.
@@ -230,7 +231,7 @@ function SuiviDemande({ lead, onContact, onDeclarer, onAutre, onRetirer, onNoter
         <div className="font-medium">{lead.partner?.raison_sociale ?? '—'}
           {lead.metier && <span className="text-gray-400 font-normal"> · {METIER_LABEL[lead.metier] ?? lead.metier}</span>}
         </div>
-        <span className="text-xs text-dark/60">transmise le {new Date(lead.created_at).toLocaleDateString('fr-FR')}</span>
+        <span className="text-xs text-dark/60">transmise le {new Date(lead.consent_client_at).toLocaleDateString('fr-FR')}</span>
       </div>
       {lead.partner?.lien_interet && <div className="text-xs text-terra">Lien d'intérêt : {lead.partner.lien_interet}</div>}
 

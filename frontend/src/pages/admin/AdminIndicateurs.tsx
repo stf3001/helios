@@ -28,6 +28,8 @@ function valeur(i: Indicateur): string {
   if (i.valeur == null) return '—'
   const v = i.valeur.toLocaleString('fr-FR')
   if (i.unite === '€') return i.valeur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+  if (i.unite === '/5') return `${v}/5`
+  if (i.unite === 'jours') return `${v} ${i.valeur <= 1 ? 'jour' : 'jours'}`
   return i.unite === '%' ? `${v} %` : i.unite ? `${v} ${i.unite}` : v
 }
 
