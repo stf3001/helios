@@ -12,6 +12,7 @@ import HouseDocuments from '../components/fiche/HouseDocuments'
 import CarnetMaison from '../components/carnet/CarnetMaison'
 import AvantAcheter from '../components/carnet/AvantAcheter'
 import MesProjets from '../components/carnet/MesProjets'
+import CoutMaison from '../components/carnet/CoutMaison'
 import type { Parcours } from '../components/carnet/commun'
 import AFaire from '../components/carnet/AFaire'
 import ExportDossier from '../components/carnet/ExportDossier'
@@ -248,6 +249,8 @@ export default function Espace() {
                   )}
                 </div>
                 {/* Le carnet n'a de sens qu'une fois la maison créée : ses routes en dépendent. */}
+                {/* Ce que coûte la maison (lot 10), puis ce que les projets changeraient. */}
+                {house && <CoutMaison />}
                 {/* Mes projets (lot 9) : ce que le foyer prépare, avant ce qu'il possède. */}
                 {house && <MesProjets />}
                 {house && <CarnetMaison parcours={house.parcours} />}
