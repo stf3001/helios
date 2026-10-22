@@ -15,7 +15,7 @@ Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans l'
 | 7 | `BRIEF-carnet-lot5-chat.md` | lots 1, 3 et 4 |
 | 8 | `BRIEF-carnet-lot6-dossier-pdf.md` | lots 1, 3 et 4 |
 
-## Série 2 (21/10/2026) — fin de la phase 1
+## Série 2 (21/10/2026) — fin de la phase 1, faite le 22/10/2026
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
@@ -25,6 +25,12 @@ Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans l'
 | 4 | `BRIEF-carnet-lot11-contenu-cil.md` (point 44) | aucun |
 | 5 | `BRIEF-carnet-lot9-projets.md` | lots 8 et 11 |
 | 6 | `BRIEF-carnet-lot10-cout-maison.md` | lot 8 |
+
+## Série 3 (22/10/2026) — finitions
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-finitions-1.md` (points 46, 49, 13, 51 ; fiche fournie : `KB-jardin-hiver.md`) | aucun |
 
 ## Références
 
