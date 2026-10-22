@@ -1185,6 +1185,22 @@ du simulateur n'a pu être enregistrée sur le compte de démo, et aucune n'a é
 chemin est couvert par les tests (`test_projets.py`, `test_projets_api.py`) ; la capture est
 à refaire quand PVGIS répondra.
 
+### [x] 54. Carnet, lot 10 : ce que coûte la maison — fait le 22/10/2026
+
+Table `charges_maison` (0033), `services/cout_maison.py`, `GET /houses/me/cout` et
+`/charges`, section « Ce que coûte ma maison » dans « Ma maison ». **Vérifié à l'écran** : maison
+vide (tout « Non renseigné », aucun 0) et compte de démo complet avec son pré-audit recopié.
+Voir `debriefs/2026-10-22-carnet-lot10.md`.
+
+### [ ] 55. Coût de la maison : deux choix à confirmer
+
+- **L'entretien n'additionne que l'usage** (entretien, contrôle, réparation, autre) : une
+  amélioration ou un remplacement noté au journal est un INVESTISSEMENT — une PAC à 16 500 €
+  ferait du coût d'une année un chiffre faux. Le brief disait « somme des coûts du journal ».
+- **L'électricité est hors abonnement** : le brief fixe « consommation × prix du kWh ».
+  `config.py` a une grille d'abonnements (`simu_abonnement_eur_mois_par_kva`, « à recalibrer »)
+  qui pourrait s'y ajouter ; l'écran écrit « hors abonnement » en attendant.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
