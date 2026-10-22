@@ -74,8 +74,25 @@ def test_la_consigne_porte_la_regle_de_puissance():
 
 
 def test_taille_du_contexte_maison_au_fioul():
-    """Mesuré le 22/10/2026 : 15 099 caractères avant, 16 028 après (+929, dont +631 pour la
-    consigne imposée par le brief ; le résumé net des hypothèses retirées ajoute +298)."""
+    """Mesuré le 22/10/2026 : 15 099 caractères avant, 16 274 après (+1 175) : consigne du brief
+    +631 et son ajustement +246 ; le résumé, net des hypothèses de traçabilité retirées, +298."""
     ctx = contexte_maison("fioul_6_pieces")
     assert len(json.dumps(ctx["puissance"], ensure_ascii=False)) <= 850
-    assert len(json.dumps(ctx, ensure_ascii=False)) <= 16100
+    assert len(json.dumps(ctx, ensure_ascii=False)) <= 16300
+
+
+def test_un_audit_sans_puissance_le_dit_sans_chiffre():
+    with open(f"{V25}/fioul_6_pieces.json", encoding="utf-8") as f:
+        ctx = contexte(json.load(f))
+    assert "refaire le pré-audit" in ctx["puissance_non_calculee"]
+    assert "puissance_non_calculee" not in contexte_maison("fioul_6_pieces")
+
+
+@pytest.mark.parametrize("question, sujet", [
+    ("Mes radiateurs suffiront-ils ?", True), ("Quelle puissance de pompe à chaleur ?", True),
+    ("Un installateur me propose 14 kW", True), ("Combien de kWh représente mon fioul ?", True),
+    ("Comment isoler mes combles ?", False),
+])
+def test_les_questions_de_puissance_ne_recoivent_pas_de_fiche_toute_faite(question, sujet):
+    from app.routers.chat import _SUJET_PUISSANCE
+    assert bool(_SUJET_PUISSANCE.search(question)) is sujet

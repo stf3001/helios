@@ -375,7 +375,12 @@ CONSIGNE_AUDIT_PRIME = (
     "radiateur de plus ou plus grand règle la question, sans citer de modèle ni de prix. Radiateur "
     "\"inconnu\" : l'installateur doit relever sa puissance. Sans bloc puissance, ne donner aucune "
     "puissance de pompe à chaleur : proposer de refaire le pré-audit. Pour une pompe à chaleur "
-    "air/air, ne pas dimensionner les unités pièce par pièce."
+    "air/air, ne pas dimensionner les unités pièce par pièce. "
+    # Ajustement après vérification (22/10/2026) : le modèle local jugeait « normal » un devis
+    # au-dessus de la plage, et répondait « 10 » (le facteur) pour le relevé.
+    "Si une puissance proposée par un installateur dépasse la borne haute de pac_air_eau_kw, "
+    "dire qu'elle dépasse ce que le pré-audit calcule et qu'il faut demander sur quoi elle repose. "
+    "Le relevé de combustible en kWh est conso_autre_energie_kwh_an."
 )
 
 
@@ -465,7 +470,11 @@ def build_audit_context(audit) -> dict:
         "a_l_occasion": (r.get("synthese") or {}).get("a_l_occasion"),
         "a_preciser": r.get("a_preciser"),
         # v2.6 : la puissance de chauffage et les radiateurs (absente des audits plus anciens).
-        **({"puissance": resume_puissance(r["puissance"])} if r.get("puissance") else {}),
+        **({"puissance": resume_puissance(r["puissance"])} if r.get("puissance") else
+           # Ajustement après vérification : sans cette ligne, le modèle local inventait une
+           # puissance pour un audit v2.5. Elle dit ce qui manque, sans chiffre.
+           {"puissance_non_calculee": "Ce pré-audit ne calcule pas la puissance de chauffage : n'en donner "
+                                      "aucune, proposer de refaire le pré-audit."}),
     }
 
 

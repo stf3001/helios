@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import uuid
 from datetime import date, datetime, timezone
 
@@ -46,6 +47,13 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 def _vigilance_du_foyer(house: House, episodes) -> list | None:
     dep = regions.departement_du_code_postal(house.code_postal or "")
     return vigilance.pour_le_chat(vigilance.vigilances_du_foyer(dep, episodes, datetime.now(timezone.utc)))
+
+
+# Les sujets du bloc `puissance` du pré-audit et du relevé de combustible (point 81).
+_SUJET_PUISSANCE = re.compile(
+    r"puissance|\bkw\b|kwh|radiateur|pompe [àa] chaleur|\bpac\b|fioul|granul|st[eè]re|relev[ée]",
+    re.IGNORECASE,
+)
 
 
 async def _carnet_du_foyer(db: AsyncSession, house: House) -> dict | None:
@@ -258,11 +266,15 @@ async def send_message(
     # Question sur le carnet de CE foyer (« ma PAC », « mes travaux ») : elle va à Claude,
     # qui lit le carnet. Une fiche générale servie telle quelle répondrait à côté.
     question_carnet = bool(house_context and house_context.get("carnet") and parle_du_carnet(payload.content))
+    # Point 81 : une question sur la puissance, les radiateurs ou le relevé d'un foyer dont le
+    # pré-audit les calcule ne reçoit pas une fiche générale servie telle quelle (vérifié : « Mes
+    # radiateurs suffiront-ils ? » recevait la méthode générale au lieu des verdicts du foyer).
+    question_puissance = bool(audit_context and audit_context.get("puissance") and _SUJET_PUISSANCE.search(payload.content))
 
     # Réponse instantanée (doc 07 §5) : fiche Q/R quasi identique → on la sert sans LLM.
     # `force_llm` (bouton « développer » du widget) désactive le court-circuit, comme une
     # question sur le carnet.
-    if not payload.force_llm and not question_carnet:
+    if not payload.force_llm and not question_carnet and not question_puissance:
         instant = rag.instant_answer(results, relance=relance)
         if instant is not None:
             instant_citations = citations[:1]
