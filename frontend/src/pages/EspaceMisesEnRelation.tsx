@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BadgeCheck, Handshake, Shuffle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import ApiError from '../components/ApiError'
+import FormulaireDemande from '../components/mer/FormulaireDemande'
 
 /** Une proposition tirée au sort par le serveur (`services/propositions.py`) : l'écran n'en
  *  choisit ni le nombre ni l'ordre, et le texte du consentement vient de l'API. */
@@ -49,9 +50,7 @@ export default function EspaceMisesEnRelation() {
 
   const [partnerId, setPartnerId] = useState('')
   const [metier, setMetier] = useState('')
-  const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
 
   const [loadError, setLoadError] = useState(false)
 
@@ -74,7 +73,7 @@ export default function EspaceMisesEnRelation() {
 
   // Un nouveau tirage à chaque choix de métier : l'ordre est celui du serveur, jamais trié ici.
   async function choisirMetier(m: string) {
-    setMetier(m); setPartnerId(''); setConsent(false); setError(null); setConfirmation(null); setPropositions(null)
+    setMetier(m); setPartnerId(''); setError(null); setConfirmation(null); setPropositions(null)
     if (!m) return
     const res = await authFetch(`/api/leads/propositions?metier=${m}`)
     if (!res.ok) {
@@ -85,29 +84,11 @@ export default function EspaceMisesEnRelation() {
     setPropositions((await res.json()).propositions)
   }
 
-  async function createLead(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSubmitting(true)
+  function envoye() {
     const choisi = propositions?.find((p) => p.id === partnerId)
-    try {
-      const res = await authFetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partner_id: partnerId, metier: metier || null, type: 'travaux', consent }),
-      })
-      if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        throw new Error(typeof body?.detail === 'string' ? body.detail : 'Mise en relation impossible.')
-      }
-      setPartnerId(''); setMetier(''); setConsent(false); setPropositions(null)
-      setConfirmation(`Votre demande a été transmise à ${choisi?.raison_sociale ?? 'ce partenaire'}. Il pourra vous contacter au sujet de ce projet.`)
-      loadLeads()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue')
-    } finally {
-      setSubmitting(false)
-    }
+    setPartnerId(''); setMetier(''); setPropositions(null)
+    setConfirmation(`Votre demande a été transmise à ${choisi?.raison_sociale ?? 'ce partenaire'}. Il pourra vous contacter au sujet de ce projet, dans les créneaux que vous avez donnés.`)
+    loadLeads()
   }
 
   async function reportStatus(lead: Lead, statut: string) {
@@ -157,7 +138,7 @@ export default function EspaceMisesEnRelation() {
         <div className="space-y-10">
           {/* Nouvelle mise en relation : métier, puis au plus trois partenaires TIRÉS AU SORT
               (série 4, lot 1). Hélios est payé le même prix fixe quel que soit le choix. */}
-          <form onSubmit={createLead} className="bg-gray-50 rounded-2xl p-6 space-y-4">
+          <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold">Nouvelle demande</h2>
             {confirmation && <p className="rounded-lg bg-leaf/10 px-3 py-2 text-sm text-leaf">{confirmation}</p>}
             <div>
@@ -181,7 +162,7 @@ export default function EspaceMisesEnRelation() {
                     <label key={p.id} className={'flex items-start gap-3 rounded-xl border bg-white p-3 cursor-pointer '
                       + (partnerId === p.id ? 'border-primary' : 'border-gray-200')}>
                       <input type="radio" name="partenaire" value={p.id} checked={partnerId === p.id}
-                        onChange={() => { setPartnerId(p.id); setConsent(false) }} className="mt-1" />
+                        onChange={() => setPartnerId(p.id)} className="mt-1" />
                       <span className="min-w-0 text-sm">
                         <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                           {p.raison_sociale}
@@ -194,19 +175,13 @@ export default function EspaceMisesEnRelation() {
                   ))}
                 </div>
                 {partnerId && (
-                  <label className="flex items-start gap-2 text-sm text-gray-700">
-                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
-                    <span>{propositions.find((p) => p.id === partnerId)?.consentement}</span>
-                  </label>
+                  <FormulaireDemande key={partnerId} partnerId={partnerId} metier={metier} onEnvoye={envoye}
+                    consentement={propositions.find((p) => p.id === partnerId)?.consentement ?? ''} />
                 )}
-                <button type="submit" disabled={!partnerId || !consent || submitting}
-                  className="rounded-xl bg-primary text-white font-semibold px-5 py-2.5 hover:opacity-90 disabled:opacity-40">
-                  {submitting ? 'Envoi…' : 'Demander la mise en relation'}
-                </button>
               </>
             )}
             {error && <p className="text-sm text-red-600">{error}</p>}
-          </form>
+          </div>
 
           {/* Suivi des leads */}
           <div>

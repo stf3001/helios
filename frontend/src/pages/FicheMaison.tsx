@@ -130,6 +130,17 @@ const TOITURE_FIELDS: FieldSpec[] = [
   { key: 'pente', label: 'Pente (degrés)', type: 'number', min: 0, max: 90 },
 ]
 
+/** Libellé et valeur lisibles d'un champ de la fiche : le dossier d'une mise en relation les
+ *  affiche avec les mots de la fiche, au foyer comme au partenaire. */
+const TOUS_LES_CHAMPS = [...IDENTITE_FIELDS, ...ENVELOPPE_FIELDS, ...SYSTEMES_FIELDS, ...ENERGIE_FIELDS,
+  ...PROJET_FIELDS, ...TOITURE_FIELDS]
+// eslint-disable-next-line react-refresh/only-export-components
+export function champFiche(key: string, valeur: unknown): { label: string; valeur: string } {
+  const spec = TOUS_LES_CHAMPS.find((f) => f.key === key)
+  const option = spec && 'options' in spec ? spec.options.find((o) => o.value === valeur) : undefined
+  return { label: spec?.label ?? key, valeur: option?.label ?? String(valeur) }
+}
+
 export default function FicheMaison() {
   const { user, authFetch } = useAuth()
   const [house, setHouse] = useState<Record<string, unknown> | null>(null)

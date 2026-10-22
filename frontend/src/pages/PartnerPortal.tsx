@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Building2 } from 'lucide-react'
 import PasswordInput from '../components/PasswordInput'
+import Dossier, { Creneaux, Score, type Creneau, type DossierLead, type LigneScore } from '../components/mer/Dossier'
 
 interface PLead {
   id: string
@@ -11,14 +12,22 @@ interface PLead {
   montant_travaux: number | null
   prix_ht: number | null
   consent_retire: boolean
+  score: number | null
   created_at: string
+}
+/** Le dossier transmis (lot 2), lu tel qu'il a été figé au consentement. */
+interface PDetail {
+  id: string; creneaux: Creneau[]; message: string | null; score: number | null; score_detail: LigneScore[]
+  contact: { nom: string | null; telephone: string | null; email: string | null }
+  dossier: DossierLead | null; rappel_legal: string; consent_retire: boolean
 }
 
 const STATUT_LABEL: Record<string, string> = {
   transmis: 'Transmis', contacte: 'Contacté', devis: 'Devis', signe: 'Signé', perdu: 'Perdu',
 }
 const METIER_LABEL: Record<string, string> = {
-  pv: 'Photovoltaïque', pac: 'Pompe à chaleur', isolation: 'Isolation',
+  solaire: 'Panneaux solaires', pv: 'Photovoltaïque', pac: 'Pompe à chaleur', isolation: 'Isolation',
+  eau: "Machine à eau de l'air", eolien: 'Éolienne', inertie: 'Stockage par inertie',
   menuiseries: 'Menuiseries', vmc: 'Ventilation', regulation: 'Régulation',
 }
 const TOKEN_KEY = 'helios_partner_token'
@@ -30,6 +39,7 @@ export default function PartnerPortal() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [ouvert, setOuvert] = useState<PDetail | null>(null)
 
   function pFetch(path: string, init?: RequestInit) {
     return fetch(path, { ...init, headers: { ...(init?.headers || {}), Authorization: `Bearer ${token}` } })
@@ -62,6 +72,21 @@ export default function PartnerPortal() {
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
     setLeads([])
+  }
+
+  async function ouvrir(lead: PLead) {
+    if (ouvert?.id === lead.id) { setOuvert(null); return }
+    const r = await pFetch(`/api/partner/leads/${lead.id}`)
+    if (r.ok) setOuvert(await r.json())
+  }
+
+  async function telecharger(leadId: string, docId: string, nom: string) {
+    const r = await pFetch(`/api/partner/leads/${leadId}/documents/${docId}`)
+    if (!r.ok) return
+    const url = URL.createObjectURL(await r.blob())
+    const a = document.createElement('a')
+    a.href = url; a.download = nom; a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function advance(lead: PLead, statut: string) {
@@ -144,8 +169,27 @@ export default function PartnerPortal() {
               <div className="text-xs text-gray-400 mb-2">
                 Reçu le {new Date(l.created_at).toLocaleDateString('fr-FR')}
                 {l.prix_ht != null && <> · mise en relation {l.prix_ht.toLocaleString('fr-FR')} € HT</>}
+                {l.score != null && <> · score {l.score}/100</>}
                 {l.consent_retire && <span className="text-red-500"> · consentement retiré</span>}
               </div>
+              <button onClick={() => ouvrir(l)} className="mb-2 text-xs text-primary underline">
+                {ouvert?.id === l.id ? 'Fermer le dossier' : 'Voir le dossier'}
+              </button>
+              {ouvert?.id === l.id && (
+                ouvert.dossier ? (
+                  <div className="mb-3 space-y-4 rounded-xl border border-bord bg-sable p-4">
+                    <Creneaux creneaux={ouvert.creneaux} />
+                    <p className="text-xs text-dark/70">{ouvert.rappel_legal}</p>
+                    <div className="text-sm"><span className="text-dark/60">Contact : </span>
+                      {ouvert.contact.nom}{ouvert.contact.telephone && ` · ${ouvert.contact.telephone}`} · {ouvert.contact.email}</div>
+                    <Dossier dossier={ouvert.dossier} lienDocument={(docId) => {
+                      const d = ouvert.dossier?.documents?.find((x) => x.id === docId)
+                      if (d) telecharger(l.id, docId, d.filename)
+                    }} />
+                    {ouvert.score != null && <Score score={ouvert.score} detail={ouvert.score_detail} />}
+                  </div>
+                ) : <p className="mb-3 text-sm text-gray-500">Aucun dossier : le foyer a retiré son consentement, ou la demande précède les dossiers.</p>
+              )}
               {!l.consent_retire && next[l.statut] && (
                 <div className="flex flex-wrap gap-2">
                   {next[l.statut].map((a) => (
