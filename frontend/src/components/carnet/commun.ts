@@ -14,6 +14,20 @@ export function signalerMaj() {
   window.dispatchEvent(new Event(EVENEMENT))
 }
 
+/** Ouvre le formulaire du journal pré-rempli (phase 2 : « Noter une fissure » depuis les risques). */
+const OUVRIR_JOURNAL = 'carnet:ouvrir-journal'
+export function ouvrirJournal(brouillon: Record<string, string>) {
+  window.dispatchEvent(new CustomEvent(OUVRIR_JOURNAL, { detail: brouillon }))
+  document.getElementById('journal-maison')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+export function useOuvrirJournal(ouvrir: (brouillon: Record<string, string>) => void) {
+  useEffect(() => {
+    const ecouter = (e: Event) => ouvrir((e as CustomEvent).detail)
+    window.addEventListener(OUVRIR_JOURNAL, ecouter)
+    return () => window.removeEventListener(OUVRIR_JOURNAL, ecouter)
+  }, [ouvrir])
+}
+
 export function useMaj(recharger: () => void) {
   useEffect(() => {
     window.addEventListener(EVENEMENT, recharger)

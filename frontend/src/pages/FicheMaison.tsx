@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import BlockCard from '../components/fiche/BlockCard'
+import { ChoixCommune } from '../components/carnet/RisquesCommune'
 import CompletenessBar from '../components/fiche/CompletenessBar'
 import { LIEN_EQUIPEMENTS } from '../components/fiche/FieldInput'
 import HouseDocuments from '../components/fiche/HouseDocuments'
@@ -306,6 +307,13 @@ export default function FicheMaison() {
             </p>
           )}
           <CompletenessBar score={house.completeness_score as number} niveau={house.niveau as string} />
+          {/* Phase 2 : la commune, choisie parmi celles du code postal (hors score). Jamais l'adresse. */}
+          <div className="rounded-xl border border-bord bg-white p-3">
+            {house.commune
+              ? <p className="text-sm text-dark/70">Commune : <strong className="text-ink">{house.commune as string}</strong>
+                  {' '}<button onClick={() => setHouse({ ...house, commune: null })} className="text-xs text-primary hover:underline">changer</button></p>
+              : <ChoixCommune onChoisie={() => authFetch('/api/houses/me').then((r) => r.json()).then(setHouse)} />}
+          </div>
           {/* Les six blocs sont REPLIÉS : voir le commentaire de `BlockCard`. L'écart passe
               de `space-y-6` à `space-y-2` — des blocs fermés forment une liste, et une liste
               aérée au même pas que des cartes ouvertes se lit mal. */}

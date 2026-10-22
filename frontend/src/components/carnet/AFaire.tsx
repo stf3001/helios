@@ -24,6 +24,8 @@ type Bloc = {
   prochaine: { libelle: string; echeance: string; equipement_id: string | null } | null
   // Mises en relation, lot 5 : « L'entreprise vous a-t-elle contacté ? », tant que sans réponse.
   questions_contact?: { lead_id: string; partenaire: string | null; metier: string | null; transmis_le: string }[]
+  // Phase 2 : feux de forêt dans la commune et débroussaillement « je ne sais pas ».
+  debroussaillement?: { libelle: string; lien: string | null } | null
 }
 
 function Pastille({ nature }: { nature: string }) {
@@ -118,6 +120,18 @@ export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () 
             </span>
           </li>
         ))}
+        {bloc.debroussaillement && (
+          <li className="flex flex-wrap items-center gap-3 py-2.5">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-terra" />
+            <span className="min-w-0 flex-1 text-sm text-ink">
+              Feux de forêt dans votre commune : {bloc.debroussaillement.libelle.toLowerCase()} par le débroussaillement obligatoire.
+              <span className="block text-xs text-dark/60">
+                <Link to="/mon-espace" className="text-primary hover:underline">Répondre dans ma fiche</Link>
+                {bloc.debroussaillement.lien && <>{' · '}<a href={bloc.debroussaillement.lien} target="_blank" rel="noreferrer" className="text-primary hover:underline">vérifier</a></>}
+              </span>
+            </span>
+          </li>
+        )}
         {bloc.lignes.map((l, i) => {
           if (l.kind === 'garantie') {
             return (

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import FieldInput from '../fiche/FieldInput'
 import type { Draft, FieldSpec } from '../fiche/types'
 import { messageErreur, type Doc } from './Formulaires'
-import { type EquipementNom, aujourdhui, dateLongue, nomEquipement, signalerMaj, useMaj } from './commun'
+import { type EquipementNom, aujourdhui, dateLongue, nomEquipement, signalerMaj, useMaj, useOuvrirJournal } from './commun'
 
 /**
  * Le journal de la maison (carnet, lot 4) : ce qui a été fait, du plus récent au plus
@@ -51,6 +51,9 @@ export default function Journal({ equipements, documents, onRemplacer }: {
   }, [authFetch, filtre])
   useEffect(charger, [charger])
   useMaj(charger)
+  // Phase 2 : « Noter une fissure » (risques de la commune) ouvre le formulaire pré-rempli.
+  const preRemplir = useCallback((b: Record<string, string>) => { setForm({ date: aujourdhui(), ...b }); setErreur(null) }, [])
+  useOuvrirJournal(preRemplir)
 
   const parId = Object.fromEntries(equipements.map((e) => [e.id, e]))
   const optionsEq = equipements.map((e) => ({ value: e.id, label: nomEquipement(e) + (e.en_service ? '' : ' (ancien)') }))
