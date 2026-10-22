@@ -62,7 +62,8 @@ async def releves_du_mois(db: AsyncSession, mois: str, partner_id=None) -> tuple
         if partner_id is not None:
             q = q.where(Releve.partner_id == partner_id)
         figes = sorted(await db.scalars(q), key=lambda r: r.instantane["partenaire"]["raison_sociale"])
-        return "clos", [{**r.instantane, "cloture_le": r.cloture_le.isoformat()} for r in figes]
+        return "clos", [{**r.instantane, "cloture_le": r.instantane.get("cloture_le") or r.cloture_le.isoformat()}
+                        for r in figes]
     return "provisoire", await provisoires(db, mois, partner_id)
 
 
@@ -87,7 +88,7 @@ async def cloturer(db: AsyncSession, mois: str, par: str, aujourd_hui: date | No
     await db.flush()
     figes = []
     for r in calcules:
-        r = {**r, "statut": "clos"}
+        r = {**r, "statut": "clos", "cloture_le": maintenant.isoformat()}  # le PDF figé porte sa date
         chemin = None
         if pdf is not None:
             PDF_DIR.mkdir(parents=True, exist_ok=True)

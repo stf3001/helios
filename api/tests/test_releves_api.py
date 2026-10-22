@@ -171,6 +171,7 @@ def test_cloture_puis_releve_immuable(ctx):
     assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
     texte = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf.content)).pages)
     assert "ce document n'est pas une facture" in texte and "PROVISOIRE" not in texte
+    assert f"clos le {date.today():%d/%m/%Y}" in texte
     for interdit in (NOM_FOYER, "foyer-secret@example.com", "0699999999"):
         assert interdit not in texte
 
