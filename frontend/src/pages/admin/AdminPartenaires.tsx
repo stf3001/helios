@@ -91,6 +91,18 @@ export default function AdminPartenaires() {
   const [motDePasse, setMotDePasse] = useState<{ email: string; mdp: string } | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  /** La date de signature de la charte : sans elle, un partenaire actif n'est jamais proposé. */
+  async function signerCharte(p: Partner, date: string) {
+    setBusy(p.id)
+    setActionError(null)
+    const r = await authFetch(`/api/admin/partners/${p.id}/charte`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date }),
+    })
+    setBusy(null)
+    if (!r.ok) { setActionError(`Erreur ${r.status}`); return }
+    reload()
+  }
+
   async function agir(p: Partner, action: 'activate' | 'suspend') {
     if (action === 'suspend' && !confirm(`Suspendre ${p.raison_sociale} ? Il n'apparaîtra plus dans l'annuaire public.`)) return
     setBusy(p.id)
@@ -155,7 +167,7 @@ export default function AdminPartenaires() {
           </h2>
           <div className="space-y-2">
             {candidats.map((p) => (
-              <Ligne key={p.id} p={p} busy={busy === p.id} onAgir={agir} />
+              <Ligne key={p.id} p={p} busy={busy === p.id} onAgir={agir} onCharte={signerCharte} />
             ))}
           </div>
         </section>
@@ -202,7 +214,7 @@ export default function AdminPartenaires() {
                       .sort((a, b) => Number(b.statut === 'actif') - Number(a.statut === 'actif')
                         || a.raison_sociale.localeCompare(b.raison_sociale, 'fr'))
                       .map((p) => (
-                        <Ligne key={p.id} p={p} busy={busy === p.id} onAgir={agir} />
+                        <Ligne key={p.id} p={p} busy={busy === p.id} onAgir={agir} onCharte={signerCharte} />
                       ))}
                   </div>
                 )}
@@ -217,7 +229,12 @@ export default function AdminPartenaires() {
 
 function Ligne({
   p, busy, onAgir,
-}: { p: Partner; busy: boolean; onAgir: (p: Partner, a: 'activate' | 'suspend') => void }) {
+  onCharte,
+}: {
+  p: Partner; busy: boolean; onAgir: (p: Partner, a: 'activate' | 'suspend') => void
+  onCharte: (p: Partner, date: string) => void
+}) {
+  const [date, setDate] = useState('')
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-bord bg-cream/50 p-3">
       <div className="min-w-0 flex-1">
@@ -243,6 +260,19 @@ function Ligne({
           {p.metiers?.length ? <> · {p.metiers.join(', ')}</> : null}
           {p.zones?.length ? <> · {p.zones.length} département(s)</> : null}
         </div>
+        {p.statut === 'actif' && (p.charte_signee_at ? (
+          <div className="mt-1 text-xs text-leaf">Charte signée le {new Date(p.charte_signee_at).toLocaleDateString('fr-FR')}</div>
+        ) : (
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-terra">Charte non signée : jamais proposé aux foyers.</span>
+            <input type="date" value={date} max={new Date().toLocaleDateString('sv-SE')}
+              onChange={(e) => setDate(e.target.value)} aria-label={`Date de signature de la charte de ${p.raison_sociale}`}
+              className="rounded-md border border-bord bg-white px-2 py-1" />
+            <button disabled={busy || !date} onClick={() => onCharte(p, date)} className={BTN_SECONDAIRE}>
+              Enregistrer la signature
+            </button>
+          </div>
+        ))}
       </div>
 
       <div className="flex items-center gap-2">

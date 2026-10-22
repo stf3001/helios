@@ -10,7 +10,7 @@ suivi des rendez-vous (statut, note interne).
 """
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -205,6 +205,27 @@ async def activate_partner(
         "email": partner.email,
         "mot_de_passe_initial": temp_password,  # à transmettre au partenaire, non stocké en clair
     }
+
+
+class CharteSignee(BaseModel):
+    date: date
+
+
+@router.post("/partners/{partner_id}/charte")
+async def enregistrer_charte(
+    partner_id, payload: CharteSignee, _: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Date de signature de la charte, saisie par Stéphane (mises en relation, lot 1). Sans elle,
+    un partenaire actif n'est jamais proposé à un foyer (`services/propositions.eligible`)."""
+    partner = await db.get(Partner, partner_id)
+    if partner is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire introuvable")
+    if payload.date > date.today():
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "La date de signature ne peut pas être dans le futur.")
+    partner.charte_signee_at = datetime.combine(payload.date, time(12), tzinfo=timezone.utc)
+    await db.commit()
+    return {"id": partner.id, "charte_signee_at": partner.charte_signee_at}
 
 
 @router.post("/partners/{partner_id}/suspend")

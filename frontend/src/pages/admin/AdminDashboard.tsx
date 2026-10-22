@@ -18,7 +18,7 @@ interface Dashboard {
   }
   business: {
     partenaires_actifs: number; candidatures_en_attente: number; leads_total: number
-    leads_par_statut: Record<string, number>; commissions_signees_mois_eur: number
+    leads_par_statut: Record<string, number>; mises_en_relation_mois: number; mises_en_relation_mois_ht_eur: number
     consentements_retires: number
   }
   base_connaissances: {
@@ -177,7 +177,8 @@ export default function AdminDashboard() {
             accent={b.candidatures_en_attente > 0 ? 'warn' : 'ok'}
           />
           <StatCard label="Leads" value={b.leads_total} hint={Object.entries(b.leads_par_statut).map(([s, n]) => `${s} : ${n}`).join(' · ') || '—'} />
-          <StatCard label="Commissions signées (mois)" value={`${b.commissions_signees_mois_eur.toFixed(2)} €`} />
+          <StatCard label="Mises en relation transmises (mois)"
+            value={`${b.mises_en_relation_mois} · ${b.mises_en_relation_mois_ht_eur.toFixed(2)} € HT`} />
         </div>
         {b.consentements_retires > 0 && (
           <p className="mt-2 text-xs text-dark/60">

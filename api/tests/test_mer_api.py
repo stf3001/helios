@@ -148,3 +148,20 @@ def test_creation_garde_fous_et_prix_fige(ctx):
     assert c.portal.call(prix)[1] is None
     # Une place se libère (le lead signé n'est plus actif) : le 4e passe.
     assert creer("proprio", "D").status_code == 201
+
+
+def test_la_charte_se_date_dans_l_admin_et_rend_le_partenaire_proposable(ctx, monkeypatch):
+    from datetime import date, timedelta
+
+    from app.core.config import settings
+    c, ids, h = ctx
+    monkeypatch.setattr(settings, "admin_token", "secret-de-test")
+    admin = {"X-Admin-Token": "secret-de-test"}
+    url = f"/api/admin/partners/{ids['Sans charte']}/charte"
+    assert c.post(url, headers=admin, json={"date": (date.today() + timedelta(days=1)).isoformat()}).status_code == 422
+    assert c.post(url, json={"date": "2026-10-01"}).status_code == 403
+    r = c.post(url, headers=admin, json={"date": "2026-10-01"})
+    assert r.status_code == 200 and r.json()["charte_signee_at"].startswith("2026-10-01")
+    vus = {p["raison_sociale"] for _ in range(60) for p in
+           c.get("/api/leads/propositions", headers=h["proprio"], params={"metier": "isolation"}).json()["propositions"]}
+    assert PREFIXE + "Sans charte" in vus

@@ -111,22 +111,24 @@ async def cout_ia(db: AsyncSession) -> dict:
 
 
 async def business(db: AsyncSession) -> dict:
-    """Pipeline partenaires/leads + commissions. `commission` est en Numeric → cast float."""
+    """Pipeline partenaires/leads, et ce que valent les mises en relation du mois (prix fixe,
+    série 4 lot 1 : `prix_ht` figé à la création, dû à la transmission)."""
     par_statut = dict(
         (row[0], row[1])
         for row in (await db.execute(select(Lead.statut, func.count()).group_by(Lead.statut))).all()
     )
-    commissions_mois = await db.scalar(
-        select(func.coalesce(func.sum(Lead.commission.cast(Float)), 0.0)).where(
-            Lead.statut == "signe", Lead.created_at >= _start_of_month()
+    mer_mois = (await db.execute(
+        select(func.count(), func.coalesce(func.sum(Lead.prix_ht.cast(Float)), 0.0)).where(
+            Lead.type == "travaux", Lead.prix_ht.is_not(None), Lead.created_at >= _start_of_month()
         )
-    )
+    )).one()
     return {
         "partenaires_actifs": await _count(db, Partner, Partner.statut == "actif"),
         "candidatures_en_attente": await _count(db, Partner, Partner.statut == "candidat"),
         "leads_total": await _count(db, Lead),
         "leads_par_statut": par_statut,
-        "commissions_signees_mois_eur": round(commissions_mois or 0, 2),
+        "mises_en_relation_mois": mer_mois[0],
+        "mises_en_relation_mois_ht_eur": round(mer_mois[1] or 0, 2),
         "consentements_retires": await _count(db, Lead, Lead.consent_retire_at.is_not(None)),
     }
 
