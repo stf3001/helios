@@ -30,6 +30,7 @@ interface Dashboard {
 
 const VOIE_LABEL: Record<string, string> = {
   kb: 'Réponse instantanée (aucun LLM)',
+  preaudit: 'Phrases du pré-audit (aucun LLM)',
   local: 'Modèle local (Ollama)',
   api: 'Claude (API, payant)',
   inconnu: 'Non renseigné',
@@ -38,6 +39,7 @@ const VOIE_LABEL: Record<string, string> = {
 /** La couleur de la barre suit celle de la pastille « voie » des conversations. */
 const VOIE_BARRE: Record<string, string> = {
   kb: 'bg-leaf',
+  preaudit: 'bg-leaf/60',
   local: 'bg-sky',
   api: 'bg-terra',
 }

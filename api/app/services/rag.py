@@ -1,6 +1,8 @@
 """RAG au runtime — doc 07 §4 : recherche, seuil de pertinence, prompt avec constitution."""
 
 import json
+import re
+from datetime import date
 from pathlib import Path
 
 from sqlalchemy import select
@@ -10,6 +12,7 @@ from app.core.config import settings
 from app.models.house import House
 from app.models.kb import KbChunk, KbDocument
 from app.services.agents_engine import SOURCES_QR as _QR_SOURCES
+from app.services import audit_reference as _ref
 from app.services.completeness import _is_filled, compute_score, niveau_for_score
 
 # Version de constitution pilotée par la config (settings.constitution_version) — synchro avec le doc 03.
@@ -403,6 +406,100 @@ def resume_puissance(bloc: dict | None) -> dict | None:
     if bloc.get("note_radiateurs"):
         resume["note_radiateurs"] = bloc["note_radiateurs"]
     return resume
+
+
+# --- Réponse directe du pré-audit (série 9) -------------------------------------------------
+#
+# Pour la puissance, les radiateurs, le relevé et la puissance d'un devis, le pré-audit a déjà
+# écrit les phrases justes : Hélios les renvoie telles quelles, sans LLM (`model_used =
+# "preaudit"`). Le modèle local en ratait deux sur cinq (débrief 2026-10-22-chat-puissance).
+#
+# Les sujets, dans l'ordre où leurs réponses se suivent. Exemples des questions vérifiées :
+#   « Quelle puissance de pompe à chaleur pour ma maison ? »  → puissance
+#   « Mes radiateurs suffiront-ils ? »                        → radiateurs
+#   « Un installateur me propose 14 kW, c'est normal ? »      → devis
+#   « Combien de kWh représente mon fioul ? »                 → releve
+# Une question qui cite seulement la pompe à chaleur (marque, prix, bruit, aides) ne déclenche
+# rien : elle reste au LLM. « kW » n'attrape pas « kWh » : 15 000 kWh n'est pas un devis.
+SUJETS_PREAUDIT: tuple[tuple[str, re.Pattern], ...] = tuple((nom, re.compile(motif, re.IGNORECASE)) for nom, motif in (
+    ("radiateurs", r"radiateur|[ée]metteur"),
+    ("releve", r"relev[ée]|combien de kwh|\bmon (fioul|gaz|bois)\b|\bmes (granul[ée]s|st[eè]res|bûches|buches)\b"),
+    ("devis", r"\d+(?:[.,]\d+)?\s*kw(?!h)\b"),
+    ("puissance", r"puissance|dimensionn|quelle taille|combien de kw(?!h)"),
+))
+# « Quelle puissance souscrire ? » parle du compteur, pas du chauffage.
+_PUISSANCE_COMPTEUR = re.compile(r"souscri|kva|compteur|abonnement", re.IGNORECASE)
+_NOMBRE_KW = re.compile(r"(\d+(?:[.,]\d+)?)\s*kw(?!h)\b", re.IGNORECASE)
+
+
+def _fr_kw(x: float) -> str:
+    """9.5 -> « 9,5 » ; 9.0 -> « 9 »."""
+    t = f"{x:.1f}".replace(".", ",")
+    return t[:-2] if t.endswith(",0") else t
+
+
+def _fr_entier(n) -> str:
+    return f"{int(round(n)):,}".replace(",", " ")
+
+
+def sujets_preaudit(question: str) -> list[str]:
+    sujets = [nom for nom, motif in SUJETS_PREAUDIT if motif.search(question)]
+    if "puissance" in sujets and _PUISSANCE_COMPTEUR.search(question):
+        sujets.remove("puissance")
+    return sujets
+
+
+def reponse_preaudit(audit_result: dict, date_audit, question: str) -> str | None:
+    """Les phrases du pré-audit qui répondent à la question, ou None (la question va au LLM).
+
+    Aucun calcul, sauf la comparaison d'une puissance proposée à la plage de PAC. Sans bloc
+    `puissance` (audit avant la v2.6), ou pour un devis sans plage air/eau, None."""
+    bloc = (audit_result or {}).get("puissance")
+    sujets = sujets_preaudit(question)
+    if not bloc or not sujets:
+        return None
+    tx = _ref.TEXTES_PUISSANCE
+    plage = bloc.get("pac_air_eau_kw") if bloc.get("affichage") == "complet" else None
+    parties: list[str] = []
+    for sujet in sujets:
+        if sujet == "radiateurs":
+            lignes = [tx[f"radiateurs_{r['verdict']}"].format(piece=r["piece"])
+                      for r in bloc.get("radiateurs") or [] if f"radiateurs_{r['verdict']}" in tx]
+            if not bloc.get("radiateurs"):
+                parties.append(tx["chat_sans_pieces"])
+            else:
+                parties.extend(f"- {l}" for l in lignes)
+                if bloc.get("note_radiateurs"):
+                    parties.append(bloc["note_radiateurs"])
+        elif sujet == "releve":
+            c = audit_result.get("consommation") or {}
+            r = c.get("releve")
+            if not r:
+                parties.append(tx["chat_sans_releve"])
+                continue
+            parties.append(tx["chat_releve"].format(
+                quantite=_fr_entier(r["quantite"]), unite=_ref.UNITE_RELEVE.get(r["unite"], r["unite"]),
+                energie=_ref.TYPE_RELEVE.get(r["type"], r["type"]), kwh=_fr_entier(c["conso_autre_energie_kwh_an"])))
+            if c.get("eau_chaude_deduite_kwh_an"):
+                parties.append(tx["chat_releve_eau_chaude"].format(
+                    ecs=_fr_entier(c["eau_chaude_deduite_kwh_an"]),
+                    chauffage=_fr_entier(c["conso_chauffage_declaree_kwh_an"])))
+        elif sujet == "devis":
+            if not plage:
+                return None  # pas de PAC air/eau proposée : rien à quoi comparer
+            kw = float(_NOMBRE_KW.search(question).group(1).replace(",", "."))
+            cle = ("chat_devis_dessus" if kw > plage["haut"] else "chat_devis_dessous" if kw < plage["bas"]
+                   else "chat_devis_dans")
+            parties.append(tx[cle].format(kw=_fr_kw(kw), pac_bas=_fr_kw(plage["bas"]), pac_haut=_fr_kw(plage["haut"])))
+        elif sujet == "puissance":
+            parties.append(bloc["texte"])
+            if bloc.get("texte_plage"):
+                parties.append(bloc["texte_plage"])
+            elif bloc.get("note_radiateurs"):
+                parties.append(bloc["note_radiateurs"])
+    jour = date.fromisoformat(str(date_audit)[:10])
+    intro = tx["chat_intro"].format(date=jour.strftime("%d/%m/%Y"))
+    return intro + "\n\n" + "\n".join(parties)
 
 
 def build_audit_context(audit) -> dict:

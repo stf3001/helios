@@ -39,6 +39,7 @@ interface Detail {
 
 const VOIE: Record<string, { label: string; classe: string }> = {
   kb: { label: 'instantané', classe: 'border-leaf/40 bg-leaf/10 text-leaf' },
+  preaudit: { label: 'pré-audit', classe: 'border-leaf/40 bg-leaf/10 text-leaf' },
   local: { label: 'local', classe: 'border-sky/40 bg-sky/10 text-sky' },
   api: { label: 'API', classe: 'border-terra/40 bg-terra/10 text-terra' },
 }

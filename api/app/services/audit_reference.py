@@ -678,7 +678,22 @@ TEXTES_PUISSANCE: dict[str, str] = {
     "radiateurs_ok_55": "{piece} : vos radiateurs suffisent avec une eau à 55 °C.",
     "radiateurs_insuffisant": "{piece} : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question.",
     "radiateurs_inconnu": "{piece} : la puissance des radiateurs n'est pas indiquée ; l'installateur doit la relever.",
+    # Réponse directe du chat (`rag.reponse_preaudit`) : {date}, {quantite}, {unite}, {energie},
+    # {kwh}, {ecs}, {chauffage}, {kw}, {pac_bas}, {pac_haut}.
+    "chat_intro": "D'après votre pré-audit du {date} :",
+    "chat_releve": "Votre relevé ({quantite} {unite} de {energie} par an) représente environ {kwh} kWh.",
+    "chat_releve_eau_chaude": "Environ {ecs} kWh vont à l'eau chaude : le chauffage en garde {chauffage} kWh.",
+    "chat_sans_releve": "Votre pré-audit ne repose pas sur un relevé : vous pouvez indiquer votre consommation dans le bloc Énergie de votre fiche, puis refaire le pré-audit.",
+    "chat_sans_pieces": "Pour savoir si vos radiateurs suffisent, indiquez vos pièces et leurs radiateurs (avec leur puissance) dans « Ma maison », puis refaites le pré-audit.",
+    "chat_devis_dessus": "{kw} kW, c'est au-dessus de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur sur quoi repose cette puissance : une machine trop puissante coûte plus cher et fonctionne moins bien.",
+    "chat_devis_dans": "{kw} kW, c'est dans la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW).",
+    "chat_devis_dessous": "{kw} kW, c'est en dessous de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur comment la maison sera chauffée les jours les plus froids.",
 }
+# Le relevé d'une autre énergie, tel que la fiche le dit (libellés de `FicheMaison.tsx`, à tenir
+# ENSEMBLE) : le PDF du pré-audit et la réponse directe du chat lisent les mêmes.
+TYPE_RELEVE = {"gaz": "gaz", "fioul": "fioul", "bois_buches": "bois en bûches", "granules": "granulés",
+               "reseau": "chaleur du réseau"}
+UNITE_RELEVE = {"kwh": "kWh", "m3": "m³", "litres": "litres", "steres": "stères", "kg": "kg"}
 # Émetteurs du carnet (lot 2) : à eau, testés au régime ; plancher à eau, basse température par
 # nature ; électriques, sans objet pour une PAC air/eau. Les autres (bois, clim) : pas de verdict.
 EMETTEURS_EAU = {"radiateur_eau"}

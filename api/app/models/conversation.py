@@ -26,7 +26,7 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(String(10), nullable=False)  # user | helios
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    model_used: Mapped[str | None] = mapped_column(String(10))  # local | api
+    model_used: Mapped[str | None] = mapped_column(String(10))  # kb | preaudit | local | api
     tokens: Mapped[int | None] = mapped_column(Integer)
     citations: Mapped[list[dict] | None] = mapped_column(JSONB)
     chunks_used: Mapped[list[str] | None] = mapped_column(JSONB)  # ids des kb_chunks cités

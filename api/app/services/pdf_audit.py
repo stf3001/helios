@@ -925,10 +925,9 @@ def _deperditions(pdf: FPDF, audit: dict):
         pdf.ln(6.4)
 
 
-# v2.7 : le relevé d'une autre énergie, tel que la fiche le dit (libellés de `FicheMaison.tsx`).
-_TYPE_RELEVE = {"gaz": "gaz", "fioul": "fioul", "bois_buches": "bois en bûches", "granules": "granulés",
-                "reseau": "chaleur du réseau"}
-_UNITE_RELEVE = {"kwh": "kWh", "m3": "m³", "litres": "litres", "steres": "stères", "kg": "kg"}
+# v2.7 : le relevé d'une autre énergie, tel que la fiche le dit (`audit_reference`).
+_TYPE_RELEVE = ref.TYPE_RELEVE
+_UNITE_RELEVE = ref.UNITE_RELEVE
 
 
 def _consommation_v2(pdf: FPDF, audit: dict, encadre: bool = False):

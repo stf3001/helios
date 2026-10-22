@@ -68,3 +68,11 @@ R: La pompe à chaleur air/eau (et géothermique) fait partie des rares gestes *
 - **radiateurs_ok_55** : « {piece} : vos radiateurs suffisent avec une eau à 55 °C. »
 - **radiateurs_insuffisant** : « {piece} : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question. »
 - **radiateurs_inconnu** : « {piece} : la puissance des radiateurs n'est pas indiquée ; l'installateur doit la relever. »
+- **chat_intro** : « D'après votre pré-audit du {date} : »
+- **chat_releve** : « Votre relevé ({quantite} {unite} de {energie} par an) représente environ {kwh} kWh. »
+- **chat_releve_eau_chaude** : « Environ {ecs} kWh vont à l'eau chaude : le chauffage en garde {chauffage} kWh. »
+- **chat_sans_releve** : « Votre pré-audit ne repose pas sur un relevé : vous pouvez indiquer votre consommation dans le bloc Énergie de votre fiche, puis refaire le pré-audit. »
+- **chat_sans_pieces** : « Pour savoir si vos radiateurs suffisent, indiquez vos pièces et leurs radiateurs (avec leur puissance) dans « Ma maison », puis refaites le pré-audit. »
+- **chat_devis_dessus** : « {kw} kW, c'est au-dessus de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur sur quoi repose cette puissance : une machine trop puissante coûte plus cher et fonctionne moins bien. »
+- **chat_devis_dans** : « {kw} kW, c'est dans la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). »
+- **chat_devis_dessous** : « {kw} kW, c'est en dessous de la plage que calcule votre pré-audit ({pac_bas} à {pac_haut} kW). Demandez à l'installateur comment la maison sera chauffée les jours les plus froids. »

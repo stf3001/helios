@@ -130,6 +130,7 @@ async def send_message(
     simulation_context = None
     solar_context = None
     audit_context = None
+    dernier_audit = None
     energy_context = None
     niveau = None
     if user:
@@ -167,6 +168,7 @@ async def send_message(
             )
             if audit is not None:
                 audit_context = rag.build_audit_context(audit)
+                dernier_audit = audit
 
             energy_study = await db.scalar(
                 select(EnergyStudy).where(EnergyStudy.house_id == house.id).order_by(EnergyStudy.created_at.desc())
@@ -270,6 +272,28 @@ async def send_message(
     # pré-audit les calcule ne reçoit pas une fiche générale servie telle quelle (vérifié : « Mes
     # radiateurs suffiront-ils ? » recevait la méthode générale au lieu des verdicts du foyer).
     question_puissance = bool(audit_context and audit_context.get("puissance") and _SUJET_PUISSANCE.search(payload.content))
+
+    # Série 9 : puissance, radiateurs, relevé ou puissance d'un devis → les phrases du pré-audit
+    # du foyer, telles quelles, sans LLM (`model_used = "preaudit"`). Avant la fiche générale :
+    # elles portent les chiffres de CETTE maison. `force_llm` (« développer ») passe outre.
+    if not payload.force_llm and dernier_audit is not None:
+        directe = rag.reponse_preaudit(dernier_audit.json_result, dernier_audit.created_at.isoformat(),
+                                       payload.content)
+        if directe is not None:
+
+            async def stream_preaudit():
+                yield json.dumps({"type": "conversation", "conversation_id": str(conversation_id), "mode": mode,
+                                  "simplified": False, "instant": True}) + "\n"
+                yield json.dumps({"type": "token", "text": directe}) + "\n"
+                async with async_session() as db2:
+                    msg = Message(conversation_id=conversation_id, role="helios", content=directe,
+                                  model_used="preaudit", citations=[], chunks_used=[],
+                                  constitution_version=settings.constitution_version, rag_score=rag_score)
+                    db2.add(msg)
+                    await db2.commit()
+                    yield json.dumps({"type": "message_id", "message_id": str(msg.id)}) + "\n"
+
+            return StreamingResponse(stream_preaudit(), media_type="application/x-ndjson")
 
     # Réponse instantanée (doc 07 §5) : fiche Q/R quasi identique → on la sert sans LLM.
     # `force_llm` (bouton « développer » du widget) désactive le court-circuit, comme une

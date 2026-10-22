@@ -53,7 +53,8 @@ async def utilisateurs(db: AsyncSession) -> dict:
 async def activite_helios(db: AsyncSession) -> dict:
     """Activité du chat sur 7 jours + répartition par voie de réponse.
 
-    `model_used` : "kb" = réponse instantanée (aucun LLM), "local" = Ollama, "api" = Claude.
+    `model_used` : "kb" = réponse instantanée (aucun LLM), "preaudit" = phrases du pré-audit du
+    foyer (aucun LLM, série 9), "local" = Ollama, "api" = Claude.
     Le ratio instantané/local/api pilote directement le coût et la latence.
     """
     repartition = dict(
