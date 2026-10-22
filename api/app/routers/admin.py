@@ -31,11 +31,14 @@ from app.routers import account
 from app.models.conversation import Conversation, Message
 from app.models.moderation import STATUTS, AdminAccessLog, MessageReport
 from app.models.house import House
-from app.models.partner import Contestation, Lead, Partner, PartnerDocument
+from app.models.audit import Audit
+from app.models.partner import Contestation, Lead, Partner, PartnerDocument, Review
+from app.models.simulateur import SimulateurStudy
 from app.models.rendez_vous import STATUTS_RDV, RendezVous
 from app.models.user import User
 from app.services import (activation, admin_health, admin_stats, admin_supervision, agents_engine, conformite,
-                          conformite_lecture, contestations, justificatifs, rdv_admin, releves, releves_lecture)
+                          conformite_lecture, contestations, justificatifs, rdv_admin, releves, releves_lecture,
+                          suivi_foyer)
 from app.services.pdf_releve import releve_pdf
 from app.services.creneaux import heure_de_paris
 
@@ -459,6 +462,64 @@ async def releve_pdf_admin(
     return Response(contenu, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{nom}"'})
 
 
+
+
+# --- Qualité du réseau (mises en relation, lot 5) : jamais publiée, jamais un classement ---
+
+
+async def _leads_qualite(db: AsyncSession, demo: bool):
+    """Mises en relation `travaux` avec leur partenaire ; les « Démo » seulement si demandé."""
+    q = select(Lead, Partner).join(Partner, Partner.id == Lead.partner_id).where(Lead.type == "travaux")
+    if not demo:
+        q = q.where(Partner.demo.is_(False))
+    return (await db.execute(q)).all()
+
+
+@router.get("/mer/indicateurs")
+async def indicateurs_mer(
+    mois: str | None = None, demo: bool = False, admin: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Indicateurs du mois (de transmission, heure de Paris) et cumul, chacun avec sa source."""
+    mois = _mois(mois)
+    rows = await _leads_qualite(db, demo)
+    leads = [l for l, _ in rows]
+    ids = [l.id for l in leads]
+    conts = list(await db.scalars(select(Contestation).where(Contestation.lead_id.in_(ids)))) if ids else []
+    notes = dict((await db.execute(select(Review.lead_id, Review.note).where(Review.lead_id.in_(ids)))).all()) if ids else {}
+    etudiees = set(await db.scalars(select(Audit.house_id))) | set(await db.scalars(select(SimulateurStudy.house_id)))
+    await _tracer(db, admin, "indicateurs_mer", mois)
+    return {
+        "mois": mois, "demo": demo,
+        "du_mois": suivi_foyer.indicateurs(leads, conts, etudiees, notes, mois),
+        "cumul": suivi_foyer.indicateurs(leads, conts, etudiees, notes, None),
+    }
+
+
+@router.get("/mer/ecarts")
+async def ecarts_mer(
+    demo: bool = False, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Les contradictions foyer / partenaire, et les demandes signalées « sans contact » : le prix
+    n'est jamais annulé automatiquement — un avoir se décide ici, sur un relevé non clos."""
+    out = []
+    for l, p in await _leads_qualite(db, demo):
+        ec = suivi_foyer.ecarts(l)
+        if not ec and not l.sans_contact_signale:
+            continue
+        mois = releves.mois_de(l.consent_client_at)
+        house = await db.get(House, l.house_id)
+        out.append({
+            "lead_id": l.id, "partenaire": p.raison_sociale, "demo": p.demo, "metier": l.metier,
+            "code_postal": house.code_postal if house else None, "transmis_le": l.consent_client_at,
+            "statut_partenaire": l.statut, "contacte_le": l.contacte_le, "contact_foyer": l.contact_foyer,
+            "declarations_foyer": l.declarations_foyer or [], "sans_contact_signale": l.sans_contact_signale,
+            "ecarts": ec, "prix_ht": float(l.prix_ht) if l.prix_ht is not None else None,
+            "facturable": l.facturable, "mois": mois,
+            "releve_clos": await releves_lecture.cloture(db, mois) is not None,
+        })
+    await _tracer(db, admin, "ecarts_mer", f"{len(out)} demande(s)")
+    return sorted(out, key=lambda x: x["transmis_le"], reverse=True)
 
 
 # --- Signalements de réponses (revue qualité) ---
