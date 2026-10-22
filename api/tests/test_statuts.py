@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 from app.services.a_faire import a_faire
 from app.services.entretien import (
-    CHEMIN_TABLE, MENTION_COPROPRIETE, MENTION_PROPRIETAIRE, charger_taches, echeances,
+    CHEMIN_TABLE, MENTION_COPROPRIETE, MENTION_PROPRIETAIRE, charger_taches, echeances, verifications,
 )
 
 AUJOURD_HUI = date(2026, 10, 22)  # octobre : aucune tâche écartée par ses `mois_actifs` utiles ici
@@ -79,6 +79,11 @@ def test_une_tache_du_proprietaire_n_entre_jamais_dans_a_faire():
     bloc = a_faire(lignes, [], AUJOURD_HUI)
     ids = {l["tache_id"] for l in bloc["lignes"]}
     assert ids and not ids & {"spanc-controle", "debroussaillement", "pv-suivi-production", "pv-inspection-visuelle"}
+
+
+def test_le_locataire_n_a_pas_a_verifier_le_debroussaillement():
+    assert [v["tache_id"] for v in verifications(TACHES, maison(zone_old="ne_sais_pas"))] == ["debroussaillement"]
+    assert verifications(TACHES, maison(zone_old="ne_sais_pas", statut="locataire")) == []
 
 
 # — Appartement —

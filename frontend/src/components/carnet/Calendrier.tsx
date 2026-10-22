@@ -36,8 +36,10 @@ function Ligne({ e, parId, documents }: { e: Echeance; parId: Record<string, Equ
           <span className="block text-ink">{e.libelle}</span>
           <span className="block text-xs text-dark/60">
             {nomEquipement(e.equipement_id ? parId[e.equipement_id] : undefined)} ·{' '}
-            <span className={e.statut === 'en_retard' ? 'font-semibold text-terra' : ''}>{echeanceRelative(e.echeance)}</span>
-            {' '}· {QUI[e.qui] ?? e.qui} · {e.nature === 'obligation' ? 'obligation' : 'conseil'}
+            {/* Un retard qui n'est pas le sien ne s'affiche pas en alerte. */}
+            <span className={e.statut === 'en_retard' && e.pour_moi ? 'font-semibold text-terra' : ''}>{echeanceRelative(e.echeance)}</span>
+            {/* « Vous-même » n'a pas de sens pour une tâche qui revient au propriétaire. */}
+            {e.pour_moi && <>{' '}· {QUI[e.qui] ?? e.qui}</>} · {e.nature === 'obligation' ? 'obligation' : 'conseil'}
           </span>
           {e.statut === 'a_planifier' && (
             <span className="block text-xs text-dark/50">

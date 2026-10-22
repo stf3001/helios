@@ -295,10 +295,14 @@ def verifications(taches, maison) -> list[dict]:
     """
     if maison is None or _champ(maison, "type_logement") != "maison":
         return []
+    locataire = _champ(maison, "statut") == "locataire"
     lignes = []
     for tache in taches:
         conditions = tache["applique_a"].get("maison")
         if not conditions:
+            continue
+        # Vérifier une obligation du propriétaire n'est pas l'affaire du locataire (lot 8).
+        if locataire and tache.get("responsable") == "proprietaire":
             continue
         inconnues = [c for c in conditions if c in QUESTIONS_DE_MAISON and _champ(maison, c) == "ne_sais_pas"]
         autres_ok = all(_condition(maison, c, v) for c, v in conditions.items() if c not in inconnues)
