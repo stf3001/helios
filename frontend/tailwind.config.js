@@ -24,6 +24,8 @@ export default {
         sun: t('--h-or'),            // or : reserve a l'icone de la carte sombre
         sky: t('--h-bleu'),          // icones vent et eau
         leaf: t('--h-vert'),         // icones terre, pastille « en ligne »
+        vigiorange: t('--h-vigi-orange'), // vigilance meteo : la pastille, jamais un fond
+        vigirouge: t('--h-vigi-rouge'),
 
         /* Neutres rechauffes. Le site ecrit `text-gray-600` et `border-gray-200` dans
            une soixantaine de fichiers : les redefinir ici les accorde au fond ivoire

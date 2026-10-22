@@ -52,7 +52,14 @@ export default function Journal({ equipements, documents, onRemplacer }: {
   useEffect(charger, [charger])
   useMaj(charger)
   // Phase 2 : « Noter une fissure » (risques de la commune) ouvre le formulaire pré-rempli.
-  const preRemplir = useCallback((b: Record<string, string>) => { setForm({ date: aujourdhui(), ...b }); setErreur(null) }, [])
+  const preRemplir = useCallback((b: Record<string, string>) => {
+    setForm({ date: aujourdhui(), ...b }); setErreur(null)
+    // Le journal défile lui-même, une fois sa page dessinée (on peut venir d'un autre onglet).
+    // Deux fois : les blocs au-dessus (coût, projets) finissent de charger et poussent le journal.
+    for (const delai of [150, 700]) {
+      window.setTimeout(() => document.getElementById('journal-maison')?.scrollIntoView({ block: 'start' }), delai)
+    }
+  }, [])
   useOuvrirJournal(preRemplir)
 
   const parId = Object.fromEntries(equipements.map((e) => [e.id, e]))

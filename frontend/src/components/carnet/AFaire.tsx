@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CalendarCheck, Check, PhoneCall, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { type ApresEpisode, LigneVigilance, type Vigilance, noterUnDegat } from './VigilanceMeteo'
 import { useAuth } from '../../context/AuthContext'
 import type { Doc } from './Formulaires'
 import FormFait from './FormFait'
@@ -26,6 +27,9 @@ type Bloc = {
   questions_contact?: { lead_id: string; partenaire: string | null; metier: string | null; transmis_le: string }[]
   // Phase 2 : feux de forêt dans la commune et débroussaillement « je ne sais pas ».
   debroussaillement?: { libelle: string; lien: string | null } | null
+  // Vigilance météo (phase 2) : discrète, une ligne ; puis « Noter un dégât » après vent ou orages.
+  vigilances?: Vigilance[]
+  apres_episode?: ApresEpisode[]
 }
 
 function Pastille({ nature }: { nature: string }) {
@@ -118,6 +122,19 @@ export default function AFaire({ onVoirMaison, onToutVoir }: { onVoirMaison: () 
               <button onClick={() => repondre(q.lead_id, 'oui')} className="rounded-lg border border-bord px-3 py-1 text-xs hover:bg-cream">Oui</button>
               <button onClick={() => repondre(q.lead_id, 'non')} className="rounded-lg border border-bord px-3 py-1 text-xs hover:bg-cream">Non</button>
             </span>
+          </li>
+        ))}
+        {(bloc.vigilances ?? []).map((v) => (
+          <li key={`v-${v.phenomene}-${v.debut}`} className="py-2.5"><LigneVigilance v={v} /></li>
+        ))}
+        {(bloc.apres_episode ?? []).map((a) => (
+          <li key={`d-${a.phenomene}`} className="flex flex-wrap items-center gap-3 py-2.5">
+            <span className="min-w-0 flex-1 text-sm text-ink">
+              Après l'épisode de {a.libelle.toLowerCase()} : un dégât à noter ?
+              <span className="block text-xs text-dark/60">utile pour l'assurance, avec une photo</span>
+            </span>
+            <button onClick={() => noterUnDegat(a, onVoirMaison)}
+              className="rounded-lg border border-bord px-3 py-1 text-xs hover:bg-cream">Noter un dégât</button>
           </li>
         ))}
         {bloc.debroussaillement && (

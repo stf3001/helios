@@ -21,6 +21,8 @@
   --h-or: 242 180 90;            /* #F2B45A — reserve a l'icone de la carte sombre */
   --h-bleu: 47 111 143;          /* #2F6F8F — icones vent et eau */
   --h-vert: 47 122 91;           /* #2F7A5B — icones terre, pastille « en ligne » */
+  --h-vigi-orange: 247 164 1;    /* #F7A401 — vigilance orange de Meteo-France (pastille seulement) */
+  --h-vigi-rouge: 224 0 0;       /* #E00000 — vigilance rouge (pastille seulement) */
 }
 
 @layer base {

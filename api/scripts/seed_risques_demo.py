@@ -1,4 +1,4 @@
-"""Trois foyers de TEST pour vérifier « Les risques de ma commune » (phase 2), base de dev seulement.
+"""Foyers de TEST pour vérifier « Les risques de ma commune » et la vigilance météo (phase 2), base de dev seulement.
 
 Chacun a une maison dont le code postal mène à la commune à vérifier ; la commune se choisit
 ensuite dans l'écran (c'est ce qu'on vérifie). Débroussaillement « je ne sais pas ».
@@ -23,6 +23,9 @@ FOYERS = {  # e-mail → (code postal, commune attendue)
     "risques-var@example.com": ("83680", "La Garde-Freinet — feux de forêt"),
     "risques-argiles@example.com": ("32000", "Auch — argiles"),
     "risques-creuse@example.com": ("23150", "Ahun — peu exposée"),
+    # Vigilance météo, avec `scripts.collecter_vigilance --fixture` (rouge canicule 13, rien dans le Nord).
+    "vigilance-marseille@example.com": ("13008", "Marseille — vigilance rouge simulée"),
+    "vigilance-nord@example.com": ("59000", "Lille — aucune vigilance"),
 }
 
 

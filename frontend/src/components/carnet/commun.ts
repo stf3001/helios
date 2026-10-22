@@ -18,7 +18,6 @@ export function signalerMaj() {
 const OUVRIR_JOURNAL = 'carnet:ouvrir-journal'
 export function ouvrirJournal(brouillon: Record<string, string>) {
   window.dispatchEvent(new CustomEvent(OUVRIR_JOURNAL, { detail: brouillon }))
-  document.getElementById('journal-maison')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 export function useOuvrirJournal(ouvrir: (brouillon: Record<string, string>) => void) {
   useEffect(() => {

@@ -13,6 +13,7 @@ import CarnetMaison from '../components/carnet/CarnetMaison'
 import AvantAcheter from '../components/carnet/AvantAcheter'
 import MesProjets from '../components/carnet/MesProjets'
 import RisquesCommune from '../components/carnet/RisquesCommune'
+import VigilanceMeteo from '../components/carnet/VigilanceMeteo'
 import CoutMaison from '../components/carnet/CoutMaison'
 import type { Parcours } from '../components/carnet/commun'
 import AFaire from '../components/carnet/AFaire'
@@ -177,6 +178,9 @@ export default function Espace() {
               quel que soit l'onglet ouvert. Sans fiche, il n'a rien à dire. */}
           {/* Lot 8 : l'acheteur a « Avant d'acheter » À LA PLACE du bloc — rien à entretenir
               tant qu'il n'est pas chez lui, tout à demander au vendeur. */}
+          {/* Vigilance météo (phase 2) : d'ordinaire dans « À faire » ; en ligne seule quand ce
+              bloc n'est pas montré (parcours acheteur) — jamais deux fois. */}
+          {house && house.parcours.avant_d_acheter && <VigilanceMeteo />}
           {house && house.parcours.avant_d_acheter && <AvantAcheter />}
           {house && !house.parcours.avant_d_acheter && (
             <AFaire onVoirMaison={() => setSection('maison')}
