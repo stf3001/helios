@@ -303,6 +303,16 @@ class Settings(BaseSettings):
         (3, 9.7), (6, 12.9), (9, 16.3), (12, 19.7), (15, 22.8), (18, 26.0), (24, 33.8), (30, 40.7), (36, 47.6),
     )
 
+    # --- Mises en relation a prix fixe (lot 1 de la serie 4, routers/leads.py) ---
+    # Prix paye par le partenaire pour chaque mise en relation demandee par un foyer, fige sur
+    # le lead a sa creation : valide par Stephane le 22/10/2026, tous metiers, a ajuster par
+    # metier apres quelques mois. Du a la transmission, sauf contestation acceptee (lot 3).
+    mer_prix_ht_eur: float = 60.0
+    mer_delai_contestation_jours: int = 7
+    # Le foyer choisit parmi au plus ce nombre de partenaires, TIRES AU SORT et presentes dans
+    # un ordre aleatoire — jamais tries par note, anciennete ou nombre de leads.
+    mer_nb_propositions: int = 3
+
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
     # engage quelqu'un a appeler — a confirmer avec Stephane avant toute mise en ligne.

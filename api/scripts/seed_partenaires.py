@@ -8,7 +8,8 @@ present plutot que de le dupliquer. La raison sociale sert de cle.
 ATTENTION — LA PLUPART DE CES RAISONS SOCIALES SONT PROVISOIRES. Stephane a demande de
 remplir l'annuaire avec des noms quelconques en attendant les vrais. Ces entreprises
 N'EXISTENT PAS : les treize isolations, les soixante-dix-huit renforts et le courtier.
-Seules cinq sont reelles (AD Solar, Ensol, Hydrolia, Eolia, Energiesto).
+Seules quatre sont reelles (Ensol, Hydrolia, Eolia, Energiesto) ; AD Solar n'est pas partenaire
+(decision de Stephane du 22/10/2026).
 
 C'est pourquoi le seed ne les active PAS : elles entrent en `en_attente`, statut que
 l'annuaire public filtre et que `routers/chat.py` ne donne pas au modele. Helios ne nomme
@@ -98,8 +99,6 @@ def _renforts() -> dict[str, tuple[tuple[str, ...], tuple[str, ...], bool]]:
 
 #: raison sociale -> (zones, metiers, rge)
 PARTENAIRES: dict[str, tuple[tuple[str, ...], tuple[str, ...], bool]] = {
-    # Le seul partenaire a couvrir PACA sur le solaire et la pompe a chaleur.
-    "AD Solar": (DEPTS_PACA, ("solaire", "pac"), True),
     # Partout ailleurs.
     "Ensol": (DEPTS_HORS_PACA, ("solaire", "pac"), True),
     # Quatre acteurs nationaux : ils vendent en ligne ou a distance, donc toutes zones.
@@ -116,10 +115,18 @@ PARTENAIRES: dict[str, tuple[tuple[str, ...], tuple[str, ...], bool]] = {
     **_renforts(),
 }
 
-#: Les cinq entreprises reelles. Tout le reste de `PARTENAIRES` est provisoire et reste
+#: Les quatre entreprises reelles. Tout le reste de `PARTENAIRES` est provisoire et reste
 #: `en_attente` jusqu'a signature. Liste en dur et non deduite : une raison sociale qui
 #: n'y figure pas est inventee par defaut, ce qui est le sens prudent de l'erreur.
-REELS: frozenset[str] = frozenset({"AD Solar", "Ensol", "Hydrolia", "Eolia", "Energiesto"})
+# AD Solar n'y est plus : decision de Stephane du 22/10/2026, pas partenaire d'Helios. La
+# migration 0035 le passe `suspendu` en base (jamais supprime), et le seed ne le recree pas.
+REELS: frozenset[str] = frozenset({"Ensol", "Hydrolia", "Eolia", "Energiesto"})
+
+#: Lien d'interet affiche au foyer a cote du nom (mises en relation, lot 1).
+LIENS_INTERET: dict[str, str] = {
+    "Hydrolia": "Société créée par le fondateur d'Hélios",
+    "Eolia": "Société créée par le fondateur d'Hélios",
+}
 
 
 async def semer() -> None:
@@ -135,6 +142,7 @@ async def semer() -> None:
             partenaire.metiers = list(metiers)
             partenaire.rge = rge
             partenaire.statut = "actif" if raison_sociale in REELS else "en_attente"
+            partenaire.lien_interet = LIENS_INTERET.get(raison_sociale)
         await db.commit()
 
         actifs = list(await db.scalars(select(Partner).where(Partner.statut == "actif")))

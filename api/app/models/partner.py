@@ -27,6 +27,9 @@ class Partner(Base):
     charte_signee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     statut: Mapped[str] = mapped_column(String(20), nullable=False, default="candidat")  # candidat|actif|suspendu
     note_moyenne: Mapped[float | None] = mapped_column(Float)
+    # Affiché au foyer à côté du nom (mises en relation, lot 1) : Hydrolia et Eolia sont des
+    # sociétés du fondateur d'Hélios. Facultatif.
+    lien_interet: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 
@@ -45,7 +48,9 @@ class Lead(Base):
     consent_client_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)  # consentement horodaté
     consent_retire_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     montant_travaux: Mapped[int | None] = mapped_column(Integer)  # HT, renseigné à DEVIS/SIGNÉ
-    commission: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    commission: Mapped[float | None] = mapped_column(Numeric(10, 2))  # historique : plus calculée sur `travaux`
+    # Prix fixe payé par le partenaire, figé à la création (`mer_prix_ht_eur`, 22/10/2026).
+    prix_ht: Mapped[float | None] = mapped_column(Numeric(10, 2))
     motif_perdu: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
