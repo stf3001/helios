@@ -7,6 +7,7 @@
 - `partner_documents` : Kbis, décennale, RGE, avec dates ; fichiers sous `generated/partner_docs/`.
 - `chartes` : texte de la charte partenaire par version ; `partners.charte_version_signee`.
   AUCUNE version n'est insérée ici : le texte se charge par script, après relecture.
+- `partners.motif_refus` : une candidature refusée garde son motif (statut `refuse`).
 - `partner_activations` : lien d'activation à usage unique (jeton haché, expiration).
 
 Réversible.
@@ -39,6 +40,7 @@ def upgrade() -> None:
     op.add_column("leads", sa.Column("facturable", sa.Boolean, nullable=False, server_default=sa.true()))
     op.add_column("leads", sa.Column("contacte_le", sa.Date))
     op.add_column("partners", sa.Column("charte_version_signee", sa.String(20)))
+    op.add_column("partners", sa.Column("motif_refus", sa.Text))  # candidature refusée (statut `refuse`)
 
     op.create_table(
         "contestations", _id(),
@@ -87,6 +89,7 @@ def downgrade() -> None:
     op.drop_table("chartes")
     op.drop_table("partner_documents")
     op.drop_table("contestations")
+    op.drop_column("partners", "motif_refus")
     op.drop_column("partners", "charte_version_signee")
     op.drop_column("leads", "contacte_le")
     op.drop_column("leads", "facturable")

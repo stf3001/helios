@@ -71,6 +71,10 @@ async def _effacer(ids) -> None:
         for d in await s.scalars(select(PartnerDocument).where(PartnerDocument.partner_id.in_(pids))):
             if d.path != "-" and DOCS_DIR in Path(d.path).parents:
                 Path(d.path).unlink(missing_ok=True)
+        for pid in pids:
+            dossier = DOCS_DIR / str(pid)
+            if dossier.is_dir() and not any(dossier.iterdir()):
+                dossier.rmdir()
         await s.execute(text("DELETE FROM leads WHERE house_id = :h"), {"h": ids["house"]})
         if pids:
             await s.execute(text("DELETE FROM partners WHERE id = ANY(:p)"), {"p": pids})
