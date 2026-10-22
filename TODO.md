@@ -1119,6 +1119,15 @@ justes. Reste au LLM, et donc à ce point : un foyer SANS bloc puissance (audit 
 modèle local une puissance inventée (« 20 kW à 40 kW »), malgré la consigne. Débrief :
 `debriefs/2026-10-22-chat-reponse-preaudit.md`.
 
+**Mise à jour du 22/10/2026 (série 10)** : l'audit ancien ne passe plus par le LLM pour la
+puissance. Un foyer connecté sans bloc puissance (audit v2.5 ou aucun pré-audit) reçoit
+l'invitation à refaire ou faire son pré-audit (`chat_preaudit_ancien`, `chat_sans_preaudit`) ;
+le solaire, la borne, la clim et le compteur ne sont plus comparés à la plage de PAC. Vérifié
+par les vraies routes. Reste au LLM, et donc à ce point : sur ces autres puissances, le modèle
+local répond mal (borne « un peu faible pour une maison de cette taille » ; clim : il ressort
+de lui-même la plage de PAC de son contexte et invente des puissances de chaudière). Débrief :
+`debriefs/2026-10-22-chat-garde-fous.md`.
+
 ### [x] 43. Carnet, lot 6 : le « Dossier de la maison » en PDF — fait le 21/10/2026
 
 **Vérifié à l'œil** sur trois maisons rendues en image (code postal seul : 1 page ; moyenne :

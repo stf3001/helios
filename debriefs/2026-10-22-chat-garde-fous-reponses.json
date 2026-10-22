@@ -1,0 +1,90 @@
+[
+ {
+  "foyer": "v27",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\nAu jour le plus froid de référence (-5 °C), votre maison demande entre 7,3 et 8,5 kW de chauffage. Le calcul tiré de votre consommation réelle (8,5 kW) est le plus juste ; le calcul au volume (7,3 kW) sert de repère de prudence.\nUne pompe à chaleur air/eau d'environ 7 à 10 kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v25",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Votre pré-audit du 22/10/2026 ne calcule pas encore la puissance de chauffage de votre maison. Refaites-le depuis votre espace : il donnera la puissance, la plage de pompe à chaleur et, si vos pièces sont saisies, le bilan de vos radiateurs.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "sans",
+  "question": "Quelle puissance de pompe à chaleur pour ma maison ?",
+  "reponse": "Pour connaître la puissance de chauffage de votre maison, faites votre pré-audit depuis votre espace : il la calcule à partir de votre fiche, avec la plage de pompe à chaleur qui conviendrait et, si vos pièces sont saisies, le bilan de vos radiateurs.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ },
+ {
+  "foyer": "v27",
+  "question": "Quelle puissance de panneaux solaires pour ma maison ?",
+  "reponse": "Pour estimer la puissance de panneaux solaires qui pourraient couvrir une partie de la consommation d'électricité de votre maison, nous utiliserons le simulateur solaire pré-rempli avec votre fiche.\n\nLe simulateur solaire est disponible en cliquant sur le lien « /simulateur-solaire ».",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Une borne de 7 kW, c'est assez ?",
+  "reponse": "Non, la borne de 7 kW est un peu faible pour une maison de cette taille.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Une clim de 3,5 kW pour ma chambre ?",
+  "reponse": "Pour une clim de 3,5 kW pour votre chambre, je vous propose quelques options de chauffage :\n\n*   **Pompe à chaleur air/eau :** une pompe à chaleur air/eau d'environ 7 à 10 kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.\n*   **Chaudière à condensat :** une chaudière à condensat d'environ 5 à 7 kW peut être une bonne option.\n*   **Boiler à gaz :** une chaudière à gaz d'environ 3 à 5 kW peut être suffisante, mais gardez à l'esprit que le gaz coûte cher.\n\nCes chiffres sont basés sur les calculs ci-dessus et peuvent varier en fonction de votre maison et de vos besoins spécifiques.\n\nPouvez-vous me dire d'où je peux obtenir un devis et quel est le coût estimé de l'installation de cette solution ?",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": true
+   }
+  ],
+  "model_used": "local"
+ },
+ {
+  "foyer": "v27",
+  "question": "Un installateur me propose 14 kW, c'est normal ?",
+  "reponse": "D'après votre pré-audit du 22/10/2026 :\n\n14 kW, c'est au-dessus de la plage que calcule votre pré-audit (7 à 10 kW). Demandez à l'installateur sur quoi repose cette puissance : une machine trop puissante coûte plus cher et fonctionne moins bien.",
+  "flux": [
+   {
+    "mode": "connecte",
+    "simplified": false,
+    "instant": true
+   }
+  ],
+  "model_used": "preaudit"
+ }
+]
