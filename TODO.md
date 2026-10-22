@@ -1317,6 +1317,18 @@ scripts.charger_charte` sur la base de production. Elle est déjà en vigueur su
 pour vérifier le lot avec les partenaires « Démo ». À reporter aussi dans le doc 01 (« Loyauté
 envers la plateforme » y parle encore des commissions).
 
+### [x] 69. Mises en relation, lot 4 : les relevés mensuels — fait le 22/10/2026
+
+Relevé par partenaire et par mois de transmission (heure de Paris), provisoire puis clos par
+l'administration (au plus tôt le 8 du mois suivant, aucune contestation en attente), figé en JSON
+et PDF ; export CSV. Pas une facture (migration 0039). Débrief : `debriefs/2026-10-22-mer-lot4.md`.
+
+### [ ] 70. Brancher la facturation légale sur les relevés clos, une fois la SAS créée
+
+Le relevé clos est l'instantané à facturer : il manque la numérotation continue, les mentions
+obligatoires, le n° de TVA d'Hélios et la conservation légale. `mer_tva_taux` (20 %) est indicatif.
+À reprendre avec l'expert-comptable ; rien n'est facturé d'ici là.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
