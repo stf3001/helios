@@ -9,6 +9,12 @@ Date de référence d'une échéance, dans cet ordre : dernière fois faite (jou
 date de pose, 1er juillet de l'année de pose (SUPPOSÉE), sinon inconnue → « à planifier ».
 Sans journal, aucun roulement : une échéance passée reste « en retard », puisque rien ne
 dit que l'entretien a été fait.
+
+Lot 8 : chaque échéance dit si elle revient au foyer (`pour_moi`) et, sinon, pourquoi
+(`mention`) — d'après `statut`, `type_logement` et `chauffage_collectif` de la fiche. Une
+tâche qui ne revient pas au foyer reste AFFICHÉE dans le calendrier, en lecture ; seul le
+bloc « À faire » l'écarte. Un statut inconnu compte comme propriétaire occupant : on ne
+cache jamais une obligation à qui pourrait en être redevable.
 """
 import json
 import logging
@@ -24,10 +30,11 @@ CHEMIN_TABLE = Path(__file__).resolve().parents[2] / "data" / "entretien" / "tac
 
 REGLES = ("mois", "annee_civile")
 QUI = ("soi", "pro", "soi_ou_pro")
+RESPONSABLES = ("occupant", "proprietaire")
 NATURES = ("obligation", "recommande")
 TYPES_SOURCE = ("officiel", "guide", "fabricant", "expertise")
 _CHAMPS = {
-    "id", "applique_a", "libelle", "regle", "frequence_mois", "n_annees", "puissance_kw", "qui", "nature",
+    "id", "responsable", "applique_a", "libelle", "regle", "frequence_mois", "n_annees", "puissance_kw", "qui", "nature",
     "mois_preferes", "mois_actifs", "source", "fiche_kb", "valide_le", "note",
 }
 
@@ -38,6 +45,18 @@ QUESTIONS_DE_MAISON = {"zone_old": "Vérifiez si votre terrain est concerné"}
 
 # Ordre d'affichage : ce qui presse d'abord ; « à planifier » avant « plus tard », car une
 # date inconnue peut cacher un retard.
+# Ce que ne voit pas un appartement : il n'a ni terrain à débroussailler ni assainissement
+# individuel (décision du 20/10/2026).
+NON_APPLICABLES_APPARTEMENT = ("debroussaillement", "spanc-controle")
+# En chauffage collectif, la copropriété entretient la chaudière commune. Seuls les appareils
+# de chauffage qui PEUVENT être cette chaudière sont concernés : un poêle ou une PAC
+# individuelle reste à la charge du foyer. « autre » couvre la sous-station d'un réseau.
+TYPES_CHAUFFAGE_COLLECTIF = ("chaudiere_gaz", "chaudiere_fioul", "chaudiere_bois", "autre")
+
+# Recopiées de la décision du 20/10/2026, telles quelles.
+MENTION_PROPRIETAIRE = "À la charge de votre propriétaire, sauf clause contraire du bail."
+MENTION_COPROPRIETE = "Assuré par la copropriété."
+
 ORDRE_STATUTS = ("en_retard", "ce_mois", "bientot", "a_planifier", "plus_tard")
 JOURS_CE_MOIS = 30
 JOURS_BIENTOT = 90
@@ -101,6 +120,8 @@ def _valider(t: dict, ids_vus: set) -> None:
                 and all(isinstance(p[k], (int, float)) for k in p) and p["min"] <= p["max"]):
             raise TacheInvalide("`puissance_kw` doit valoir {\"min\": …, \"max\": …} avec min ≤ max")
 
+    if t.get("responsable") not in RESPONSABLES:
+        raise TacheInvalide(f"`responsable` inconnu : {t.get('responsable')!r} (attendu : occupant ou proprietaire)")
     if t.get("qui") not in QUI:
         raise TacheInvalide(f"`qui` inconnu : {t.get('qui')!r}")
     if t.get("nature") not in NATURES:
@@ -293,14 +314,31 @@ def verifications(taches, maison) -> list[dict]:
     return lignes
 
 
-def _ligne(tache, equipement, reference, provenance, aujourd_hui, mention) -> dict:
+def _a_qui(tache: dict, equipement, maison) -> tuple[bool, str | None]:
+    """(revient-elle au foyer, et sinon la phrase qui dit pourquoi)."""
+    if maison is None:
+        return True, None
+    if (_champ(maison, "type_logement") == "appartement" and _champ(maison, "chauffage_collectif") == "oui"
+            and equipement is not None and _champ(equipement, "categorie") == "chauffage"
+            and _champ(equipement, "type") in TYPES_CHAUFFAGE_COLLECTIF):
+        return False, MENTION_COPROPRIETE
+    if _champ(maison, "statut") == "locataire" and tache["responsable"] == "proprietaire":
+        return False, MENTION_PROPRIETAIRE
+    return True, None
+
+
+def _ligne(tache, equipement, reference, provenance, aujourd_hui, mention, maison=None) -> dict:
     echeance = _echeance(tache, reference)
+    pour_moi, mention_qui = _a_qui(tache, equipement, maison)
     annee_civile = tache.get("regle", "mois") == "annee_civile"
     return {
         "tache_id": tache["id"],
         "equipement_id": _champ(equipement, "id") if equipement is not None else None,
         "libelle": tache["libelle"],
         "qui": tache["qui"],
+        "responsable": tache["responsable"],
+        "pour_moi": pour_moi,
+        "mention": mention_qui,
         "nature": tache["nature"],
         "source": tache.get("source"),
         "fiche_kb": tache.get("fiche_kb"),
@@ -330,16 +368,20 @@ def echeances(equipements, taches, derniers_faits, aujourd_hui: date, maison=Non
     """Une échéance par (équipement en service × tâche qui s'y applique), plus les tâches de maison.
 
     `derniers_faits` : {(tache_id, equipement_id ou None) : date}, vide tant que le journal
-    (lot 4) n'existe pas. Une tâche hors de ses `mois_actifs` n'est pas renvoyée.
+    (lot 4) n'existe pas. Une tâche hors de ses `mois_actifs` n'est pas renvoyée, ni, pour un
+    appartement, celles de `NON_APPLICABLES_APPARTEMENT`.
     """
+    appartement = maison is not None and _champ(maison, "type_logement") == "appartement"
     lignes = []
     for tache in taches:
         if tache.get("mois_actifs") and aujourd_hui.month not in tache["mois_actifs"]:
             continue
+        if appartement and tache["id"] in NON_APPLICABLES_APPARTEMENT:
+            continue
         if "maison" in tache["applique_a"]:
             if _maison_concernee(tache, maison):
                 reference, provenance = _reference(tache["id"], None, derniers_faits)
-                lignes.append(_ligne(tache, None, reference, provenance, aujourd_hui, None))
+                lignes.append(_ligne(tache, None, reference, provenance, aujourd_hui, None, maison))
             continue
         for eq in equipements:
             if _champ(eq, "en_service") is False or not _s_applique(tache, eq):
@@ -348,5 +390,5 @@ def echeances(equipements, taches, derniers_faits, aujourd_hui: date, maison=Non
             if not vaut:
                 continue
             reference, provenance = _reference(tache["id"], eq, derniers_faits)
-            lignes.append(_ligne(tache, eq, reference, provenance, aujourd_hui, mention))
+            lignes.append(_ligne(tache, eq, reference, provenance, aujourd_hui, mention, maison))
     return sorted(lignes, key=_cle_tri)

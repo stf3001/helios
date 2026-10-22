@@ -37,9 +37,9 @@ def _table(tmp_path, *taches) -> Path:
 # ---------------------------------------------------------------- chargeur
 
 def test_la_vraie_table_se_charge_en_mode_strict():
-    """La table relue par Stéphane (lot 3 bis) : 18 tâches, aucune écartée par le chargeur."""
+    """La table relue par Stéphane (lot 3 bis, `responsable` au lot 8) : 18 tâches, aucune écartée par le chargeur."""
     table = charger_table(CHEMIN_TABLE, strict=True)
-    assert len(table["taches"]) == 18 and table["version"] == "2026-10-20"
+    assert len(table["taches"]) == 18 and table["version"] == "2026-10-22"
     obligations = [t for t in table["taches"] if t["nature"] == "obligation"]
     assert {t["id"] for t in obligations} == {
         "chaudiere-entretien", "pac-entretien", "poele-entretien", "ramonage", "spanc-controle", "debroussaillement"}
@@ -51,7 +51,7 @@ def test_la_table_d_exemple_se_charge_en_mode_strict():
 
 
 BASE = {"id": "t", "applique_a": {"categorie": "ecs", "types": []}, "libelle": "L", "frequence_mois": 12,
-        "qui": "soi", "nature": "recommande", "valide_le": "2000-01-01"}
+        "responsable": "occupant", "qui": "soi", "nature": "recommande", "valide_le": "2000-01-01"}
 OFFICIEL = {"type": "officiel", "titre": "Texte", "url": "https://exemple.invalid"}
 
 
@@ -60,6 +60,8 @@ OFFICIEL = {"type": "officiel", "titre": "Texte", "url": "https://exemple.invali
     ({"nature": "obligation", "source": {**OFFICIEL, "type": "guide"}}, "obligation exige"),
     ({"nature": "obligation", "source": {**OFFICIEL, "url": None}}, "obligation exige"),
     ({"valide_le": None}, "relecture"),
+    ({"responsable": None}, "responsable"),
+    ({"responsable": "bailleur"}, "responsable"),
     ({"valide_le": "20/10/2026"}, "relecture"),
     ({"applique_a": {"categorie": "ecs", "types": ["chaudiere_gaz"]}}, "type inconnu"),
     ({"applique_a": {"categorie": "piscine"}}, "categorie"),

@@ -31,6 +31,10 @@ production, elle est ignorée et une ligne est écrite dans le journal (`helios.
   - `annee_civile` + `n_annees` (entier ≥ 1) : échéance = 31 décembre de (année de référence + n).
 - `puissance_kw` : `{"min": 4, "max": 70}`, facultatif, tâches d'équipement seulement. Puissance
   connue (unité `kW`) hors plage → tâche absente ; inconnue → tâche affichée avec une mention.
+- `responsable` : `occupant` ou `proprietaire` — qui en a la charge quand le foyer est
+  locataire. **Obligatoire.** Un locataire voit les tâches `proprietaire` en lecture (« À la
+  charge de votre propriétaire, sauf clause contraire du bail ») et elles n'entrent pas dans
+  son bloc « À faire ». Un propriétaire occupant voit tout comme le sien.
 - `qui` : `soi`, `pro` ou `soi_ou_pro`.
 - `nature` : `obligation` ou `recommande`.
 - `mois_preferes` : mois (1-12) conseillés. Règle `mois` : l'échéance est reportée au 1er du

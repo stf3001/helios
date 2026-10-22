@@ -4,6 +4,10 @@ Le bloc ne calcule rien : il CHOISIT parmi les échéances du moteur d'entretien
 (`services/entretien.py`) et les garanties (`services/garanties.py`). Règle de contenu
 (décision de Stéphane) : tâches en retard et du mois, puis jusqu'à 3 « bientôt », puis les
 garanties qui expirent bientôt ; au plus 6 lignes, le reste est derrière « Tout voir ».
+
+Lot 8 : seules les échéances `pour_moi` y entrent — une tâche à la charge du propriétaire
+d'un locataire, ou une chaudière assurée par la copropriété, reste lisible dans le
+calendrier mais ne relance pas le foyer.
 """
 from datetime import date
 
@@ -17,6 +21,7 @@ def _champ(obj, nom):
 
 def a_faire(echeances: list[dict], garanties: list[dict], aujourd_hui: date, table_vide: bool = False) -> dict:
     """`echeances` arrive déjà trié par le moteur ; on garde son ordre."""
+    echeances = [e for e in echeances if e.get("pour_moi", True)]
     urgentes = [e for e in echeances if e["statut"] in ("en_retard", "ce_mois")]
     bientot = [e for e in echeances if e["statut"] == "bientot"][:MAX_BIENTOT]
     lignes = [{"kind": "tache", **e} for e in urgentes + bientot]

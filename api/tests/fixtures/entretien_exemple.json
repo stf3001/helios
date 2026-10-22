@@ -4,40 +4,40 @@
   "taches": [
     {"id": "exemple-pac-24-mois", "applique_a": {"categorie": "chauffage", "types": ["PAC_air_eau"]},
      "libelle": "Exemple : tâche tous les 24 mois", "regle": "mois", "frequence_mois": 24,
-     "qui": "pro", "nature": "recommande", "valide_le": "2000-01-01"},
+     "responsable": "occupant", "qui": "pro", "nature": "recommande", "valide_le": "2000-01-01"},
 
     {"id": "exemple-chaudiere-annee-civile", "applique_a": {"categorie": "chauffage", "types": ["chaudiere_gaz"]},
      "libelle": "Exemple : obligation par année civile", "regle": "annee_civile", "n_annees": 1,
-     "puissance_kw": {"min": 4, "max": 400}, "qui": "pro", "nature": "obligation", "mois_preferes": [9, 10],
+     "puissance_kw": {"min": 4, "max": 400}, "responsable": "occupant", "qui": "pro", "nature": "obligation", "mois_preferes": [9, 10],
      "source": {"type": "officiel", "titre": "Texte d'exemple", "url": "https://exemple.invalid/texte"},
      "valide_le": "2000-01-01"},
 
     {"id": "exemple-clim-printemps", "applique_a": {"categorie": ["chauffage", "clim"], "types": ["split", "PAC_air_air"]},
      "libelle": "Exemple : tâche reportée au printemps", "frequence_mois": 12,
-     "qui": "soi_ou_pro", "nature": "recommande", "mois_preferes": [4, 5], "valide_le": "2000-01-01"},
+     "responsable": "occupant", "qui": "soi_ou_pro", "nature": "recommande", "mois_preferes": [4, 5], "valide_le": "2000-01-01"},
 
     {"id": "exemple-clim-ete-seulement", "applique_a": {"categorie": "clim", "types": ["split"]},
      "libelle": "Exemple : tâche active l'été seulement", "regle": "mois", "frequence_mois": 1,
-     "mois_actifs": [6, 7, 8], "qui": "soi", "nature": "recommande",
+     "mois_actifs": [6, 7, 8], "responsable": "occupant", "qui": "soi", "nature": "recommande",
      "source": {"type": "guide", "titre": "Guide d'exemple", "url": null}, "valide_le": "2000-01-01"},
 
     {"id": "exemple-vmc-toute-categorie", "applique_a": {"categorie": "ventilation", "types": []},
      "libelle": "Exemple : toute la catégorie", "regle": "mois", "frequence_mois": 6,
-     "qui": "soi", "nature": "recommande", "fiche_kb": "gestes_equipements", "valide_le": "2000-01-01"},
+     "responsable": "occupant", "qui": "soi", "nature": "recommande", "fiche_kb": "gestes_equipements", "valide_le": "2000-01-01"},
 
     {"id": "exemple-maison", "applique_a": {"maison": {}},
      "libelle": "Exemple : tâche de la maison", "regle": "mois", "frequence_mois": 6,
-     "qui": "soi", "nature": "recommande", "valide_le": "2000-01-01"},
+     "responsable": "occupant", "qui": "soi", "nature": "recommande", "valide_le": "2000-01-01"},
 
     {"id": "exemple-maison-sous-condition", "applique_a": {"maison": {"type_logement": "maison"}},
      "libelle": "Exemple : maison sous condition de fiche", "regle": "mois", "frequence_mois": 12,
-     "qui": "soi_ou_pro", "nature": "obligation",
+     "responsable": "occupant", "qui": "soi_ou_pro", "nature": "obligation",
      "source": {"type": "officiel", "titre": "Texte d'exemple", "url": "https://exemple.invalid/texte"},
      "valide_le": "2000-01-01"},
 
     {"id": "exemple-maison-zone", "applique_a": {"maison": {"zone_old": "oui"}},
      "libelle": "Exemple : obligation selon la zone du terrain", "regle": "mois", "frequence_mois": 12,
-     "qui": "soi_ou_pro", "nature": "obligation",
+     "responsable": "occupant", "qui": "soi_ou_pro", "nature": "obligation",
      "source": {"type": "officiel", "titre": "Texte d'exemple", "url": "https://exemple.invalid/zone"},
      "valide_le": "2000-01-01"}
   ]
