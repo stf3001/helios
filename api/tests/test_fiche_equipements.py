@@ -1,292 +1,197 @@
-"""Carnet, lot 7 : la correspondance équipement → fiche Maison, en fonctions pures.
+"""Carnet, lot 7 : la fiche suit l'équipement relié — les fonctions pures, sans base.
 
-Sans base : des objets jetables portent les mêmes attributs que les modèles.
-
-Le test de couverture est le plus important du module — il interdit qu'une traduction
-sorte une valeur que `schemas/house.py` refuserait, et qu'un type d'équipement reçoive
-une traduction inventée.
+Le parcours par l'API (même transaction, 409, 400 sur un champ verrouillé) est tenu par
+`test_fiche_equipements_api.py`, contre la vraie base.
 """
+
 import uuid
 from datetime import date
 from types import SimpleNamespace
-from typing import get_args
 
 import pytest
 
-from app.models.equipement import ORIGINES_FICHE, TYPES_PAR_CATEGORIE
-from app.schemas.house import Chauffage, Ecs, Ventilation
+from app.models.house import House
 from app.services import fiche_equipements as fe
+from app.services.audit_engine import run_audit
+from app.services.suggestions_fiche import suggestions
 
 AUJOURD_HUI = date(2026, 10, 22)
 
-# Tous les champs de fiche que le lot touche, pour que `getattr` ne mente jamais.
-_CHAMPS_FICHE = dict.fromkeys(fe.LIBELLES_CHAMPS, None) | {"clim_nb_pieces": None}
+
+def eq(origine, categorie, type_, annee=None, date_pose=None, en_service=True):
+    return SimpleNamespace(id=uuid.uuid4(), origine_fiche=origine, categorie=categorie, type=type_,
+                           annee_pose=annee, date_pose=date_pose, en_service=en_service)
 
 
-def eq(origine, categorie, type_, **kw):
-    champs = dict(id=uuid.uuid4(), origine_fiche=origine, categorie=categorie, type=type_,
-                  en_service=True, date_pose=None, annee_pose=None)
+def maison(**kw):
+    champs = {c: None for c in fe.LIBELLES_CHAMPS}
     champs.update(kw)
     return SimpleNamespace(**champs)
 
 
-def maison(**kw):
-    return SimpleNamespace(**(_CHAMPS_FICHE | kw))
+def appliquer(m, champs):
+    for c, v in champs.items():
+        setattr(m, c, v)
+    return m
 
 
-# — La table de correspondance couvre tout, et ne sort rien d'invalide —
+# — Chaque origine : création, année, hors service, remplacement —
 
-def test_chaque_origine_de_la_fiche_est_connue():
-    assert set(fe.ORIGINES) == set(ORIGINES_FICHE)
-
-
-@pytest.mark.parametrize("categorie,literal", [
-    ("chauffage", Chauffage), ("ecs", Ecs), ("ventilation", Ventilation),
+@pytest.mark.parametrize("origine,categorie,type_,remplacant,attendu", [
+    ("chauffage_principal", "chauffage", "chaudiere_gaz", "PAC_air_eau",
+     {"chauffage_principal": "gaz", "chauffage_principal_annee": 2015}),
+    ("chauffage_appoint", "chauffage", "poele_granules", "convecteurs",
+     {"chauffage_appoint": "bois", "chauffage_appoint_annee": 2015}),
+    ("ecs", "ecs", "thermodynamique", "ballon_elec", {"ecs": "thermodynamique", "ecs_annee": 2015}),
+    ("clim", "clim", "multisplit", "split", {"clim": True, "clim_type": "Multisplit"}),
+    ("ventilation", "ventilation", "VMC_double", "VMC_simple", {"ventilation": "VMC_double"}),
 ])
-def test_aucune_valeur_de_fiche_inventee(categorie, literal):
-    permises = set(get_args(literal))
-    for type_, acceptees in fe._TYPE_VERS_FICHE[categorie].items():
-        assert type_ in TYPES_PAR_CATEGORIE[categorie], type_
-        assert set(acceptees) <= permises, f"{type_} → {acceptees}"
+def test_chaque_origine_suit_son_equipement(origine, categorie, type_, remplacant, attendu):
+    champ_annee = fe.ORIGINES[origine]["annee"]
+    e = eq(origine, categorie, type_, annee=2015)
+    m = maison()
+    assert fe.a_ecrire(m, [e]) == attendu
+    assert fe.champs_verrouilles([e]) == list(attendu)
+
+    # Une date exacte l'emporte sur l'année seule.
+    e.date_pose = date(2018, 3, 1)
+    if champ_annee:
+        assert fe.a_ecrire(m, [e])[champ_annee] == 2018
+
+    # Hors service sans remplaçant : ce qu'il fixait est vidé, plus rien n'est verrouillé.
+    appliquer(m, fe.a_ecrire(m, [e]))
+    assert fe.champs_a_vider(e) == dict.fromkeys(attendu)
+    e.en_service = False
+    appliquer(m, fe.champs_a_vider(e))
+    assert all(getattr(m, c) is None for c in attendu)
+    assert fe.champs_verrouilles([e]) == []
+
+    # Le remplaçant hérite de l'origine : la fiche prend SES valeurs.
+    nouveau = eq(origine, categorie, remplacant, annee=2026)
+    appliquer(m, fe.a_ecrire(m, [e, nouveau]))
+    assert fe.ecarts(m, [e, nouveau]) == []
+    assert fe.champs_fiche_depuis(nouveau) == {c: getattr(m, c) for c in attendu}
+    if champ_annee:
+        assert getattr(m, champ_annee) == 2026
 
 
-@pytest.mark.parametrize("categorie", ["chauffage", "ecs", "ventilation"])
-def test_les_seuls_types_sans_equivalent_sont_des_autres(categorie):
-    """Un type oublié laisserait la fiche libre en silence, alors que le foyer a un appareil."""
-    manquants = set(TYPES_PAR_CATEGORIE[categorie]) - set(fe._TYPE_VERS_FICHE[categorie])
-    assert manquants <= {"autre"}
-
-
-def test_les_libelles_de_clim_sont_des_types_connus_et_tiennent_dans_la_fiche():
-    # `clim_type` est un texte libre borné à 50 caractères (`schemas/house.py`).
-    assert set(fe.LIBELLES_CLIM) <= set(TYPES_PAR_CATEGORIE["clim"])
-    assert all(len(v) <= 50 for v in fe.LIBELLES_CLIM.values())
-
-
-def test_le_sens_inverse_retombe_sur_les_memes_codes():
-    """`FICHE_VERS_TYPE` sert les suggestions du lot 1 : un aller-retour ne doit pas dériver."""
-    for code_fiche, type_eq in fe.FICHE_VERS_TYPE.items():
-        assert code_fiche in fe._TYPE_VERS_FICHE["chauffage"].get(type_eq, ())
-
-
-# — Ce qu'un équipement fixe dans la fiche —
-
-def test_le_chauffage_fixe_son_code_et_son_annee():
-    assert fe.champs_fiche_depuis(eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee_pose=2016)) == {
-        "chauffage_principal": "gaz", "chauffage_principal_annee": 2016}
-
-
-def test_la_date_exacte_prime_sur_lannee_declaree():
-    champs = fe.champs_fiche_depuis(eq("ecs", "ecs", "thermodynamique",
-                                       date_pose=date(2021, 3, 4), annee_pose=1999))
-    assert champs == {"ecs": "thermodynamique", "ecs_annee": 2021}
-
-
-@pytest.mark.parametrize("type_", ["poele_bois", "poele_granules", "insert", "chaudiere_bois"])
-def test_plusieurs_appareils_tombent_sur_le_meme_code(type_):
-    assert fe.champs_fiche_depuis(eq("chauffage_appoint", "chauffage", type_))["chauffage_appoint"] == "bois"
-
-
-def test_la_clim_pose_le_booleen_et_le_libelle_sans_annee():
-    champs = fe.champs_fiche_depuis(eq("clim", "clim", "gainable", annee_pose=2019))
-    assert champs == {"clim": True, "clim_type": "Gainable"}
-    # La fiche n'a pas d'année de clim, et le nombre de pièces reste au foyer.
-    assert "clim_nb_pieces" not in champs
-
-
-def test_une_clim_autre_ne_fixe_que_sa_presence():
-    assert fe.champs_fiche_depuis(eq("clim", "clim", "autre")) == {"clim": True}
-
-
-def test_un_equipement_sans_date_vide_lannee_de_la_fiche():
-    """Règle STRICTE après la reprise : l'équipement gagne aussi quand il se tait."""
-    assert fe.champs_fiche_depuis(eq("chauffage_principal", "chauffage", "convecteurs")) == {
-        "chauffage_principal": "elec_direct", "chauffage_principal_annee": None}
-
-
-@pytest.mark.parametrize("equipement", [
-    eq(None, "chauffage", "chaudiere_gaz"),
-    eq("ecs", "ecs", "autre"),                     # décision 3 : pas d'équivalent dans la fiche
-    eq("ventilation", "ventilation", "autre"),
-    eq("ecs", "chauffage", "chaudiere_gaz"),       # origine et catégorie incohérentes
-])
-def test_ne_fixe_rien(equipement):
-    assert fe.champs_fiche_depuis(equipement) == {}
-
-
-def test_un_reseau_de_chaleur_nest_pas_ecrase_par_un_autre():
-    """Décision 1 : « reseau » se traduit déjà en « autre », il n'y a rien à corriger."""
-    champs = fe.champs_fiche_depuis(eq("chauffage_principal", "chauffage", "autre", annee_pose=2010),
-                                    maison(chauffage_principal="reseau"))
-    assert champs["chauffage_principal"] == "reseau"
-
-
-def test_un_autre_chauffage_corrige_une_fiche_qui_dit_autre_chose():
-    champs = fe.champs_fiche_depuis(eq("chauffage_principal", "chauffage", "autre"),
-                                    maison(chauffage_principal="gaz"))
-    assert champs["chauffage_principal"] == "autre"
-
-
-# — Les verrous —
-
-@pytest.mark.parametrize("equipement", [
-    eq("ecs", "ecs", "autre"), eq("ventilation", "ventilation", "autre"),
-])
-def test_un_type_sans_equivalent_ne_verrouille_rien(equipement):
-    """Décision 3 : le foyer peut avoir une autre solution que celles que le carnet nomme."""
-    assert fe.champs_verrouilles([equipement]) == []
-
-
-def test_une_clim_autre_laisse_son_type_libre():
-    assert fe.champs_verrouilles([eq("clim", "clim", "autre")]) == ["clim"]
-
-
-def test_les_verrous_couvrent_les_champs_de_lorigine():
-    equipements = [eq("chauffage_principal", "chauffage", "PAC_air_eau"), eq("clim", "clim", "split")]
-    assert set(fe.champs_verrouilles(equipements)) == {
-        "chauffage_principal", "chauffage_principal_annee", "clim", "clim_type"}
-
-
-def test_un_ancien_equipement_ne_verrouille_rien():
-    assert fe.champs_verrouilles([eq("ecs", "ecs", "ballon_elec", en_service=False)]) == []
-
-
-def test_le_reseau_de_chaleur_reste_verrouille_malgre_labsence_decart():
-    """Décision 1 : rien à réécrire, mais la fiche ne peut plus contredire l'appareil."""
-    equipements = [eq("chauffage_principal", "chauffage", "autre", annee_pose=2010)]
-    assert "chauffage_principal" in fe.champs_verrouilles(equipements)
-    assert fe.ecarts(maison(chauffage_principal="reseau", chauffage_principal_annee=2010),
-                     equipements) == []
-
-
-# — Les écarts et ce qu'il faut écrire —
-
-def test_ecart_sur_le_type_et_sur_lannee():
-    trouves = fe.ecarts(maison(chauffage_principal="fioul", chauffage_principal_annee=1998),
-                        [eq("chauffage_principal", "chauffage", "PAC_air_eau", annee_pose=2016)])
-    assert {e["champ"]: (e["fiche"], e["equipement"]) for e in trouves} == {
-        "chauffage_principal": ("fioul", "PAC_air_eau"),
-        "chauffage_principal_annee": (1998, 2016),
-    }
-
-
-def test_aucun_ecart_quand_la_fiche_est_deja_juste():
-    assert fe.ecarts(maison(ecs="solaire", ecs_annee=2020),
-                     [eq("ecs", "ecs", "solaire", annee_pose=2020)]) == []
-
-
-def test_la_clim_du_carnet_corrige_une_fiche_muette():
-    trouves = fe.ecarts(maison(clim=False), [eq("clim", "clim", "multisplit")])
-    assert {e["champ"] for e in trouves} == {"clim", "clim_type"}
-
-
-def test_a_ecrire_rend_aussi_les_valeurs_inchangees():
-    equipements = [eq("ecs", "ecs", "solaire", annee_pose=2020)]
-    assert fe.a_ecrire(maison(ecs="solaire", ecs_annee=2020), equipements) == {
-        "ecs": "solaire", "ecs_annee": 2020}
-
-
-def test_un_ancien_equipement_nimpose_plus_rien():
-    assert fe.a_ecrire(maison(ecs="gaz"), [eq("ecs", "ecs", "solaire", en_service=False)]) == {}
-
-
-# — Vider —
-
-def test_vider_rend_les_champs_que_lequipement_fixait():
-    assert fe.champs_a_vider(eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee_pose=2016)) == {
-        "chauffage_principal": None, "chauffage_principal_annee": None}
-    assert fe.champs_a_vider(eq("ventilation", "ventilation", "VMC_double")) == {"ventilation": None}
-
-
-def test_vider_ne_touche_pas_un_champ_quil_ne_fixait_pas():
-    assert fe.champs_a_vider(eq("ecs", "ecs", "autre")) == {}
-    assert "clim_nb_pieces" not in fe.champs_a_vider(eq("clim", "clim", "split"))
-
-
-# — Le refus d'un PATCH sur un champ verrouillé —
-
-def test_renvoyer_la_meme_valeur_est_permis():
-    """`saveBlock` de `FicheMaison.tsx` renvoie TOUT le bloc, champs verrouillés compris."""
-    equipements = [eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee_pose=2016)]
-    m = maison(chauffage_principal="gaz", chauffage_principal_annee=2016, regulation="thermostat")
-    assert fe.refus_patch(m, equipements, {"chauffage_principal": "gaz",
-                                           "chauffage_principal_annee": 2016,
-                                           "regulation": "connecte"}) == []
-
-
-def test_changer_un_champ_verrouille_est_refuse():
-    equipements = [eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee_pose=2016)]
+def test_un_equipement_sans_annee_vide_l_annee_de_la_fiche():
     m = maison(chauffage_principal="gaz", chauffage_principal_annee=2016)
-    assert fe.refus_patch(m, equipements, {"chauffage_principal": "fioul"}) == ["chauffage_principal"]
-    assert fe.refus_patch(m, equipements, {"chauffage_principal_annee": None}) == ["chauffage_principal_annee"]
+    assert fe.a_ecrire(m, [eq("chauffage_principal", "chauffage", "chaudiere_gaz")]) == {
+        "chauffage_principal": "gaz", "chauffage_principal_annee": None}
 
 
-def test_un_champ_libre_passe_toujours():
-    equipements = [eq("clim", "clim", "split")]
-    m = maison(clim=True, clim_type="Split", clim_nb_pieces=2)
-    assert fe.refus_patch(m, equipements, {"clim_nb_pieces": 4, "ecs": "ballon_elec"}) == []
+# — Les décisions du 22/10/2026 —
+
+@pytest.mark.parametrize("fiche", ["reseau", "autre"])
+def test_un_chauffage_autre_ne_reecrit_pas_un_reseau_de_chaleur(fiche):
+    m = maison(chauffage_principal=fiche, chauffage_principal_annee=2000)
+    e = eq("chauffage_principal", "chauffage", "autre", annee=2000)
+    assert fe.ecarts(m, [e]) == []
+    assert fe.a_ecrire(m, [e])["chauffage_principal"] == fiche
+    assert "chauffage_principal" in fe.champs_verrouilles([e])  # verrouillé quand même
+    # Face à une autre valeur, « autre » est bien écrit.
+    assert fe.a_ecrire(maison(chauffage_principal="gaz"), [e])["chauffage_principal"] == "autre"
 
 
-# — La reprise des données existantes (migration 0030) —
-
-def test_la_reprise_recopie_lannee_de_la_fiche_dans_un_equipement_sans_date():
-    """Décision 2 : à la reprise SEULEMENT, l'équipement muet hérite de l'année de la fiche."""
-    e = eq("chauffage_principal", "chauffage", "chaudiere_gaz")
-    m = maison(chauffage_principal="gaz", chauffage_principal_annee=2016)
-    plan = fe.reprise(m, [e], AUJOURD_HUI)
-    assert plan["annees"] == {e.id: 2016}
-    assert plan["fiche"] == {}  # l'année reprise referme l'écart
-    assert len(plan["journal"]) == 1
-    assert plan["journal"][0]["titre"] == "Fiche mise à jour depuis le carnet"
-    assert "2016" in plan["journal"][0]["note"]
+@pytest.mark.parametrize("origine,categorie", [("ecs", "ecs"), ("ventilation", "ventilation")])
+def test_un_type_sans_equivalent_laisse_le_champ_libre(origine, categorie):
+    m = maison(**{origine: "solaire" if origine == "ecs" else "naturelle"})
+    e = eq(origine, categorie, "autre", annee=2012)
+    assert fe.a_ecrire(m, [e]) == {}
+    assert fe.champs_verrouilles([e]) == []
+    assert fe.champs_a_vider(e) == {}  # ni verrouillé, ni vidé
+    assert fe.refus_patch(m, [e], {origine: "gaz"}) == []
 
 
-def test_la_reprise_fait_gagner_lequipement_et_consigne_lancienne_valeur():
-    e = eq("chauffage_principal", "chauffage", "PAC_air_eau", annee_pose=2021)
-    plan = fe.reprise(maison(chauffage_principal="fioul", chauffage_principal_annee=1998),
-                      [e], AUJOURD_HUI)
-    assert plan["annees"] == {}
-    assert plan["fiche"] == {"chauffage_principal": "PAC_air_eau", "chauffage_principal_annee": 2021}
-    assert len(plan["journal"]) == 1
-    note = plan["journal"][0]["note"]
-    assert "fioul" in note and "1998" in note
-    assert plan["journal"][0]["equipement_id"] == e.id
-    assert plan["journal"][0]["type"] == "autre"
+def test_une_clim_autre_verrouille_seulement_le_oui():
+    e = eq("clim", "clim", "autre")
+    assert fe.a_ecrire(maison(clim_type="Pompe de piscine"), [e]) == {"clim": True}
+    assert fe.champs_verrouilles([e]) == ["clim"]
 
 
-def test_la_reprise_ne_trouve_rien_quand_tout_concorde():
-    """Idempotence : relancée après elle-même, elle n'a plus rien à faire."""
-    e = eq("ecs", "ecs", "solaire", annee_pose=2020)
-    plan = fe.reprise(maison(ecs="solaire", ecs_annee=2020), [e], AUJOURD_HUI)
-    assert plan == {"annees": {}, "fiche": {}, "journal": []}
-
-
-def test_la_reprise_est_idempotente_sur_un_vrai_ecart():
-    e = eq("ecs", "ecs", "thermodynamique", annee_pose=2022)
-    m = maison(ecs="ballon_elec", ecs_annee=2005)
-    premier = fe.reprise(m, [e], AUJOURD_HUI)
-    for champ, valeur in premier["fiche"].items():
-        setattr(m, champ, valeur)
-    assert fe.reprise(m, [e], AUJOURD_HUI) == {"annees": {}, "fiche": {}, "journal": []}
-
-
-def test_la_reprise_ne_date_pas_un_equipement_sans_equivalent():
-    """Une eau chaude « autre » n'écrit rien : son année n'a pas à venir de la fiche."""
-    e = eq("ecs", "ecs", "autre")
-    plan = fe.reprise(maison(ecs="ballon_elec", ecs_annee=2005), [e], AUJOURD_HUI)
-    assert plan == {"annees": {}, "fiche": {}, "journal": []}
-    assert e.annee_pose is None
-
-
-def test_la_reprise_ignore_les_anciens_equipements():
-    e = eq("ecs", "ecs", "solaire", en_service=False)
-    plan = fe.reprise(maison(ecs="ballon_elec", ecs_annee=2005), [e], AUJOURD_HUI)
-    assert plan == {"annees": {}, "fiche": {}, "journal": []}
-
-
-def test_la_reprise_groupe_les_champs_dun_meme_equipement_en_une_entree():
+def test_le_nombre_de_pieces_climatisees_reste_modifiable():
+    m = maison(clim=True, clim_type="Split")
     e = eq("clim", "clim", "split")
-    plan = fe.reprise(maison(clim=False, clim_type=None), [e], AUJOURD_HUI)
-    assert plan["fiche"] == {"clim": True, "clim_type": "Split"}
-    assert len(plan["journal"]) == 1
-    assert "vide" in plan["journal"][0]["note"]
+    assert "clim_nb_pieces" not in fe.champs_verrouilles([e])
+    assert fe.refus_patch(m, [e], {"clim_nb_pieces": 3}) == []
+
+
+def test_une_origine_dans_la_mauvaise_categorie_ne_fixe_rien():
+    assert fe.champs_fiche_depuis(eq("ecs", "chauffage", "chaudiere_gaz")) == {}
+
+
+# — Le PATCH de la fiche —
+
+def test_le_patch_refuse_seulement_ce_qui_change():
+    m = maison(chauffage_principal="gaz", chauffage_principal_annee=2016, regulation=None)
+    e = eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee=2016)
+    # `saveBlock` renvoie tout le bloc : les mêmes valeurs passent.
+    assert fe.refus_patch(m, [e], {"chauffage_principal": "gaz", "chauffage_principal_annee": 2016,
+                                    "regulation": "thermostat"}) == []
+    assert fe.refus_patch(m, [e], {"chauffage_principal_annee": 2017}) == ["chauffage_principal_annee"]
+    assert fe.refus_patch(m, [e], {"chauffage_principal": None}) == ["chauffage_principal"]
+
+
+def test_un_equipement_hors_service_ne_verrouille_rien():
+    e = eq("chauffage_principal", "chauffage", "chaudiere_gaz", annee=2016, en_service=False)
+    assert fe.refus_patch(maison(chauffage_principal="gaz"), [e], {"chauffage_principal": "fioul"}) == []
+
+
+# — La reprise (migration 0030) —
+
+def test_reprise_l_equipement_gagne_et_laisse_une_trace():
+    m = maison(chauffage_principal="PAC_air_air", chauffage_principal_annee=2010,
+               ecs="ballon_elec", ecs_annee=2010)
+    pac = eq("chauffage_principal", "chauffage", "PAC_air_air", annee=2012)
+    ballon = eq("ecs", "ecs", "ballon_elec", annee=2010)
+    r = fe.reprise(m, [pac, ballon], AUJOURD_HUI)
+    assert r["fiche"] == {"chauffage_principal_annee": 2012}
+    assert r["annees"] == {}
+    assert len(r["journal"]) == 1
+    entree = r["journal"][0]
+    assert entree["type"] == "autre" and entree["titre"] == "Fiche mise à jour depuis le carnet"
+    assert entree["equipement_id"] == pac.id and "2010" in entree["note"]
+    # Relancée sur le résultat : rien de plus.
+    appliquer(m, r["fiche"])
+    assert fe.reprise(m, [pac, ballon], AUJOURD_HUI) == {"annees": {}, "fiche": {}, "journal": []}
+
+
+def test_reprise_un_equipement_sans_date_prend_l_annee_de_la_fiche():
+    m = maison(chauffage_principal="gaz", chauffage_principal_annee=2016)
+    chaudiere = eq("chauffage_principal", "chauffage", "chaudiere_gaz")
+    r = fe.reprise(m, [chaudiere], AUJOURD_HUI)
+    assert r["annees"] == {chaudiere.id: 2016}
+    assert r["fiche"] == {}  # plus d'écart une fois l'année reprise
+    assert len(r["journal"]) == 1 and "2016" in r["journal"][0]["note"]
+    assert fe.reprise(m, [chaudiere], AUJOURD_HUI)["journal"] == []
+
+
+def test_reprise_type_different_l_equipement_gagne():
+    m = maison(chauffage_principal="fioul", chauffage_principal_annee=1995)
+    pac = eq("chauffage_principal", "chauffage", "PAC_air_eau", annee=2021)
+    r = fe.reprise(m, [pac], AUJOURD_HUI)
+    assert r["fiche"] == {"chauffage_principal": "PAC_air_eau", "chauffage_principal_annee": 2021}
+    assert "fioul" in r["journal"][0]["note"] and "1995" in r["journal"][0]["note"]
+
+
+# — Le pré-audit, inchangé, lit la fiche synchronisée —
+
+def test_le_pre_audit_lit_la_fiche_synchronisee():
+    base = dict(code_postal="13001", annee_construction="1975_1988", surface_habitable=100,
+                isolation_combles="aucune", isolation_murs="partielle", isolation_plancher="bonne",
+                menuiseries="simple", ventilation="VMC_simple", regulation="aucune",
+                conso_elec_kwh_an=8000, objectifs=["confort_hiver"])
+    fiche_perimee = House(**base, chauffage_principal="fioul", chauffage_principal_annee=1995)
+    pac = eq("chauffage_principal", "chauffage", "PAC_air_eau", annee=2021)
+    appliquer(fiche_perimee, fe.a_ecrire(fiche_perimee, [pac]))
+    juste = House(**base, chauffage_principal="PAC_air_eau", chauffage_principal_annee=2021)
+    assert run_audit(fiche_perimee, aujourd_hui=AUJOURD_HUI) == run_audit(juste, aujourd_hui=AUJOURD_HUI)
+
+
+# — La table inverse sert toujours les suggestions du lot 1 —
+
+def test_les_suggestions_traduisent_toujours_la_fiche():
+    m = SimpleNamespace(chauffage_principal="reseau", chauffage_principal_annee=1990,
+                        chauffage_appoint=None, ecs=None, clim=None, ventilation=None)
+    assert suggestions(m, [])[0]["type"] == "autre"
