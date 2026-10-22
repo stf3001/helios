@@ -44,13 +44,21 @@ Décisions de Stéphane du 22/10/2026 : 60 € HT tous métiers, dus à la trans
 | 4 | `BRIEF-mer-lot4-releves.md` | lots 1 et 3 |
 | 5 | `BRIEF-mer-lot5-suivi-foyer.md` | lots 1 à 3 |
 
-## Série 5 (22/10/2026) — fin de la phase 2
+## Série 5 (22/10/2026) — fin de la phase 2, faite le 22/10/2026
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-p2-risques-commune.md` (fiche fournie : `KB-risques-maison.md`) | aucun |
 | 2 | `BRIEF-p2-vigilance-meteo.md` (module dormant sans clé Météo-France) | lot 1 de la série |
 | 3 | `BRIEF-p2-projets-isolation.md` | aucun |
+
+## Série 6 (22/10/2026) — pièces dans le pré-audit (point 37)
+
+Décisions de Stéphane du 22/10/2026 : deux calculs de puissance affichés en fourchette ; plage PAC air/eau à 80-120 % ; air/air inchangé (selon la surface) ; radiateurs testés à 50 °C puis 55 °C.
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-preaudit-lot6-puissance.md` | aucun |
 
 ## Références
 
