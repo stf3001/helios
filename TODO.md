@@ -1168,12 +1168,15 @@ véranda) dans la base. À écrire par Stéphane, puis à déclarer dans `agents
 le modèle s'affichera seul. Son `outil` est aujourd'hui `jardin`, qui est le POTAGER : à
 changer quand la fiche existera (pas de calculateur de jardin d'hiver).
 
-### [ ] 52. Un projet terminé apparaît deux fois au journal
+### [x] 52. Un projet terminé apparaît deux fois au journal — tranché le 22/10/2026
 
 Le brief demande une entrée `amelioration` ; or le journal fusionne déjà les chantiers
 (`a_faire.journal_fusionne`), si bien que « Ballon thermodynamique » s'y lit deux fois à la même
 date (Amélioration, puis Travaux). À trancher : garder l'entrée (elle porte la facture et
 l'intervenant comme les autres) ou ne pas l'écrire quand le chantier existe.
+
+**Décision de Stéphane (22/10/2026) : on garde l'entrée `amelioration` en plus du chantier,
+c'est voulu.** Ne pas la retirer.
 
 ### [ ] 53. Refaire la capture « projet solaire avec son étude liée »
 
