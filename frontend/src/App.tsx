@@ -37,6 +37,7 @@ import piliers from './data/piliers.json'
 import AdminRoute from './components/admin/AdminRoute'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminPartenaires from './pages/admin/AdminPartenaires'
+import AdminContestations from './pages/admin/AdminContestations'
 import AdminServices from './pages/admin/AdminServices'
 import AdminAgents from './pages/admin/AdminAgents'
 import AdminConversations from './pages/admin/AdminConversations'
@@ -56,6 +57,7 @@ function AdminRoutes() {
       <Route path="/signalements" element={<AdminRoute><AdminSignalements /></AdminRoute>} />
       <Route path="/foyers" element={<AdminRoute><AdminFoyers /></AdminRoute>} />
       <Route path="/partenaires" element={<AdminRoute><AdminPartenaires /></AdminRoute>} />
+      <Route path="/contestations" element={<AdminRoute><AdminContestations /></AdminRoute>} />
       <Route path="/services" element={<AdminRoute><AdminServices /></AdminRoute>} />
       <Route path="/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
       <Route path="/rendez-vous" element={<AdminRoute><AdminRendezVous /></AdminRoute>} />
