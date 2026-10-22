@@ -71,6 +71,12 @@ class Lead(Base):
     # du partenaire (dont `contacte_le`) ne touche jamais au prix.
     facturable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
     contacte_le: Mapped[date | None] = mapped_column(Date)
+    # Lot 5 : ce que DÉCLARE LE FOYER, à côté du statut tenu par le partenaire — jamais mélangés,
+    # sinon aucun écart ne serait détectable. Rien de tout cela ne touche au prix.
+    contact_foyer: Mapped[str | None] = mapped_column(String(3))  # oui | non
+    contact_foyer_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    declarations_foyer: Mapped[list | None] = mapped_column(JSONB)  # [{type, le}]
+    sans_contact_signale: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 
