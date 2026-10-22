@@ -76,13 +76,21 @@ Décisions de Stéphane du 22/10/2026 : facteurs de conversion validés en l'ét
 |---|---|---|
 | 1 | `BRIEF-chat-lot1-puissance.md` | série 7 |
 
-## Série 9 (22/10/2026) — réponse directe du pré-audit dans le chat
+## Série 9 (22/10/2026) — réponse directe du pré-audit dans le chat, faite le 22/10/2026
 
 Décision de Stéphane du 22/10/2026 : pour la puissance, les radiateurs, le relevé et la puissance d'un devis, Hélios renvoie les phrases du pré-audit, sans LLM (le modèle local en ratait deux sur cinq).
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-chat-lot2-reponse-preaudit.md` | série 8 |
+
+## Série 10 (22/10/2026) — deux garde-fous de la réponse directe
+
+Aucune puissance inventée pour un foyer connecté (audit ancien ou absent → invitation à faire le pré-audit) ; les puissances solaires, de borne, de clim et de compteur ne sont jamais comparées à la plage de la PAC.
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-chat-lot3-garde-fous.md` | série 9 |
 
 ## Références
 
