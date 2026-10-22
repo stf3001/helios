@@ -1342,6 +1342,19 @@ jamais annulé tout seul (décision du 22/10/2026). Aucun geste « avoir » n'ex
 seule une contestation acceptée rend une demande non facturable. À trancher par Stéphane : un bouton
 « ne pas facturer » sur un relevé non clos, ou la contestation reste la seule voie.
 
+### [x] 73. Phase 2, risques de la commune — fait le 22/10/2026
+
+Le foyer choisit sa commune (jamais l'adresse) ; Géorisques donne les risques recensés, gardés
+30 jours (`risques_commune`, migration 0041) ; section sobre dans « Ma maison », débroussaillement
+et fissures reliés au carnet, liste courte dans le contexte du chat. Débrief :
+`debriefs/2026-10-22-p2-risques.md`.
+
+### [ ] 74. Relire `kb/risques_maison.md`
+
+Fiche fournie le 22/10/2026, recopiée telle quelle : ses 10 questions sont `verif: a_verifier`. Elle
+est DÉJÀ publique (FAQ, 10 pages pré-rendues, plan de site 520 URL) et ingérée par le chat, comme le
+voulait le brief. Les cinq questions de vigilance météo servent au lot suivant.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
