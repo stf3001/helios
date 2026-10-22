@@ -6,6 +6,7 @@ import ApiError from '../ApiError'
 import Depliant from '../Depliant'
 import { faqSlug } from '../../lib/faqSlug'
 import MesPieces from './MesPieces'
+import { ACompleter, type BlocCil, type Isolant, type Manque, Isolants } from './CarnetCil'
 import Calendrier from './Calendrier'
 import Journal from './Journal'
 import { type Parcours, signalerMaj, useMaj } from './commun'
@@ -14,8 +15,14 @@ import {
   type Chantier, type Doc, type Equipement, type Garantie, FormChantier, FormEquipement, messageErreur,
 } from './Formulaires'
 import {
-  CATEGORIES, FICHE_GARANTIES, dateFr, libelleType, phraseSuggestion,
+  CATEGORIES, CATEGORIES_CIL, FICHE_GARANTIES, dateFr, libelleType, phraseSuggestion,
 } from './libelles'
+
+// Les chantiers d'isolation reçoivent leurs isolants (carnet d'information du logement, lot 11).
+const CIL_ISOLATION = ['isolation_toiture', 'isolation_murs', 'planchers_bas']
+
+/** Amène un bloc du carnet à l'écran, une fois rendu. */
+const montrer = (id: string) => setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 50)
 
 /**
  * Carnet de maison, lot 1 : « Mes équipements » et « Travaux et garanties ».
@@ -50,10 +57,11 @@ type Vacant = { origine: string; categorie: string; nom: string }
 const CHAMPS_EQUIPEMENT = [
   'categorie', 'type', 'marque', 'modele', 'numero_serie', 'puissance', 'unite', 'date_pose', 'annee_pose',
   'installateur', 'garantie_fabricant_fin', 'contrat_entretien', 'contrat_prestataire', 'travaux_id', 'note',
+  'mode_evacuation', 'etiquette_energie',
 ]
 const CHAMPS_CHANTIER = [
   'nature', 'entreprise', 'date_reception', 'montant_ttc', 'facture_document_id',
-  'attestation_assurance_document_id', 'note',
+  'attestation_assurance_document_id', 'note', 'categorie_cil',
 ]
 
 const choisir = (d: Draft, champs: string[]) =>
@@ -128,6 +136,10 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
   const [chantiers, setChantiers] = useState<Chantier[]>([])
   const [garanties, setGaranties] = useState<GarantieMaison[]>([])
   const [documents, setDocuments] = useState<Doc[]>([])
+  const [isolants, setIsolants] = useState<Isolant[]>([])
+  const [cil, setCil] = useState<BlocCil[]>([])
+  // L'isolant ouvert en saisie : son id, ou `nouveau:<chantier>`.
+  const [isolantOuvert, setIsolantOuvert] = useState<string | null>(null)
   // Un équipement relié à la fiche vient de quitter le service, sans remplaçant.
   const [vacant, setVacant] = useState<Vacant | null>(null)
   const [erreur, setErreur] = useState(false)
@@ -141,8 +153,10 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
     Promise.all([
       json('/api/houses/me/equipements'), json('/api/houses/me/equipements/suggestions'),
       json('/api/houses/me/travaux'), json('/api/houses/me/garanties'), json('/api/houses/me/documents'),
-    ]).then(([eq, sg, ch, ga, docs]) => {
+      json('/api/houses/me/isolants'), json('/api/houses/me/cil'),
+    ]).then(([eq, sg, ch, ga, docs, iso, ci]) => {
       setEquipements(eq); setSuggestions(sg); setChantiers(ch); setGaranties(ga); setDocuments(docs)
+      setIsolants(iso); setCil(ci)
     }).catch(() => setErreur(true))
   }, [authFetch])
   useEffect(charger, [charger])
@@ -174,6 +188,25 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
       choisir(d, CHAMPS_CHANTIER))
     if (!err) setFormCh(null)
     return err
+  }
+
+  /** « Compléter » : ouvre le formulaire qui porte ce qui manque. */
+  function completer(m: Manque, bloc: BlocCil) {
+    if (m.objet === 'equipement') {
+      const e = equipements.find((x) => x.id === m.id)
+      if (e) { setFormCh(null); setFormEq({ ...e }); montrer('mes-equipements') }
+    } else if (m.objet === 'isolant') {
+      setIsolantOuvert(m.id); montrer(`chantier-${bloc.travaux_id}`)
+    } else if (m.objet === 'journal') {
+      montrer('journal-maison')
+    } else if (m.champs.includes('equipement')) {
+      setFormCh(null); setFormEq({ categorie: 'chauffage', travaux_id: m.id }); montrer('mes-equipements')
+    } else if (m.champs.includes('isolant') && !m.champs.includes('description')) {
+      setIsolantOuvert(`nouveau:${m.id}`); montrer(`chantier-${m.id}`)
+    } else {
+      const c = chantiers.find((x) => x.id === m.id)
+      if (c) { setFormEq(null); setFormCh({ id: c.id, ...choisir(c as unknown as Draft, CHAMPS_CHANTIER) }); montrer('form-chantier') }
+    }
   }
 
   if (erreur) return <ApiError retry={charger} />
@@ -319,8 +352,12 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
           )}
         </div>
 
+        {/* Le carnet d'information du logement est l'affaire du propriétaire : section déjà masquée
+            pour un locataire (lot 8). */}
+        <ACompleter blocs={cil} onCompleter={completer} />
+
         {formCh && (
-          <div className="mb-3">
+          <div id="form-chantier" className="mb-3 scroll-mt-20">
             <FormChantier key={String(formCh.id ?? 'nouveau')} initial={formCh} documents={documents}
               enregistrer={enregistrerChantier} onAnnuler={() => setFormCh(null)} />
           </div>
@@ -369,6 +406,9 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
                       {[c.entreprise, c.date_reception ? `réceptionné le ${dateFr(c.date_reception)}` : 'date de réception à indiquer']
                         .filter(Boolean).join(' · ')}
                     </p>
+                    {c.categorie_cil && c.categorie_cil !== 'autre' && (
+                      <p className="text-xs text-dark/50">{CATEGORIES_CIL.find((o) => o.value === c.categorie_cil)?.label}</p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <button onClick={() => { setFormEq(null); setFormCh({ id: c.id, ...choisir(c as unknown as Draft, CHAMPS_CHANTIER) }) }} title="Modifier" aria-label="Modifier"
@@ -378,6 +418,11 @@ export default function CarnetMaison({ parcours }: { parcours: Parcours }) {
                       className="rounded p-1.5 text-dark/50 hover:bg-cream hover:text-terra"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
+                {CIL_ISOLATION.includes(c.categorie_cil ?? '') && (
+                  <div id={`chantier-${c.id}`} className="scroll-mt-20">
+                    <Isolants travauxId={c.id} isolants={isolants} ouvert={isolantOuvert} setOuvert={setIsolantOuvert} />
+                  </div>
+                )}
                 {c.garanties.length > 0 && (
                   <ul className="mt-2 grid gap-1.5 sm:grid-cols-3">
                     {c.garanties.map((g) => (

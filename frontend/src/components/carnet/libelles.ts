@@ -77,6 +77,25 @@ export const TYPES: Record<string, FieldOption[]> = {
   autre: [{ value: 'autre', label: 'Autre' }],
 }
 
+/** Carnet d'information du logement (lot 11). Codes : `MODES_EVACUATION`, `ETIQUETTES_ENERGIE`
+ *  (`models/equipement.py`) et `CATEGORIES_CIL` (`models/travaux.py`) — à tenir ENSEMBLE. */
+export const MODES_EVACUATION: FieldOption[] = [
+  { value: 'ventouse', label: 'Ventouse' }, { value: 'conduit', label: 'Conduit de fumée' },
+  { value: 'sans_objet', label: 'Sans objet (pas de combustion)' }, { value: 'inconnu', label: 'Je ne sais pas' },
+]
+export const ETIQUETTES_ENERGIE: FieldOption[] = [
+  ...['A+++', 'A++', 'A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].map((c) => ({ value: c, label: c })),
+  { value: 'inconnue', label: 'Je ne sais pas' },
+]
+export const CATEGORIES_CIL: FieldOption[] = [
+  { value: 'isolation_toiture', label: 'Isolation de la toiture (combles, rampants, toit-terrasse)' },
+  { value: 'isolation_murs', label: "Isolation des murs donnant sur l'extérieur" },
+  { value: 'parois_vitrees_portes', label: "Fenêtres et portes donnant sur l'extérieur" },
+  { value: 'planchers_bas', label: 'Isolation des planchers bas' },
+  { value: 'chauffage_froid_ecs', label: 'Chauffage, climatisation, eau chaude' },
+  { value: 'autre', label: "Autres travaux (hors carnet d'information du logement)" },
+]
+
 export const UNITES: FieldOption[] = ['kW', 'kWc', 'kWh', 'L'].map((u) => ({ value: u, label: u }))
 
 /** Les valeurs de la fiche Maison, avec leur article : « Votre fiche indique une PAC air/eau de 2016 ».

@@ -19,6 +19,8 @@ const TYPES = [
   { value: 'facture', label: 'Facture' },
   { value: 'devis', label: 'Devis' },
   { value: 'photo', label: 'Photo' },
+  // Plans, coupes, schémas de réseaux : une rubrique du carnet d'information du logement (lot 11).
+  { value: 'plan', label: 'Plan' },
   { value: 'autre', label: 'Autre' },
 ]
 

@@ -102,7 +102,7 @@ export default function Journal({ equipements, documents, onRemplacer }: {
   }
 
   return (
-    <section className="rounded-xl border border-ink/10 bg-white p-4">
+    <section id="journal-maison" className="scroll-mt-20 rounded-xl border border-ink/10 bg-white p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-display text-xl text-ink">
           <BookOpen className="h-5 w-5 text-primary" /> Journal de la maison

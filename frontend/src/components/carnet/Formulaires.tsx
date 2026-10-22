@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import FieldInput from '../fiche/FieldInput'
 import type { Draft, FieldSpec, FieldValue } from '../fiche/types'
-import { CATEGORIES, TYPES, UNITES } from './libelles'
+import { CATEGORIES, CATEGORIES_CIL, ETIQUETTES_ENERGIE, MODES_EVACUATION, TYPES, UNITES } from './libelles'
 
 export type Equipement = {
   id: string; categorie: string; type: string; marque: string | null; modele: string | null
@@ -10,6 +10,7 @@ export type Equipement = {
   garantie_fabricant_fin: string | null; contrat_entretien: boolean | null
   contrat_prestataire: string | null; travaux_id: string | null; origine_fiche: string | null
   en_service: boolean; note: string | null; age_ans: number | null; age_statut: 'calcule' | 'suppose' | null
+  mode_evacuation: string | null; etiquette_energie: string | null
   date_pose_retenue: string | null
 }
 
@@ -21,6 +22,7 @@ export type Chantier = {
   id: string; nature: string; entreprise: string | null; date_reception: string | null
   montant_ttc: number | null; facture_document_id: string | null
   attestation_assurance_document_id: string | null; note: string | null; garanties: Garantie[]
+  categorie_cil: string | null
 }
 
 export type Doc = { id: string; type: string; filename: string }
@@ -99,6 +101,11 @@ export function FormEquipement({ initial, chantiers, enregistrer, onAnnuler }: {
     { key: 'contrat_entretien', label: "Contrat d'entretien ?", type: 'boolean' },
     { key: 'contrat_prestataire', label: 'Prestataire du contrat', type: 'text' },
     { key: 'numero_serie', label: 'Numéro de série', type: 'text', help: 'Visible par vous seul, jamais transmis à Helios' },
+    // Rubriques du carnet d'information du logement (lot 11), pour le chauffage, le froid et l'eau chaude.
+    ...(['chauffage', 'ecs', 'clim'].includes(categorie) ? [
+      { key: 'mode_evacuation', label: 'Évacuation des fumées', type: 'select' as const, options: MODES_EVACUATION },
+      { key: 'etiquette_energie', label: 'Étiquette énergie', type: 'select' as const, options: ETIQUETTES_ENERGIE },
+    ] : []),
     ...(chantiers.length ? [{ key: 'travaux_id', label: 'Posé lors du chantier', type: 'select' as const,
       options: chantiers.map((c) => ({ value: c.id, label: c.nature })) }] : []),
     { key: 'note', label: 'Note', type: 'textarea', help: 'Pour vous seul, jamais transmise à Helios' },
@@ -137,11 +144,12 @@ export function FormChantier({ initial, documents, enregistrer, onAnnuler }: {
     { key: 'date_reception', label: 'Date de réception', type: 'date',
       help: 'Celle du procès-verbal. Sans elle, pas de garantie calculée.' },
     { key: 'montant_ttc', label: 'Montant TTC (€)', type: 'number', min: 0, step: 'any' },
+    { key: 'categorie_cil', label: "Rubrique du carnet d'information du logement", type: 'select', options: CATEGORIES_CIL },
     ...(optionsDocs.length ? [
       { key: 'facture_document_id', label: 'Facture (dans vos papiers)', type: 'select' as const, options: optionsDocs },
       { key: 'attestation_assurance_document_id', label: "Attestation d'assurance", type: 'select' as const, options: optionsDocs },
     ] : []),
-    { key: 'note', label: 'Note', type: 'textarea' },
+    { key: 'note', label: 'Description des travaux', type: 'textarea', help: 'Ce qui a été fait, où, avec quoi' },
   ]
 
   async function soumettre(e: React.FormEvent) {
