@@ -51,6 +51,12 @@ def test_les_textes_des_actions_sont_ceux_de_la_fiche(action):
     assert f"### Q: {t['question']}\n" in (KB / f"{t['fiche']}.md").read_text(encoding="utf-8")
 
 
+@pytest.mark.parametrize("cle", sorted(k for k in ref.TEXTES_PUISSANCE if k != "fiche"))
+def test_les_textes_de_puissance_sont_ceux_de_la_fiche(cle):
+    section = _section_preaudit(ref.TEXTES_PUISSANCE["fiche"])
+    assert ref.TEXTES_PUISSANCE[cle] == _phrase(section, cle)
+
+
 # --- Maison de référence --------------------------------------------------------------------
 
 @pytest.fixture

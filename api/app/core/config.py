@@ -88,7 +88,7 @@ class Settings(BaseSettings):
     solar_incertitude: float = 0.12              # demi-largeur des fourchettes affichées (±12 %)
 
     # --- Pré-audit (doc 07 §6) ---
-    audit_version: str = "v2.5"                   # version du moteur, stockée dans audits.version_helios
+    audit_version: str = "v2.6"                   # version du moteur, stockée dans audits.version_helios
     audit_min_completeness: float = 70.0         # complétude minimale pour générer un pré-audit chiffré (doc 02)
     audit_incertitude: float = 0.15              # demi-largeur des fourchettes (±15 %) — pré-audit = ordres de grandeur
 
@@ -201,6 +201,23 @@ class Settings(BaseSettings):
     audit_pac_air_air_cout_unite_eur: tuple[int, int] = (1800, 3000)
     audit_m2_par_unite_air_air: float = 30.0
     audit_unites_air_air_max: int = 6
+    # Puissance de chauffage (pré-audit v2.6, point 37) : deux calculs affichés en fourchette,
+    # par la consommation (H = Q utile / (DJU × 24)) et au volume (S × h × G × ΔT). Méthode de
+    # `kb/pac_air_eau.md`. Toutes les valeurs ci-dessous : A VALIDER par Stéphane.
+    audit_t_int: float = 19.0                                # A VALIDER par Stéphane
+    # Température extérieure de base, par zone climatique (°C). A VALIDER par Stéphane.
+    audit_t_base_par_zone: tuple[tuple[str, float], ...] = (("H1", -10.0), ("H2", -7.0), ("H3", -5.0))
+    # Degrés-jours de chauffage, base 18 °C, par zone. A VALIDER par Stéphane.
+    audit_dju_par_zone: tuple[tuple[str, float], ...] = (("H1", 2700.0), ("H2", 2200.0), ("H3", 1500.0))
+    audit_hauteur_plafond_m: float = 2.5                     # A VALIDER par Stéphane
+    # Coefficient volumique G (W/m³.K) d'une maison non isolée, et plancher. A VALIDER par Stéphane.
+    audit_g_non_isolee: float = 1.6
+    audit_g_min: float = 0.6
+    # Régimes d'eau testés pour les radiateurs (départ, retour °C), dans l'ordre. A VALIDER par Stéphane.
+    audit_regimes_radiateurs: tuple[tuple[float, float], ...] = ((50.0, 45.0), (55.0, 50.0))
+    audit_exposant_radiateur: float = 1.3                    # A VALIDER par Stéphane
+    # Plage de puissance d'une PAC air/eau, en % de la puissance de référence. A VALIDER par Stéphane.
+    audit_pac_plage_pct: tuple[int, int] = (80, 120)
     # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :
     # arrêté du 31 mars 2021 modifié (3CL-DPE), tableau des facteurs d'émission, relevé le
     # 20/10/2026 dans sa transcription open source (Open3CL, src/conso.js, « au 31 mars

@@ -506,6 +506,7 @@ SOURCES: dict[str, tuple[str, str]] = {
     "scop_air_air_neuf": ("SCOP d'une PAC air/air neuve, ordre de grandeur, à calibrer", "2026-10-20"),
     "facteurs_co2": ("Méthode du DPE, arrêté du 31/03/2021 modifié", "2026-10-20"),
     "hausse_prix": ("Hausse annuelle du prix de l'énergie, même hypothèse que le simulateur", "2026-10-20"),
+    "puissance": ("Méthode de kb/pac_air_eau.md (consommation et volume), réglages A VALIDER", "2026-10-22"),
 }
 
 # --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------
@@ -646,6 +647,27 @@ TEXTES_ACTIONS: dict[str, dict] = {
         "devis": ("volume et prise d'air", "COP et ses conditions", "dépose de l'ancien ballon"),
     },
 }
+# v2.6 : la puissance de chauffage et les radiateurs pièce par pièce (point 37). Même règle de
+# source unique que `TEXTES_ACTIONS` : recopiés MOT POUR MOT de la section « Pour le pré-audit »
+# de la fiche, vérifiés par `tests/test_audit_textes.py`. Variables : {t_base}, {p_bas},
+# {p_haut}, {p_conso}, {p_volume}, {pac_bas}, {pac_haut} (kW, virgule décimale), {piece}.
+TEXTES_PUISSANCE: dict[str, str] = {
+    "fiche": "action_pac_remplacement",
+    "puissance_declaree": "Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage. Le calcul tiré de votre consommation réelle ({p_conso} kW) est le plus juste ; le calcul au volume ({p_volume} kW) sert de repère de prudence.",
+    "puissance_estimee": "Au jour le plus froid de référence ({t_base} °C), votre maison demande entre {p_bas} et {p_haut} kW de chauffage, selon deux calculs faits sans vos relevés. Avec vos factures de chauffage, ce chiffre serait plus juste, et souvent plus bas.",
+    "plage_pac": "Une pompe à chaleur air/eau d'environ {pac_bas} à {pac_haut} kW couvrirait ce besoin. Si un devis propose beaucoup plus, demandez sur quoi repose la puissance choisie.",
+    "radiateurs_ok_50": "{piece} : vos radiateurs suffisent avec une eau à 50 °C.",
+    "radiateurs_ok_55": "{piece} : vos radiateurs suffisent avec une eau à 55 °C.",
+    "radiateurs_insuffisant": "{piece} : vos radiateurs seraient un peu justes, même à 55 °C. Un radiateur de plus, ou plus grand, réglerait la question.",
+    "radiateurs_inconnu": "{piece} : la puissance des radiateurs n'est pas indiquée ; l'installateur doit la relever.",
+}
+# Émetteurs du carnet (lot 2) : à eau, testés au régime ; plancher à eau, basse température par
+# nature ; électriques, sans objet pour une PAC air/eau. Les autres (bois, clim) : pas de verdict.
+EMETTEURS_EAU = {"radiateur_eau"}
+EMETTEURS_BASSE_TEMPERATURE = {"plancher_chauffant_eau"}
+EMETTEURS_ELECTRIQUES = {"convecteur", "panneau_rayonnant", "radiateur_inertie", "seche_serviettes",
+                         "plancher_chauffant_elec"}
+
 # Champs de texte d'une action, dans l'ordre d'affichage.
 TEXTES_LISTES = ("benefices", "vigilance", "devis")
 # Clé du « pourquoi » selon la raison d'un « à l'occasion » (`raison_occasion` du moteur).
