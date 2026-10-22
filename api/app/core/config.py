@@ -223,13 +223,13 @@ class Settings(BaseSettings):
     # (`services/autre_energie.py`). Fioul ~10 kWh PCI/L et granulés 4,6 kWh/kg : les repères déjà
     # écrits pour leurs prix ci-dessus ; gaz 11 kWh/m³ : coefficient courant des factures (PCS),
     # cohérent avec le prix CRE en €/kWh ; bûches 1 700 kWh/stère : bois dur sec (1 500 à 2 000
-    # selon l'essence et l'humidité). A VALIDER par Stéphane.
+    # selon l'essence et l'humidité). Validé par Stéphane le 22/10/2026.
     audit_kwh_par_unite: tuple[tuple[str, str, float], ...] = (
         ("fioul", "litres", 10.0), ("gaz", "m3", 11.0), ("bois_buches", "steres", 1700.0),
         ("granules", "kg", 4.6), ("gaz", "kwh", 1.0), ("fioul", "kwh", 1.0), ("reseau", "kwh", 1.0),
     )
     # Eau chaude au gaz, déduite d'un relevé de gaz quand la fiche dit « eau chaude au gaz »
-    # (kWh de gaz par occupant et par an). A VALIDER par Stéphane.
+    # (kWh de gaz par occupant et par an). Validé par Stéphane le 22/10/2026.
     audit_ecs_combustible_kwh_occupant_an: int = 1100
     # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :
     # arrêté du 31 mars 2021 modifié (3CL-DPE), tableau des facteurs d'émission, relevé le

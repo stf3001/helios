@@ -367,8 +367,37 @@ CONSIGNE_AUDIT_PRIME = (
     "Les chiffres de ce pré-audit sont ceux de la maison de l'utilisateur et priment sur les ordres "
     "de grandeur généraux de la base. Ne les recalcule pas. Si une fiche générale donne un autre ordre "
     "de grandeur, explique l'écart par les conditions de la maison (chauffage, climat, état) au lieu "
-    "de le contredire."
+    "de le contredire. "
+    # Point 81 : la puissance du pré-audit v2.6+ (`puissance` ci-dessous). Consigne au modèle.
+    "Puissance de chauffage et plage de pompe à chaleur : ce sont celles du moteur. Les citer telles "
+    "quelles, en fourchette, en disant quel calcul fait référence. Ne jamais proposer une autre "
+    "puissance, ni la recalculer à partir d'un ratio au m². Radiateur \"insuffisant\" : dire qu'un "
+    "radiateur de plus ou plus grand règle la question, sans citer de modèle ni de prix. Radiateur "
+    "\"inconnu\" : l'installateur doit relever sa puissance. Sans bloc puissance, ne donner aucune "
+    "puissance de pompe à chaleur : proposer de refaire le pré-audit. Pour une pompe à chaleur "
+    "air/air, ne pas dimensionner les unités pièce par pièce."
 )
+
+
+def resume_puissance(bloc: dict | None) -> dict | None:
+    """Le bloc `puissance` du pré-audit (v2.6+), réduit à ce que le chat doit savoir dire : la
+    référence, la phrase du pré-audit, la plage PAC (bloc complet seulement) et un verdict par
+    pièce. Ni puissances à 50/55 °C ni puissance nominale : trop lourd, le verdict suffit."""
+    if not bloc:
+        return None
+    resume = {k: bloc.get(k) for k in ("reference", "p_reference_kw", "p_conso_kw", "p_volume_kw", "t_base",
+                                        "texte")}
+    resume["statut_reference"] = (bloc.get("statuts") or {}).get("p_reference_kw")
+    if bloc.get("affichage") == "complet":
+        resume.update(pac_air_eau_kw=bloc.get("pac_air_eau_kw"), texte_plage=bloc.get("texte_plage"))
+    # Une ligne par pièce, « pièce : verdict, besoin W » : la forme la plus courte qui garde tout.
+    radiateurs = [f"{r['piece']} : {r['verdict']}" + (f", besoin {r['besoin_w']} W" if r.get("besoin_w") else "")
+                  for r in bloc.get("radiateurs") or []]
+    if radiateurs:
+        resume["radiateurs"] = radiateurs
+    if bloc.get("note_radiateurs"):
+        resume["note_radiateurs"] = bloc["note_radiateurs"]
+    return resume
 
 
 def build_audit_context(audit) -> dict:
@@ -400,7 +429,9 @@ def build_audit_context(audit) -> dict:
             "conso_chauffage_estimee_kwh_an", "energie_chauffage", "origine", "zone_climatique",
             "conso_elec_declaree_kwh_an", "conso_chauffage_declaree_kwh_an", "conso_chauffage_retenue_kwh_an",
             "base_economies", "ratio_reel_theorique", "message_ratio", "prix_energie_eur_kwh",
-            "cout_chauffage_actuel_eur", "statuts")},
+            "cout_chauffage_actuel_eur", "statuts")}
+        # v2.7 : le relevé de fioul, de gaz, de bois ou de réseau, en kWh (absent avant).
+        | {k: c[k] for k in ("releve", "conso_autre_energie_kwh_an", "eau_chaude_deduite_kwh_an") if k in c},
         "deperditions": r.get("deperditions"),
         "priorites": [{k: a.get(k) for k in (
             "rang", "label", "categorie", "horizon", "libelle_occasion", "contexte", "cout_eur",
@@ -423,13 +454,18 @@ def build_audit_context(audit) -> dict:
         "confort_ete": r.get("confort_ete"),
         "solaire": r.get("solaire"),
         "alertes": r.get("alertes"),
-        "hypotheses": [{"cle": h["cle"], "valeur": h["valeur"]} for h in r.get("hypotheses", [])],
+        # Les hypothèses du calcul de puissance (`puissance_*`, `radiateurs_*`) sont de la
+        # traçabilité : le résumé `puissance` dit ce qu'il faut, elles ne partent pas au chat.
+        "hypotheses": [{"cle": h["cle"], "valeur": h["valeur"]} for h in r.get("hypotheses", [])
+                       if not h["cle"].startswith(("puissance_", "radiateurs_"))],
         "entrees_supposees": [e for e in r.get("entrees", []) if e.get("statut") == "suppose"],
         # v2.3 : le plan RECOMMANDÉ séparé de ce qui attend une occasion. C'est le premier qu'il
         # faut citer comme budget conseillé, jamais le total de la synthèse qui additionne tout.
         "plan_recommande": (r.get("synthese") or {}).get("plan_recommande"),
         "a_l_occasion": (r.get("synthese") or {}).get("a_l_occasion"),
         "a_preciser": r.get("a_preciser"),
+        # v2.6 : la puissance de chauffage et les radiateurs (absente des audits plus anciens).
+        **({"puissance": resume_puissance(r["puissance"])} if r.get("puissance") else {}),
     }
 
 
