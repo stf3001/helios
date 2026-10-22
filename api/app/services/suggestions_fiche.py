@@ -5,12 +5,8 @@ même `origine_fiche`. Rien n'est créé ici : le foyer clique, relit le formula
 enregistre. Fonction pure — la route lui passe la maison et ses équipements.
 """
 
-# Codes de la fiche (`schemas/house.py`) → types de l'équipement. Ceux qui manquent sont
-# repris tels quels (PAC, ballons, VMC : les mêmes codes des deux côtés).
-_TYPE_CHAUFFAGE = {
-    "elec_direct": "convecteurs", "gaz": "chaudiere_gaz", "fioul": "chaudiere_fioul",
-    "bois": "poele_bois", "reseau": "autre",
-}
+from app.services.fiche_equipements import FICHE_VERS_TYPE as _TYPE_CHAUFFAGE
+
 # Une ventilation naturelle, absente ou inconnue n'est pas un appareil qu'on date.
 _VENTILATIONS_APPAREIL = ("VMC_simple", "VMC_double")
 

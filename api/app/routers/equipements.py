@@ -3,6 +3,10 @@
 Contrôles d'accès sur le modèle de `documents.py` : un identifiant appartenant à un autre
 foyer répond 404, comme un identifiant qui n'existe pas — on ne confirme pas son existence.
 L'âge est calculé ici, à la lecture, jamais stocké.
+
+Lot 7 : un équipement en service portant `origine_fiche` FIXE les champs correspondants de
+la fiche (`services/fiche_equipements.py`). Chaque écriture qui le touche resynchronise la
+fiche et son score dans la même transaction ; il n'y en a qu'un en service par origine.
 """
 import uuid
 from datetime import date
@@ -18,6 +22,8 @@ from app.models.house import House
 from app.models.travaux import Travaux
 from app.models.user import User
 from app.schemas.equipement import EquipementCreate, EquipementUpdate, verifier_type
+from app.services import fiche_equipements as fe
+from app.services.completeness import compute_score
 from app.services.garanties import age_ans, date_pose, garanties_maison
 from app.services.suggestions_fiche import suggestions
 
@@ -44,6 +50,37 @@ async def _verifier_travaux(db: AsyncSession, house: House, travaux_id: uuid.UUI
     t = await db.get(Travaux, travaux_id)
     if t is None or t.house_id != house.id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ce chantier n'appartient pas à votre maison")
+
+
+async def _equipements(db: AsyncSession, house: House) -> list[Equipement]:
+    return list(await db.scalars(select(Equipement).where(Equipement.house_id == house.id)))
+
+
+async def _verifier_origine(db: AsyncSession, house: House, eq: Equipement) -> None:
+    """Un seul équipement en service par champ de fiche, et de la bonne catégorie."""
+    if not eq.origine_fiche or not eq.en_service:
+        return
+    if eq.categorie != fe.ORIGINES[eq.origine_fiche]["categorie"]:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            "Cet équipement est relié à la fiche : sa catégorie ne peut pas changer.")
+    autres = [e for e in await _equipements(db, house)
+              if e.id != eq.id and e.en_service and e.origine_fiche == eq.origine_fiche]
+    if autres:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Un autre équipement en service tient déjà cette place dans votre fiche — "
+            "mettez-le hors service d'abord.",
+        )
+
+
+async def _synchroniser(db: AsyncSession, house: House, vider: dict | None = None) -> None:
+    """La fiche suit ses équipements : on vide d'abord ce que l'équipement retiré fixait,
+    puis on réécrit ce que ceux en service imposent. Score recalculé dans la foulée."""
+    for champ, valeur in (vider or {}).items():
+        setattr(house, champ, valeur)
+    for champ, valeur in fe.a_ecrire(house, await _equipements(db, house)).items():
+        setattr(house, champ, valeur)
+    house.completeness_score = compute_score(house)
 
 
 def _out(eq: Equipement, aujourd_hui: date) -> dict:
@@ -80,7 +117,10 @@ async def create_equipement(
         )
     await _verifier_travaux(db, house, payload.travaux_id)
     eq = Equipement(house_id=house.id, **payload.model_dump())
+    await _verifier_origine(db, house, eq)
     db.add(eq)
+    await db.flush()
+    await _synchroniser(db, house)
     await db.commit()
     await db.refresh(eq)
     return _out(eq, date.today())
@@ -100,10 +140,18 @@ async def update_equipement(
         verifier_type(champs.get("categorie", eq.categorie), champs.get("type", eq.type))
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    avant = set(fe.champs_fiche_depuis(eq)) if eq.en_service else set()
     for champ, valeur in champs.items():
         if champ in ("categorie", "type", "en_service") and valeur is None:
             continue  # colonnes NOT NULL : « null » ne veut rien dire ici
         setattr(eq, champ, valeur)
+    await _verifier_origine(db, house, eq)
+    await db.flush()
+    # Ce qu'il fixait et ne fixe plus (hors service, type devenu sans équivalent) est vidé ;
+    # ce qu'il fixe encore est réécrit par la synchronisation, sans passer par le vide —
+    # sinon un « reseau » conservé face à un « autre » redeviendrait « autre ».
+    apres = set(fe.champs_fiche_depuis(eq)) if eq.en_service else set()
+    await _synchroniser(db, house, dict.fromkeys(avant - apres))
     await db.commit()
     await db.refresh(eq)
     return _out(eq, date.today())
@@ -115,7 +163,11 @@ async def delete_equipement(
 ):
     house = await _own_house(db, user.id)
     eq = await _own_equipement(db, house, equipement_id)
+    # Supprimer un équipement en service vaut mise hors service sans remplaçant (22/10/2026).
+    vider = fe.champs_a_vider(eq) if eq.en_service else {}
     await db.delete(eq)
+    await db.flush()
+    await _synchroniser(db, house, vider)
     await db.commit()
 
 

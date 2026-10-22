@@ -1,184 +1,189 @@
-"""Carnet, lot 7 : l'équipement en service est la source, la fiche Maison en est la copie.
+"""Une seule source pour les équipements de la fiche Maison (carnet, lot 7 — point 35).
 
-Depuis le lot 1, le type et l'année des systèmes vivaient à deux endroits — la fiche
-(lue par le pré-audit et le score de complétude) et l'équipement du carnet. Ici une seule
-table de correspondance dit, pour chaque `origine_fiche`, quels champs de fiche un
-équipement détermine et comment son code se traduit.
+L'équipement EN SERVICE qui porte `origine_fiche` gagne : les champs correspondants de la
+fiche en deviennent une COPIE, écrite par le serveur et verrouillée à la saisie. Le pré-audit
+continue de lire la fiche, qui est désormais juste — il n'a pas changé.
 
-Fonctions PURES : la route leur passe la maison et ses équipements, elles ne lisent ni
-n'écrivent rien. Le pré-audit n'est pas touché — il continue de lire la fiche.
+Fonctions pures : la route leur passe la maison et ses équipements, et applique le résultat.
+Rien n'est inventé : un type sans équivalent dans la fiche laisse le champ LIBRE (le foyer
+peut avoir une solution que le carnet ne sait pas nommer), jamais une valeur devinée.
 
-RÈGLE QUI TIENT TOUT : on n'écrit JAMAIS dans la fiche une valeur que l'équipement ne dit
-pas. Un type d'équipement sans équivalent dans la fiche (une eau chaude ou une ventilation
-« autre ») ne détermine donc rien : la fiche reste libre, ni verrouillée ni vidée — le foyer
-peut avoir une solution que le carnet ne sait pas nommer.
+`suggestions_fiche.py` lit la table inverse (`FICHE_VERS_TYPE`) : les deux sens vivent ici.
 """
 from datetime import date
 
-# origine_fiche → (champ de type, champ d'année). La clim n'a pas d'année dans la fiche.
-CHAMPS_PAR_ORIGINE: dict[str, tuple[str, str | None]] = {
-    "chauffage_principal": ("chauffage_principal", "chauffage_principal_annee"),
-    "chauffage_appoint": ("chauffage_appoint", "chauffage_appoint_annee"),
-    "ecs": ("ecs", "ecs_annee"),
-    "clim": ("clim_type", None),
-    "ventilation": ("ventilation", None),
+# Pour chaque origine : la catégorie d'équipement, le champ « type » de la fiche, et son
+# champ « année » (la ventilation et la clim n'en ont pas dans la fiche).
+ORIGINES: dict[str, dict] = {
+    "chauffage_principal": {"categorie": "chauffage", "type": "chauffage_principal",
+                            "annee": "chauffage_principal_annee"},
+    "chauffage_appoint": {"categorie": "chauffage", "type": "chauffage_appoint",
+                          "annee": "chauffage_appoint_annee"},
+    "ecs": {"categorie": "ecs", "type": "ecs", "annee": "ecs_annee"},
+    "clim": {"categorie": "clim", "type": None, "annee": None},
+    "ventilation": {"categorie": "ventilation", "type": "ventilation", "annee": None},
 }
 
-# Type d'équipement (`models/equipement.py`) → valeur de la fiche (`schemas/house.py`).
-# `None` = aucun équivalent, la fiche reste libre. Sens inverse de `_TYPE_CHAUFFAGE` de
-# `suggestions_fiche.py` : plusieurs types d'appareils tombent sur le même code de fiche.
-_VERS_FICHE: dict[str, dict[str, str | None]] = {
+# Type d'équipement → valeurs de fiche ACCEPTÉES, la première étant celle qu'on écrit. Une
+# valeur acceptée déjà présente n'est pas réécrite : un réseau de chaleur saisi au carnet
+# comme « autre » reste « reseau » dans la fiche (décision du 22/10/2026). Un type absent
+# n'a pas d'équivalent : le champ reste libre.
+_TYPE_VERS_FICHE: dict[str, dict[str, tuple[str, ...]]] = {
     "chauffage": {
-        "PAC_air_eau": "PAC_air_eau", "PAC_air_air": "PAC_air_air",
-        "chaudiere_gaz": "gaz", "chaudiere_fioul": "fioul",
-        "chaudiere_bois": "bois", "poele_bois": "bois", "poele_granules": "bois", "insert": "bois",
-        "convecteurs": "elec_direct", "radiateurs_inertie": "elec_direct",
-        "autre": "autre",
+        "PAC_air_eau": ("PAC_air_eau",), "PAC_air_air": ("PAC_air_air",),
+        "chaudiere_gaz": ("gaz",), "chaudiere_fioul": ("fioul",),
+        "chaudiere_bois": ("bois",), "poele_bois": ("bois",), "poele_granules": ("bois",), "insert": ("bois",),
+        "convecteurs": ("elec_direct",), "radiateurs_inertie": ("elec_direct",),
+        "autre": ("autre", "reseau"),
     },
-    "ecs": {
-        "ballon_elec": "ballon_elec", "thermodynamique": "thermodynamique", "gaz": "gaz",
-        "solaire": "solaire", "instantane": "instantane",
-        "autre": None,  # la fiche n'a pas d'« autre » pour l'eau chaude
-    },
-    "ventilation": {
-        "VMC_simple": "VMC_simple", "VMC_double": "VMC_double",
-        "autre": None,  # ni pour la ventilation : `aucune` et `naturelle` ne sont pas un appareil
-    },
-    # La fiche ne connaît la climatisation que par un texte libre : on y écrit le libellé du
-    # type. RECOPIE DE `components/carnet/libelles.ts` — les deux se tiennent à jour ENSEMBLE.
-    "clim": {
-        "split": "Split", "multisplit": "Multisplit", "gainable": "Gainable",
-        "PAC_air_air": "PAC air/air réversible", "autre": "Autre",
-    },
+    "ecs": {t: (t,) for t in ("ballon_elec", "thermodynamique", "gaz", "solaire", "instantane")},
+    "ventilation": {"VMC_simple": ("VMC_simple",), "VMC_double": ("VMC_double",)},
 }
 
-# Décision 1 : un chauffage « autre » ne réécrit pas une fiche qui dit déjà la même chose.
-# `reseau` se traduit en `autre` à l'aller (lot 1) : la fiche n'a donc rien de faux à dire
-# qu'un équipement « autre » remplacerait. Le champ reste verrouillé pour autant.
-_EQUIVALENTS_AUTRE: dict[str, tuple[str, ...]] = {
-    "chauffage_principal": ("reseau", "autre"),
-    "chauffage_appoint": ("reseau", "autre"),
+# La fiche ne connaît la clim qu'en texte libre : on y écrit le libellé que voit le foyer,
+# recopié de `frontend/src/components/carnet/libelles.ts` (à tenir à jour ENSEMBLE).
+# « autre » n'a pas de libellé utile : `clim_type` reste libre, seul `clim` est verrouillé.
+LIBELLES_CLIM = {"split": "Split", "multisplit": "Multisplit", "gainable": "Gainable",
+                 "PAC_air_air": "PAC air/air réversible"}
+
+# Le sens inverse, pour les suggestions du lot 1 : code de fiche → type d'équipement. Ceux
+# qui manquent sont repris tels quels (PAC, ballons, VMC : mêmes codes des deux côtés).
+FICHE_VERS_TYPE = {
+    "elec_direct": "convecteurs", "gaz": "chaudiere_gaz", "fioul": "chaudiere_fioul",
+    "bois": "poele_bois", "reseau": "autre",
+}
+
+# Pour le message d'un refus : le libellé que le foyer lit dans sa fiche (`FicheMaison.tsx`).
+LIBELLES_CHAMPS = {
+    "chauffage_principal": "Chauffage principal", "chauffage_principal_annee": "Année d'installation",
+    "chauffage_appoint": "Chauffage d'appoint", "chauffage_appoint_annee": "Année d'installation (appoint)",
+    "ecs": "Eau chaude sanitaire", "ecs_annee": "Année ECS", "clim": "Climatisation ?",
+    "clim_type": "Type de climatisation", "ventilation": "Ventilation",
 }
 
 
-def _champ(obj, nom):
-    """Lit un attribut d'un modèle SQLAlchemy comme une clé de dict (tests, scripts)."""
-    return obj.get(nom) if isinstance(obj, dict) else getattr(obj, nom, None)
+def annee_de(equipement) -> int | None:
+    """L'année de pose : celle de la date exacte, sinon l'année seule, sinon rien."""
+    if equipement.date_pose:
+        return equipement.date_pose.year
+    return equipement.annee_pose
 
 
-def annee_pose(equipement) -> int | None:
-    """L'année de pose : celle de la date exacte si elle existe, sinon l'année déclarée."""
-    exacte = _champ(equipement, "date_pose")
-    if isinstance(exacte, date):
-        return exacte.year
-    return _champ(equipement, "annee_pose")
+def champs_fiche_depuis(equipement, maison=None) -> dict:
+    """Les champs de fiche que cet équipement fixe, avec leur valeur. Vide = rien de lié.
 
-
-def valeur_fiche(origine: str, categorie: str | None, type_: str | None) -> str | None:
-    """La valeur de fiche qu'un type d'équipement détermine, ou `None` s'il n'y en a pas."""
-    if origine not in CHAMPS_PAR_ORIGINE or not type_:
-        return None
-    table = _VERS_FICHE.get("clim" if origine == "clim" else (categorie or ""))
-    return table.get(type_) if table else None
-
-
-def champs_verrouilles_de(origine: str) -> tuple[str, ...]:
-    """Les champs de fiche qu'un équipement de cette origine tient en lecture seule.
-
-    La clim verrouille `clim` et `clim_type`, jamais `clim_nb_pieces` : le nombre de pièces
-    climatisées n'est pas une propriété de l'appareil, le foyer continue de le saisir.
+    Avec la maison, une valeur de fiche déjà ACCEPTÉE pour ce type est conservée telle
+    quelle (« reseau » face à un équipement « autre »). Une année absente de l'équipement
+    vide celle de la fiche : la règle est stricte, l'équipement gagne aussi quand il se tait.
     """
-    champ_type, champ_annee = CHAMPS_PAR_ORIGINE[origine]
-    champs = ["clim", champ_type] if origine == "clim" else [champ_type]
-    if champ_annee:
-        champs.append(champ_annee)
-    return tuple(champs)
-
-
-def champs_fiche_depuis(equipement) -> dict:
-    """Ce que cet équipement impose à la fiche. Vide s'il ne lui impose rien.
-
-    Un équipement hors service, sans `origine_fiche`, ou dont le type n'a pas d'équivalent
-    dans la fiche ne détermine rien. L'année suit la RÈGLE STRICTE : un équipement sans date
-    met l'année de fiche à vide, car c'est lui qui dit la vérité (la migration 0030 a d'abord
-    recopié l'année de la fiche dans ces équipements, une fois pour toutes).
-    """
-    origine = _champ(equipement, "origine_fiche")
-    if origine not in CHAMPS_PAR_ORIGINE or _champ(equipement, "en_service") is False:
+    origine = ORIGINES.get(equipement.origine_fiche or "")
+    if origine is None or equipement.categorie != origine["categorie"]:
         return {}
-    valeur = valeur_fiche(origine, _champ(equipement, "categorie"), _champ(equipement, "type"))
-    if valeur is None:
+    if equipement.origine_fiche == "clim":
+        champs = {"clim": True}
+        if equipement.type in LIBELLES_CLIM:
+            champs["clim_type"] = LIBELLES_CLIM[equipement.type]
+        return champs
+    acceptees = _TYPE_VERS_FICHE.get(origine["categorie"], {}).get(equipement.type)
+    if not acceptees:
         return {}
-    champ_type, champ_annee = CHAMPS_PAR_ORIGINE[origine]
-    champs: dict = {champ_type: valeur}
-    if origine == "clim":
-        champs["clim"] = True
-    if champ_annee:
-        champs[champ_annee] = annee_pose(equipement)
+    actuelle = getattr(maison, origine["type"], None) if maison is not None else None
+    champs = {origine["type"]: actuelle if actuelle in acceptees else acceptees[0]}
+    if origine["annee"]:
+        champs[origine["annee"]] = annee_de(equipement)
     return champs
 
 
-def champs_a_vider(origine: str) -> dict:
-    """Ce qu'il reste de la fiche quand l'appareil part sans remplaçant : rien.
+def champs_a_vider(equipement) -> dict:
+    """Mise hors service sans remplaçant (ou suppression) : les champs qu'il fixait, à vide.
 
-    `clim` repasse à `False` — plus d'appareil, plus de climatisation ; `clim_nb_pieces`
-    n'est pas touché, il appartient au foyer.
+    Seuls ceux qu'il VERROUILLAIT : un type sans équivalent n'avait rien écrit, il ne vide rien.
     """
-    champ_type, champ_annee = CHAMPS_PAR_ORIGINE[origine]
-    champs: dict = {champ_type: None}
-    if origine == "clim":
-        champs["clim"] = False
-    if champ_annee:
-        champs[champ_annee] = None
-    return champs
+    return {champ: None for champ in champs_fiche_depuis(equipement)}
 
 
-def equipement_de_la_fiche(equipements, origine: str):
-    """L'unique équipement EN SERVICE portant cette origine, s'il existe."""
-    for e in equipements:
-        if _champ(e, "origine_fiche") == origine and _champ(e, "en_service") is not False:
-            return e
-    return None
+def _pilotes(equipements) -> list:
+    return [e for e in equipements if e.en_service and e.origine_fiche in ORIGINES]
 
 
 def champs_verrouilles(equipements) -> list[str]:
-    """Les champs de fiche que le carnet tient à jour : l'écran les affiche en lecture.
-
-    Un champ est verrouillé dès qu'un équipement en service porte son origine ET que son
-    type a un équivalent dans la fiche — sinon personne ne le renseignerait plus.
-    """
-    champs: list[str] = []
-    for origine in CHAMPS_PAR_ORIGINE:
-        eq = equipement_de_la_fiche(equipements, origine)
-        if eq is not None and valeur_fiche(origine, _champ(eq, "categorie"), _champ(eq, "type")) is not None:
-            champs += [c for c in champs_verrouilles_de(origine) if c not in champs]
-    return champs
+    """Les champs de fiche qu'un équipement en service fixe : en lecture dans la fiche."""
+    verrous: list[str] = []
+    for e in _pilotes(equipements):
+        verrous += [c for c in champs_fiche_depuis(e) if c not in verrous]
+    return verrous
 
 
-def valeurs_attendues(equipements) -> dict:
-    """Tout ce que les équipements en service imposent à la fiche, champ par champ."""
-    attendues: dict = {}
-    for origine in CHAMPS_PAR_ORIGINE:
-        eq = equipement_de_la_fiche(equipements, origine)
-        if eq is not None:
-            attendues.update(champs_fiche_depuis(eq))
-    return attendues
+def a_ecrire(maison, equipements) -> dict:
+    """Tout ce que les équipements en service imposent à la fiche (valeurs inchangées comprises)."""
+    sortie: dict = {}
+    for e in _pilotes(equipements):
+        sortie.update(champs_fiche_depuis(e, maison))
+    return sortie
 
 
 def ecarts(maison, equipements) -> list[dict]:
-    """Les champs où la fiche contredit l'équipement, avec les deux valeurs.
-
-    Sert à la migration 0030 (l'équipement gagne, l'ancienne valeur part au journal) et au
-    refus d'un `PATCH /houses/me` qui changerait un champ verrouillé. Un chauffage « autre »
-    face à un réseau de chaleur n'est PAS un écart (décision 1) : la fiche dit déjà `autre`
-    à la traduction, il n'y a rien à corriger.
-    """
+    """Les champs où la fiche contredit un équipement en service : ce que la sync corrige."""
     sortie = []
-    for champ, attendue in valeurs_attendues(equipements).items():
-        actuelle = _champ(maison, champ)
-        if actuelle == attendue:
-            continue
-        if attendue == "autre" and actuelle in _EQUIVALENTS_AUTRE.get(champ, ()):
-            continue
-        sortie.append({"champ": champ, "valeur_fiche": actuelle, "valeur_equipement": attendue})
+    for e in _pilotes(equipements):
+        for champ, valeur in champs_fiche_depuis(e, maison).items():
+            ancienne = getattr(maison, champ)
+            if ancienne != valeur:
+                sortie.append({"champ": champ, "fiche": ancienne, "equipement": valeur,
+                               "equipement_id": e.id})
     return sortie
+
+
+def refus_patch(maison, equipements, champs: dict) -> list[str]:
+    """Les champs verrouillés que ce PATCH CHANGERAIT. Renvoyer la même valeur est permis :
+    la fiche enregistre un bloc entier (`saveBlock`), champs verrouillés compris."""
+    verrous = set(champs_verrouilles(equipements))
+    return [c for c, v in champs.items() if c in verrous and getattr(maison, c) != v]
+
+
+def _decrire(valeur) -> str:
+    if valeur is None:
+        return "vide"
+    if valeur is True:
+        return "oui"
+    return str(valeur)
+
+
+def reprise(maison, equipements, aujourd_hui: date) -> dict:
+    """Reprise des données existantes (migration 0030), une maison à la fois.
+
+    1. Un équipement sans date face à une fiche datée prend l'année de la fiche — à la
+       reprise SEULEMENT : ensuite, l'équipement qui se tait vide la fiche.
+    2. Puis l'équipement gagne sur chaque écart restant.
+    Chaque geste laisse une entrée de journal. Relancée, elle ne trouve plus rien à faire.
+    Met à jour `annee_pose` des objets reçus (la migration passe des copies, pas des modèles).
+
+    Renvoie {"annees": {equipement_id: annee}, "fiche": {champ: valeur}, "journal": [...]}.
+    """
+    annees, journal = {}, []
+    for e in _pilotes(equipements):
+        champ_annee = ORIGINES[e.origine_fiche]["annee"]
+        if not champ_annee or annee_de(e) is not None or not champs_fiche_depuis(e):
+            continue
+        annee_fiche = getattr(maison, champ_annee)
+        if annee_fiche is not None:
+            annees[e.id] = annee_fiche
+            e.annee_pose = annee_fiche  # pour que l'étape 2 voie l'équipement daté
+            journal.append(_entree(e, aujourd_hui,
+                                   f"Année de pose {annee_fiche} reprise de la fiche : l'équipement n'en avait pas."))
+    fiche: dict = {}
+    par_equipement: dict = {}
+    for ec in ecarts(maison, equipements):
+        fiche[ec["champ"]] = ec["equipement"]
+        par_equipement.setdefault(ec["equipement_id"], []).append(ec)
+    for e in _pilotes(equipements):
+        if e.id in par_equipement:
+            detail = " ; ".join(f"{LIBELLES_CHAMPS[ec['champ']]} : {_decrire(ec['fiche'])}"
+                                for ec in par_equipement[e.id])
+            journal.append(_entree(e, aujourd_hui, f"Ancienne valeur de la fiche — {detail}."))
+    return {"annees": annees, "fiche": fiche, "journal": journal}
+
+
+def _entree(e, aujourd_hui: date, note: str) -> dict:
+    return {"date": aujourd_hui, "type": "autre", "titre": "Fiche mise à jour depuis le carnet",
+            "equipement_id": e.id, "note": note}

@@ -106,6 +106,8 @@ class HouseOut(HouseUpdate):
     completeness_score: float
     niveau: str
     block_scores: dict[str, float]
+    # Les champs qu'un équipement du carnet fixe (lot 7) : la fiche les affiche en lecture.
+    champs_verrouilles: list[str] = []
     updated_at: datetime
 
     class Config:
