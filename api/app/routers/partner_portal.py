@@ -20,7 +20,7 @@ from datetime import date, datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +32,9 @@ from app.core.security import create_partner_token, hash_password, verify_passwo
 from app.models.house import House
 from app.models.partner import Contestation, Lead, Partner, PartnerDocument
 from app.routers.leads import LEAD_DOCS_DIR
-from app.services import activation, commission, conformite, conformite_lecture, contestations, justificatifs
+from app.services import (activation, commission, conformite, conformite_lecture, contestations, justificatifs,
+                          releves, releves_lecture)
+from app.services.pdf_releve import releve_pdf
 
 # Le partenaire n'appelle que parce que le foyer l'a demandé, dans les créneaux qu'il a donnés.
 RAPPEL_LEGAL = ("Ce foyer a demandé à être contacté au sujet de ce projet. Appelez-le uniquement dans les "
@@ -308,3 +310,32 @@ async def signer_charte(payload: Signer, partner: Partner = Depends(get_current_
     partner.charte_signee_at = datetime.now(timezone.utc)
     await db.commit()
     return {"version_signee": partner.charte_version_signee, "signee_le": partner.charte_signee_at}
+
+
+# --- Mes relevés (lot 4) — pas des factures ---
+
+
+@router.get("/releves")
+async def mes_releves(partner: Partner = Depends(get_current_partner), db: AsyncSession = Depends(get_db)):
+    """Un mois par mois où une mise en relation à prix fixe a été transmise, du plus récent au plus ancien."""
+    transmis = await db.scalars(select(Lead.consent_client_at).where(
+        Lead.partner_id == partner.id, Lead.type == "travaux", Lead.prix_ht.is_not(None)))
+    out = []
+    for mois in sorted({releves.mois_de(t) for t in transmis}, reverse=True):
+        statut, liste = await releves_lecture.releves_du_mois(db, mois, partner.id)
+        if liste:
+            out.append({"statut": statut, **liste[0]})
+    return out
+
+
+@router.get("/releves/{mois}/pdf")
+async def mon_releve_pdf(mois: str, partner: Partner = Depends(get_current_partner), db: AsyncSession = Depends(get_db)):
+    """Même règle que l'administration : le PDF figé si le mois est clos, « provisoire » sinon."""
+    try:
+        releves.lire_mois(mois)
+        contenu, nom = await releves_lecture.pdf_du_mois(db, mois, partner.id, releve_pdf)
+    except releves.MoisInvalide as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+    except LookupError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
+    return Response(contenu, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{nom}"'})

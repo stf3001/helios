@@ -12,11 +12,13 @@ Mises en relation, lot 3 : candidatures (justificatifs, validation avec lien d'a
 copier, refus motivé), contestations (accepter ou refuser, avec un motif) et justificatifs à
 échéance. Chaque action est tracée dans le journal des accès (`_tracer`).
 """
+import csv
+import io
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -33,7 +35,8 @@ from app.models.partner import Contestation, Lead, Partner, PartnerDocument
 from app.models.rendez_vous import STATUTS_RDV, RendezVous
 from app.models.user import User
 from app.services import (activation, admin_health, admin_stats, admin_supervision, agents_engine, conformite,
-                          conformite_lecture, contestations, justificatifs, rdv_admin)
+                          conformite_lecture, contestations, justificatifs, rdv_admin, releves, releves_lecture)
+from app.services.pdf_releve import releve_pdf
 from app.services.creneaux import heure_de_paris
 
 
@@ -371,6 +374,91 @@ async def suspend_partner(
     partner.statut = "suspendu"
     await db.commit()
     return {"id": partner.id, "statut": partner.statut}
+
+
+# --- Relevés mensuels (mises en relation, lot 4) — PAS des factures ---
+
+
+def _mois(mois: str | None) -> str:
+    try:
+        if mois is None:
+            return releves.mois_de(datetime.now(timezone.utc))
+        releves.lire_mois(mois)
+        return mois
+    except releves.MoisInvalide as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+
+
+@router.get("/releves")
+async def releves_du_mois(
+    mois: str | None = None, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Le tableau du mois (par défaut le mois en cours à Paris) : provisoire tant qu'il n'est pas clos."""
+    mois = _mois(mois)
+    statut, liste = await releves_lecture.releves_du_mois(db, mois)
+    cloture = await releves_lecture.cloture(db, mois)
+    await _tracer(db, admin, "releves_consultes", mois)
+    return {
+        "mois": mois, "statut": statut, "cloture_le": cloture.cloture_le if cloture else None,
+        "cloture_par": cloture.cloture_par if cloture else None,
+        "cloture_possible_le": releves.cloture_possible_le(mois),
+        "en_attente": sum(len(r["en_attente"]) for r in liste),
+        "total_ht": round(sum(r["total_ht"] for r in liste if not r["partenaire"].get("demo")), 2),
+        "releves": liste,
+    }
+
+
+@router.post("/releves/{mois}/cloturer")
+async def cloturer_releves(
+    mois: str, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Fige le mois pour tous les partenaires : au plus tôt le 8 du mois suivant, sans contestation
+    en attente (le refus les nomme). Un relevé clos ne se recalcule plus."""
+    mois = _mois(mois)
+    try:
+        figes = await releves_lecture.cloturer(db, mois, admin.email if admin else "secret_partagé",
+                                                pdf=releve_pdf)
+    except releves_lecture.ClotureRefusee as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
+    await _tracer(db, admin, "releves_clos", f"{mois} · {len(figes)} relevé(s)")
+    return {"mois": mois, "statut": "clos", "nb_releves": len(figes)}
+
+
+@router.get("/releves/{mois}/csv")
+async def releves_csv(
+    mois: str, admin: User | None = Depends(require_admin_access), db: AsyncSession = Depends(get_db)
+):
+    """Une ligne par mise en relation du mois ; aucune donnée de foyer (code postal seulement)."""
+    mois = _mois(mois)
+    statut, liste = await releves_lecture.releves_du_mois(db, mois)
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";")
+    w.writerow(["mois", "statut_releve", "partenaire", "siret", "demo", "transmise_le", "heure", "metier",
+                "code_postal", "etat", "prix_ht"])
+    for r in liste:
+        for x in r["lignes"]:
+            w.writerow([mois, statut, r["partenaire"]["raison_sociale"], r["partenaire"].get("siret") or "",
+                        "oui" if r["partenaire"].get("demo") else "non", x["date"], x["heure"], x["metier"],
+                        x["code_postal"] or "", x["etat"], f"{x['prix_ht']:.2f}".replace(".", ",")])
+    await _tracer(db, admin, "releves_csv", mois)
+    # BOM : Excel lit l'UTF-8 (accents des raisons sociales) seulement s'il le trouve.
+    return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="releves-{mois}.csv"'})
+
+
+@router.get("/releves/{mois}/{partner_id}/pdf")
+async def releve_pdf_admin(
+    mois: str, partner_id: uuid.UUID, admin: User | None = Depends(require_admin_access),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        contenu, nom = await releves_lecture.pdf_du_mois(db, _mois(mois), partner_id, releve_pdf)
+    except LookupError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(e))
+    await _tracer(db, admin, "releve_pdf", mois)
+    return Response(contenu, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{nom}"'})
+
+
 
 
 # --- Signalements de réponses (revue qualité) ---
