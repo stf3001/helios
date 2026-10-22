@@ -178,7 +178,7 @@ async def list_all_partners(
     return [
         {"id": p.id, "raison_sociale": p.raison_sociale, "siret": p.siret, "email": p.email,
          "rge": p.rge, "zones": p.zones, "metiers": p.metiers, "statut": p.statut,
-         "note_moyenne": p.note_moyenne, "charte_signee_at": p.charte_signee_at,
+         "note_moyenne": p.note_moyenne, "charte_signee_at": p.charte_signee_at, "demo": p.demo,
          "created_at": p.created_at}
         for p in rows
     ]

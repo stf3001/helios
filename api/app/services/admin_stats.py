@@ -123,7 +123,7 @@ async def business(db: AsyncSession) -> dict:
         )
     )).one()
     return {
-        "partenaires_actifs": await _count(db, Partner, Partner.statut == "actif"),
+        "partenaires_actifs": await _count(db, Partner, Partner.statut == "actif", Partner.demo.is_(False)),
         "candidatures_en_attente": await _count(db, Partner, Partner.statut == "candidat"),
         "leads_total": await _count(db, Lead),
         "leads_par_statut": par_statut,

@@ -312,6 +312,8 @@ class Settings(BaseSettings):
     # Le foyer choisit parmi au plus ce nombre de partenaires, TIRES AU SORT et presentes dans
     # un ordre aleatoire — jamais tries par note, anciennete ou nombre de leads.
     mer_nb_propositions: int = 3
+    # Comptes qui voient les partenaires de démonstration (`partners.demo`, point 60) — et eux seuls.
+    mer_comptes_demo: tuple[str, ...] = ("demo@helios.fr",)
 
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici

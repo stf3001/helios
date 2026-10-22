@@ -19,6 +19,7 @@ interface Partner {
   statut: string
   note_moyenne: number | null
   charte_signee_at: string | null
+  demo?: boolean  // partenaire de démonstration (point 60) : visible du seul compte de démo
   created_at: string
 }
 
@@ -240,6 +241,10 @@ function Ligne({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-semibold text-ink">{p.raison_sociale}</span>
+          {p.demo && (
+            <span className="rounded-full border border-bord bg-sable px-2 py-0.5 text-xs text-dark/60"
+              title="Visible du seul compte de démo, jamais dans l'annuaire public">Démo</span>
+          )}
           <span className={'rounded-full border px-2 py-0.5 text-xs ' + (STATUT_STYLE[p.statut] ?? 'border-bord text-dark/60')}>
             {STATUT_LABEL[p.statut] ?? p.statut}
           </span>

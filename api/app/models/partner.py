@@ -30,6 +30,8 @@ class Partner(Base):
     # Affiché au foyer à côté du nom (mises en relation, lot 1) : Hydrolia et Eolia sont des
     # sociétés du fondateur d'Hélios. Facultatif.
     lien_interet: Mapped[str | None] = mapped_column(String(200))
+    # Partenaire de démonstration (point 60) : visible des seuls comptes de `mer_comptes_demo`.
+    demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 

@@ -41,7 +41,9 @@ async def list_partners(
 
     # Ordre ALPHABÉTIQUE (décision de Stéphane du 22/10/2026, point 64) : plus jamais par note.
     # Hélios est payé le même prix fixe par chaque partenaire ; un classement dirait le contraire.
-    stmt = select(Partner).where(Partner.statut == "actif").order_by(Partner.raison_sociale)
+    # Jamais de partenaire de démonstration dans l'annuaire public (point 60).
+    stmt = (select(Partner).where(Partner.statut == "actif", Partner.demo.is_(False))
+            .order_by(Partner.raison_sociale))
     rows = list(await db.scalars(stmt))
     result = []
     for p in rows:

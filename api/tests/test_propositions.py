@@ -83,3 +83,11 @@ def test_garde_fous_de_creation():
 
 def test_le_courtage_n_est_pas_un_metier_de_travaux():
     assert "courtage" not in pr.METIERS_TRAVAUX and "solaire" in pr.METIERS_TRAVAUX
+
+
+def test_un_partenaire_de_demonstration_n_est_eligible_que_pour_un_compte_de_demo():
+    d = partenaire("Démo X", demo=True)
+    assert not pr.eligible(d, "83", "isolation")
+    assert pr.eligible(d, "83", "isolation", voit_demo=True)
+    assert pr.refus_creation("proprietaire", "isolation", d, "83", []).startswith("Ce partenaire")
+    assert pr.refus_creation("proprietaire", "isolation", d, "83", [], voit_demo=True) is None

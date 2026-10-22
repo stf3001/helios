@@ -293,7 +293,8 @@ async def send_message(
     # bloc dit a Helios de demander le code postal avant de citer qui que ce soit.
     par_metier: dict[str, list[str]] = {}
     if departement is not None:
-        actifs = await db.scalars(select(Partner).where(Partner.statut == "actif"))
+        # Les partenaires de démonstration (point 60) ne sont jamais nommés par le chat.
+        actifs = await db.scalars(select(Partner).where(Partner.statut == "actif", Partner.demo.is_(False)))
         for partenaire in actifs:
             if departement not in (partenaire.zones or []):
                 continue
