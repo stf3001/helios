@@ -70,18 +70,23 @@ function Tuile({ to, icon: Icon, title, desc }: {
   )
 }
 
-/** Le calendrier n'existe qu'une fois l'onglet ouvert ET le carnet chargé, et les blocs du
+/** La cible n'existe qu'une fois l'onglet ouvert ET le carnet chargé, et les blocs du
     dessus (équipements, pièces) poussent encore la mise en page en arrivant : on attend
-    qu'il soit là, puis on recale une fois, sans quoi on s'arrête au milieu des équipements. */
-function allerAuCalendrier(essai = 0) {
-  const cible = document.getElementById('calendrier-entretien')
+    qu'elle soit là, puis on recale une fois, sans quoi on s'arrête au milieu des équipements. */
+function allerA(id: string, essai = 0) {
+  const cible = document.getElementById(id)
   if (!cible) {
-    if (essai < 40) setTimeout(() => allerAuCalendrier(essai + 1), 100)
+    if (essai < 40) setTimeout(() => allerA(id, essai + 1), 100)
     return
   }
   cible.scrollIntoView()
   setTimeout(() => cible.scrollIntoView(), 500)
 }
+
+/* Les ancres du carnet qu'une autre page peut viser par `?aller=` — la fiche Maison
+   renvoie ici pour un champ que tient un équipement (lot 7). Liste FERMÉE : un
+   identifiant inconnu dans l'URL ne doit rien ouvrir. */
+const ANCRES_MAISON = ['mes-equipements', 'calendrier-entretien']
 
 export default function Espace() {
   useTitle('Mon espace')
@@ -93,7 +98,11 @@ export default function Espace() {
   const askPrefill = searchParams.get('ask') ?? undefined
   /* `?ask=` vise la conversation : on ouvre son onglet, sinon la question pre-remplie
      attendrait derriere un onglet ferme. */
-  const [section, setSection] = useState<Section>('helios')
+  /* `?aller=<ancre>` ouvre l'onglet « Ma maison » sur un bloc du carnet : le lien d'un
+     champ verrouillé de la fiche (lot 7) arrive par là. */
+  const ancre = searchParams.get('aller')
+  const [section, setSection] = useState<Section>(
+    ancre && ANCRES_MAISON.includes(ancre) ? 'maison' : 'helios')
   const [house, setHouse] = useState<{ completeness_score: number; niveau: string; code_postal: string } | null>(null)
   const [lastAudit, setLastAudit] = useState<{ created_at: string } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -112,6 +121,10 @@ export default function Espace() {
     }).catch(() => setError(true)).finally(() => setLoading(false))
   }, [authFetch])
   useEffect(load, [load])
+  /* Une seule fois, à l'arrivée : le carnet n'est pas encore monté, `allerA` l'attend. */
+  useEffect(() => {
+    if (ancre && ANCRES_MAISON.includes(ancre)) allerA(ancre)
+  }, [ancre])
 
   return (
     <section className="max-w-[1040px] mx-auto px-4 py-8">
@@ -158,7 +171,7 @@ export default function Espace() {
               quel que soit l'onglet ouvert. Sans fiche, il n'a rien à dire. */}
           {house && (
             <AFaire onVoirMaison={() => setSection('maison')}
-              onToutVoir={() => { setSection('maison'); allerAuCalendrier() }} />
+              onToutVoir={() => { setSection('maison'); allerA('calendrier-entretien') }} />
           )}
 
           <BandeOnglets onglets={ONGLETS} actif={section} onChoisir={setSection}

@@ -21,6 +21,7 @@ export default function BlockCard({
   onChange,
   onSave,
   icone,
+  verrouilles,
 }: {
   title: string
   weightLabel: string
@@ -30,6 +31,8 @@ export default function BlockCard({
   onChange: (key: string, value: FieldValue) => void
   onSave: (keys: string[]) => Promise<void>
   icone?: React.ReactNode
+  /** Carnet, lot 7 : les champs de ce bloc que tient un équipement — affichés en lecture. */
+  verrouilles?: string[]
 }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -80,7 +83,8 @@ export default function BlockCard({
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         {visibles.map((f) => (
-          <FieldInput key={f.key} spec={f} value={draft[f.key]} onChange={(v) => onChange(f.key, v)} />
+          <FieldInput key={f.key} spec={f} value={draft[f.key]} onChange={(v) => onChange(f.key, v)}
+            verrouille={verrouilles?.includes(f.key)} />
         ))}
       </div>
       <div className="flex items-center gap-3">

@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import BlockCard from '../components/fiche/BlockCard'
 import CompletenessBar from '../components/fiche/CompletenessBar'
+import { LIEN_EQUIPEMENTS } from '../components/fiche/FieldInput'
 import HouseDocuments from '../components/fiche/HouseDocuments'
 import type { Draft, FieldSpec, FieldValue } from '../components/fiche/types'
 import { useAuth } from '../context/AuthContext'
@@ -207,6 +209,9 @@ export default function FicheMaison() {
     setDraft((d) => ({ ...d, [key]: value }))
   }
 
+  // Fixés par un équipement en service du carnet (lot 7) : en lecture ici.
+  const verrouilles = (house?.champs_verrouilles as string[] | undefined) ?? []
+
   if (loading) {
     return <div className="max-w-[900px] mx-auto px-4 py-16 text-center text-gray-500">Chargement…</div>
   }
@@ -277,17 +282,24 @@ export default function FicheMaison() {
         </div>
       ) : (
         <>
+          {verrouilles.length > 0 && (
+            <p className="mb-4 text-sm text-dark/70">
+              Les champs marqués d'un cadenas viennent de vos équipements : ils se modifient{' '}
+              <Link to={LIEN_EQUIPEMENTS} className="font-semibold text-primary hover:underline">dans Mes équipements</Link>,
+              et la fiche suit.
+            </p>
+          )}
           <CompletenessBar score={house.completeness_score as number} niveau={house.niveau as string} />
           {/* Les six blocs sont REPLIÉS : voir le commentaire de `BlockCard`. L'écart passe
               de `space-y-6` à `space-y-2` — des blocs fermés forment une liste, et une liste
               aérée au même pas que des cartes ouvertes se lit mal. */}
           <div className="space-y-2">
-            <BlockCard icone={<Home className="h-4 w-4 text-primary" />} title="Identité du logement" weightLabel="20 % du score" pct={(house.block_scores as Record<string, number>)?.identite} fields={IDENTITE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard icone={<Layers className="h-4 w-4 text-primary" />} title="Enveloppe" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.enveloppe} fields={ENVELOPPE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard icone={<Flame className="h-4 w-4 text-primary" />} title="Systèmes" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.systemes} fields={SYSTEMES_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard icone={<Gauge className="h-4 w-4 text-primary" />} title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard icone={<Target className="h-4 w-4 text-primary" />} title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
-            <BlockCard icone={<Sun className="h-4 w-4 text-primary" />} title="Toiture / potentiel solaire" weightLabel="bonus" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} />
+            <BlockCard icone={<Home className="h-4 w-4 text-primary" />} title="Identité du logement" weightLabel="20 % du score" pct={(house.block_scores as Record<string, number>)?.identite} fields={IDENTITE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard icone={<Layers className="h-4 w-4 text-primary" />} title="Enveloppe" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.enveloppe} fields={ENVELOPPE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard icone={<Flame className="h-4 w-4 text-primary" />} title="Systèmes" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.systemes} fields={SYSTEMES_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard icone={<Gauge className="h-4 w-4 text-primary" />} title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard icone={<Target className="h-4 w-4 text-primary" />} title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard icone={<Sun className="h-4 w-4 text-primary" />} title="Toiture / potentiel solaire" weightLabel="bonus" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
           </div>
           <div className="mt-8">
             <HouseDocuments />

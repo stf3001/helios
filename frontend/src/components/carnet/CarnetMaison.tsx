@@ -23,7 +23,12 @@ import {
  * Tout ce que le foyer saisit est DÉCLARÉ ; l'âge et les fins de garantie sont CALCULÉS
  * côté serveur, et une année sans date donne une date SUPPOSÉE — l'écran le dit à chaque
  * fois. Aucune explication juridique ici : « En savoir plus » renvoie à la fiche
- * `kb/garanties_travaux.md`. La fiche Maison n'est jamais modifiée depuis ce carnet.
+ * `kb/garanties_travaux.md`.
+ *
+ * Lot 7 : un équipement en service relié à la fiche (`origine_fiche`) la FIXE — le serveur
+ * la réécrit à chaque enregistrement, d'où la disparition de la note « Votre fiche indique… ».
+ * Le mettre hors service ou le supprimer vide le champ de la fiche : un bandeau propose
+ * alors d'ajouter ce qui le remplace.
  */
 
 type Suggestion = {
@@ -31,7 +36,12 @@ type Suggestion = {
   annee_pose: number | null; valeur_fiche: string | null
 }
 type GarantieMaison = Garantie & { provenance: 'travaux' | 'equipement'; donnees: string; mention: string | null }
-type Fiche = Record<string, unknown>
+/** Ce que dit le bandeau après une mise hors service : la place de la fiche restée vide. */
+const PLACE_FICHE: Record<string, string> = {
+  chauffage_principal: 'votre chauffage principal', chauffage_appoint: "votre chauffage d'appoint",
+  ecs: 'votre eau chaude', clim: 'votre climatisation', ventilation: 'votre ventilation',
+}
+type Vacant = { origine: string; categorie: string; nom: string }
 
 // Ce que l'API accepte en écriture : le reste (âge, identifiants, dates système) est calculé.
 const CHAMPS_EQUIPEMENT = [
@@ -75,21 +85,12 @@ function lignePose(e: Equipement): string | null {
   return `${pose} · ${e.age_statut === 'suppose' ? 'environ ' : ''}${age}`
 }
 
-/** L'année que la fiche Maison indique pour ce champ, si elle diffère de celle de l'équipement. */
-function ecartFiche(e: Equipement, fiche: Fiche | null): number | null {
-  if (!fiche || !e.origine_fiche || !e.date_pose_retenue) return null
-  const annee = fiche[`${e.origine_fiche}_annee`]
-  if (typeof annee !== 'number') return null
-  return Number(e.date_pose_retenue.slice(0, 4)) === annee ? null : annee
-}
-
-function CarteEquipement({ e, fiche, onModifier, onService, onSupprimer }: {
-  e: Equipement; fiche: Fiche | null
+function CarteEquipement({ e, onModifier, onService, onSupprimer }: {
+  e: Equipement
   onModifier: () => void; onService: () => void; onSupprimer: () => void
 }) {
   const nom = [e.marque, e.modele].filter(Boolean).join(' ')
   const pose = lignePose(e)
-  const ecart = ecartFiche(e, fiche)
   return (
     <li className="rounded-lg border border-bord bg-white p-3">
       <div className="flex items-start justify-between gap-2">
@@ -100,7 +101,6 @@ function CarteEquipement({ e, fiche, onModifier, onService, onSupprimer }: {
           {e.garantie_fabricant_fin && (
             <p className="text-xs text-dark/60">Garantie fabricant jusqu'au {dateFr(e.garantie_fabricant_fin)}</p>
           )}
-          {ecart !== null && <p className="mt-1 text-xs text-terra">Votre fiche indique {ecart}.</p>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button onClick={onModifier} title="Modifier" aria-label="Modifier"
@@ -125,7 +125,8 @@ export default function CarnetMaison() {
   const [chantiers, setChantiers] = useState<Chantier[]>([])
   const [garanties, setGaranties] = useState<GarantieMaison[]>([])
   const [documents, setDocuments] = useState<Doc[]>([])
-  const [fiche, setFiche] = useState<Fiche | null>(null)
+  // Un équipement relié à la fiche vient de quitter le service, sans remplaçant.
+  const [vacant, setVacant] = useState<Vacant | null>(null)
   const [erreur, setErreur] = useState(false)
   // Un seul formulaire ouvert à la fois : `id` absent = création.
   const [formEq, setFormEq] = useState<Draft | null>(null)
@@ -137,9 +138,8 @@ export default function CarnetMaison() {
     Promise.all([
       json('/api/houses/me/equipements'), json('/api/houses/me/equipements/suggestions'),
       json('/api/houses/me/travaux'), json('/api/houses/me/garanties'), json('/api/houses/me/documents'),
-      authFetch('/api/houses/me').then((r) => (r.ok ? r.json() : null)),
-    ]).then(([eq, sg, ch, ga, docs, f]) => {
-      setEquipements(eq); setSuggestions(sg); setChantiers(ch); setGaranties(ga); setDocuments(docs); setFiche(f)
+    ]).then(([eq, sg, ch, ga, docs]) => {
+      setEquipements(eq); setSuggestions(sg); setChantiers(ch); setGaranties(ga); setDocuments(docs)
     }).catch(() => setErreur(true))
   }, [authFetch])
   useEffect(charger, [charger])
@@ -161,7 +161,7 @@ export default function CarnetMaison() {
     const corps = choisir(d, CHAMPS_EQUIPEMENT)
     if (!id && d.origine_fiche) corps.origine_fiche = d.origine_fiche
     const err = await ecrire(id ? `/api/houses/me/equipements/${id}` : '/api/houses/me/equipements', id ? 'PATCH' : 'POST', corps)
-    if (!err) setFormEq(null)
+    if (!err) { setFormEq(null); setVacant(null) }
     return err
   }
 
@@ -181,13 +181,22 @@ export default function CarnetMaison() {
   const parCategorie = CATEGORIES.map((c) => ({ ...c, items: enService.filter((e) => e.categorie === c.value) }))
     .filter((c) => c.items.length)
 
+  // Retiré du service (ou supprimé) alors qu'il tenait une place de la fiche : le serveur a
+  // vidé ce champ, on propose d'ajouter le remplaçant, qui héritera de la même place.
+  const apresRetrait = (e: Equipement) => (err: string | null) => {
+    if (err) { alert(err); return }
+    if (e.en_service && e.origine_fiche)
+      setVacant({ origine: e.origine_fiche, categorie: e.categorie, nom: libelleType(e.categorie, e.type) })
+  }
+
   const carte = (e: Equipement) => (
-    <CarteEquipement key={e.id} e={e} fiche={fiche}
+    <CarteEquipement key={e.id} e={e}
       onModifier={() => { setFormCh(null); setFormEq({ ...e }) }}
-      onService={() => ecrire(`/api/houses/me/equipements/${e.id}`, 'PATCH', { en_service: !e.en_service })}
+      onService={() => ecrire(`/api/houses/me/equipements/${e.id}`, 'PATCH', { en_service: !e.en_service })
+        .then(e.en_service ? apresRetrait(e) : (err) => { if (err) alert(err) })}
       onSupprimer={() => {
         if (confirm(`Supprimer « ${libelleType(e.categorie, e.type)} » du carnet ? Pour garder son historique, mettez-le plutôt hors service.`))
-          ecrire(`/api/houses/me/equipements/${e.id}`, 'DELETE')
+          ecrire(`/api/houses/me/equipements/${e.id}`, 'DELETE').then(apresRetrait(e))
       }} />
   )
 
@@ -203,6 +212,20 @@ export default function CarnetMaison() {
             <BoutonAjout onClick={() => { setFormCh(null); setFormEq({ categorie: 'chauffage' }) }}>Ajouter</BoutonAjout>
           )}
         </div>
+
+        {vacant && !formEq && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-cream px-3 py-2">
+            <span className="text-sm text-dark/80">
+              {vacant.nom} n'est plus en service : votre fiche ne dit plus rien de {PLACE_FICHE[vacant.origine]}.
+              Qu'est-ce qui le remplace ?
+            </span>
+            <span className="flex shrink-0 items-center gap-3">
+              <button onClick={() => { setFormCh(null); setFormEq({ categorie: vacant.categorie, origine_fiche: vacant.origine }) }}
+                className="text-sm font-semibold text-primary hover:underline">Ajouter ce qui le remplace</button>
+              <button onClick={() => setVacant(null)} className="text-sm text-dark/60 hover:underline">Plus tard</button>
+            </span>
+          </div>
+        )}
 
         {suggestions.length > 0 && !formEq && (
           <ul className="mb-3 space-y-2">
