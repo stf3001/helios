@@ -1,7 +1,8 @@
 """Espace partenaire — doc 04. Le partenaire se connecte, voit ses leads et fait avancer les statuts.
 
 C'est ici que se fait la vraie transition de statut d'un lead (côté client, c'était une démo).
-À SIGNÉ, la commission est calculée par le moteur déterministe (doc 08 §3).
+Mises en relation à prix fixe (série 4, lot 1) : aucune commission sur un lead `travaux`, le prix
+est figé à la création (`prix_ht`) ; le courtage (`energie`) garde son calcul.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -51,7 +52,8 @@ async def my_leads(partner: Partner = Depends(get_current_partner), db: AsyncSes
             "statut": lead.statut,
             "code_postal": house.code_postal if house else None,
             "montant_travaux": lead.montant_travaux,
-            "commission": float(lead.commission) if lead.commission is not None else None,
+            "prix_ht": float(lead.prix_ht) if lead.prix_ht is not None else None,
+            "commission": float(lead.commission) if lead.commission is not None else None,  # historique, courtage
             "consent_retire": lead.consent_retire_at is not None,
             "created_at": lead.created_at,
         })
@@ -67,7 +69,7 @@ async def advance_lead(
     if lead is None or lead.partner_id != partner.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead introuvable")
     if lead.statut == "signe":
-        raise HTTPException(status.HTTP_409_CONFLICT, "Lead signé : immuable (traçabilité de la commission).")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Lead signé : immuable.")
     if lead.consent_retire_at is not None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Consentement retiré par le client : lead inexploitable.")
 
@@ -77,7 +79,7 @@ async def advance_lead(
         lead.motif_perdu = payload.motif_perdu
 
     lead.statut = payload.statut
-    if payload.statut == "signe":
+    if payload.statut == "signe" and lead.type != "travaux":
         lead.commission = commission.compute_commission(lead.metier, lead.montant_travaux)
     await db.commit()
     return {"id": lead.id, "statut": lead.statut, "commission": float(lead.commission) if lead.commission else None}

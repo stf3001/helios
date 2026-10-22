@@ -83,14 +83,18 @@ def test_trois_partenaires_par_departement_pour_pouvoir_comparer(metier):
     """
     couverture = _couverture(metier)
     for departement in regions.TOUS_DEPARTEMENTS:
-        assert len(couverture[departement]) == 3, (departement, couverture[departement])
+        attendu = 3
+        # AD Solar n'est plus partenaire (decision de Stephane du 22/10/2026) : la PACA perd son
+        # troisieme nom en solaire et en PAC, en attendant qu'il soit remplace (TODO.md).
+        if metier in ("solaire", "pac") and departement in regions.REGIONS["pac"][1]:
+            attendu = 2
+        assert len(couverture[departement]) == attendu, (departement, couverture[departement])
 
 
 def test_les_partenaires_historiques_couvrent_bien_leur_zone():
-    """AD Solar sur PACA, Ensol ailleurs : la repartition voulue par Stephane."""
+    """Ensol hors PACA ; AD Solar n'est plus partenaire (decision de Stephane du 22/10/2026)."""
     solaire = _couverture("solaire")
-    assert "AD Solar" in solaire["13"]
-    assert "AD Solar" not in solaire["35"]
+    assert "AD Solar" not in solaire["13"] and "AD Solar" not in solaire["35"]
     assert "Ensol" in solaire["35"]
     assert "Ensol" not in solaire["13"]
 

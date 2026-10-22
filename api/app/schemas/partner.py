@@ -3,7 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Metier = Literal["pv", "pac", "isolation", "menuiseries", "vmc", "regulation"]
+# Ce qu'un candidat peut déclarer : les métiers de l'annuaire (`regions.METIERS`) et trois corps
+# d'état sans partenaire à ce jour. « pv » est devenu « solaire » le 22/10/2026 : c'est le code de
+# l'annuaire, et un candidat en « pv » n'aurait jamais été proposé.
+Metier = Literal["solaire", "pac", "isolation", "eau", "eolien", "inertie", "courtage", "menuiseries", "vmc",
+                 "regulation"]
 
 
 class PartnerApply(BaseModel):
@@ -20,7 +24,7 @@ class LeadCreate(BaseModel):
     partner_id: uuid.UUID
     audit_id: uuid.UUID | None = None
     type: Literal["travaux", "energie"] = "travaux"
-    metier: Metier | None = None
+    metier: str | None = Field(default=None, max_length=30)  # vérifié par la route (`propositions.METIERS_TRAVAUX`)
     consent: bool  # doit être True (consentement spécifique horodaté, doc 08 §6)
 
 

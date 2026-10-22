@@ -1,24 +1,32 @@
-"""Mises en relation (leads) — doc 08. Consentement horodaté, cycle de statut, commission à la signature.
+"""Mises en relation (leads). Consentement horodaté, cycle de statut.
 
-Garde-fous (doc 08 §2/§6) appliqués :
+Série 4, lot 1 (22/10/2026) : une mise en relation `travaux` est payée par le partenaire à PRIX
+FIXE (`mer_prix_ht_eur`, figé sur le lead à sa création), quel que soit le montant des travaux.
+Plus aucune commission n'est calculée sur un lead `travaux` ; `commission` reste en base pour
+l'historique. Le courtage (`energie`) ne change pas.
+
+Garde-fous :
 - un lead n'est créé qu'avec le consentement explicite du client (horodaté) ;
+- le foyer choisit parmi au plus 3 partenaires tirés au sort (`services/propositions.py`) ;
+- un lead `travaux` : propriétaire ou acheteur, partenaire éligible à la création, pas de
+  doublon, au plus 3 demandes actives par métier ;
 - le client peut retirer son consentement tant que le devis n'est pas signé ;
-- lead immuable après SIGNÉ (traçabilité de la commission) ;
-- la commission est calculée par le moteur déterministe (doc 08 §3), jamais saisie à la main.
+- lead immuable après SIGNÉ.
 """
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.house import House
 from app.models.partner import Lead, Partner, Review
 from app.models.user import User
 from app.schemas.partner import LeadCreate, LeadStatusUpdate, ReviewCreate
-from app.services import commission
+from app.services import commission, propositions, regions
 from app.services.email import send_lead_notification
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -44,16 +52,38 @@ async def _own_lead(db: AsyncSession, user_id, lead_id) -> Lead:
 def _to_out(lead: Lead, partner: Partner | None) -> dict:
     return {
         "id": lead.id,
-        "partner": {"id": partner.id, "raison_sociale": partner.raison_sociale} if partner else None,
+        "partner": {"id": partner.id, "raison_sociale": partner.raison_sociale,
+                    "lien_interet": partner.lien_interet} if partner else None,
         "type": lead.type,
         "metier": lead.metier,
         "statut": lead.statut,
         "montant_travaux": lead.montant_travaux,
-        "commission": float(lead.commission) if lead.commission is not None else None,
+        # Ni commission ni prix au foyer : il ne paie rien, et le prix est le même pour tous.
         "consent_client_at": lead.consent_client_at,
         "consent_retire_at": lead.consent_retire_at,
         "created_at": lead.created_at,
     }
+
+
+async def _nb_avis(db: AsyncSession) -> dict:
+    rows = await db.execute(select(Lead.partner_id, func.count()).join(Review, Review.lead_id == Lead.id)
+                            .group_by(Lead.partner_id))
+    return dict(rows.all())
+
+
+@router.get("/propositions")
+async def get_propositions(metier: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Au plus 3 partenaires éligibles, TIRÉS AU SORT, dans un ordre aléatoire — jamais triés."""
+    house = await _own_house(db, user.id)
+    if metier not in propositions.METIERS_TRAVAUX:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Métier inconnu")
+    departement = regions.departement_du_code_postal(house.code_postal or "")
+    eligibles = [p for p in await db.scalars(select(Partner).where(Partner.statut == "actif"))
+                 if propositions.eligible(p, departement, metier)]
+    avis = await _nb_avis(db)
+    tires = propositions.tirer(eligibles, settings.mer_nb_propositions)
+    return {"metier": metier, "ordre": "tire_au_sort",
+            "propositions": [propositions.proposition(p, avis.get(p.id, 0)) for p in tires]}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -66,6 +96,15 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
     partner = await db.get(Partner, payload.partner_id)
     if partner is None or partner.statut != "actif":
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Partenaire indisponible")
+    prix_ht = None
+    if payload.type == "travaux":
+        actifs = list(await db.scalars(select(Lead).where(
+            Lead.house_id == house.id, Lead.type == "travaux", Lead.statut.in_(propositions.STATUTS_ACTIFS))))
+        refus = propositions.refus_creation(
+            house.statut, payload.metier, partner, regions.departement_du_code_postal(house.code_postal or ""), actifs)
+        if refus:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, refus)
+        prix_ht = settings.mer_prix_ht_eur  # figé : un changement de prix ne touche pas les leads passés
 
     lead = Lead(
         house_id=house.id,
@@ -75,6 +114,7 @@ async def create_lead(payload: LeadCreate, user: User = Depends(get_current_user
         metier=payload.metier,
         statut="transmis",  # créé puis immédiatement transmis au partenaire
         consent_client_at=datetime.now(timezone.utc),
+        prix_ht=prix_ht,
     )
     db.add(lead)
     await db.commit()
@@ -114,14 +154,15 @@ async def withdraw_consent(lead_id, user: User = Depends(get_current_user), db: 
 async def update_status(
     lead_id, payload: LeadStatusUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
-    """Avance le lead dans son cycle. À SIGNÉ, la commission est calculée par le moteur déterministe.
+    """Avance le lead dans son cycle. Aucune commission sur un lead `travaux` (prix fixe, figé à la
+    création) ; le courtage (`energie`) garde son calcul.
 
     NB : en production ces transitions viendront de l'espace partenaire ; ici l'endpoint sert le suivi
     et la démo. Un lead SIGNÉ est immuable (doc 08 §2).
     """
     lead = await _own_lead(db, user.id, lead_id)
     if lead.statut == "signe":
-        raise HTTPException(status.HTTP_409_CONFLICT, "Lead signé : immuable (traçabilité de la commission).")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Lead signé : immuable.")
 
     if payload.montant_travaux is not None:
         lead.montant_travaux = payload.montant_travaux
@@ -129,7 +170,7 @@ async def update_status(
         lead.motif_perdu = payload.motif_perdu
 
     lead.statut = payload.statut
-    if payload.statut == "signe":
+    if payload.statut == "signe" and lead.type != "travaux":
         lead.commission = commission.compute_commission(lead.metier, lead.montant_travaux)
 
     await db.commit()

@@ -1,5 +1,9 @@
 """Calcul de commission d'apport d'affaires — doc 08 §3 (grille indicative à calibrer par métier).
 
+PLUS UTILISÉ POUR LES TRAVAUX depuis le 22/10/2026 (série 4, lot 1) : une mise en relation
+`travaux` est payée à prix fixe (`mer_prix_ht_eur`). Ce module reste pour l'historique des
+leads déjà signés et pour le courtage (`energie`), dont le modèle ne change pas.
+
 Déterministe : la commission = taux(métier) × montant HT des travaux signés. Le taux central
 de la fourchette du doc est utilisé. Aucune valeur n'est produite par le LLM.
 """
