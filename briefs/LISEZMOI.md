@@ -26,11 +26,23 @@ Lots faisables en local, sans e-mail ni clé d'API. Un brief à la fois, dans l'
 | 5 | `BRIEF-carnet-lot9-projets.md` | lots 8 et 11 |
 | 6 | `BRIEF-carnet-lot10-cout-maison.md` | lot 8 |
 
-## Série 3 (22/10/2026) — finitions
+## Série 3 (22/10/2026) — finitions, faite le 22/10/2026
 
 | Ordre | Brief | Prérequis |
 |---|---|---|
 | 1 | `BRIEF-finitions-1.md` (points 46, 49, 13, 51 ; fiche fournie : `KB-jardin-hiver.md`) | aucun |
+
+## Série 4 (22/10/2026) — mises en relation à prix fixe
+
+Décisions de Stéphane du 22/10/2026 : 60 € HT tous métiers, dus à la transmission, contestation sous 7 jours ; le foyer choisit parmi trois partenaires tirés au sort ; AD Solar n'est pas partenaire ; Hydrolia et Eolia avec lien d'intérêt affiché.
+
+| Ordre | Brief | Prérequis |
+|---|---|---|
+| 1 | `BRIEF-mer-lot1-prix-fixe.md` | aucun |
+| 2 | `BRIEF-mer-lot2-dossier-score.md` | lot 1 |
+| 3 | `BRIEF-mer-lot3-espace-partenaire.md` | lots 1 et 2 |
+| 4 | `BRIEF-mer-lot4-releves.md` | lots 1 et 3 |
+| 5 | `BRIEF-mer-lot5-suivi-foyer.md` | lots 1 à 3 |
 
 ## Références
 
