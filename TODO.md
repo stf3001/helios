@@ -1099,13 +1099,16 @@ puis sur le compte de démo par la vraie route (`POST /houses/me/dossier`, 3 pag
 d'export vérifié à l'écran (375 px). `pdf_audit.py` n'a pas changé d'un octet : ses briques sont
 importées, pas extraites. Commits `59829a2` → fin du lot.
 
-### [ ] 44. Le dossier de la maison : deux relectures avant toute communication
+### [x] 44. Le dossier de la maison : deux relectures avant toute communication — fait le 22/10/2026 (lot 11)
 
-1. **La mention de pied de première page**, recopiée telle quelle du brief, est à faire
-   relire par Stéphane (`pdf_dossier.MENTION`).
-2. **La liste des rubriques du carnet d'information du logement** est à confirmer sur le
-   texte officiel avant de parler de « rubriques du CIL » où que ce soit. Le document ne dit
-   jamais « conforme », « certifié » ni « officiel » (testé).
+1. **La mention de pied de première page** est désormais celle décidée par Stéphane pour le
+   lot 11 (`pdf_dossier.MENTION`), présente mot pour mot dans le PDF (testé sur le texte extrait).
+2. **Les rubriques du carnet d'information du logement** ont été vérifiées le 21/10/2026 sur
+   le CCH (art. L. 126-35-2 à L. 126-35-11, R. 126-32 à R. 126-34) et l'arrêté du 27 décembre
+   2022, d'après la synthèse d'Actu-Juridique et le texte publié par AIDA (INERIS) — sources
+   citées dans `briefs/BRIEF-carnet-lot11-contenu-cil.md`. Le dossier les reprend (catégorie
+   du chantier, description, isolants, évacuation et étiquette des appareils, plans) et ne
+   dit jamais « conforme », « certifié » ni « officiel » (testé).
 
 ### [ ] 45. Rendez-vous : qui reçoit, et sur quelles heures — EN ATTENTE DE DÉCISION
 
@@ -1204,6 +1207,14 @@ Voir `debriefs/2026-10-22-carnet-lot10.md`.
 **Décision de Stéphane (22/10/2026) : les deux sont confirmés.** L'entretien ne compte que
 l'usage (ni améliorations ni remplacements), et l'électricité reste hors abonnement. Ne pas
 les changer sans lui.
+
+### [x] 56. Carnet, lot 11 : le dossier reprend le contenu du CIL — fait le 22/10/2026
+
+Migration 0034 (évacuation, étiquette, rubrique CIL du chantier, table `isolants`, type de
+document `plan`), `services/cil.py` (« À compléter », indicateur sans valeur légale),
+`GET /houses/me/cil`, formulaires et PDF. **Vérifié** : rendu du PDF d'une maison rénovée en
+2024 (PAC + combles) relu à l'œil, liste « À compléter » à l'écran sur le compte de démo
+(remis en état). Voir `debriefs/2026-10-22-carnet-lot11.md`.
 
 ## Le piège à ne pas réintroduire
 
