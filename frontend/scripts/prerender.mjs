@@ -36,7 +36,8 @@ const SITE = process.env.HELIOS_SITE_URL || 'https://helios.fr'
  * des pages orphelines, indexables mais liées depuis nulle part. Elle reste en revanche
  * pleinement dans la base de connaissances : le chat s'en sert.
  */
-const SOURCES_EXCLUES = new Set(['cas_terrain'])
+// `charte_partenaire` : texte de référence de la charte, en relecture, jamais publié (mer lot 3).
+const SOURCES_EXCLUES = new Set(['cas_terrain', 'charte_partenaire'])
 
 /**
  * Même expression que le parseur Python (`agents_engine._FAQ_RE`) : format `### Q:` / `meta` / `R:`.
