@@ -1254,12 +1254,14 @@ calculée sur les travaux ; le foyer choisit parmi au plus 3 partenaires tirés 
 `suspendu` ; textes publics, fiche FAQ et constitution v0.3 au prix fixe. Courtage inchangé.
 **Vérifié** à l'écran avec des partenaires jetables (effacés). Voir `debriefs/2026-10-22-mer-lot1.md`.
 
-### [ ] 60. Dater la charte des partenaires réels — SANS CELA, AUCUNE PROPOSITION
+### [ ] 60. Mettre les partenaires réels en règle — SANS CELA, AUCUNE PROPOSITION
 
-Un partenaire n'est proposé à un foyer que s'il est `actif` ET a une charte signée. Ensol,
-Hydrolia, Eolia et Energiesto sont actifs mais **sans date de charte** (le seed les a activés sans
-passer par l'admin) : aujourd'hui, un foyer ne reçoit aucune proposition, nulle part. À faire par
-Stéphane dans `/admin/partenaires` (« Enregistrer la signature »), pour ceux qui ont réellement signé.
+**Règle changée au lot 3 (22/10/2026)** : un partenaire n'est proposé que s'il est `actif`, a signé
+DANS SON ESPACE la charte en vigueur, et a un Kbis, une décennale (et un RGE s'il le déclare)
+valides (`services/conformite.py`). La date saisie par l'admin du lot 1 n'existe plus. Ensol,
+Hydrolia, Eolia et Energiesto n'ont ni justificatif ni signature : `/admin/partenaires` les montre
+« manquant ». Dans l'ordre : relire la charte (point 68), la mettre en vigueur, leur envoyer un lien
+d'activation (bouton « Lien d'activation »), qu'ils déposent leurs pièces et signent.
 
 Le 22/10/2026, pour vérifier les lots sans dater la charte d'un partenaire réel : quatre partenaires
 « Démo … » (`api/scripts/seed_partenaires_demo.py`, `partners.demo`), charte datée, Var, visibles du
@@ -1300,6 +1302,20 @@ efface copies de documents, dossier, coordonnées, message et créneaux. Débrie
 
 `mer_score_points` (`config.py`) : 20/20/20/15/10/15, proposés le 22/10/2026. Sans retour réel,
 on ne sait pas si un dossier à 55 vaut moins qu'un dossier à 80 pour un artisan.
+
+### [x] 67. Mises en relation, lot 3 : espace partenaire, charte, contestations — fait le 22/10/2026
+
+Contestation sous 7 jours tranchée par l'admin (acceptée → `facturable = false`, prix gardé),
+justificatifs datés, charte versionnée signée dans l'espace, activation par lien à usage unique,
+suivi déclaratif sans effet sur le prix (migration 0038). Débrief : `debriefs/2026-10-22-mer-lot3.md`.
+
+### [ ] 68. Relire la charte partenaire v2, puis la mettre en vigueur
+
+`kb/charte_partenaire.md`, marquée `a_relire: Stéphane`, écrite à partir du doc 01 au modèle du prix
+fixe. Elle n'est ni publiée ni ingérée. Après relecture : `cd api && .venv/Scripts/python.exe -m
+scripts.charger_charte` sur la base de production. Elle est déjà en vigueur sur la base de DÉV,
+pour vérifier le lot avec les partenaires « Démo ». À reporter aussi dans le doc 01 (« Loyauté
+envers la plateforme » y parle encore des commissions).
 
 ## Le piège à ne pas réintroduire
 

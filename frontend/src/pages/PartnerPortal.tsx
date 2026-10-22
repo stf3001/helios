@@ -373,7 +373,7 @@ function Entreprise({ moi, pFetch, onMaj }: { moi: Moi; pFetch: PFetch; onMaj: (
       </div>
 
       <section>
-        <h2 className="mb-2 font-semibold">Justificatifs</h2>
+        <h2 className="mb-2 text-xl text-ink">Justificatifs</h2>
         <div className="space-y-3">
           {types.map(([t, libelle]) => {
             const e = moi.justificatifs[t]
@@ -404,7 +404,7 @@ function Entreprise({ moi, pFetch, onMaj }: { moi: Moi; pFetch: PFetch; onMaj: (
       </section>
 
       <section>
-        <h2 className="mb-2 font-semibold">Charte partenaire</h2>
+        <h2 className="mb-2 text-xl text-ink">Charte partenaire</h2>
         {!moi.charte.version ? (
           <p className="text-sm text-dark/70">La charte est en cours de relecture. Vous pourrez la signer ici dès qu'elle sera en vigueur.</p>
         ) : (
@@ -479,7 +479,7 @@ function TexteCharte({ texte }: { texte: string }) {
       {blocs.map((b, i) => b.startsWith('# ')
         ? <h3 key={i} className="text-lg text-ink">{b.slice(2)}</h3>
         : b.startsWith('## ')
-          ? <h4 key={i} className="pt-2 font-semibold text-ink">{b.slice(3)}</h4>
+          ? <h4 key={i} className="pt-2 text-base text-ink">{b.slice(3)}</h4>
           : <p key={i}>{gras(b)}</p>)}
     </>
   )
