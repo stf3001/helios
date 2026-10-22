@@ -51,6 +51,16 @@ const POSTES: Record<string, string> = {
   eolien_eur: 'éolienne',
 }
 
+// Le nom de rayon de chaque fiche `kb/` qu'un modèle cite (identifiants de `modeles.json`).
+const FICHES: Record<string, string> = {
+  dimensionnement_pv: 'Bien dimensionner ses panneaux', stockage_contrats: 'Stockage et contrats',
+  action_pac_remplacement: 'Passer à la pompe à chaleur', pac_air_eau: 'La PAC air/eau', pac_air_air: 'La PAC air/air',
+  action_ballon_thermodynamique: 'Le ballon thermodynamique', supports_securite: 'Supports et carport',
+  eau: "L'eau de l'air", eolien: "L'éolien", baremes_aides: 'Les aides', urbanisme_assurance: 'Urbanisme et assurance',
+  financement_projet: 'Financer son projet', choisir_installateur: "Choisir l'entreprise",
+  garanties_travaux: 'Les garanties après travaux',
+}
+
 const euros = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} €`
 
 function Provenance({ source, statut, date }: { source: string | null; statut: string | null; date: string | null }) {
@@ -281,9 +291,22 @@ function FicheProjet({ id, documents, equipements, onFermer }: {
       {(p.fiches ?? []).length > 0 && (
         <div>
           <p className="mb-1 text-sm font-semibold text-ink">Avant de signer</p>
-          <ul className="space-y-1">
-            {(p.fiches ?? []).flatMap((f) => f.questions.slice(0, 2)).map((q) => (
-              <li key={q}><Link to={`/faq/${faqSlug(q)}`} className="text-sm text-primary hover:underline">{q}</Link></li>
+          {/* Une fiche par sujet, repliée : ses questions dedans. Le nom est un titre de
+              rayon, pas une explication — celles-ci sont dans les fiches. */}
+          <ul className="divide-y divide-bord rounded-lg border border-bord">
+            {(p.fiches ?? []).filter((f) => f.questions.length).map((f) => (
+              <li key={f.source}>
+                <details className="group px-3 py-2">
+                  <summary className="cursor-pointer list-none text-sm text-ink marker:hidden">
+                    {FICHES[f.source] ?? f.source} <span className="text-xs text-dark/50">· {f.questions.length}</span>
+                  </summary>
+                  <ul className="mt-1.5 space-y-1">
+                    {f.questions.map((q) => (
+                      <li key={q}><Link to={`/faq/${faqSlug(q)}`} className="text-sm text-primary hover:underline">{q}</Link></li>
+                    ))}
+                  </ul>
+                </details>
+              </li>
             ))}
           </ul>
         </div>
