@@ -1022,7 +1022,12 @@ deux photos de pièce en vignette, rangées à part dans « Papiers » (compteur
 `d8509f1`. Photos hors limite, remplacement, cascade et accès entre foyers tenus par
 `api/tests/test_pieces_api.py` (contre la vraie base).
 
-### [ ] 37. Brancher les pièces et émetteurs dans le pré-audit et le dimensionnement PAC/clim
+### [x] 37. Brancher les pièces et émetteurs dans le pré-audit et le dimensionnement PAC/clim — fait le 22/10/2026 (pré-audit v2.6)
+
+Puissance de chauffage en fourchette (consommation et volume), plage PAC air/eau 80-120 %, radiateurs
+pièce par pièce à 50 puis 55 °C ; l'air/air reste à la surface (décision du 22/10/2026). La fiche
+donne le total, les pièces seulement la répartition. Débrief : `debriefs/2026-10-22-preaudit-lot6.md`.
+Texte d'origine :
 
 Le lot 2 ne fait que SAISIR : aucun moteur ne lit `pieces` ni `emetteurs`. À faire dans un
 lot à venir, **après validation par Stéphane des règles de calcul** (puissance par pièce,
@@ -1280,7 +1285,10 @@ Le doc 08 §5 est écrit pour une commission sur les travaux signés. Le modèle
 fixe dû à la transmission, avec contestation sous 7 jours (lot 3) : contrat, CGV partenaire et
 mentions à faire relire avant de facturer quiconque.
 
-### [ ] 63. Reporter la constitution v0.3 dans le doc 03 du dossier de cadrage
+### [x] 63. Reporter la constitution v0.3 dans le doc 03 du dossier de cadrage — vérifié le 22/10/2026
+
+`03-CONSTITUTION-HELIOS.md` dit « payée à prix fixe par les entreprises partenaires pour chaque mise
+en relation demandée » et ne parle plus de commission (relu).
 
 `prompts/constitution-v0.3.md` dit « payée à prix fixe… » ; sa source de vérité déclarée,
 `03-CONSTITUTION-HELIOS.md` (hors du dépôt), parle encore de commission. À synchroniser.
@@ -1386,6 +1394,24 @@ rubrique du carnet d'information du logement et ouvre la saisie des isolants. D�
 propriétaire. » Proposée dans le plan du 22/10/2026, acceptée avec lui, écrite par moi : à
 relire par Stéphane. La rubrique proposée pour la ventilation est « aucune » (la liste du brief
 n'en a pas) : à confirmer aussi.
+
+### [ ] 79. Valider les réglages « A VALIDER » de la puissance de chauffage
+
+`config.py`, sous `audit_t_int` : températures de base par zone (−10 / −7 / −5 °C), degrés-jours
+(2 700 / 2 200 / 1 500), hauteur sous plafond (2,5 m), G (1,6 et plancher 0,6 W/m³.K), régimes des
+radiateurs (50/45 et 55/50 °C), exposant (1,3), plage PAC (80-120 %). Ce sont les propositions du
+brief, appliquées telles quelles ; l'altitude n'est pas prise en compte (comme `coef_zone`).
+
+### [ ] 80. Une facture qui ne voit pas tout le chauffage donne une puissance trop basse
+
+Trouvé en vérifiant le lot 6. Quand la consommation est déclarée, c'est elle qui fait référence.
+Mais une maison avec un appoint « autre » (bois, par exemple), donc hors facture, ou de gros
+usages courants, garde peu de chauffage dans sa facture : la maison de référence (200 m², PAC
+air/air, appoint « autre ») ressort à 4,2 kW par la consommation contre 12,2 kW au volume ; la
+même maison en convecteurs ressortait à 1,4 kW. Le moteur signale déjà l'appoint hors facture
+dans ses hypothèses. À trancher par Stéphane : garder la règle, ou faire référence au volume
+quand un appoint hors facture est déclaré, ou quand l'écart entre les deux calculs dépasse un
+seuil. Sans effet sur l'air/eau : elle ne se propose qu'au fioul et au gaz, jamais déclarés.
 
 ## Le piège à ne pas réintroduire
 
