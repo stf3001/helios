@@ -1,0 +1,47 @@
+{
+ "totalElements": 2,
+ "totalPages": 2,
+ "pageNumber": 0,
+ "pageSize": 1,
+ "content": [
+  {
+   "idGaspar": "32DDT20140506",
+   "libPpr": "PPRi Auch",
+   "modeleProcedure": "PPRN-I",
+   "libBassinRisques": "Gers centre",
+   "etatRevision": true,
+   "supExists": true,
+   "zonageReglementaire": {
+    "zoneRegExists": true,
+    "listTypeReg": [
+     {
+      "code": "02",
+      "libelle": "Prescriptions",
+      "nom": "Zone Verte (Crue Historique)",
+      "codeZone": "Vert"
+     },
+     {
+      "code": "03",
+      "libelle": "Interdiction",
+      "nom": "Zone Rouge Hachur�e",
+      "codeZone": "Rouge Hachur�e"
+     },
+     {
+      "code": "04",
+      "libelle": "Interdiction stricte",
+      "nom": "Zone Rouge",
+      "codeZone": "Rouge"
+     }
+    ]
+   },
+   "departementPilote": {
+    "codeDepartementPilote": "32",
+    "libelleDepartementPilote": "GERS"
+   },
+   "dateModification": "14/09/2026",
+   "listePprRevises": [
+    "32PREF20040057"
+   ]
+  }
+ ]
+}

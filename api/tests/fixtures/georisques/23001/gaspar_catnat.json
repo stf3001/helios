@@ -1,0 +1,63 @@
+[
+ {
+  "results": 5,
+  "page": 1,
+  "total_pages": 1,
+  "data": [
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Mouvement de Terrain",
+    "code_insee": "23001",
+    "libelle_commune": "Ahun"
+   },
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "23001",
+    "libelle_commune": "Ahun"
+   },
+   {
+    "code_national_catnat": "IOME2320254A",
+    "date_debut_evt": "01/04/2022",
+    "date_fin_evt": "30/06/2022",
+    "date_publication_arrete": "25/07/2023",
+    "date_publication_jo": "04/10/2023",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "23001",
+    "libelle_commune": "Ahun"
+   },
+   {
+    "code_national_catnat": "NOR19821118",
+    "date_debut_evt": "06/11/1982",
+    "date_fin_evt": "10/11/1982",
+    "date_publication_arrete": "18/11/1982",
+    "date_publication_jo": "19/11/1982",
+    "libelle_risque_jo": "Tempête",
+    "code_insee": "23001",
+    "libelle_commune": "Ahun"
+   },
+   {
+    "code_national_catnat": "NOR19821118",
+    "date_debut_evt": "06/11/1982",
+    "date_fin_evt": "10/11/1982",
+    "date_publication_arrete": "18/11/1982",
+    "date_publication_jo": "19/11/1982",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "23001",
+    "libelle_commune": "Ahun"
+   }
+  ],
+  "response_code": 200,
+  "message": null,
+  "next": null,
+  "previous": null
+ }
+]

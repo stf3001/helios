@@ -1,0 +1,139 @@
+{
+ "adresse": null,
+ "commune": {
+  "libelle": "LA GARDE-FREINET",
+  "codePostal": null,
+  "codeInsee": "83063"
+ },
+ "url": "https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi/rapport2/83063/LA+GARDE-FREINET",
+ "risquesNaturels": {
+  "inondation": {
+   "present": true,
+   "libelle": "Inondation",
+   "libelleStatutCommune": "Risque Existant",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "remonteeNappe": {
+   "present": true,
+   "libelle": "Remontée de nappe",
+   "libelleStatutCommune": "Risque Existant",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "risqueCotier": {
+   "present": false,
+   "libelle": "Risques côtiers (submersion marine, tsunami)",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "seisme": {
+   "present": true,
+   "libelle": "Séisme",
+   "libelleStatutCommune": "Risque Existant - faible",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "mouvementTerrain": {
+   "present": true,
+   "libelle": "Mouvements de terrain",
+   "libelleStatutCommune": "Risque Existant",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "reculTraitCote": {
+   "present": false,
+   "libelle": "Recul du trait de cote",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "retraitGonflementArgile": {
+   "present": true,
+   "libelle": "Retrait gonflement des argiles",
+   "libelleStatutCommune": "Risque Existant - modéré",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "avalanche": {
+   "present": false,
+   "libelle": "Avalanche",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "feuForet": {
+   "present": true,
+   "libelle": "Feu de foret",
+   "libelleStatutCommune": "Risque Existant",
+   "libelleStatutAdresse": null,
+   "specifique": "Votre commune est concernée par les obligations légales de débroussaillement"
+  },
+  "eruptionVolcanique": {
+   "present": false,
+   "libelle": "Volcan",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "cyclone": {
+   "present": false,
+   "libelle": "Vent violent",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "radon": {
+   "present": true,
+   "libelle": "Radon",
+   "libelleStatutCommune": "Risque Existant - important",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  }
+ },
+ "risquesTechnologiques": {
+  "icpe": {
+   "present": false,
+   "libelle": "Installations industrielles classées (ICPE)",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "nucleaire": {
+   "present": false,
+   "libelle": "Nucléaire",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "canalisationsMatieresDangereuses": {
+   "present": false,
+   "libelle": "Canalisations de transport de matières dangereuses",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "pollutionSols": {
+   "present": true,
+   "libelle": "Pollution des sols",
+   "libelleStatutCommune": "Risque Concerne",
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "ruptureBarrage": {
+   "present": false,
+   "libelle": "Rupture de barrage",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  },
+  "risqueMinier": {
+   "present": false,
+   "libelle": "Risques miniers",
+   "libelleStatutCommune": null,
+   "libelleStatutAdresse": null,
+   "specifique": null
+  }
+ }
+}

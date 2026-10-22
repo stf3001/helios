@@ -1,0 +1,143 @@
+[
+ {
+  "results": 13,
+  "page": 1,
+  "total_pages": 1,
+  "data": [
+   {
+    "code_national_catnat": "INTE0200563A",
+    "date_debut_evt": "14/07/2002",
+    "date_fin_evt": "14/07/2002",
+    "date_publication_arrete": "29/10/2002",
+    "date_publication_jo": "09/11/2002",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE1502134A",
+    "date_debut_evt": "25/11/2014",
+    "date_fin_evt": "26/11/2014",
+    "date_publication_arrete": "17/02/2015",
+    "date_publication_jo": "19/02/2015",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE1935602A",
+    "date_debut_evt": "01/12/2019",
+    "date_fin_evt": "02/12/2019",
+    "date_publication_arrete": "12/12/2019",
+    "date_publication_jo": "19/12/2019",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE2002329A",
+    "date_debut_evt": "22/11/2019",
+    "date_fin_evt": "24/11/2019",
+    "date_publication_arrete": "27/01/2020",
+    "date_publication_jo": "13/02/2020",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE2433751A",
+    "date_debut_evt": "24/10/2024",
+    "date_fin_evt": "24/10/2024",
+    "date_publication_arrete": "15/12/2024",
+    "date_publication_jo": "20/12/2024",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE2515511A",
+    "date_debut_evt": "18/05/2025",
+    "date_fin_evt": "19/05/2025",
+    "date_publication_arrete": "27/05/2025",
+    "date_publication_jo": "28/05/2025",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "INTE9500304A",
+    "date_debut_evt": "01/01/1989",
+    "date_fin_evt": "31/12/1992",
+    "date_publication_arrete": "18/07/1995",
+    "date_publication_jo": "03/08/1995",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "IOCE0924293A",
+    "date_debut_evt": "18/09/2009",
+    "date_fin_evt": "19/09/2009",
+    "date_publication_arrete": "16/10/2009",
+    "date_publication_jo": "21/10/2009",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "IOCE0929932A",
+    "date_debut_evt": "22/10/2009",
+    "date_fin_evt": "22/10/2009",
+    "date_publication_arrete": "10/12/2009",
+    "date_publication_jo": "13/12/2009",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "IOCE1027783A",
+    "date_debut_evt": "15/06/2010",
+    "date_fin_evt": "16/06/2010",
+    "date_publication_arrete": "29/10/2010",
+    "date_publication_jo": "03/11/2010",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "IOCE1131348A",
+    "date_debut_evt": "04/11/2011",
+    "date_fin_evt": "10/11/2011",
+    "date_publication_arrete": "18/11/2011",
+    "date_publication_jo": "19/11/2011",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "NOR19831115",
+    "date_debut_evt": "23/08/1983",
+    "date_fin_evt": "24/08/1983",
+    "date_publication_arrete": "15/11/1983",
+    "date_publication_jo": "18/11/1983",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   },
+   {
+    "code_national_catnat": "NOR19831115",
+    "date_debut_evt": "23/08/1983",
+    "date_fin_evt": "24/08/1983",
+    "date_publication_arrete": "15/11/1983",
+    "date_publication_jo": "18/11/1983",
+    "libelle_risque_jo": "Mouvement de Terrain",
+    "code_insee": "83063",
+    "libelle_commune": "La Garde-Freinet"
+   }
+  ],
+  "response_code": 200,
+  "message": null,
+  "next": null,
+  "previous": null
+ }
+]

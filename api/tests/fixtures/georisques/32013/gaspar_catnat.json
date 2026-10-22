@@ -1,0 +1,233 @@
+[
+ {
+  "results": 22,
+  "page": 1,
+  "total_pages": 1,
+  "data": [
+   {
+    "code_national_catnat": "INTE0300234A",
+    "date_debut_evt": "03/02/2003",
+    "date_fin_evt": "04/02/2003",
+    "date_publication_arrete": "30/04/2003",
+    "date_publication_jo": "22/05/2003",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE0300480A",
+    "date_debut_evt": "01/01/2002",
+    "date_fin_evt": "31/12/2002",
+    "date_publication_arrete": "07/08/2003",
+    "date_publication_jo": "17/08/2003",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE1228647A",
+    "date_debut_evt": "01/04/2011",
+    "date_fin_evt": "30/06/2011",
+    "date_publication_arrete": "11/07/2012",
+    "date_publication_jo": "17/07/2012",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE1311772A",
+    "date_debut_evt": "01/04/2012",
+    "date_fin_evt": "31/12/2012",
+    "date_publication_arrete": "21/05/2013",
+    "date_publication_jo": "25/05/2013",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE1625249A",
+    "date_debut_evt": "01/04/2015",
+    "date_fin_evt": "30/09/2015",
+    "date_publication_arrete": "16/09/2016",
+    "date_publication_jo": "21/10/2016",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE1717783A",
+    "date_debut_evt": "01/04/2016",
+    "date_fin_evt": "31/12/2016",
+    "date_publication_arrete": "26/06/2017",
+    "date_publication_jo": "07/07/2017",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE1820388A",
+    "date_debut_evt": "01/04/2017",
+    "date_fin_evt": "31/12/2017",
+    "date_publication_arrete": "24/07/2018",
+    "date_publication_jo": "12/08/2018",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE2010312A",
+    "date_debut_evt": "01/04/2019",
+    "date_fin_evt": "30/09/2019",
+    "date_publication_arrete": "29/04/2020",
+    "date_publication_jo": "12/06/2020",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE2101163A",
+    "date_debut_evt": "29/12/2020",
+    "date_fin_evt": "30/12/2020",
+    "date_publication_arrete": "18/01/2021",
+    "date_publication_jo": "03/02/2021",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9100268A",
+    "date_debut_evt": "01/05/1989",
+    "date_fin_evt": "31/12/1990",
+    "date_publication_arrete": "10/06/1991",
+    "date_publication_jo": "19/07/1991",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9300602A",
+    "date_debut_evt": "05/07/1993",
+    "date_fin_evt": "06/07/1993",
+    "date_publication_arrete": "26/10/1993",
+    "date_publication_jo": "03/12/1993",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9300656A",
+    "date_debut_evt": "01/01/1991",
+    "date_fin_evt": "31/12/1992",
+    "date_publication_arrete": "06/12/1993",
+    "date_publication_jo": "28/12/1993",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9500219A",
+    "date_debut_evt": "01/01/1993",
+    "date_fin_evt": "30/09/1993",
+    "date_publication_arrete": "03/05/1995",
+    "date_publication_jo": "07/05/1995",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9800067A",
+    "date_debut_evt": "01/10/1993",
+    "date_fin_evt": "31/12/1996",
+    "date_publication_arrete": "12/03/1998",
+    "date_publication_jo": "28/03/1998",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9900124A",
+    "date_debut_evt": "01/01/1997",
+    "date_fin_evt": "30/06/1998",
+    "date_publication_arrete": "19/03/1999",
+    "date_publication_jo": "03/04/1999",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9900488A",
+    "date_debut_evt": "24/09/1999",
+    "date_fin_evt": "25/09/1999",
+    "date_publication_arrete": "29/11/1999",
+    "date_publication_jo": "04/12/1999",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Mouvement de Terrain",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "INTE9900627A",
+    "date_debut_evt": "25/12/1999",
+    "date_fin_evt": "29/12/1999",
+    "date_publication_arrete": "29/12/1999",
+    "date_publication_jo": "30/12/1999",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "IOCE0902322A",
+    "date_debut_evt": "24/01/2009",
+    "date_fin_evt": "27/01/2009",
+    "date_publication_arrete": "28/01/2009",
+    "date_publication_jo": "29/01/2009",
+    "libelle_risque_jo": "Inondations et/ou Coulées de Boue",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "IOCE1032143A",
+    "date_debut_evt": "01/07/2009",
+    "date_fin_evt": "30/09/2009",
+    "date_publication_arrete": "13/12/2010",
+    "date_publication_jo": "13/01/2011",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "IOME2218165A",
+    "date_debut_evt": "01/04/2021",
+    "date_fin_evt": "30/06/2021",
+    "date_publication_arrete": "11/07/2022",
+    "date_publication_jo": "26/07/2022",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   },
+   {
+    "code_national_catnat": "IOME2308745A",
+    "date_debut_evt": "01/07/2022",
+    "date_fin_evt": "31/12/2022",
+    "date_publication_arrete": "03/04/2023",
+    "date_publication_jo": "03/05/2023",
+    "libelle_risque_jo": "Sécheresse",
+    "code_insee": "32013",
+    "libelle_commune": "Auch"
+   }
+  ],
+  "response_code": 200,
+  "message": null,
+  "next": null,
+  "previous": null
+ }
+]

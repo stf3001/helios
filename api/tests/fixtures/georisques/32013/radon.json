@@ -1,0 +1,16 @@
+{
+ "results": 1,
+ "page": 1,
+ "total_pages": 1,
+ "data": [
+  {
+   "classe_potentiel": "1",
+   "code_insee": "32013",
+   "libelle_commune": "AUCH"
+  }
+ ],
+ "response_code": 200,
+ "message": null,
+ "next": null,
+ "previous": null
+}

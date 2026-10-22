@@ -1,0 +1,26 @@
+{
+ "totalElements": 1,
+ "totalPages": 1,
+ "pageNumber": 0,
+ "pageSize": 1,
+ "content": [
+  {
+   "idGaspar": "83DDTM20030013",
+   "libPpr": "PPRN-IF - La Garde-Freinet 2003",
+   "modeleProcedure": "PPRN-IF",
+   "libBassinRisques": "-",
+   "etatRevision": false,
+   "supExists": false,
+   "zonageReglementaire": {
+    "zoneRegExists": false,
+    "listTypeReg": []
+   },
+   "departementPilote": {
+    "codeDepartementPilote": "83",
+    "libelleDepartementPilote": "VAR"
+   },
+   "dateModification": "08/04/2025",
+   "listePprRevises": []
+  }
+ ]
+}
