@@ -1261,6 +1261,11 @@ Hydrolia, Eolia et Energiesto sont actifs mais **sans date de charte** (le seed 
 passer par l'admin) : aujourd'hui, un foyer ne reçoit aucune proposition, nulle part. À faire par
 Stéphane dans `/admin/partenaires` (« Enregistrer la signature »), pour ceux qui ont réellement signé.
 
+Le 22/10/2026, pour vérifier les lots sans dater la charte d'un partenaire réel : quatre partenaires
+« Démo … » (`api/scripts/seed_partenaires_demo.py`, `partners.demo`), charte datée, Var, visibles du
+SEUL compte de démo (`mer_comptes_demo`), jamais dans l'annuaire ni le chat. **Le point reste ouvert** :
+aucun foyer réel n'a encore de proposition.
+
 ### [ ] 61. Remplacer AD Solar en PACA (solaire et pompe à chaleur)
 
 Depuis le 22/10/2026, aucun partenaire réel ne couvre la PACA en solaire ni en PAC (Ensol couvre
@@ -1278,11 +1283,23 @@ mentions à faire relire avant de facturer quiconque.
 `prompts/constitution-v0.3.md` dit « payée à prix fixe… » ; sa source de vérité déclarée,
 `03-CONSTITUTION-HELIOS.md` (hors du dépôt), parle encore de commission. À synchroniser.
 
-### [ ] 64. L'annuaire public est encore trié par note
+### [x] 64. L'annuaire public était trié par note — corrigé le 22/10/2026 (`59357a8`)
 
-`GET /partners` (`routers/partners.py`) range les partenaires par note moyenne décroissante. Les
-propositions ne le sont jamais (tirage au sort) ; l'annuaire, lui, met toujours les mieux notés en
-tête. À trancher : ordre alphabétique, ou tirage, pour rester cohérent avec le prix fixe.
+Décision de Stéphane : ordre alphabétique de la raison sociale, plus jamais par note
+(`routers/partners.py`, vérifié par `tests/test_partenaires_demo.py`).
+
+### [x] 65. Mises en relation, lot 2 : le dossier transmis et son score — fait le 22/10/2026
+
+Le foyer coche ce qu'il transmet, donne coordonnées et créneaux, voit l'aperçu exact avant de
+consentir ; le partenaire lit un dossier figé et daté, avec un score expliqué ligne par ligne
+(`services/dossier_lead.py`, `services/score_lead.py`, migration 0037). Le retrait du consentement
+efface copies de documents, dossier, coordonnées, message et créneaux. Débrief :
+`debriefs/2026-10-22-mer-lot2.md`.
+
+### [ ] 66. Calibrer les points du score avec les premiers partenaires
+
+`mer_score_points` (`config.py`) : 20/20/20/15/10/15, proposés le 22/10/2026. Sans retour réel,
+on ne sait pas si un dossier à 55 vaut moins qu'un dossier à 80 pour un artisan.
 
 ## Le piège à ne pas réintroduire
 
