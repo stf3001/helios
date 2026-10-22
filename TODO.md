@@ -1152,6 +1152,36 @@ normal de la maison (`MAX_DOCUMENTS_PAR_MAISON = 6`). Le 7ᵉ dépôt est refus�
 du serveur. À trancher : relever la limite, ou sortir ces pièces du compte comme les photos
 de pièces (lot 2).
 
+### [x] 50. Carnet, lot 9 : les projets de la maison — fait le 22/10/2026
+
+`api/data/projets/modeles.json` (10 modèles, 9 servis), table `projets` (0032), API
+`/houses/me/projets` (lier-etude recopie sans recalcul, terminer en une transaction), section
+« Mes projets » de « Ma maison ». **Vérifié à l'écran** (compte de démo, remis en état) :
+projet ballon thermodynamique lié au vrai pré-audit (1 800 à 2 800 €, 413 €/an, datés), puis
+terminé — chantier, 3 garanties, ballon en service à la place de l'ancien, fiche suivie,
+journal. Voir `debriefs/2026-10-22-carnet-lot9.md`.
+
+### [ ] 51. Fiche manquante : le jardin d'hiver
+
+Le modèle « Jardin d'hiver » existe mais n'est pas servi : aucune fiche `kb/jardin_hiver` (ni
+véranda) dans la base. À écrire par Stéphane, puis à déclarer dans `agents_engine.SOURCES` ;
+le modèle s'affichera seul. Son `outil` est aujourd'hui `jardin`, qui est le POTAGER : à
+changer quand la fiche existera (pas de calculateur de jardin d'hiver).
+
+### [ ] 52. Un projet terminé apparaît deux fois au journal
+
+Le brief demande une entrée `amelioration` ; or le journal fusionne déjà les chantiers
+(`a_faire.journal_fusionne`), si bien que « Ballon thermodynamique » s'y lit deux fois à la même
+date (Amélioration, puis Travaux). À trancher : garder l'entrée (elle porte la facture et
+l'intervenant comme les autres) ou ne pas l'écrire quand le chantier existe.
+
+### [ ] 53. Refaire la capture « projet solaire avec son étude liée »
+
+Le 22/10/2026, PVGIS répondait 403 depuis ce poste (deux points d'accès) : aucune vraie étude
+du simulateur n'a pu être enregistrée sur le compte de démo, et aucune n'a été fabriquée. Le
+chemin est couvert par les tests (`test_projets.py`, `test_projets_api.py`) ; la capture est
+à refaire quand PVGIS répondra.
+
 ## Le piège à ne pas réintroduire
 
 **Un jeton de rafraîchissement à usage unique ne supporte pas deux appels en même
