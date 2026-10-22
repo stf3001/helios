@@ -996,14 +996,16 @@ leur statut ; « En savoir plus » ouvre la fiche `kb/garanties_travaux.md`. Com
 (contre la vraie base, sauté sans elle). La fiche de connaissance est `verif: a_verifier` :
 **à relire par Stéphane**.
 
-### [ ] 35. Réconcilier la fiche Maison et le carnet d'équipements
+### [x] 35. Réconcilier la fiche Maison et le carnet d'équipements — fait le 22/10/2026 (lot 7)
 
-Depuis le lot 1, l'année du chauffage vit à deux endroits : `houses.chauffage_principal_annee`
-(lue par le pré-audit et le score de complétude) et `equipements.annee_pose` / `date_pose`.
-Le lot 1 ne synchronise rien, volontairement : le carnet affiche seulement « Votre fiche
-indique 2016 » quand les deux diffèrent. Il faudra un jour **une seule source** — sans
-doute l'équipement en service portant `origine_fiche`, la fiche en devenant la lecture —
-et décider qui gagne en cas d'écart. Même question pour l'ECS, la clim et la ventilation.
+**L'équipement en service portant `origine_fiche` gagne** : la fiche en devient une copie
+écrite par le serveur (`services/fiche_equipements.py`), verrouillée à la saisie
+(`champs_verrouilles` de `GET /houses/me`, 400 sur `PATCH` si la valeur CHANGE). Un seul
+équipement en service par origine (409). Hors service ou suppression sans remplaçant : la
+fiche est vidée et le carnet propose le remplaçant. Écarts existants repris par la migration
+0030, trace au journal. **Vérifié à l'écran** (compte de démo) : fiche en lecture avec le lien,
+remplacement du ballon suivi par la fiche, compte remis en état ensuite. Pré-audit inchangé
+(test : même résultat qu'une fiche saisie juste). Voir `debriefs/2026-10-22-carnet-lot7.md`.
 
 ### [x] 36. Carnet, lot 2 : les pièces et leurs émetteurs — fait le 21/10/2026
 
@@ -1116,6 +1118,13 @@ Décision de Stéphane (21/10/2026) : en attente. Tant qu'elle n'est pas prise :
 
 Ce qu'il faudra donner : l'adresse (ou les adresses) qui reçoit, les jours et heures où
 quelqu'un décroche. Le reste est prêt : une valeur dans `.env`, une ligne dans `config.py`.
+
+### [ ] 46. L'en-tête déborde entre ~1000 et 1100 px de large
+
+Trouvé en vérifiant le lot 7 (22/10/2026), sans lien avec lui : à 1024 px, le bouton
+« Déconnexion » sort de l'écran (`scrollWidth` 1031 pour 1009 visibles), sur `/espace` comme
+sur `/mon-espace`. À 375 px, rien ne déborde (menu burger). La barre de navigation publique
+compte désormais dix entrées : à replier plus tôt, ou à resserrer.
 
 ## Le piège à ne pas réintroduire
 
