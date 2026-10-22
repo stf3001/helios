@@ -29,10 +29,12 @@ TITRES = {
     "entretien": "L'entretien", "energie": "L'énergie déclarée", "documents": "Les documents disponibles",
 }
 
-# Décision de Stéphane, recopiée telle quelle — À FAIRE RELIRE (point ouvert de TODO.md).
-MENTION = ("Ce dossier rassemble les informations déclarées par son propriétaire dans Hélios. Il suit les "
-           "rubriques d'un carnet d'information du logement, mais ne constitue ni ce carnet au sens de la "
-           "loi, ni une attestation.")
+# Décision de Stéphane (carnet, lot 11), recopiée telle quelle après vérification des rubriques
+# sur les textes (CCH L. 126-35-2 et suivants, arrêté du 27/12/2022) — point 44 de TODO.md.
+MENTION = ("Ce dossier rassemble les informations déclarées par le propriétaire dans Hélios, selon les "
+           "rubriques du carnet d'information du logement (code de la construction et de l'habitation, "
+           "art. L. 126-35-2 et suivants). Il ne remplace pas les documents remis par les professionnels et ne "
+           "vaut pas attestation.")
 MENTION_GARANTIES = "À vérifier sur votre contrat et l'attestation d'assurance de l'entreprise."
 LEGENDE = ("Chaque valeur porte une marque : (D) déclaré, saisi par le propriétaire · (J) justifié, un document "
            "est joint dans Hélios · (S) supposé, déduit d'une information incomplète (une année sans date) · "
@@ -94,7 +96,15 @@ _JOURNAL = {"entretien": "Entretien", "controle": "Contrôle", "reparation": "R�
 _ECHEANCES = {"en_retard": "en retard", "ce_mois": "ce mois-ci", "bientot": "dans les 3 mois",
               "a_planifier": "à planifier", "plus_tard": "plus tard"}
 _GARANTIES = {"en_cours": "en cours", "bientot": "se termine bientôt", "expiree": "terminée"}
-_DOCUMENTS = {"dpe": "DPE", "facture": "Facture", "devis": "Devis", "photo": "Photo", "autre": "Autre"}
+_DOCUMENTS = {"dpe": "DPE", "facture": "Facture", "devis": "Devis", "photo": "Photo", "plan": "Plan",
+              "autre": "Autre"}
+# Carnet, lot 11 (copies de `libelles.ts`).
+_EVACUATIONS = {"ventouse": "ventouse", "conduit": "conduit", "sans_objet": "sans objet", "inconnu": ""}
+_CATEGORIES_CIL = {
+    "isolation_toiture": "Isolation de la toiture", "isolation_murs": "Isolation des murs",
+    "parois_vitrees_portes": "Fenêtres et portes", "planchers_bas": "Planchers bas",
+    "chauffage_froid_ecs": "Chauffage, froid, eau chaude", "autre": "Hors carnet",
+}
 _ORIENTATIONS = {"N": "nord", "NE": "nord-est", "E": "est", "SE": "sud-est", "S": "sud", "SO": "sud-ouest",
                  "O": "ouest", "NO": "nord-ouest"}
 _QUI = {"soi": "vous-même", "pro": "un professionnel", "soi_ou_pro": "vous ou un pro"}
@@ -120,11 +130,11 @@ def _date(d) -> str:
     return d.strftime("%d/%m/%Y") if hasattr(d, "strftime") else ""
 
 
-def _nombre(n, unite: str = "") -> str:
+def _nombre(n, unite: str = "", decimales: int = 1) -> str:
     if n is None:
         return ""
     entier = float(n).is_integer()
-    texte = f"{int(n):,}".replace(",", " ") if entier else f"{n:,.1f}".replace(",", " ").replace(".", ",")
+    texte = f"{int(n):,}".replace(",", " ") if entier else f"{n:,.{decimales}f}".replace(",", " ").replace(".", ",")
     return f"{texte} {unite}".strip()
 
 
@@ -148,7 +158,7 @@ class _DossierPDF(_AuditPDF):
         self.aujourd_hui = aujourd_hui
         super().__init__(fonts_dir)
         # La première page porte la mention en pied : il lui faut plus de place en bas.
-        self.set_auto_page_break(auto=True, margin=30)
+        self.set_auto_page_break(auto=True, margin=34)
 
     def header(self):
         """Même en-tête que le pré-audit (logo, « Helios »), libellé du document à droite."""
@@ -178,7 +188,7 @@ class _DossierPDF(_AuditPDF):
     def footer(self):
         largeur = self.w - self.l_margin - self.r_margin
         if self.page_no() == 1:
-            self.set_y(-29)
+            self.set_y(-32)
             self.police("sans", "I", 7)
             self.set_text_color(*TEXTE_2)
             self.multi_cell(largeur, 3.6, MENTION, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
@@ -244,11 +254,11 @@ def _equipements(pdf, equipements, numeros_serie: bool):
     if not equipements:
         _para(pdf, NON_RENSEIGNE, couleur=TEXTE_2)
         return
-    entetes = ["Type", "Marque et modèle", "Pose", "Âge", "Garantie fabricant", "Contrat"]
-    largeurs = [36, 40, 26, 18, 28, 32]
+    entetes = ["Type", "Marque et modèle", "Pose", "Âge", "Garantie fabricant", "Contrat", "Évacuation, étiquette"]
+    largeurs = [30, 34, 22, 15, 24, 27, 28]
     if numeros_serie:
         entetes.append("N° de série")
-        largeurs = [30, 32, 22, 15, 24, 25, 32]
+        largeurs = [25, 27, 20, 13, 21, 22, 25, 27]
 
     def ligne(e):
         pose = (_date(_champ(e, "date_pose")) if _champ(e, "date_pose")
@@ -266,6 +276,9 @@ def _equipements(pdf, equipements, numeros_serie: bool):
             age_txt,
             f"{_date(_champ(e, 'garantie_fabricant_fin'))} {_marque('D')}" if _champ(e, "garantie_fabricant_fin") else "",
             contrat,
+            ", ".join(x for x in (_EVACUATIONS.get(_champ(e, "mode_evacuation") or "", ""),
+                                  "" if _champ(e, "etiquette_energie") in (None, "inconnue")
+                                  else f"classe {_champ(e, 'etiquette_energie')}") if x),
         ]
         if numeros_serie:
             cellules.append(_txt(_champ(e, "numero_serie")))
@@ -328,12 +341,30 @@ def _travaux(pdf, travaux):
                               for g in (_champ(t, "garanties") or []))
         lignes.append([
             f"{_txt(_champ(t, 'nature'))} {_marque('J' if justifie else 'D')}",
+            _CATEGORIES_CIL.get(_champ(t, "categorie_cil"), ""),
             _txt(_champ(t, "entreprise")),
             f"{_date(reception)} {_marque('D')}" if reception else "à indiquer",
             f"{garanties} {_marque('C')}" if garanties else "",
         ])
-    _tableau(pdf, ["Chantier", "Entreprise", "Réception", "Garanties"], [45, 35, 25, 75], lignes)
+    _tableau(pdf, ["Chantier", "Catégorie", "Entreprise", "Réception", "Garanties"], [38, 28, 28, 22, 64], lignes)
     _para(pdf, MENTION_GARANTIES, taille=8, style="I", couleur=TEXTE_2)
+    for t in travaux:
+        description = _champ(t, "note")
+        isolants = _champ(t, "isolants") or []
+        if not description and not isolants:
+            continue
+        _place(pdf, 24)
+        _sous_titre(pdf, _txt(_champ(t, "nature")))
+        if description:
+            _para(pdf, f"{_txt(description)} {_marque('D')}", taille=9)
+        if isolants:
+            _tableau(pdf, ["Isolant", "Marque, référence", "R (m².K/W)", "Lambda (W/m.K)", "Épaisseur", "Surface",
+                           "Interfaces"], [28, 32, 18, 18, 20, 18, 46], [
+                [f"{_txt(_champ(i, 'nature'))} {_marque('D')}", _txt(_champ(i, "marque_reference")),
+                 _nombre(_champ(i, "resistance_thermique")), _nombre(_champ(i, "conductivite"), decimales=3),  # 0,040 W/m.K
+                 _nombre(_champ(i, "epaisseur_mm"), "mm"), _nombre(_champ(i, "surface_m2"), "m²"),
+                 _txt(_champ(i, "interfaces"))]
+                for i in isolants])
 
 
 def _entretien(pdf, echeances, journal, noms_equipements, aujourd_hui: date):
@@ -379,8 +410,17 @@ def _documents(pdf, documents):
     if not documents:
         _para(pdf, NON_RENSEIGNE, couleur=TEXTE_2)
         return
-    _tableau(pdf, ["Type", "Ajouté le"], [60, 120],
-             [[_DOCUMENTS.get(_champ(d, "type"), _champ(d, "type")), _date(_champ(d, "uploaded_at"))] for d in documents])
+    plans = [d for d in documents if _champ(d, "type") == "plan"]
+    autres = [d for d in documents if _champ(d, "type") != "plan"]
+    if plans:
+        _sous_titre(pdf, "Plans, coupes et schémas de réseaux")
+        _tableau(pdf, ["Plan", "Ajouté le"], [120, 60],
+                 [[_txt(_champ(d, "filename")), _date(_champ(d, "uploaded_at"))] for d in plans])
+    if autres:
+        if plans:
+            _sous_titre(pdf, "Autres documents")
+        _tableau(pdf, ["Type", "Ajouté le"], [60, 120],
+                 [[_DOCUMENTS.get(_champ(d, "type"), _champ(d, "type")), _date(_champ(d, "uploaded_at"))] for d in autres])
     _para(pdf, "Les documents restent dans Hélios : ils ne sont pas joints à ce dossier.", taille=8, style="I",
           couleur=TEXTE_2)
 

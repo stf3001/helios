@@ -17,6 +17,7 @@ from app.core.deps import get_current_user
 from app.core.ratelimit import limiter
 from app.models.equipement import Equipement
 from app.models.house_document import HouseDocument
+from app.models.isolant import Isolant
 from app.models.journal import JournalEntree
 from app.models.piece import Emetteur, Piece
 from app.models.travaux import Travaux
@@ -46,6 +47,7 @@ async def telecharger_dossier(request: Request, payload: DemandeDossier,
     aujourd_hui = date.today()
     equipements = list(await db.scalars(select(Equipement).where(Equipement.house_id == house.id)))
     travaux = list(await db.scalars(select(Travaux).where(Travaux.house_id == house.id)))
+    isolants = list(await db.scalars(select(Isolant).where(Isolant.house_id == house.id).order_by(Isolant.created_at)))
     entrees = list(await db.scalars(select(JournalEntree).where(JournalEntree.house_id == house.id)))
     pieces = list(await db.scalars(
         select(Piece).where(Piece.house_id == house.id).order_by(Piece.niveau, Piece.ordre, Piece.created_at)))
@@ -63,7 +65,8 @@ async def telecharger_dossier(request: Request, payload: DemandeDossier,
     for t in sorted(travaux, key=lambda t: (t.date_reception or date.min), reverse=True):
         garanties = [{**g, "statut": statut_garantie(g["fin"], aujourd_hui)}
                      for g in (fin_garanties_chantier(t.date_reception) if t.date_reception else [])]
-        chantiers.append({**{c.name: getattr(t, c.name) for c in t.__table__.columns}, "garanties": garanties})
+        chantiers.append({**{c.name: getattr(t, c.name) for c in t.__table__.columns}, "garanties": garanties,
+                          "isolants": [i for i in isolants if i.travaux_id == t.id]})
 
     contenu = dossier_pdf(
         house=house, equipements=eqs, travaux=chantiers, pieces=pieces, emetteurs=emetteurs,

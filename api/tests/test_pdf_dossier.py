@@ -150,6 +150,44 @@ def maisons() -> dict:
     return {"minimale": minimale, "moyenne": moyenne, "complete": complete}
 
 
+def maison_renovee_2024() -> dict:
+    """Lot 11 : une maison rénovée en 2024 — PAC air/eau et isolation des combles — avec les
+    rubriques du carnet d'information du logement remplies. Sert aussi au rendu du débrief."""
+    fiche = _fiche(code_postal="83136", type_logement="maison", statut="proprietaire", annee_construction="1975_1988",
+                   surface_habitable=110, nb_niveaux=1, residence_principale=True, isolation_combles="bonne",
+                   isolation_combles_annee=2024, menuiseries="double", ventilation="VMC_simple",
+                   chauffage_principal="PAC_air_eau", chauffage_principal_annee=2024, conso_elec_kwh_an=6100,
+                   puissance_souscrite="9", option_tarifaire="base", zone_old="non")
+    combles = _chantier(1, "Isolation des combles perdus", "Isol'Var", date(2024, 3, 12), facture="d1")
+    combles.update(categorie_cil="isolation_toiture",
+                   note="Soufflage de ouate de cellulose sur 80 m², rehausse de la trappe et pare-vapeur autour du conduit.",
+                   isolants=[{"nature": "Ouate de cellulose", "marque_reference": "Isocel Ouate Soufflée",
+                              "resistance_thermique": 7.5, "conductivite": 0.04, "epaisseur_mm": 300, "surface_m2": 80,
+                              "interfaces": "Écart au feu autour du conduit, trappe isolée"}])
+    pac = _chantier(2, "Remplacement de la chaudière fioul par une PAC", "Clim'Azur", date(2024, 10, 2), facture="d2")
+    pac.update(categorie_cil="chauffage_froid_ecs", note="Dépose de la chaudière fioul et de la cuve ; PAC air/eau 11 kW.")
+    eqs = [_eq(1, "chauffage", "PAC_air_eau", marque="Atlantic", modele="Alféa Excellia", date_pose=date(2024, 10, 2),
+               puissance=11, unite="kW", travaux_id="t2", mode_evacuation="sans_objet", etiquette_energie="A++"),
+           _eq(2, "chauffage", "chaudiere_fioul", annee_pose=1999, en_service=False, mode_evacuation="conduit")]
+    documents = [SimpleNamespace(type=t, filename=f, uploaded_at=datetime(*d)) for t, f, d in [
+        ("facture", "facture-combles.pdf", (2024, 3, 15)), ("facture", "facture-pac.pdf", (2024, 10, 5)),
+        ("plan", "plan-rez-de-chaussee.pdf", (2024, 1, 20)), ("plan", "schema-reseau-chauffage.pdf", (2024, 10, 5))]]
+    return _arguments(fiche, eqs, [pac, combles], documents=documents)
+
+
+def test_le_dossier_reprend_les_rubriques_du_cil():
+    _, texte = _texte(pdf_dossier.dossier_pdf(**maison_renovee_2024()))
+    plat = " ".join(texte.split())
+    assert pdf_dossier.MENTION in plat
+    for attendu in ("Isolation de la toiture", "Chauffage, froid, eau chaude", "Ouate de cellulose",
+                    "Isocel Ouate Soufflée", "7,5", "0,040", "300 mm", "80 m²", "sans objet, classe A++", "conduit",
+                    "Plans, coupes et schémas de réseaux", "plan-rez-de-chaussee.pdf", "Autres documents",
+                    "Soufflage de ouate de cellulose"):
+        assert attendu in plat, attendu
+    for interdit in ("conforme", "certifié", "officiel"):
+        assert interdit not in plat.lower(), interdit
+
+
 def _texte(pdf_bytes: bytes) -> tuple[int, str]:
     lecteur = PdfReader(io.BytesIO(pdf_bytes))
     return len(lecteur.pages), "\n".join(p.extract_text() or "" for p in lecteur.pages)
@@ -161,7 +199,7 @@ def test_trois_maisons_sans_erreur_ni_trou(nom):
     assert "Dossier de la maison" in texte
     assert "None" not in texte and "{" not in texte and "}" not in texte
     assert PDL not in texte
-    assert "ne constitue ni ce carnet au sens de la" in texte.replace("\n", " ")
+    assert pdf_dossier.MENTION in " ".join(texte.split())  # mot pour mot (lot 11)
     for interdit in ("conforme", "certifié", "officiel"):
         assert interdit not in texte.lower(), interdit
     if nom == "minimale":
