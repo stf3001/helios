@@ -24,6 +24,7 @@ Budget = Literal["<5k", "5-15k", "15-30k", "30k+", "ne_sait_pas"]
 Horizon = Literal["<6mois", "6-24mois", "reflexion"]
 Ombrage = Literal["aucun", "partiel", "important"]
 ZoneOld = Literal["oui", "non", "ne_sais_pas"]
+ChauffageCollectif = Literal["oui", "non", "ne_sais_pas"]
 
 
 class PlageHoraire(BaseModel):
@@ -98,6 +99,7 @@ class HouseUpdate(BaseModel):
     pente: int | None = Field(default=None, ge=0, le=90)
 
     zone_old: ZoneOld | None = None  # débroussaillement (lot 3 bis) — hors score
+    chauffage_collectif: ChauffageCollectif | None = None  # appartements (lot 8) — hors score
 
 
 class HouseOut(HouseUpdate):

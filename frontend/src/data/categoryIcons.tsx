@@ -23,6 +23,7 @@ const MAP: Record<string, CatIcon> = {
   energie: { Icon: Zap, color: 'text-primary' },
   achat_energie: { Icon: Zap, color: 'text-primary' },
   locataire: { Icon: Key, color: 'text-ink' },
+  achat: { Icon: Key, color: 'text-ink' },
   copropriete: { Icon: Building2, color: 'text-ink' },
   dpe: { Icon: FileBarChart, color: 'text-ink' },
   chantier: { Icon: HardHat, color: 'text-terra' },

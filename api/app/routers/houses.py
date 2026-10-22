@@ -77,7 +77,7 @@ async def update_my_house(
             f"{noms} vient de vos équipements : modifiez-le dans « Mes équipements ».",
         )
     for field, value in champs.items():
-        if field == "zone_old" and value is None:
+        if field in ("zone_old", "chauffage_collectif") and value is None:
             value = "ne_sais_pas"  # colonne NOT NULL : « non renseigné » veut dire « je ne sais pas »
         setattr(house, field, value)
     house.completeness_score = compute_score(house)

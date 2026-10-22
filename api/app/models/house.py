@@ -87,6 +87,14 @@ class House(Base):
     # Demandée aux maisons seulement, hors score de complétude.
     zone_old: Mapped[str] = mapped_column(String(12), nullable=False, default="ne_sais_pas",
                                           server_default="ne_sais_pas")
+    # Chauffage collectif (carnet, lot 8, migration 0031) : oui|non|ne_sais_pas. Demandé aux
+    # appartements seulement, hors score ; `oui` → la chaudière est l'affaire de la copropriété.
+    chauffage_collectif: Mapped[str] = mapped_column(String(12), nullable=False, default="ne_sais_pas",
+                                                     server_default="ne_sais_pas")
+    # « Avant d'acheter » (lot 8) : {id_document: {"coche": bool, "document_id": str | None}}.
+    # Écrit par ses propres routes, jamais par PATCH /houses/me ; archivé au journal au passage
+    # à `proprietaire`.
+    avant_achat: Mapped[dict | None] = mapped_column(JSONB)
 
     completeness_score: Mapped[float] = mapped_column(Float, default=0.0)
     updated_at: Mapped[datetime] = mapped_column(

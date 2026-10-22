@@ -152,6 +152,10 @@ SOURCES: list[SourceSpec] = [
     # Garanties après travaux (21/10/2026, carnet de maison lot 1) : l'écran « Travaux et
     # garanties » y renvoie au lieu d'écrire du juridique dans le code. À relire.
     SourceSpec(name="garanties_travaux", kind="faq_markdown", location="helios/kb/garanties_travaux.md"),
+    # Parcours par statut (22/10/2026, carnet lot 8) : la liste « Avant d'acheter » et la
+    # note au propriétaire recopient les sections finales de ces deux fiches. À relire.
+    SourceSpec(name="achat_logement", kind="faq_markdown", location="helios/kb/achat_logement.md"),
+    SourceSpec(name="locataire_entretien", kind="faq_markdown", location="helios/kb/locataire_entretien.md"),
 ]
 
 # Sources dont les fiches sont des Q/R servables telles quelles : page FAQ publique
