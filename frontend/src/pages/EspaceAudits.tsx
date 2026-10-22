@@ -74,6 +74,8 @@ interface AuditResult {
     zone_climatique?: string
     conso_chauffage_declaree_kwh_an?: number | null
     message_ratio?: string | null
+    base_economies?: 'declaree' | 'estimee'
+    releve?: { type: string; unite: string; quantite: number } | null  // v2.7
   }
   priorites: Priorite[]
   synthese: {
@@ -150,7 +152,7 @@ function phraseBloc(b: BlocPlan) {
 const actions = (n: number) => `${n} action${n > 1 ? 's' : ''}`
 
 /** v2.6 : les phrases de la fiche PAC remplies par le moteur ; l'écran n'ajoute aucun chiffre. */
-function BlocPuissance({ b }: { b: Puissance }) {
+function BlocPuissance({ b, estimee }: { b: Puissance; estimee: boolean }) {
   const lignes = b.radiateurs.filter((x) => x.texte)
   return (
     <div>
@@ -163,6 +165,12 @@ function BlocPuissance({ b }: { b: Puissance }) {
         </ul>
       )}
       {b.note_radiateurs && <p className="text-sm text-gray-600 mt-2">{b.note_radiateurs}</p>}
+      {/* Pré-audit lot 7 : sans relevé, la puissance repose sur deux estimations. */}
+      {estimee && (
+        <Link to="/mon-espace#energie" className="mt-2 inline-block text-sm font-semibold text-primary hover:underline">
+          Indiquer ma consommation
+        </Link>
+      )}
     </div>
   )
 }
@@ -551,7 +559,7 @@ export default function EspaceAudits() {
                         Consommation de chauffage estimée : <strong>{r.consommation.conso_chauffage_estimee_kwh_an.toLocaleString('fr-FR')} kWh/an</strong>{' '}
                         ({ORIGINE[r.consommation.origine ?? ''] ?? r.consommation.origine}, zone {r.consommation.zone_climatique}).
                         {r.consommation.conso_chauffage_declaree_kwh_an != null && (
-                          <> D'après votre facture : environ {r.consommation.conso_chauffage_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an de chauffage.</>
+                          <> D'après votre {r.consommation.releve ? 'relevé' : 'facture'} : environ {r.consommation.conso_chauffage_declaree_kwh_an.toLocaleString('fr-FR')} kWh/an de chauffage.</>
                         )}
                         {r.consommation.message_ratio && <> {r.consommation.message_ratio}</>}
                       </p>
@@ -577,7 +585,7 @@ export default function EspaceAudits() {
                     )}
                   </div>
 
-                  {r.puissance?.affichage && <BlocPuissance b={r.puissance} />}
+                  {r.puissance?.affichage && <BlocPuissance b={r.puissance} estimee={r.consommation.base_economies === 'estimee'} />}
 
                   {r.gestes ? <PlanV21 r={r} /> : (
                   <>

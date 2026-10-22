@@ -19,6 +19,7 @@ type Poste = {
   code: string; montant_eur: number | null; statut: string | null; libelle?: string | null
   conso_kwh_an?: number; prix_eur_kwh?: number; prix_date?: string; kva?: number; kva_suppose?: boolean
   nb_entrees?: number; depuis?: string; raison?: string | null; type_energie?: string | null
+  quantite?: number; unite?: string
 }
 type Action = {
   action: string; label: string; horizon: string; cout_eur: { bas: number; haut: number }
@@ -48,6 +49,11 @@ const CHAMPS_CHARGES: [string, string][] = [
   ['assurance', 'assurance_eur_an'], ['taxe_fonciere', 'taxe_fonciere_eur_an'],
   ['charges_copro', 'charges_copro_eur_an'], ['eau', 'eau_eur_an'], ['autre', 'autre_eur_an'],
 ]
+// Pré-audit lot 7 : libellés de la fiche (`FicheMaison.tsx`), à tenir ENSEMBLE.
+const ENERGIES: Record<string, string> = {
+  gaz: 'gaz', fioul: 'fioul', bois_buches: 'bois en bûches', granules: 'granulés', reseau: 'chaleur du réseau',
+}
+const UNITES: Record<string, string> = { kwh: 'kWh', m3: 'm³', litres: 'litres', steres: 'stères', kg: 'kg' }
 const HORIZONS: Record<string, string> = { maintenant: 'maintenant', prioritaire: 'prioritaire', a_l_occasion: "à l'occasion" }
 // Même seuil que `audit_retour_affichage_max_ans` (api/app/core/config.py) et `EspaceAudits.tsx`.
 const RETOUR_MAX_ANS = 30
@@ -63,6 +69,10 @@ function Origine({ p }: { p: Poste }) {
       réglementé au {dateFr(p.prix_date)}{p.kva_suppose ? `, ${p.kva} kVA supposés` : `, ${p.kva} kVA`}), hors abonnement.</>
   }
   if (p.code === 'electricite') return <>Indiquez votre consommation dans <Link to="/mon-espace" className="text-primary hover:underline">votre fiche</Link>.</>
+  if (p.code === 'autre_energie' && p.montant_eur !== null) {
+    return <>Calculé : {p.quantite?.toLocaleString('fr-FR')} {UNITES[p.unite ?? ''] ?? p.unite} de {ENERGIES[p.type_energie ?? ''] ?? p.type_energie},
+      soit {p.conso_kwh_an?.toLocaleString('fr-FR')} kWh × {prix(p.prix_eur_kwh ?? 0)}, prix supposé (au {dateFr(p.prix_date)}).</>
+  }
   if (p.code === 'autre_energie') {
     return p.raison === 'unite_inconnue'
       ? <>Votre fiche indique {p.type_energie} sans unité : pas de montant, plutôt qu'un montant faux.</>

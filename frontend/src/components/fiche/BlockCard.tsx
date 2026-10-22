@@ -22,6 +22,8 @@ export default function BlockCard({
   onSave,
   icone,
   verrouilles,
+  id,
+  ouvert,
 }: {
   title: string
   weightLabel: string
@@ -33,6 +35,9 @@ export default function BlockCard({
   icone?: React.ReactNode
   /** Carnet, lot 7 : les champs de ce bloc que tient un équipement — affichés en lecture. */
   verrouilles?: string[]
+  /** Pré-audit lot 7 : une ancre (`/mon-espace#energie`) qui ouvre ce bloc. */
+  id?: string
+  ouvert?: boolean
 }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -91,7 +96,8 @@ export default function BlockCard({
   )
 
   return (
-    <Depliant titre={title} resume={resume} icone={icone}>
+    <div id={id} className="scroll-mt-20">
+    <Depliant titre={title} resume={resume} icone={icone} ouvert={ouvert}>
       {pct !== undefined && (
         <div className="h-1.5 rounded-full bg-bord overflow-hidden">
           <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -119,5 +125,6 @@ export default function BlockCard({
         )}
       </div>
     </Depliant>
+    </div>
   )
 }

@@ -47,6 +47,17 @@ def test_sans_puissance_souscrite_le_prix_est_celui_du_preaudit_et_c_est_dit():
     assert p["montant_eur"] == round(4000 * prix_kwh(settings.audit_puissance_kva_defaut), 2)
 
 
+def test_l_autre_energie_avec_unite_est_chiffree():
+    """1 500 L × 10 kWh/L = 15 000 kWh × 0,19 €/kWh = 2 850 € (pré-audit lot 7)."""
+    p = _postes(cout_possession(maison(conso_autre_energie_type="fioul", conso_autre_energie_qte=1500,
+                                       conso_autre_energie_unite="litres"), None, [], AUJOURD_HUI))["autre_energie"]
+    assert (p["montant_eur"], p["statut"], p["conso_kwh_an"]) == (2850, "calcule", 15000)
+    assert (p["prix_statut"], p["prix_date"], p["raison"]) == ("suppose", "2026-09-01", None)
+    bois = _postes(cout_possession(maison(conso_autre_energie_type="granules", conso_autre_energie_qte=3000,
+                                          conso_autre_energie_unite="kg"), None, [], AUJOURD_HUI))["autre_energie"]
+    assert bois["montant_eur"] == round(3000 * 4.6 * 0.08, 2) and bois["prix_eur_kwh"] == 0.08
+
+
 def test_l_autre_energie_sans_unite_n_est_pas_chiffree():
     p = _postes(cout_possession(maison(conso_autre_energie_type="fioul", conso_autre_energie_qte=1500),
                                 None, [], AUJOURD_HUI))["autre_energie"]

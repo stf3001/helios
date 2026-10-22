@@ -15,6 +15,7 @@ Hélios n'est pas un outil bancaire : ni valeur du bien, ni prêt, ni patrimoine
 from datetime import date, datetime
 
 from app.core.config import settings
+from app.services.autre_energie import ENERGIE_DU_TYPE, kwh_autre_energie
 from app.services.simu_engine import prix_kwh
 
 # Les entrées de journal qui sont un coût de POSSESSION. Une amélioration ou un remplacement
@@ -60,12 +61,21 @@ def poste_electricite(house) -> dict:
 
 
 def poste_autre_energie(house) -> dict:
-    """La fiche donne une quantité sans unité (litres ? kWh ? stères ?) : comme le pré-audit,
-    on ne la multiplie par aucun prix. Le poste reste non renseigné, et dit pourquoi."""
+    """Quantité déclarée → kWh (`autre_energie`, la conversion du pré-audit) × prix du kWh de
+    cette énergie (`config.py`, bûches et granulés au prix du bois), à prix supposé et daté.
+    Une ancienne quantité sans unité n'est multipliée par aucun prix : le poste le dit."""
     type_ = _champ(house, "conso_autre_energie_type")
     qte = _champ(house, "conso_autre_energie_qte")
-    raison = "unite_inconnue" if type_ and qte else None
-    return _poste("autre_energie", None, None, type_energie=type_, raison=raison)
+    unite = _champ(house, "conso_autre_energie_unite")
+    kwh = kwh_autre_energie(type_, unite, qte)
+    if kwh is None:
+        raison = "unite_inconnue" if type_ and qte and not unite else None
+        return _poste("autre_energie", None, None, type_energie=type_, raison=raison)
+    energie = ENERGIE_DU_TYPE[type_]
+    prix = dict(settings.audit_prix_energie_eur_kwh)[energie]
+    return _poste("autre_energie", kwh * prix, "calcule", type_energie=type_, quantite=qte, unite=unite,
+                  conso_kwh_an=round(kwh), prix_eur_kwh=prix, prix_statut="suppose",
+                  prix_date=dict(settings.audit_prix_energie_date_valeur)[energie], raison=None)
 
 
 def poste_entretien(entrees, aujourd_hui: date) -> dict:

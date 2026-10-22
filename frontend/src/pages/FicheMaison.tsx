@@ -163,6 +163,11 @@ export default function FicheMaison() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newCodePostal, setNewCodePostal] = useState('')
+  // Pré-audit lot 7 : « Indiquer ma consommation » mène ici (`#energie`), bloc Énergie ouvert.
+  const ouvrirEnergie = window.location.hash === '#energie'
+  useEffect(() => {
+    if (ouvrirEnergie && house) setTimeout(() => document.getElementById('energie')?.scrollIntoView(), 100)
+  }, [ouvrirEnergie, house])
   const [newAnnee, setNewAnnee] = useState('')
   const [newChauffage, setNewChauffage] = useState('')
   const [creating, setCreating] = useState(false)
@@ -335,7 +340,7 @@ export default function FicheMaison() {
             <BlockCard icone={<Home className="h-4 w-4 text-primary" />} title="Identité du logement" weightLabel="20 % du score" pct={(house.block_scores as Record<string, number>)?.identite} fields={IDENTITE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
             <BlockCard icone={<Layers className="h-4 w-4 text-primary" />} title="Enveloppe" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.enveloppe} fields={ENVELOPPE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
             <BlockCard icone={<Flame className="h-4 w-4 text-primary" />} title="Systèmes" weightLabel="25 % du score" pct={(house.block_scores as Record<string, number>)?.systemes} fields={SYSTEMES_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
-            <BlockCard icone={<Gauge className="h-4 w-4 text-primary" />} title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
+            <BlockCard id="energie" ouvert={ouvrirEnergie} icone={<Gauge className="h-4 w-4 text-primary" />} title="Énergie & factures" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.energie} fields={ENERGIE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
             <BlockCard icone={<Target className="h-4 w-4 text-primary" />} title="Projet & désidératas" weightLabel="15 % du score" pct={(house.block_scores as Record<string, number>)?.projet} fields={PROJET_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
             <BlockCard icone={<Sun className="h-4 w-4 text-primary" />} title="Toiture / potentiel solaire" weightLabel="bonus" fields={TOITURE_FIELDS} draft={draft} onChange={onChange} onSave={saveBlock} verrouilles={verrouilles} />
           </div>
