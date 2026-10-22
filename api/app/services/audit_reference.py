@@ -458,6 +458,17 @@ LIBELLES_HYPOTHESES: dict[str, str] = {
     "scop_pac_air_air_neuf": "Rendement saisonnier d'une pompe à chaleur air/air neuve : {valeur}",
     "facteurs_co2_kg_kwh": "Émissions de CO₂, en kg par kWh consommé : {valeur}",
     "hausse_prix_pct_an": "Hausse du prix de l'énergie, en % par an (coût sur 10 ans) : {valeur}",
+    # v2.6 : la puissance de chauffage et les radiateurs.
+    "puissance_t_int": "Température intérieure de calcul : {valeur} °C",
+    "puissance_t_base": "Température extérieure de base, zone {param} : {valeur} °C",
+    "puissance_dju": "Degrés-jours de chauffage, zone {param} (base 18 °C) : {valeur}",
+    "puissance_rendement": "Rendement de l'appareil actuel ({param}), pour passer à la chaleur utile : {valeur}",
+    "puissance_hauteur_plafond_m": "Hauteur sous plafond : {valeur} m",
+    "puissance_indice_isolation": "Indice d'isolation (1 = maison non isolée) : {valeur}",
+    "puissance_g_w_m3_k": "Coefficient de pertes au volume G : {valeur} W/m³.K",
+    "puissance_pac_plage_pct": "Puissance d'une PAC air/eau, en % du besoin : {valeur}",
+    "radiateurs_regimes": "Températures d'eau testées pour les radiateurs (départ, retour), en °C : {valeur}",
+    "radiateurs_exposant": "Exposant des radiateurs (puissance donnée pour 50 °C d'écart) : {valeur}",
 }
 # Mots techniques qui apparaissent dans ces valeurs (clés de dictionnaire, formes d'aide,
 # paramètres). Les actions, postes et équipements ont déjà leurs libellés ailleurs.
@@ -506,7 +517,7 @@ SOURCES: dict[str, tuple[str, str]] = {
     "scop_air_air_neuf": ("SCOP d'une PAC air/air neuve, ordre de grandeur, à calibrer", "2026-10-20"),
     "facteurs_co2": ("Méthode du DPE, arrêté du 31/03/2021 modifié", "2026-10-20"),
     "hausse_prix": ("Hausse annuelle du prix de l'énergie, même hypothèse que le simulateur", "2026-10-20"),
-    "puissance": ("Méthode de kb/pac_air_eau.md (consommation et volume), réglages A VALIDER", "2026-10-22"),
+    "puissance": ("Méthode de la fiche « PAC air/eau » (consommation et volume), valeurs à calibrer", "2026-10-22"),
 }
 
 # --- v2.4 : les textes des fiches `kb/action_*.md` ----------------------------------------

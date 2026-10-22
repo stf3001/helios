@@ -110,8 +110,16 @@ interface AuditResult {
     eau_chaude_eur_an: number | null; hausse_pct_an: number
     chauffage_et_eau_chaude_10_ans_eur: number; economie_10_ans_plan_recommande_eur: number
   } | null
+  // v2.6 : la puissance de chauffage et les radiateurs (absents des audits plus anciens)
+  puissance?: Puissance | null
   avertissement: string
 }
+interface Puissance {
+  affichage: 'complet' | 'puissance' | null
+  texte: string | null; texte_plage: string | null; note_radiateurs: string | null
+  radiateurs: { piece: string; verdict: string; texte?: string | null }[]
+}
+
 interface AuditRow { id: string; created_at: string; result: AuditResult }
 
 const POSTE_LABEL: Record<string, string> = {
@@ -140,6 +148,24 @@ function phraseBloc(b: BlocPlan) {
   return `coût ${plage(b.investissement_eur)}, ${aides}, reste à charge ${plage(b.reste_a_charge_eur)}, économie ${plage(b.economie_annuelle_eur)} par an`
 }
 const actions = (n: number) => `${n} action${n > 1 ? 's' : ''}`
+
+/** v2.6 : les phrases de la fiche PAC remplies par le moteur ; l'écran n'ajoute aucun chiffre. */
+function BlocPuissance({ b }: { b: Puissance }) {
+  const lignes = b.radiateurs.filter((x) => x.texte)
+  return (
+    <div>
+      <h2 className="font-semibold text-lg mb-2">Puissance de chauffage</h2>
+      {b.texte && <p className="text-sm text-gray-600">{b.texte}</p>}
+      {b.texte_plage && <p className="text-sm text-gray-600 mt-2">{b.texte_plage}</p>}
+      {lignes.length > 0 && (
+        <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1 mt-2">
+          {lignes.map((x) => <li key={x.piece}>{x.texte}</li>)}
+        </ul>
+      )}
+      {b.note_radiateurs && <p className="text-sm text-gray-600 mt-2">{b.note_radiateurs}</p>}
+    </div>
+  )
+}
 
 function CartePriorite({ p, numero = true }: { p: Priorite; numero?: boolean }) {
   return (
@@ -550,6 +576,8 @@ export default function EspaceAudits() {
                       </p>
                     )}
                   </div>
+
+                  {r.puissance?.affichage && <BlocPuissance b={r.puissance} />}
 
                   {r.gestes ? <PlanV21 r={r} /> : (
                   <>

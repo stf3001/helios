@@ -184,3 +184,16 @@ def test_pieces_lues_comme_la_base_les_rend():
     les émetteurs, `piece_id`, `type`, `nombre`, `puissance_w` sont lus."""
     pieces, emetteurs = pieces_fioul()
     assert all(isinstance(x, SimpleNamespace) for x in pieces + emetteurs)
+
+
+@pytest.mark.parametrize("nom", sorted(maisons()))
+def test_le_pdf_porte_le_bloc_et_les_anciens_audits_s_affichent(nom, tmp_path, monkeypatch):
+    import fitz
+    from app.services import pdf_audit
+    monkeypatch.setattr(pdf_audit, "PDF_DIR", tmp_path)
+    nouveau = audit(nom)
+    texte = "".join(pg.get_text() for pg in fitz.open(pdf_audit.build_pdf(nouveau, house_label="Maison")))
+    assert ("Puissance de chauffage" in texte) == bool(nouveau["puissance"]["affichage"])
+    ancien = json.loads((V25 / f"{nom}.json").read_text(encoding="utf-8"))   # v2.5 : pas de bloc
+    texte = "".join(pg.get_text() for pg in fitz.open(pdf_audit.build_pdf(ancien, house_label="Maison")))
+    assert "Puissance de chauffage" not in texte

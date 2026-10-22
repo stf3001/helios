@@ -969,6 +969,23 @@ def _dans_le_temps(pdf: FPDF, audit: dict):
                    f"{_milliers(cl['apres_plan_recommande_kg_an'])}{NBSP}kg/an après le plan recommandé.")
 
 
+def _puissance(pdf: FPDF, bloc: dict):
+    """v2.6 : les phrases de la fiche PAC, telles que le moteur les a remplies. Air/eau : la
+    plage et les radiateurs pièce par pièce ; air/air : la seule phrase de puissance."""
+    _section(pdf, "Puissance de chauffage")
+    _para(pdf, bloc["texte"])
+    if bloc.get("texte_plage"):
+        pdf.ln(1)
+        _para(pdf, bloc["texte_plage"])
+    lignes = [r["texte"] for r in bloc.get("radiateurs") or [] if r.get("texte")]
+    if lignes or bloc.get("note_radiateurs"):
+        pdf.ln(1)
+    for texte in lignes:
+        _puce(pdf, texte)
+    if bloc.get("note_radiateurs"):
+        _para(pdf, bloc["note_radiateurs"], taille=9, couleur=TEXTE_2)
+
+
 def _confort_ete(pdf: FPDF, ete: dict, titre: str):
     _section(pdf, titre)
     for conseil in ete["conseils"]:
@@ -992,6 +1009,8 @@ def _page_comprendre(pdf: FPDF, audit: dict):
     _section(pdf, "Votre consommation")
     _consommation_v2(pdf, audit, encadre=True)
     _dans_le_temps(pdf, audit)
+    if (audit.get("puissance") or {}).get("affichage"):
+        _puissance(pdf, audit["puissance"])
     if audit.get("confort_ete"):
         _confort_ete(pdf, audit["confort_ete"], "Confort d'été")
 
