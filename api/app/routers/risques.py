@@ -1,9 +1,11 @@
-"""La commune de la maison et ses risques (phase 2).
+"""La commune de la maison, ses risques et la vigilance météo de son département (phase 2).
 
 Le foyer choisit sa commune parmi celles de son code postal (API Découpage administratif) ; Hélios
 ne demande jamais l'adresse. Les risques viennent de Géorisques, gardés 30 jours. Une panne ne
 casse rien : la section répond « indisponible » et l'écran ne l'affiche pas.
 """
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,7 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.routers.equipements import _own_house
-from app.services import risques_affichage, risques_lecture
+from app.services import regions, risques_affichage, risques_lecture, vigilance, vigilance_lecture
 from app.services.entretien import table_courante, verifications
 
 router = APIRouter(prefix="/houses/me", tags=["carnet"])
@@ -59,3 +61,17 @@ async def risques(user: User = Depends(get_current_user), db: AsyncSession = Dep
         return {"disponible": False, "raison": "indisponible"}
     verifs = verifications(table_courante()["taches"], house)
     return {"disponible": True, **risques_affichage.section(ligne, house, verifs)}
+
+
+@router.get("/vigilance")
+async def vigilance_du_foyer(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Vigilance orange ou rouge du département, et « Noter un dégât » après vent ou orages. Lue en
+    base : jamais d'appel à Météo-France ici. Sans clé, la table reste vide et rien ne s'affiche."""
+    house = await _own_house(db, user.id)
+    dep = regions.departement_du_code_postal(house.code_postal or "")
+    maintenant = datetime.now(timezone.utc)
+    episodes = await vigilance_lecture.du_departement(db, dep)
+    return {
+        "actives": [vigilance.ligne_a_faire(v, maintenant) for v in vigilance.vigilances_du_foyer(dep, episodes, maintenant)],
+        "apres": vigilance.apres_episode(dep, episodes, maintenant),
+    }

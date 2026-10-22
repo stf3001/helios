@@ -1,7 +1,7 @@
 import json
 import logging
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -30,7 +30,8 @@ from app.models.solar import SolarStudy
 from app.models.travaux import Travaux
 from app.models.user import User
 from app.schemas.chat import ChatIn
-from app.services import civilites, ollama_client, rag, regions, risques_affichage, router_llm
+from app.services import (civilites, ollama_client, rag, regions, risques_affichage, router_llm, vigilance,
+                          vigilance_lecture)
 from app.services.a_faire import derniers_faits, journal_fusionne
 from app.services.carnet_contexte import carnet_contexte, parle_du_carnet
 from app.services.entretien import echeances, table_courante
@@ -40,6 +41,11 @@ from app.services.pieces import resume_pieces
 logger = logging.getLogger("helios.chat")
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+
+def _vigilance_du_foyer(house: House, episodes) -> list | None:
+    dep = regions.departement_du_code_postal(house.code_postal or "")
+    return vigilance.pour_le_chat(vigilance.vigilances_du_foyer(dep, episodes, datetime.now(timezone.utc)))
 
 
 async def _carnet_du_foyer(db: AsyncSession, house: House) -> dict | None:
@@ -71,6 +77,8 @@ async def _carnet_du_foyer(db: AsyncSession, house: House) -> dict | None:
             # Phase 2 : les risques de la commune, relus du cache seulement — jamais d'appel réseau ici.
             risques=risques_affichage.pour_le_chat(
                 await db.get(RisquesCommune, house.code_insee) if house.code_insee else None),
+            vigilance=_vigilance_du_foyer(house, await vigilance_lecture.du_departement(
+                db, regions.departement_du_code_postal(house.code_postal or ""))),
         )
         return carnet or None
     except Exception:

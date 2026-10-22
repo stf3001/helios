@@ -97,14 +97,16 @@ def taille(carnet: dict) -> int:
 
 
 def carnet_contexte(equipements, echeances, garanties, journal, resume_pieces=None,
-                    aujourd_hui: date | None = None, travaux=(), risques: dict | None = None) -> dict:
+                    aujourd_hui: date | None = None, travaux=(), risques: dict | None = None,
+                    vigilance: list | None = None) -> dict:
     """Le résumé du carnet ; `{}` si le foyer n'a rien saisi.
 
     `equipements` : modèles ou dicts portant aussi `age_ans` / `age_statut` (calculés par
     `garanties.age_ans`) ; `echeances` : sortie triée du moteur d'entretien ; `garanties` :
     sortie de `garanties_maison` ; `journal` : sortie de `journal_fusionne` (plus récent
     d'abord) ; `travaux` : pour réduire la nature d'un chantier à sa catégorie ; `risques` :
-    `risques_affichage.pour_le_chat` (codes des risques de la COMMUNE, statut `observe`, < 200 car.).
+    `risques_affichage.pour_le_chat` (codes des risques de la COMMUNE, statut `observe`, < 200 car.) ;
+    `vigilance` : `vigilance.pour_le_chat` (orange ou rouge en cours : phénomène, couleur, fin).
     """
     aujourd_hui = aujourd_hui or date.today()
     type_par_id = {_champ(e, "id"): _champ(e, "type") for e in equipements}
@@ -182,10 +184,10 @@ def carnet_contexte(equipements, echeances, garanties, journal, resume_pieces=No
 
     # Un foyer qui n'a rien saisi n'a pas de carnet, même si la table connaît des tâches de
     # maison (détecteur de fumée) : on ne lui résumerait que des « à planifier ».
-    if not (equipements or travaux or journal or pieces or risques):
+    if not (equipements or travaux or journal or pieces or risques or vigilance):
         return {}
     carnet = {"equipements": eqs, "echeances": echs, "garanties": gars, "journal": jrn, "pieces": pieces,
-              "risques": risques}
+              "risques": risques, "vigilance": vigilance}
     carnet = {k: v for k, v in carnet.items() if v}  # aucun bloc vide
     return _plafonner(carnet)
 

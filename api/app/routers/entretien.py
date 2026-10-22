@@ -4,7 +4,7 @@ Ni rappel ni e-mail ici : quand le fournisseur sera branché (point 1 de TODO.md
 rappels liront `a_faire_de_la_maison` — la même chose que le bloc de l'espace.
 Le journal fournit `derniers_faits` : une tâche cochée fait avancer son échéance.
 """
-from datetime import date
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -22,7 +22,7 @@ from app.models.user import User
 from app.routers.equipements import _own_house
 from app.routers.journal import cols, verifier_liens, verifier_limite
 from app.schemas.journal import Fait
-from app.services import risques_affichage, suivi_foyer
+from app.services import regions, risques_affichage, suivi_foyer, vigilance, vigilance_lecture
 from app.services.a_faire import a_faire, derniers_faits
 from app.services.entretien import echeances, table_courante, verifications
 from app.services.garanties import garanties_maison
@@ -78,7 +78,15 @@ async def a_faire_de_la_maison(db: AsyncSession, house: House) -> dict:
     ligne = await db.get(RisquesCommune, house.code_insee) if house.code_insee else None
     bloc["debroussaillement"] = (risques_affichage.section(ligne, house, c["verifications"])["debroussaillement"]
                                  if ligne is not None else None)
-    bloc["rien_d_urgent"] = bloc["rien_d_urgent"] and not bloc["questions_contact"] and not bloc["debroussaillement"]
+    # Vigilance météo (phase 2) : une ligne tant qu'elle court, puis « Noter un dégât » 7 jours.
+    dep = regions.departement_du_code_postal(house.code_postal or "")
+    maintenant = datetime.now(timezone.utc)
+    episodes = await vigilance_lecture.du_departement(db, dep)
+    bloc["vigilances"] = [vigilance.ligne_a_faire(v, maintenant)
+                          for v in vigilance.vigilances_du_foyer(dep, episodes, maintenant)]
+    bloc["apres_episode"] = vigilance.apres_episode(dep, episodes, maintenant)
+    bloc["rien_d_urgent"] = (bloc["rien_d_urgent"] and not bloc["questions_contact"] and not bloc["debroussaillement"]
+                             and not bloc["vigilances"] and not bloc["apres_episode"])
     return bloc
 
 
