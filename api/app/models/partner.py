@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import ARRAY, Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import ARRAY, Boolean, Date, DateTime, Float, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,6 +32,8 @@ class Partner(Base):
     lien_interet: Mapped[str | None] = mapped_column(String(200))
     # Partenaire de démonstration (point 60) : visible des seuls comptes de `mer_comptes_demo`.
     demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    # Version de la charte signée dans l'espace partenaire (lot 3) ; `charte_signee_at` en est l'horodatage.
+    charte_version_signee: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 
@@ -64,6 +66,10 @@ class Lead(Base):
     contact_email: Mapped[str | None] = mapped_column(String(255))
     message: Mapped[str | None] = mapped_column(Text)
     motif_perdu: Mapped[str | None] = mapped_column(Text)
+    # Lot 3 : seule une contestation ACCEPTÉE passe un lead à non facturable ; le suivi déclaratif
+    # du partenaire (dont `contacte_le`) ne touche jamais au prix.
+    facturable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    contacte_le: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
 
 
@@ -76,4 +82,63 @@ class Review(Base):
     lead_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("leads.id"), nullable=False, unique=True)
     note: Mapped[int] = mapped_column(Integer, nullable=False)  # 1..5
     commentaire: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+
+
+class Contestation(Base):
+    """Contestation d'une mise en relation par le partenaire, dans les 7 jours (lot 3)."""
+
+    __tablename__ = "contestations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    lead_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"),
+                                               nullable=False, index=True)
+    motif: Mapped[str] = mapped_column(String(30), nullable=False)
+    commentaire: Mapped[str] = mapped_column(Text, nullable=False)
+    essais: Mapped[list | None] = mapped_column(JSONB)  # dates ISO des trois essais (« injoignable »)
+    statut: Mapped[str] = mapped_column(String(12), nullable=False, default="en_attente")
+    decision_motif: Mapped[str | None] = mapped_column(Text)
+    decidee_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+
+
+class PartnerDocument(Base):
+    """Justificatif d'un partenaire : `kbis`, `decennale`, `rge` (lot 3)."""
+
+    __tablename__ = "partner_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    partner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("partners.id", ondelete="CASCADE"),
+                                                  nullable=False, index=True)
+    type: Mapped[str] = mapped_column(String(12), nullable=False)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    path: Mapped[str] = mapped_column(String(255), nullable=False)
+    date_delivrance: Mapped[date | None] = mapped_column(Date)  # Kbis
+    date_fin: Mapped[date | None] = mapped_column(Date)         # décennale, RGE
+    statut: Mapped[str] = mapped_column(String(10), nullable=False, default="depose")  # depose | refuse
+    motif_refus: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+
+
+class Charte(Base):
+    """Texte de la charte partenaire par version. La version en vigueur est la plus récente."""
+
+    __tablename__ = "chartes"
+
+    version: Mapped[str] = mapped_column(String(20), primary_key=True)
+    texte: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
+
+
+class PartnerActivation(Base):
+    """Lien d'activation à usage unique : seul le haché du jeton est stocké."""
+
+    __tablename__ = "partner_activations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    partner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("partners.id", ondelete="CASCADE"),
+                                                  nullable=False, index=True)
+    jeton_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expire_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    utilise_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")

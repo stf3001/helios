@@ -324,6 +324,8 @@ class Settings(BaseSettings):
     mer_score_fiche_min_pct: float = 60.0   # « fiche complete » a partir de ce score de completude
     mer_score_etude_max_mois: int = 6       # « etude recente » : pre-audit ou etude de moins de 6 mois
     mer_documents_max: int = 5              # documents qu'un foyer peut joindre a une demande
+    mer_activation_jours: int = 7           # lien d'activation d'un compte partenaire, usage unique (lot 3)
+    mer_kbis_max_mois: int = 3              # un Kbis de moins de 3 mois a la candidature
 
     # --- Rendez-vous telephonique avec un conseiller (cf. services/creneaux.py) ---
     # ATTENTION : ces heures ne sont PAS l'agenda reel de l'equipe. Un creneau propose ici
