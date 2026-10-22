@@ -1192,7 +1192,7 @@ Table `charges_maison` (0033), `services/cout_maison.py`, `GET /houses/me/cout` 
 vide (tout « Non renseigné », aucun 0) et compte de démo complet avec son pré-audit recopié.
 Voir `debriefs/2026-10-22-carnet-lot10.md`.
 
-### [ ] 55. Coût de la maison : deux choix à confirmer
+### [x] 55. Coût de la maison : deux choix — confirmés le 22/10/2026
 
 - **L'entretien n'additionne que l'usage** (entretien, contrôle, réparation, autre) : une
   amélioration ou un remplacement noté au journal est un INVESTISSEMENT — une PAC à 16 500 €
@@ -1200,6 +1200,10 @@ Voir `debriefs/2026-10-22-carnet-lot10.md`.
 - **L'électricité est hors abonnement** : le brief fixe « consommation × prix du kWh ».
   `config.py` a une grille d'abonnements (`simu_abonnement_eur_mois_par_kva`, « à recalibrer »)
   qui pourrait s'y ajouter ; l'écran écrit « hors abonnement » en attendant.
+
+**Décision de Stéphane (22/10/2026) : les deux sont confirmés.** L'entretien ne compte que
+l'usage (ni améliorations ni remplacements), et l'électricité reste hors abonnement. Ne pas
+les changer sans lui.
 
 ## Le piège à ne pas réintroduire
 
