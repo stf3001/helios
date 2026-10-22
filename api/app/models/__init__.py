@@ -10,6 +10,7 @@ from app.models.kb import KbChunk, KbDocument
 from app.models.partner import Lead, Partner, Review
 from app.models.piece import Emetteur, Piece
 from app.models.pro import ProProfile
+from app.models.projet import Projet
 from app.models.refresh_token import RefreshToken
 from app.models.simulateur import SimulateurStudy
 from app.models.solar import SolarStudy
@@ -21,5 +22,5 @@ __all__ = [
     "User", "House", "RefreshToken", "KbDocument", "KbChunk",
     "Conversation", "Message", "SolarStudy", "Audit", "EnergyStudy",
     "Partner", "Lead", "Review", "HouseDocument", "AgentLog", "WaterStudy", "ProProfile",
-    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree",
+    "SimulateurStudy", "Equipement", "Travaux", "Piece", "Emetteur", "JournalEntree", "Projet",
 ]
