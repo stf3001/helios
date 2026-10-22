@@ -203,21 +203,34 @@ class Settings(BaseSettings):
     audit_unites_air_air_max: int = 6
     # Puissance de chauffage (pré-audit v2.6, point 37) : deux calculs affichés en fourchette,
     # par la consommation (H = Q utile / (DJU × 24)) et au volume (S × h × G × ΔT). Méthode de
-    # `kb/pac_air_eau.md`. Toutes les valeurs ci-dessous : A VALIDER par Stéphane.
-    audit_t_int: int = 19                                # A VALIDER par Stéphane
-    # Température extérieure de base, par zone climatique (°C). A VALIDER par Stéphane.
+    # `kb/pac_air_eau.md`. Toutes les valeurs ci-dessous : validées par Stéphane le 22/10/2026
+    # (ordres de grandeur, à recaler sur des cas réels).
+    audit_t_int: int = 19                                # validé le 22/10/2026
+    # Température extérieure de base, par zone climatique (°C).
     audit_t_base_par_zone: tuple[tuple[str, int], ...] = (("H1", -10), ("H2", -7), ("H3", -5))
-    # Degrés-jours de chauffage, base 18 °C, par zone. A VALIDER par Stéphane.
+    # Degrés-jours de chauffage, base 18 °C, par zone.
     audit_dju_par_zone: tuple[tuple[str, int], ...] = (("H1", 2700), ("H2", 2200), ("H3", 1500))
-    audit_hauteur_plafond_m: float = 2.5                     # A VALIDER par Stéphane
-    # Coefficient volumique G (W/m³.K) d'une maison non isolée, et plancher. A VALIDER par Stéphane.
+    audit_hauteur_plafond_m: float = 2.5                     # validé le 22/10/2026
+    # Coefficient volumique G (W/m³.K) d'une maison non isolée, et plancher.
     audit_g_non_isolee: float = 1.6
     audit_g_min: float = 0.6
-    # Régimes d'eau testés pour les radiateurs (départ, retour °C), dans l'ordre. A VALIDER par Stéphane.
+    # Régimes d'eau testés pour les radiateurs (départ, retour °C), dans l'ordre.
     audit_regimes_radiateurs: tuple[tuple[int, int], ...] = ((50, 45), (55, 50))
-    audit_exposant_radiateur: float = 1.3                    # A VALIDER par Stéphane
-    # Plage de puissance d'une PAC air/eau, en % de la puissance de référence. A VALIDER par Stéphane.
+    audit_exposant_radiateur: float = 1.3                    # validé le 22/10/2026
+    # Plage de puissance d'une PAC air/eau, en % de la puissance de référence.
     audit_pac_plage_pct: tuple[int, int] = (80, 120)
+    # Pré-audit lot 7 : kWh par unité de la consommation déclarée d'une autre énergie
+    # (`services/autre_energie.py`). Fioul ~10 kWh PCI/L et granulés 4,6 kWh/kg : les repères déjà
+    # écrits pour leurs prix ci-dessus ; gaz 11 kWh/m³ : coefficient courant des factures (PCS),
+    # cohérent avec le prix CRE en €/kWh ; bûches 1 700 kWh/stère : bois dur sec (1 500 à 2 000
+    # selon l'essence et l'humidité). A VALIDER par Stéphane.
+    audit_kwh_par_unite: tuple[tuple[str, str, float], ...] = (
+        ("fioul", "litres", 10.0), ("gaz", "m3", 11.0), ("bois_buches", "steres", 1700.0),
+        ("granules", "kg", 4.6), ("gaz", "kwh", 1.0), ("fioul", "kwh", 1.0), ("reseau", "kwh", 1.0),
+    )
+    # Eau chaude au gaz, déduite d'un relevé de gaz quand la fiche dit « eau chaude au gaz »
+    # (kWh de gaz par occupant et par an). A VALIDER par Stéphane.
+    audit_ecs_combustible_kwh_occupant_an: int = 1100
     # Facteurs d'émission (kg CO2 par kWh d'ÉNERGIE FINALE), ceux de la méthode du DPE :
     # arrêté du 31 mars 2021 modifié (3CL-DPE), tableau des facteurs d'émission, relevé le
     # 20/10/2026 dans sa transcription open source (Open3CL, src/conso.js, « au 31 mars
