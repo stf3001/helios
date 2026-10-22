@@ -354,11 +354,17 @@ fiches, plan de site à 420 URL.
 
 ## Ménage — sans risque, mais à ne pas oublier
 
-### [ ] 13. Retirer `/potentiel-hydrique`, ou le rebrancher
+### [x] 13. Retirer `/potentiel-hydrique`, ou le rebrancher — retiré le 22/10/2026 (`e2d4aa2`)
 
 Il lit encore `water_engine.py`, donc la table climatique inventée (point 14). Son remplaçant (la machine à eau du simulateur)
 existe et tourne sur PVGIS. Route dans `frontend/src/App.tsx`, lien dans
 `frontend/src/pages/Espace.tsx`.
+
+**Fait** : la route redirige vers `/simulateur-solaire` (et nginx en 301), la page, la tuile de l'espace
+et `/api/water` sont retirées, le chat ne lit plus l'étude hydrique, le plan de site perd la page.
+`water_engine.py` reste : `awg.py` (la machine à eau du simulateur) lit ses tables de performance.
+Aucune étude stockée n'est supprimée. Le point 14 reste ouvert.
+
 
 ### [ ] 14. Faire corriger la table climatique chez Hydrolia
 
@@ -1122,12 +1128,16 @@ Décision de Stéphane (21/10/2026) : en attente. Tant qu'elle n'est pas prise :
 Ce qu'il faudra donner : l'adresse (ou les adresses) qui reçoit, les jours et heures où
 quelqu'un décroche. Le reste est prêt : une valeur dans `.env`, une ligne dans `config.py`.
 
-### [ ] 46. L'en-tête déborde entre ~1000 et 1100 px de large
+### [x] 46. L'en-tête déborde entre ~1000 et 1100 px de large — corrigé le 22/10/2026 (`992c3fc`)
 
 Trouvé en vérifiant le lot 7 (22/10/2026), sans lien avec lui : à 1024 px, le bouton
 « Déconnexion » sort de l'écran (`scrollWidth` 1031 pour 1009 visibles), sur `/espace` comme
 sur `/mon-espace`. À 375 px, rien ne déborde (menu burger). La barre de navigation publique
 compte désormais dix entrées : à replier plus tôt, ou à resserrer.
+
+**Fait** : la navigation se replie en menu sous 1280 px (`xl`), sans lien retiré. Mesuré sans
+débordement à 375, 1024, 1100, 1280 et 1440 px, sur l'accueil et l'espace.
+
 
 ### [x] 47. Carnet, lot 8 : un parcours par statut et par type de logement — fait le 22/10/2026
 
@@ -1148,12 +1158,16 @@ correction se fait dans la fiche, puis dans `services/parcours.py` ou
 `services/note_proprietaire.py` (les tests cassent sinon). À vérifier en particulier :
 « l'attestation du vendeur » sur le débroussaillement, reprise du brief.
 
-### [ ] 49. Un acheteur qui joint tous ses papiers bute sur la limite de 6 documents
+### [x] 49. Un acheteur qui joint tous ses papiers bute sur la limite de 6 documents — réglé le 22/10/2026 (`ff0073b`)
 
 La liste « Avant d'acheter » compte jusqu'à 7 lignes, et une pièce jointe passe par le dépôt
 normal de la maison (`MAX_DOCUMENTS_PAR_MAISON = 6`). Le 7ᵉ dépôt est refusé avec le message
 du serveur. À trancher : relever la limite, ou sortir ces pièces du compte comme les photos
 de pièces (lot 2).
+
+**Fait** : 50 documents et 250 Mo par maison (10 Mo par fichier, photos de pièce hors compte),
+un message par limite, compteur « x / 50 · y / 250 Mo » à l'écran.
+
 
 ### [x] 50. Carnet, lot 9 : les projets de la maison — fait le 22/10/2026
 
@@ -1164,12 +1178,17 @@ projet ballon thermodynamique lié au vrai pré-audit (1 800 à 2 800 €, 413 �
 terminé — chantier, 3 garanties, ballon en service à la place de l'ancien, fiche suivie,
 journal. Voir `debriefs/2026-10-22-carnet-lot9.md`.
 
-### [ ] 51. Fiche manquante : le jardin d'hiver
+### [x] 51. Fiche manquante : le jardin d'hiver — réglé le 22/10/2026 (`700bfb0`)
 
 Le modèle « Jardin d'hiver » existe mais n'est pas servi : aucune fiche `kb/jardin_hiver` (ni
 véranda) dans la base. À écrire par Stéphane, puis à déclarer dans `agents_engine.SOURCES` ;
 le modèle s'affichera seul. Son `outil` est aujourd'hui `jardin`, qui est le POTAGER : à
 changer quand la fiche existera (pas de calculateur de jardin d'hiver).
+
+**Fait** : `kb/jardin_hiver.md`, recopiée telle quelle de `briefs/KB-jardin-hiver.md`, déclarée et
+ingérée (5 questions). Le modèle passe à `outil: "aucun"` : servi aux maisons, masqué aux
+appartements, sans calculateur, `lier-etude` refusé (409).
+
 
 ### [x] 52. Un projet terminé apparaît deux fois au journal — tranché le 22/10/2026
 
@@ -1215,6 +1234,17 @@ document `plan`), `services/cil.py` (« À compléter », indicateur sans valeur
 `GET /houses/me/cil`, formulaires et PDF. **Vérifié** : rendu du PDF d'une maison rénovée en
 2024 (PAC + combles) relu à l'œil, liste « À compléter » à l'écran sur le compte de démo
 (remis en état). Voir `debriefs/2026-10-22-carnet-lot11.md`.
+
+### [ ] 57. Relire `kb/jardin_hiver.md`
+
+Les cinq questions sont `verif: a_verifier` (fiche fournie le 22/10/2026). Une correction se fait
+d'abord dans `briefs/KB-jardin-hiver.md` si l'on veut garder les deux identiques, puis réingestion.
+
+### [ ] 58. Rebrancher le projet « Machine à eau de l'air » sur un calcul
+
+Il est en `outil: "aucun"` depuis le 22/10/2026 : le calculateur d'Hydrolia est en panne et ne
+mène qu'à une table provisoire (point 14), et le simulateur solaire calcule la production
+ÉLECTRIQUE. Décision de Stéphane : il s'en occupera quand le calculateur sera réparé.
 
 ## Le piège à ne pas réintroduire
 
