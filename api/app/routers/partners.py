@@ -39,7 +39,9 @@ async def list_partners(
         except regions.ZoneIllisible:
             return []
 
-    stmt = select(Partner).where(Partner.statut == "actif").order_by(Partner.note_moyenne.desc().nullslast())
+    # Ordre ALPHABÉTIQUE (décision de Stéphane du 22/10/2026, point 64) : plus jamais par note.
+    # Hélios est payé le même prix fixe par chaque partenaire ; un classement dirait le contraire.
+    stmt = select(Partner).where(Partner.statut == "actif").order_by(Partner.raison_sociale)
     rows = list(await db.scalars(stmt))
     result = []
     for p in rows:
