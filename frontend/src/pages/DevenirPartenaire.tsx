@@ -21,6 +21,13 @@ export default function DevenirPartenaire() {
   const [rge, setRge] = useState(false)
   const [zones, setZones] = useState('')
   const [metiers, setMetiers] = useState<string[]>([])
+  // Justificatifs joints d'office (mises en relation, lot 3) : mêmes règles que dans l'espace partenaire.
+  const [kbis, setKbis] = useState<File | null>(null)
+  const [kbisDate, setKbisDate] = useState('')
+  const [decennale, setDecennale] = useState<File | null>(null)
+  const [decennaleFin, setDecennaleFin] = useState('')
+  const [rgeFichier, setRgeFichier] = useState<File | null>(null)
+  const [rgeFin, setRgeFin] = useState('')
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -34,18 +41,19 @@ export default function DevenirPartenaire() {
     setError(null)
     setSubmitting(true)
     try {
-      const res = await fetch('/api/partners/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          raison_sociale: raison,
-          siret,
-          email,
-          rge,
-          zones: zones.split(',').map((z) => z.trim()).filter(Boolean),
-          metiers,
-        }),
-      })
+      const corps = new FormData()
+      corps.append('candidature', JSON.stringify({
+        raison_sociale: raison,
+        siret,
+        email,
+        rge,
+        zones: zones.split(',').map((z) => z.trim()).filter(Boolean),
+        metiers,
+      }))
+      corps.append('kbis', kbis!); corps.append('kbis_date', kbisDate)
+      corps.append('decennale', decennale!); corps.append('decennale_fin', decennaleFin)
+      if (rge && rgeFichier) { corps.append('rge', rgeFichier); corps.append('rge_fin', rgeFin) }
+      const res = await fetch('/api/partners/apply', { method: 'POST', body: corps })
       if (!res.ok) {
         const body = await res.json().catch(() => null)
         throw new Error(typeof body?.detail === 'string' ? body.detail : 'Candidature impossible — vérifiez les champs.')
@@ -122,7 +130,19 @@ export default function DevenirPartenaire() {
               <input type="checkbox" checked={rge} onChange={(e) => setRge(e.target.checked)} />
               Je suis certifié RGE
             </label>
-            <button type="submit" disabled={submitting || !raison || siret.length !== 14 || metiers.length === 0}
+            <fieldset className="space-y-3 rounded-xl border border-bord bg-white p-4">
+              <legend className="px-1 text-sm font-medium">Vos justificatifs (PDF ou image, 10 Mo au plus)</legend>
+              <Justificatif libelle="Extrait Kbis de moins de 3 mois" dateLibelle="Délivré le"
+                onFichier={setKbis} date={kbisDate} onDate={setKbisDate} />
+              <Justificatif libelle="Attestation d'assurance décennale" dateLibelle="Valable jusqu'au"
+                onFichier={setDecennale} date={decennaleFin} onDate={setDecennaleFin} />
+              {rge && (
+                <Justificatif libelle="Qualification RGE" dateLibelle="Valable jusqu'au"
+                  onFichier={setRgeFichier} date={rgeFin} onDate={setRgeFin} />
+              )}
+            </fieldset>
+            <button type="submit" disabled={submitting || !raison || siret.length !== 14 || metiers.length === 0
+              || !kbis || !kbisDate || !decennale || !decennaleFin || (rge && (!rgeFichier || !rgeFin))}
               className="rounded-xl bg-primary text-white font-semibold px-6 py-2.5 hover:opacity-90 disabled:opacity-40">
               {submitting ? 'Envoi…' : 'Envoyer ma candidature'}
             </button>
@@ -131,5 +151,22 @@ export default function DevenirPartenaire() {
         )}
       </section>
     </>
+  )
+}
+
+function Justificatif({ libelle, dateLibelle, onFichier, date, onDate }: {
+  libelle: string; dateLibelle: string; onFichier: (f: File | null) => void; date: string; onDate: (d: string) => void
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+      <label className="block text-sm">{libelle}
+        <input type="file" required accept="application/pdf,image/jpeg,image/png,image/webp"
+          onChange={(e) => onFichier(e.target.files?.[0] ?? null)} className="mt-1 block w-full text-sm" />
+      </label>
+      <label className="block text-sm">{dateLibelle}
+        <input type="date" required value={date} onChange={(e) => onDate(e.target.value)}
+          className="mt-1 block rounded-lg border border-gray-300 px-3 py-1.5 text-sm" />
+      </label>
+    </div>
   )
 }

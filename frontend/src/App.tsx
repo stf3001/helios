@@ -22,6 +22,7 @@ import EspaceEnergie from './pages/EspaceEnergie'
 import DevenirPartenaire from './pages/DevenirPartenaire'
 import EspaceMisesEnRelation from './pages/EspaceMisesEnRelation'
 import PartnerPortal from './pages/PartnerPortal'
+import ActivationPartenaire from './pages/ActivationPartenaire'
 import Espace from './pages/Espace'
 import EspaceCompte from './pages/EspaceCompte'
 import Glossaire from './pages/Glossaire'
@@ -107,6 +108,7 @@ function SitePublic() {
           <Route path="/partenaires" element={<Partenaires />} />
           <Route path="/devenir-partenaire" element={<DevenirPartenaire />} />
           <Route path="/partenaire" element={<PartnerPortal />} />
+          <Route path="/partenaire/activer" element={<ActivationPartenaire />} />
           <Route path="/simulateur-solaire" element={<SimulateurSolaire />} />
           <Route path="/eau" element={<Eau />} />
           <Route path="/le-vent" element={<Vent />} />

@@ -210,6 +210,7 @@ function villeHtml(coquille, v) {
 const ZONES_PRIVEES = [
   '/admin', '/espace', '/mon-espace',
   '/partenaire$',  // l'espace partenaire seul — surtout pas /partenaires
+  '/partenaire/',  // activation du compte (lien à usage unique) — sans toucher /partenaires
   '/connexion', '/inscription', '/verifier-email',
 ]
 
