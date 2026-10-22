@@ -10,7 +10,7 @@ import { signalerMaj, useMaj } from './commun'
 /**
  * « Avant d'acheter » (carnet, lot 8) : à la place du bloc « À faire » quand la fiche dit
  * « en cours d'achat ». Les documents à demander au vendeur, à cocher ; une pièce reçue se
- * dépose comme n'importe quel document de la maison (limite des 6 comprise) et se rattache
+ * dépose comme n'importe quel document de la maison (limites de nombre et de taille comprises) et se rattache
  * à sa ligne. Les libellés viennent de `kb/achat_logement.md`, par l'API.
  * Au passage à « propriétaire », le serveur archive la liste au journal.
  */

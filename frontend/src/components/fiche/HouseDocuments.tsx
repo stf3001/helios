@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { FileUp, Trash2, Download, MessageSquareText } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-const MAX_DOCUMENTS = 6
+// Les deux limites de `routers/documents.py` (point 49) — à tenir ENSEMBLE.
+const MAX_DOCUMENTS = 50
+const MAX_MO = 250
 
 interface Doc {
   id: string
@@ -44,7 +46,8 @@ export default function HouseDocuments() {
   // La photo d'une pièce (carnet, lot 2) ne compte pas dans la limite : elle est rangée à part.
   const docs = tous.filter((d) => !d.piece_id)
   const photosPieces = tous.filter((d) => d.piece_id)
-  const atLimit = docs.length >= MAX_DOCUMENTS
+  const mo = docs.reduce((total, d) => total + (d.size ?? 0), 0) / (1024 * 1024)
+  const atLimit = docs.length >= MAX_DOCUMENTS || mo >= MAX_MO
 
   function load() {
     authFetch('/api/houses/me/documents').then((r) => (r.ok ? r.json() : [])).then(setTous)
@@ -118,12 +121,12 @@ export default function HouseDocuments() {
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold">Mes documents</h3>
         <span className={'text-xs ' + (atLimit ? 'text-amber-600 font-medium' : 'text-gray-400')}>
-          {docs.length} / {MAX_DOCUMENTS}
+          {docs.length} / {MAX_DOCUMENTS} · {mo < 1 && mo > 0 ? '< 1' : Math.round(mo)} / {MAX_MO} Mo
         </span>
       </div>
       <p className="text-sm text-gray-500 mb-4">
         Ajoutez votre DPE, vos factures, un devis (pour l'avis d'Helios) ou des photos de votre logement
-        (PDF ou image, 10 Mo max, {MAX_DOCUMENTS} documents maximum pour l'instant).
+        (PDF ou image, 10 Mo par fichier ; jusqu'à {MAX_DOCUMENTS} documents et {MAX_MO} Mo au total).
       </p>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -175,7 +178,7 @@ export default function HouseDocuments() {
       {photosPieces.length > 0 && (
         <div className="mt-5">
           <h4 className="mb-1 font-semibold">Photos des pièces</h4>
-          <p className="mb-2 text-xs text-gray-500">Une par pièce, ajoutées depuis « Ma maison ». Hors limite des {MAX_DOCUMENTS} documents.</p>
+          <p className="mb-2 text-xs text-gray-500">Une par pièce, ajoutées depuis « Ma maison ». Hors limites des documents.</p>
           <ul className="divide-y divide-gray-200">
             {photosPieces.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 py-2 text-sm">

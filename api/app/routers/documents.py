@@ -25,7 +25,11 @@ router = APIRouter(prefix="/houses/me/documents", tags=["documents"])
 DOCS_DIR = Path(__file__).resolve().parents[2] / "generated" / "house_docs"
 MAX_SIZE = 10 * 1024 * 1024  # 10 Mo
 ALLOWED_CT = {"application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"}
-MAX_DOCUMENTS_PAR_MAISON = 6  # limite volontaire, à revoir plus tard (doc produit) — hors photos de pièce
+# Hors photos de pièce. Relevée de 6 à 50 le 22/10/2026 (point 49) : un carnet accumule chaque année
+# attestations d'entretien, factures et pièces « Avant d'acheter ». Le plafond en octets garde l'espace
+# disque borné, à 10 Mo par fichier comme avant.
+MAX_DOCUMENTS_PAR_MAISON = 50
+MAX_OCTETS_PAR_MAISON = 250 * 1024 * 1024
 MAX_EXTRACT_CHARS = 6000  # texte transmis à Helios pour son avis — assez pour un devis, pas plus
 
 
@@ -61,7 +65,7 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
 ):
     """Avec `piece_id`, c'est LA photo de cette pièce (carnet, lot 2) : type forcé à `photo`,
-    hors limite des 6 documents, et une nouvelle photo remplace l'ancienne (fichier compris)."""
+    hors limites (nombre et plafond total), et une nouvelle photo remplace l'ancienne (fichier compris)."""
     if piece_id is not None:
         type = "photo"
     if type not in DOC_TYPES:
@@ -82,14 +86,20 @@ async def upload_document(
         if not (file.content_type or "").startswith("image/"):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "La photo d'une pièce doit être une image")
         ancienne = await db.scalar(select(HouseDocument).where(HouseDocument.piece_id == piece_id))
-    nb_documents = await db.scalar(
-        select(func.count()).select_from(HouseDocument)
+    nb_documents, octets = (await db.execute(
+        select(func.count(), func.coalesce(func.sum(HouseDocument.size), 0))
         .where(HouseDocument.house_id == house.id, HouseDocument.piece_id.is_(None))
-    )
+    )).one()
     if piece_id is None and nb_documents >= MAX_DOCUMENTS_PAR_MAISON:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"Limite de {MAX_DOCUMENTS_PAR_MAISON} documents atteinte — supprimez-en un pour en ajouter un nouveau.",
+        )
+    if piece_id is None and octets + len(content) > MAX_OCTETS_PAR_MAISON:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Plafond de {MAX_OCTETS_PAR_MAISON // (1024 * 1024)} Mo atteint pour les documents de votre maison "
+            "— supprimez-en un pour libérer de la place.",
         )
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
